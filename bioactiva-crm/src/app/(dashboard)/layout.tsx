@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Navbar } from '@/components/layout/Navbar'
 import { useAuthStore, useUIStore } from '@/store'
+import { authService } from '@/services/modules/auth.service'
+import { USE_MOCK } from '@/lib/constants/config'
 import { ROUTES } from '@/lib/constants/routes'
 
 export default function DashboardLayout({
@@ -13,20 +15,31 @@ export default function DashboardLayout({
     children: React.ReactNode
 }) {
     const router = useRouter()
-    const { isAuthenticated, usuario } = useAuthStore()
+    const { isAuthenticated, usuario, accessToken, setSession, clearSession } = useAuthStore()
     const { sidebarCollapsed, sidebarOpen } = useUIStore()
 
     useEffect(() => {
-        if (!isAuthenticated || !usuario) {
+        if (!isAuthenticated || !accessToken) {
             router.replace(ROUTES.auth.login)
+            return
         }
-    }, [isAuthenticated, usuario, router])
 
-    if (!isAuthenticated || !usuario) return null
+        // Rehidratar usuario: si hay token pero no usuario (ej. recarga de página),
+        // intentar obtener el usuario via GET /auth/me
+        if (accessToken && !usuario && !USE_MOCK) {
+            authService.getMe()
+                .then((u) => setSession(accessToken, u))
+                .catch(() => {
+                    clearSession()
+                    router.replace(ROUTES.auth.login)
+                })
+        }
+    }, [isAuthenticated, accessToken, usuario, router, setSession, clearSession])
+
+    if (!isAuthenticated || !accessToken) return null
 
     return (
         <div className="min-h-screen bg-gray-50">
-
             <Sidebar />
 
             <div

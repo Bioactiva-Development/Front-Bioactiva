@@ -3,6 +3,7 @@ import {
     LoginRequest, LoginResponse, ForgotPasswordResponse, ResetPasswordResponse,
     ActivateAccountRequest, ActivateAccountResponse, ValidateTokenResponse, Usuario,
 } from '@/types/auth.types'
+import { useAuthStore } from '@/store/auth.store'
 
 
 const MOCK_USUARIOS: Usuario[] = [
@@ -90,9 +91,11 @@ export const mockLogin = async (data: LoginRequest): Promise<LoginResponse> => {
         throw { status: 401, message: 'Correo o contraseña incorrectos.' }
     }
 
-    const token = `mock-jwt-token-${usuario.id}-${Date.now()}`
+    const accessToken = `mock-jwt-token-${usuario.id}-${Date.now()}`
 
-    return { token, usuario }
+    useAuthStore.getState().setSession(`mock-jwt-token-${usuario.id}-${Date.now()}`, usuario)
+
+    return { accessToken, accessTokenExpiresIn: 900 }
 }
 
 export const mockForgotPassword = async (correo: string): Promise<ForgotPasswordResponse> => {
@@ -130,7 +133,7 @@ export const mockValidateToken = async (token: string): Promise<ValidateTokenRes
     }
 }
 
-export const mockResetPassword = async (token: string, password: string): Promise<ResetPasswordResponse> => {
+export const mockResetPassword = async (token: string, _password: string): Promise<ResetPasswordResponse> => {
     await delay()
 
     const mockToken = MOCK_TOKENS.find((t) => t.token === token)

@@ -1,12 +1,13 @@
 export const ENDPOINTS = {
     auth: {
-        login: '/api/auth/login',
-        forgotPassword: '/api/auth/forgot-password',
-        resetPassword: '/api/auth/reset-password',
-        activate: '/api/auth/activate',
-        validateToken: (token: string) => `/api/auth/validate-token/${token}`,
-        me: '/api/auth/me',
-        logout: '/api/auth/logout',
+        login: '/auth/login',
+        refresh: '/auth/refresh',
+        me: '/auth/me',
+        forgotPassword: '/auth/forgot-password',
+        resetPassword: '/auth/reset-password',
+        activate: '/auth/activate',
+        validateToken: (token: string) => `/auth/validate-token/${token}`,
+        logout: '/auth/logout',
     },
     usuarios: {
         list: '/api/usuarios',

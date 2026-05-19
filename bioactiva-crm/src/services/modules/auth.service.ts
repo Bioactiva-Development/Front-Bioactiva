@@ -2,14 +2,25 @@ import { USE_MOCK } from '@/lib/constants/config'
 import { ENDPOINTS } from '@/services/api/endpoints'
 import { apiClient } from '@/services/api/client'
 import {
-    mockLogin, mockForgotPassword, mockValidateToken, mockResetPassword,
+    mockLogin,
+    mockForgotPassword,
+    mockValidateToken,
+    mockResetPassword,
     mockActivateAccount,
 } from '@/services/mock/auth.mock'
 import {
-    LoginRequest, LoginResponse, ForgotPasswordResponse, ResetPasswordResponse,
-    ActivateAccountRequest, ActivateAccountResponse, ValidateTokenResponse,
-    Usuario,
+    LoginRequest,
+    LoginResponse,
+    RefreshResponse,
+    ForgotPasswordResponse,
+    ResetPasswordResponse,
+    ActivateAccountRequest,
+    ActivateAccountResponse,
+    ValidateTokenResponse,
+    UsuarioRaw,
 } from '@/types/auth.types'
+
+import { mapUsuarioRaw } from '@/lib/utils/auth.mappers'
 
 export const authService = {
     login: async (data: LoginRequest): Promise<LoginResponse> => {
@@ -19,6 +30,20 @@ export const authService = {
             data,
         )
         return response.data
+    },
+
+    refresh: async (): Promise<RefreshResponse> => {
+        if (USE_MOCK) throw { status: 501, message: 'No implementado en mock' }
+        const response = await apiClient.post<RefreshResponse>(
+            ENDPOINTS.auth.refresh,
+        )
+        return response.data
+    },
+
+    getMe: async () => {
+        if (USE_MOCK) throw { status: 501, message: 'No implementado en mock' }
+        const response = await apiClient.get<UsuarioRaw>(ENDPOINTS.auth.me)
+        return mapUsuarioRaw(response.data)
     },
 
     forgotPassword: async (correo: string): Promise<ForgotPasswordResponse> => {
@@ -56,14 +81,7 @@ export const authService = {
         return response.data
     },
 
-    getMe: async (): Promise<Usuario> => {
-        if (USE_MOCK) throw { status: 501, message: 'No implementado en mock' }
-        const response = await apiClient.get<Usuario>(ENDPOINTS.auth.me)
-        return response.data
-    },
-
     logout: async (): Promise<void> => {
-        if (USE_MOCK) return
-        await apiClient.post(ENDPOINTS.auth.logout)
+        return
     },
 }

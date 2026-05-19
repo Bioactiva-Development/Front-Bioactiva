@@ -3,14 +3,23 @@ import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth.store'
 import { authService } from '@/services/modules/auth.service'
 import { ROUTES } from '@/lib/constants/routes'
+import { USE_MOCK } from '@/lib/constants/config'
 import {
-    LoginFormValues, ForgotPasswordFormValues, ResetPasswordFormValues,
+    LoginFormValues,
+    ForgotPasswordFormValues,
+    ResetPasswordFormValues,
     ActivateAccountFormValues,
 } from '@/lib/validators/auth.schema'
 
 export function useAuth() {
     const router = useRouter()
-    const { setSession, clearSession, isAuthenticated, usuario, isAdministrador } = useAuthStore()
+    const {
+        setSession,
+        clearSession,
+        isAuthenticated,
+        usuario,
+        isAdministrador
+    } = useAuthStore()
 
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -20,17 +29,42 @@ export function useAuth() {
         setError(null)
         setSuccess(null)
     }
-
     const login = async (data: LoginFormValues) => {
         try {
             resetMessages()
             setIsLoading(true)
 
-            const response = await authService.login(data)
-            setSession(response.token, response.usuario)
+            const { accessToken } = await authService.login(data)
+
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('bioactiva_token', accessToken)
+            }
+
+            let usuario
+
+            try {
+                usuario = await authService.getMe()
+            } catch {
+                usuario = {
+                    id: 0,
+                    nombres: 'Usuario',
+                    apellidos: '',
+                    correo: data.correo,
+                    rol: 'Trabajador' as any,
+                    estado: 'Activo' as any,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+            }
+
+
+            setSession(accessToken, usuario)
             router.push(ROUTES.dashboard)
         } catch (err: any) {
-            setError(err?.message ?? 'Error al iniciar sesión. Intente nuevamente.')
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('bioactiva_token')
+            }
+            setError(err?.message as string ?? 'Error al iniciar sesión. Intente nuevamente.')
         } finally {
             setIsLoading(false)
         }
@@ -39,7 +73,7 @@ export function useAuth() {
     const logout = async () => {
         try {
             await authService.logout()
-        } catch (err: any) {
+        } catch {
         } finally {
             clearSession()
             router.push(ROUTES.auth.login)
@@ -125,7 +159,4 @@ export function useAuth() {
         activateAccount,
         resetMessages,
     }
-
-
-
-}   
+}
