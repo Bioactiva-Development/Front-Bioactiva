@@ -1,5 +1,7 @@
 services:
-  bioactiva-frontend:
+  bioactiva-frontend-prod:
+    profiles:
+      - prod
     container_name: bioactiva-frontend
     build:
       context: .
@@ -14,7 +16,8 @@ services:
     restart: unless-stopped
 
   bioactiva-frontend-local:
-    profiles: ["local"]
+    profiles:
+      - local
     container_name: bioactiva-frontend-local
     env_file:
       - ./.env
