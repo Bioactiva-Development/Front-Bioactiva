@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Bell, ChevronDown, LogOut, User, Menu } from 'lucide-react'
 import { useAuthStore, useUIStore } from '@/store'
 import { useAuth } from '@/hooks/auth/useAuth'
+import { useCentroNotificaciones } from '@/hooks/notificaciones/useNotificaciones'
 import { RolUsuario } from '@/types/enums'
 
 export function Navbar() {
@@ -22,6 +23,15 @@ export function Navbar() {
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
+
+    const { data: centroNotificaciones } = useCentroNotificaciones()
+    const { setNotificacionesPendientes } = useUIStore()
+
+    useEffect(() => {
+        if (centroNotificaciones?.sinLeer !== undefined) {
+            setNotificacionesPendientes(centroNotificaciones.sinLeer)
+        }
+    }, [centroNotificaciones?.sinLeer, setNotificacionesPendientes])
 
     const iniciales = usuario
         ? `${usuario.nombres.charAt(0)}${usuario.apellidos.charAt(0)}`.toUpperCase()
