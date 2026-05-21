@@ -3,7 +3,7 @@ FROM node:22-slim AS deps
 WORKDIR /app
 
 COPY bioactiva-crm/package*.json ./
-RUN npm ci
+RUN npm install
 
 FROM node:22-slim AS builder
 
