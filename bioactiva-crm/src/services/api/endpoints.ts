@@ -82,9 +82,11 @@ export const ENDPOINTS = {
     },
 
     datos: {
+        previewImportar: '/api/datos/importar/preview',
         importar: '/api/datos/importar',
         exportar: '/api/datos/exportar',
-        historial: '/api/datos/historial'
+        contar: '/api/datos/exportar/contar',
+        historial: '/api/datos/historial',
     },
 } as const
 
