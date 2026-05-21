@@ -33,6 +33,14 @@ bioactiva-crm/build/
 *.spec.js
 .nyc_output/
 
+# Allow committing project test files under /test/
+!test/
+!test/**
+!test/**/*.test.ts
+!test/**/*.test.tsx
+!test/**/*.spec.ts
+!test/**/*.spec.tsx
+
 # next.js
 /.next/
 /out/
