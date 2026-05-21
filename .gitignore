@@ -89,6 +89,7 @@ logs/
 next-env.d.ts
 
 #archivos de usuario
+/.context
 uploads/
 exports/
 *.csv
