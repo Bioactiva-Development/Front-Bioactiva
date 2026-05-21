@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { TipoEmpresa, TamanoEmpresa, Sector } from '../../types'
+import { TipoEmpresa, TamanoEmpresa, Sector } from '@/types'
 
 export const organizacionSchema = z.object({
     nombre: z
@@ -9,8 +9,9 @@ export const organizacionSchema = z.object({
 
     nombre_comercial: z
         .string()
-        .min(1, 'El nombre comercial es obligatorio')
-        .max(100, 'Maximo 100 caracteres'),
+        .max(100, 'Máximo 100 caracteres')
+        .optional()
+        .or(z.literal('')),
 
     ruc: z
         .string()
@@ -43,12 +44,12 @@ export const organizacionSchema = z.object({
 
     ubicacion: z
         .string()
-        .max(100, 'Maximo de 100 caracteres')
+        .max(200, 'Maximo de 200 caracteres')
         .optional(),
 
     actividad_economica: z
         .string()
-        .max(120, 'Maximo de 120 caracteres')
+        .max(200, 'Maximo de 200 caracteres')
         .optional(),
 
     linkedin: z
@@ -66,3 +67,5 @@ export const organizacionSchema = z.object({
         .optional(),
 
 })
+
+export type OrganizacionFormValues = z.infer<typeof organizacionSchema>

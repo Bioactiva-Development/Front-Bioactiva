@@ -9,7 +9,7 @@ export const QUERY_KEYS = {
     },
 
     organizaciones: {
-        list: (filters?: Record<string, unknown>) => ['organizaciones', 'list', filters],
+        list: (filters?: Record<string, unknown> | unknown) => ['organizaciones', 'list', filters],
         detail: (id: string) => ['organizaciones', id],
         sunat: (query: string) => ['organizaciones', 'sunat', query],
     },
