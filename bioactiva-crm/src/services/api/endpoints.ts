@@ -12,9 +12,16 @@ export const ENDPOINTS = {
     usuarios: {
         list: '/api/usuarios',
         detail: (id: number) => `/api/usuarios/${id}`,
-        invite: '/api/usuarios/invite',
         disable: (id: number) => `/api/usuarios/${id}/disable`,
         enable: (id: number) => `/api/usuarios/${id}/enable`,
+    },
+
+    invitaciones: {
+        list: '/invitations',
+        create: '/invitations',
+        info: (token: string) => `/invitations/info/${token}`,
+        accept: '/invitations/accept',
+        revoke: (id: number) => `/invitations/${id}`,
     },
 
     organizaciones: {

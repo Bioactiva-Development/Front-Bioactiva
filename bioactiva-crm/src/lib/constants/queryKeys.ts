@@ -8,6 +8,11 @@ export const QUERY_KEYS = {
         detail: (id: number) => ['usuarios', id],
     },
 
+    invitaciones: {
+        list: (filters?: Record<string, unknown>) => ['invitaciones', 'list', filters],
+        info: (token: string) => ['invitaciones', 'info', token],
+    },
+
     organizaciones: {
         list: (filters?: Record<string, unknown>) => ['organizaciones', 'list', filters],
         detail: (id: string) => ['organizaciones', id],

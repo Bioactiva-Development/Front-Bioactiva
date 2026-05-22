@@ -4,6 +4,7 @@ export const ROUTES = {
         forgotPassword: '/forgot-password',
         resetPassword: '/reset-password',
         activate: '/activate',
+        acceptInvitation: '/accept-invitation',
     },
 
     dashboard: '/dashboard',
