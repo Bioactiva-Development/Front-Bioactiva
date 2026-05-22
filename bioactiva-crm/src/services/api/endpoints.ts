@@ -12,6 +12,7 @@ export const ENDPOINTS = {
     usuarios: {
         list: '/api/usuarios',
         detail: (id: number) => `/api/usuarios/${id}`,
+        cambiarPassword: (id: number) => `/api/usuarios/${id}/password`,
         disable: (id: number) => `/api/usuarios/${id}/disable`,
         enable: (id: number) => `/api/usuarios/${id}/enable`,
     },
@@ -94,4 +95,3 @@ export const ENDPOINTS = {
         historial: '/api/datos/historial'
     },
 } as const
-

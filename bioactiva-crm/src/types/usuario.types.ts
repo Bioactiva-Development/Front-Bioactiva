@@ -1,4 +1,34 @@
-import { RolUsuario, EstadoToken } from './enums'
+import { RolUsuario, EstadoToken, EstadoUsuario } from '@/types/enums'
+
+export interface UsuarioListItem {
+    id: number
+    nombres: string
+    apellidos: string
+    correo: string
+    rol: RolUsuario
+    estado: EstadoUsuario
+    ultimo_acceso?: string
+    created_at: string
+    updated_at: string
+}
+
+export interface UsuariosResponse {
+    usuarios: UsuarioListItem[]
+    total: number
+    activos: number
+}
+
+export interface EditarUsuarioRequest {
+    id: number
+    nombre_completo: string
+    correo: string
+    rol: RolUsuario
+}
+
+export interface CambiarPasswordRequest {
+    id: number
+    password: string
+}
 
 export interface InvitacionInfo {
     correo: string
