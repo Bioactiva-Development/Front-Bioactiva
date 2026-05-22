@@ -4,11 +4,14 @@ import { DOMINIO_INSTITUCIONAL } from '@/lib/constants/config'
 
 export const invitarUsuarioSchema = z.object({
     correo: z
-        .string()
+        .string({ error: 'El correo es obligatorio' })
         .min(1, 'El correo es obligatorio')
         .email('Formato de correo inválido')
-        .endsWith(`@${DOMINIO_INSTITUCIONAL}`, `Debe ser un correo institucional (@${DOMINIO_INSTITUCIONAL})`),
-    rol: z.nativeEnum(RolUsuario, { error: 'El rol es obligatorio' }),
+        .refine(
+            (val) => val.endsWith(`@${DOMINIO_INSTITUCIONAL}`),
+            `Debe ser un correo institucional (@${DOMINIO_INSTITUCIONAL})`,
+        ),
+    rol: z.nativeEnum(RolUsuario),
 })
 
 export const editarUsuarioSchema = z.object({
@@ -17,11 +20,14 @@ export const editarUsuarioSchema = z.object({
         .min(2, 'El nombre debe tener al menos 2 caracteres')
         .max(100, 'El nombre es demasiado largo'),
     correo: z
-        .string()
+        .string({ error: 'El correo es obligatorio' })
         .min(1, 'El correo es obligatorio')
         .email('Formato de correo inválido')
-        .endsWith(`@${DOMINIO_INSTITUCIONAL}`, `Debe ser un correo institucional (@${DOMINIO_INSTITUCIONAL})`),
-    rol: z.nativeEnum(RolUsuario, { error: 'El rol es obligatorio' }),
+        .refine(
+            (val) => val.endsWith(`@${DOMINIO_INSTITUCIONAL}`),
+            `Debe ser un correo institucional (@${DOMINIO_INSTITUCIONAL})`,
+        ),
+    rol: z.nativeEnum(RolUsuario),
 })
 
 export const cambiarPasswordSchema = z

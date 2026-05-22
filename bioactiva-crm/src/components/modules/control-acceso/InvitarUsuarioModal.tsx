@@ -22,11 +22,11 @@ export function InvitarUsuarioModal({ isLoading, error, onClose, onSubmit }: Pro
         reset,
     } = useForm<InvitarUsuarioFormValues>({
         resolver: zodResolver(invitarUsuarioSchema),
-        defaultValues: { rol: RolUsuario.Trabajador },
+        defaultValues: { correo: '', rol: RolUsuario.Trabajador },
     })
 
     useEffect(() => {
-        reset({ rol: RolUsuario.Trabajador })
+        reset({ correo: '', rol: RolUsuario.Trabajador })
     }, [reset])
 
     const handleFormSubmit = async (data: InvitarUsuarioFormValues) => {
