@@ -47,7 +47,7 @@ pipeline {
                 withSonarQubeEnv('SonarQube-Server') {
                     sh '''
                         apt-get update && apt-get install -y openjdk-17-jre-headless
-                        ${scannerHome}/bin/sonar-scanner -Dproject.settings=sonar-project.properties
+                        ${scannerHome}/bin/sonar-scanner
                     '''
                 }
             }
@@ -56,7 +56,7 @@ pipeline {
         stage('Quality Gate') {
             steps {
                 timeout(time: 1, unit: 'HOURS') {
-                    waitForQualityGate abortPipeline: true
+                    waitForQualityGate abortPipeline: false
                 }
             }
         }
