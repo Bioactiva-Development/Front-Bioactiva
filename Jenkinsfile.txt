@@ -65,12 +65,21 @@ pipeline {
             steps {
 
                 withCredentials([
-                    string(credentialsId: 'BACKEND_BIOACTIVA', variable: 'BACKEND_BIOACTIVAs')
+                    string(credentialsId: 'BACKEND_BIOACTIVA', variable: 'BACKEND_BIOACTIVA')
                 ]) {
 
                     sh '''
-                        docker compose --profile prod down
-                        docker compose --profile prod up -d --build bioactiva-frontend-prod
+                        docker compose \
+                            -p front-bioactiva \
+                            -f docker-compose.yml \
+                            --profile prod \
+                            down
+
+                        docker compose \
+                            -p front-bioactiva \
+                            -f docker-compose.yml \
+                            --profile prod \
+                            up -d --build bioactiva-frontend-prod
                     '''
                 }
             }
