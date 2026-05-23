@@ -21,9 +21,9 @@ export const QUERY_KEYS = {
     },
 
     leads: {
-        list: (filters?: Record<string, unknown>) => ['leads', 'list', filters],
+        list:     (filters?: unknown) => ['leads', 'list', filters],
         pipeline: () => ['leads', 'pipeline'],
-        detail: (id: number) => ['leads', id],
+        detail:   (id: number) => ['leads', id],
     },
 
     actividades: {
@@ -32,7 +32,7 @@ export const QUERY_KEYS = {
     },
 
     cotizaciones: {
-        list: (filters?: Record<string, unknown>) => ['cotizaciones', 'list', filters],
+        list:   (filters?: unknown) => ['cotizaciones', 'list', filters],
         detail: (id: number) => ['cotizaciones', id],
         byLead: (leadId: number) => ['cotizaciones', 'lead', leadId],
     },
