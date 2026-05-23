@@ -20,10 +20,10 @@ export interface Organizacion {
     updated_at: string
 }
 
-export interface OrgnaizacionFormData {
+export interface OrganizacionFormData {
     codigo_cliente?: string
     nombre: string
-    nombre_comercial: string
+    nombre_comercial?: string
     sub_area?: string
     ruc?: string
     tipo: TipoEmpresa
@@ -55,6 +55,7 @@ export interface OrganizacionesResponse {
 export interface SunatRucResult {
     ruc: string
     nombre: string
+    nombreCompleto?: string
     ubicacion?: string
     estado?: string
     condicion?: string
@@ -67,4 +68,42 @@ export interface SunatNombreResult {
     nombre: string
     ubicacion?: string
     estado?: string
+}
+
+export interface ContactoResumido {
+  id:       number
+  nombres:  string
+  apellidos: string
+  vocativo?: string
+  cargo?:   string
+  correo:   string
+  telefono?: string
+}
+
+export interface LeadResumido {
+  id:               number
+  servicio_interes: string
+  estado:           string
+  created_at:       string
+  encargado?:       string
+}
+
+export interface CotizacionResumida {
+  id:              number
+  nombre_servicio: string
+  monto:           number
+  tipo:            string
+  estado:          string
+  fecha_cot:       string
+  dirigido?:       string
+  nombre_remitente?: string
+  observacion?:    string
+  id_lead?:        number
+  codigo_lead?:    string
+}
+
+export interface OrganizacionConRelaciones extends Organizacion {
+  contactos:    ContactoResumido[]
+  leads:        LeadResumido[]
+  cotizaciones: CotizacionResumida[]
 }
