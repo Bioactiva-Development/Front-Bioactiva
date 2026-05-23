@@ -111,9 +111,7 @@ export function LoginForm() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-2 bg-[#1C7E3C] hover:bg-[#16642f]
-                disabled:bg-[#BCF7B3] disabled:cursor-not-allowed text-white font-semibold
-                py-3 px-4 rounded-xl text-sm transition-colors shadow-md shadow-[#BCF7B3]"
+                            className="w-full flex items-center justify-center gap-2 bg-[#1C7E3C] hover:bg-[#16642f] disabled:bg-[#BCF7B3] disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl text-sm transition-colors shadow-md shadow-[#BCF7B3]"
                         >
                             {isLoading ? (
                                 <>
