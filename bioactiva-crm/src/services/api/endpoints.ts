@@ -32,12 +32,11 @@ export const ENDPOINTS = {
     },
 
     organizaciones: {
-        list: '/api/organizaciones',
-        detail: (id: string) => `/api/organizaciones/${id}`,
-        create: '/api/organizaciones',
-        update: (id: string) => `/api/organizaciones/${id}`,
-        sunatByRuc: (ruc: string) => `/api/organizaciones/sunat/ruc/${ruc}`,
-        sunatByRazon: (razon: string) => `/api/organizaciones/sunat/razon/${razon}`
+        list: '/organizations',
+        detail: (id: string) => `/organizations/${id}`,
+        create: '/organizations',
+        update: (id: string) => `/organizations/${id}`,
+        sunat: (query: string) => `/organizations/sunat/${encodeURIComponent(query)}`,
     },
 
     contactos: {

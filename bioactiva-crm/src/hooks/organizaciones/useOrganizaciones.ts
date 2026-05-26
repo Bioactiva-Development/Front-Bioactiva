@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { organizacionesService } from '@/services/modules/organizaciones.service'
 import { QUERY_KEYS } from '@/lib/constants/queryKeys'
 import { getErrorMessage } from '@/lib/utils/error.utils'
+import { useAuthStore } from '@/store/auth.store'
 import {
   OrganizacionFiltros,
   OrganizacionFormData,
@@ -29,14 +30,24 @@ export function useOrganizacion(id: string) {
 
 export function useCrearOrganizacion() {
   const queryClient = useQueryClient()
+  const idAuthor = useAuthStore((s) => s.usuario?.id)
 
   return useMutation({
-    mutationFn: (data: OrganizacionFormData) =>
-      organizacionesService.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['organizaciones'],
-      })
+    mutationFn: (data: OrganizacionFormData) => {
+      if (!idAuthor) {
+        return Promise.reject({
+          status: 401,
+          message: 'Sesión expirada. Vuelve a iniciar sesión para registrar una organización.',
+        })
+      }
+      return organizacionesService.create(data, idAuthor)
+    },
+    onSuccess: (created) => {
+      queryClient.invalidateQueries({ queryKey: ['organizaciones'] })
+      queryClient.setQueryData(
+        QUERY_KEYS.organizaciones.detail(created.id),
+        created
+      )
     },
   })
 }

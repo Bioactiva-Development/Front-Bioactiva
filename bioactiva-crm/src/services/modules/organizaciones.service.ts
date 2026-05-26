@@ -1,4 +1,4 @@
-import {USE_MOCK} from '@/lib/constants/config'
+import { USE_MOCK } from '@/lib/constants/config'
 import { ENDPOINTS } from '@/services/api/endpoints'
 import { apiClient } from '@/services/api/client'
 import {
@@ -21,88 +21,174 @@ import {
   OrganizacionConRelaciones,
 } from '@/types/organizacion.types'
 
-const SUNAT_SERVICE_URL = 'https://a-frontend-bioactiva.onrender.com'
+import {
+  OrganizacionDtoOut,
+  SunatRucDto,
+  fromOrganizacionDto,
+  fromSunatNombreDto,
+  fromSunatRucDto,
+  toCreateOrganizacionDto,
+  toUpdateOrganizacionDto,
+} from './organizaciones.mapper'
+
+/**
+ * Servicio de organizaciones.
+ *
+ * Mapea el contrato del backend NestJS (`Módulo organizations`, ver
+ * `Documentación de endpoints por módulo`) al modelo de dominio del frontend.
+ *
+ * Endpoints expuestos por el backend:
+ *  - POST   /organizations
+ *  - GET    /organizations
+ *  - GET    /organizations/sunat/:query     (detecta RUC vs razón social)
+ *  - GET    /organizations/:id
+ *  - PATCH  /organizations/:id
+ */
+
+const RUC_REGEX = /^\d{11}$/
+
+const isRuc = (query: string) => RUC_REGEX.test(query.trim())
+
+/**
+ * Lista de organizaciones. El backend retorna un array plano; los filtros y la
+ * paginación se aplican en cliente hasta que el backend los soporte.
+ */
+const aplicarFiltrosClientSide = (
+  data: Organizacion[],
+  filtros?: OrganizacionFiltros
+): OrganizacionesResponse => {
+  let filtradas = data
+
+  if (filtros?.search) {
+    const q = filtros.search.toLowerCase()
+    filtradas = filtradas.filter(
+      (o) =>
+        o.nombre.toLowerCase().includes(q) ||
+        o.nombre_comercial.toLowerCase().includes(q) ||
+        (o.ruc ?? '').includes(q) ||
+        o.codigo_cliente.toLowerCase().includes(q)
+    )
+  }
+  if (filtros?.sector) filtradas = filtradas.filter((o) => o.sector === filtros.sector)
+  if (filtros?.tamano) filtradas = filtradas.filter((o) => o.tamano === filtros.tamano)
+  if (filtros?.tipo) filtradas = filtradas.filter((o) => o.tipo === filtros.tipo)
+
+  const page = filtros?.page ?? 1
+  const limit = filtros?.limit ?? 20
+  const start = (page - 1) * limit
+  const end = start + limit
+  return {
+    data: filtradas.slice(start, end),
+    total: filtradas.length,
+    page,
+    limit,
+  }
+}
 
 export const organizacionesService = {
-
+  /** GET /organizations */
   getAll: async (
     filtros?: OrganizacionFiltros
   ): Promise<OrganizacionesResponse> => {
     if (USE_MOCK) return mockGetOrganizaciones(filtros)
-    const response = await apiClient.get<OrganizacionesResponse>(
-      ENDPOINTS.organizaciones.list,
-      { params: filtros }
+
+    const { data } = await apiClient.get<OrganizacionDtoOut[]>(
+      ENDPOINTS.organizaciones.list
     )
-    return response.data
+    const organizaciones = data.map(fromOrganizacionDto)
+    return aplicarFiltrosClientSide(organizaciones, filtros)
   },
 
+  /** GET /organizations/:id */
   getById: async (id: string): Promise<Organizacion> => {
     if (USE_MOCK) return mockGetOrganizacion(id)
-    const response = await apiClient.get<Organizacion>(
+    const { data } = await apiClient.get<OrganizacionDtoOut>(
       ENDPOINTS.organizaciones.detail(id)
     )
-    return response.data
+    return fromOrganizacionDto(data)
   },
 
-  create: async (data: OrganizacionFormData): Promise<Organizacion> => {
+  /**
+   * POST /organizations
+   *
+   * `idAuthor` es obligatorio: el backend espera explícitamente quién crea el
+   * registro. Debe obtenerse del `useAuthStore` en el hook que invoca este
+   * servicio.
+   */
+  create: async (
+    data: OrganizacionFormData,
+    idAuthor: number
+  ): Promise<Organizacion> => {
     if (USE_MOCK) return mockCreateOrganizacion(data)
-    const response = await apiClient.post<Organizacion>(
+    const payload = toCreateOrganizacionDto(data, idAuthor)
+    const { data: created } = await apiClient.post<OrganizacionDtoOut>(
       ENDPOINTS.organizaciones.create,
-      data
+      payload
     )
-    return response.data
+    return fromOrganizacionDto(created)
   },
 
+  /** PATCH /organizations/:id */
   update: async (
     id: string,
     data: Partial<OrganizacionFormData>
   ): Promise<Organizacion> => {
     if (USE_MOCK) return mockUpdateOrganizacion(id, data)
-    const response = await apiClient.patch<Organizacion>(
+    const payload = toUpdateOrganizacionDto(data)
+    const { data: updated } = await apiClient.patch<OrganizacionDtoOut>(
       ENDPOINTS.organizaciones.update(id),
-      data
+      payload
     )
-    return response.data
+    return fromOrganizacionDto(updated)
   },
 
+  /**
+   * GET /organizations/sunat/:query — versión unificada.
+   * Si `query` tiene 11 dígitos numéricos, el backend hace búsqueda por RUC
+   * (devuelve un objeto). Si no, busca por razón social (devuelve un arreglo).
+   */
   sunatPorRuc: async (ruc: string): Promise<SunatRucResult> => {
-      try {
-        const response = await fetch(
-          `${SUNAT_SERVICE_URL}/consultar-ruc?ruc=${ruc}`
-        )
-        if (!response.ok) {
-          const error = await response.json()
-          throw { status: response.status, message: error.detail ?? 'Error al consultar SUNAT.' }
-        }
-        return response.json()
-      } catch (err: unknown) {
-        console.warn('Servicio SUNAT no disponible, usando mock:', err)
-        return mockSunatPorRuc(ruc)
-      }
-    },
+    if (USE_MOCK) return mockSunatPorRuc(ruc)
+    try {
+      const { data } = await apiClient.get<SunatRucDto>(
+        ENDPOINTS.organizaciones.sunat(ruc)
+      )
+      return fromSunatRucDto(data)
+    } catch (err) {
+      // El interceptor ya estandariza el error a { status, message, data }.
+      // Re-emite tal cual para que el hook decida si mostrar inline o toast.
+      throw err
+    }
+  },
 
-    sunatPorNombre: async (nombre: string): Promise<SunatNombreResult[]> => {
-      try {
-        const response = await fetch(
-          `${SUNAT_SERVICE_URL}/consultar-nombre?nombre=${encodeURIComponent(nombre)}`
-        )
-        if (!response.ok) {
-          const error = await response.json()
-          throw { status: response.status, message: error.detail ?? 'Error al consultar SUNAT.' }
-        }
-        return response.json()
-      } catch (err: unknown) {
-        console.warn('Servicio SUNAT no disponible, usando mock:', err)
-        return mockSunatPorNombre(nombre)
-      }
-    },
-
-  getByIdConRelaciones: async (id: string):Promise<OrganizacionConRelaciones> => {
-    if (USE_MOCK) return mockGetOrganizacionConRelaciones(id)
-    const response = await apiClient.get<OrganizacionConRelaciones>(
-        `${ENDPOINTS.organizaciones.detail(id)}/relaciones`
+  sunatPorNombre: async (nombre: string): Promise<SunatNombreResult[]> => {
+    if (USE_MOCK) return mockSunatPorNombre(nombre)
+    if (isRuc(nombre)) {
+      // Si por error se recibió un RUC, devolver un único resultado consistente.
+      const ruc = await organizacionesService.sunatPorRuc(nombre)
+      return [{ ruc: ruc.ruc, nombre: ruc.nombre, ubicacion: ruc.ubicacion }]
+    }
+    const { data } = await apiClient.get<SunatRucDto[]>(
+      ENDPOINTS.organizaciones.sunat(nombre)
     )
-    return response.data
-},
-}
+    // El doc indica que se muestran hasta los 10 primeros más coincidentes (CU003).
+    return data.slice(0, 10).map(fromSunatNombreDto)
+  },
 
+  /**
+   * Detalle con relaciones (contactos, leads, cotizaciones).
+   *
+   * TODO(backend): el endpoint `/organizations/:id/relaciones` aún no existe.
+   * En modo API real degradamos al detalle plano sin relaciones; cuando los
+   * módulos `contacts`, `leads` y `quotations` expongan sus endpoints, este
+   * método debe combinar las llamadas (Promise.all) o consumir un endpoint
+   * compuesto si el backend lo agrega.
+   */
+  getByIdConRelaciones: async (
+    id: string
+  ): Promise<OrganizacionConRelaciones> => {
+    if (USE_MOCK) return mockGetOrganizacionConRelaciones(id)
+    const organizacion = await organizacionesService.getById(id)
+    return { ...organizacion, contactos: [], leads: [], cotizaciones: [] }
+  },
+}

@@ -7,11 +7,11 @@ export const organizacionSchema = z.object({
         .min(1, 'El nombre es obligatorio')
         .max(120, 'Maximo 120 caracteres'),
 
+    // Backend: obligatorio, máximo 100 caracteres (POST /organizations)
     nombre_comercial: z
         .string()
-        .max(100, 'Máximo 100 caracteres')
-        .optional()
-        .or(z.literal('')),
+        .min(1, 'El nombre comercial es obligatorio')
+        .max(100, 'Máximo 100 caracteres'),
 
     ruc: z
         .string()
@@ -20,10 +20,12 @@ export const organizacionSchema = z.object({
         .optional()
         .or(z.literal('')),
 
+    // Backend: obligatorio (POST /organizations), máximo 20 caracteres.
+    // Si la organización no tiene RUC, debe generarse un código interno (RN-004).
     codigo_cliente: z
         .string()
-        .max(20, 'Maximo de 20 caracteres')
-        .optional(),
+        .min(1, 'El código de cliente es obligatorio')
+        .max(20, 'Máximo de 20 caracteres'),
 
     sub_area: z
         .string()
