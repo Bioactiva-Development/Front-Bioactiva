@@ -38,7 +38,9 @@ export function ResetPasswordForm() {
             setValidandoToken(false)
         }
         verificar()
-    }, [token])
+        // `validateToken` está memoizado con useCallback en useAuth, por lo que
+        // incluirlo en deps no causa re-renders innecesarios.
+    }, [token, validateToken])
 
     const onSubmit = async (data: ResetPasswordFormValues) => {
         await resetPassword(token, data)

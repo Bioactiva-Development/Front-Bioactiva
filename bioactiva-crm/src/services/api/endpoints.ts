@@ -1,13 +1,29 @@
 export const ENDPOINTS = {
     auth: {
-        login: '/auth/login',
+        login:   '/auth/login',
         refresh: '/auth/refresh',
-        me: '/auth/me',
-        forgotPassword: '/auth/forgot-password',
-        resetPassword: '/auth/reset-password',
-        activate: '/auth/activate',
-        validateToken: (token: string) => `/auth/validate-token/${token}`,
-        logout: '/auth/logout',
+        me:      '/auth/me',
+        // Nota: el backend NestJS no expone `/auth/logout` aún. El logout es
+        // client-side (clearSession + redirect); este endpoint queda como
+        // contrato futuro si el equipo backend decide invalidar el refresh
+        // token server-side en el revoke.
+        logout:  '/auth/logout',
+    },
+    resetPassword: {
+        // Base path real del backend: `/reset-password` (no bajo `/auth`).
+        // Doc HackMD §"Módulo reset_password".
+        request:  '/reset-password/request',   // POST { correo }
+        validate: '/reset-password/validate',  // POST { token } → { correo (ofuscado) }
+        reset:    '/reset-password/reset',     // POST { token, password, confirmPassword }
+    },
+    invitations: {
+        // Activación de cuenta nueva: el backend la maneja desde el módulo
+        // `invitations`, no desde `/auth/activate`. Doc HackMD §"Módulo invitations".
+        info:   (token: string) => `/invitations/info/${token}`, // GET
+        accept: '/invitations/accept',                            // POST
+        create: '/invitations',                                   // POST (admin)
+        list:   '/invitations',                                   // GET (admin)
+        delete: (id: number) => `/invitations/${id}`,             // DELETE (admin)
     },
     usuarios: {
         list: '/api/usuarios',

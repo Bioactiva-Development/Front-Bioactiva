@@ -22,6 +22,26 @@ import {
 
 import { mapUsuarioRaw } from '@/lib/utils/auth.mappers'
 
+/**
+ * Cliente del módulo de autenticación + restablecimiento de contraseña.
+ *
+ * Rutas del backend NestJS (doc HackMD):
+ *  - POST /auth/login
+ *  - POST /auth/refresh                     (cookie)
+ *  - GET  /auth/me                          (Bearer)
+ *  - POST /reset-password/request           ← antes mal mapeado a /auth/forgot-password
+ *  - POST /reset-password/validate          ← antes era GET /auth/validate-token/:t
+ *  - POST /reset-password/reset             ← antes mal mapeado a /auth/reset-password
+ */
+
+interface AppError {
+    status?: number
+    message?: string
+}
+
+const isAppError = (e: unknown): e is AppError =>
+    typeof e === 'object' && e !== null
+
 export const authService = {
     login: async (data: LoginRequest): Promise<LoginResponse> => {
         if (USE_MOCK) return mockLogin(data)
@@ -46,42 +66,96 @@ export const authService = {
         return mapUsuarioRaw(response.data)
     },
 
+    /**
+     * Solicita el envío de un correo de recuperación.
+     *
+     * El backend siempre responde `{ ok: true }` aunque el correo no exista
+     * (anti-enumeración de usuarios). El frontend debe mostrar siempre un
+     * mensaje neutral del tipo "Si el correo está registrado, recibirás...".
+     */
     forgotPassword: async (correo: string): Promise<ForgotPasswordResponse> => {
         if (USE_MOCK) return mockForgotPassword(correo)
-        const response = await apiClient.post<ForgotPasswordResponse>(
-            ENDPOINTS.auth.forgotPassword,
+        const response = await apiClient.post<{ ok: boolean }>(
+            ENDPOINTS.resetPassword.request,
             { correo },
         )
-        return response.data
+        return { message: response.data?.ok ? 'ok' : 'ok' }
     },
 
+    /**
+     * Valida un token de recuperación.
+     *
+     * Backend: `POST /reset-password/validate` con `{ token }`.
+     *   - 200 → `{ correo: "u***o@dominio.com" }` (correo ofuscado)
+     *   - 400 → `{ message: "Token inválido o ya utilizado" | "...ha expirado" }`
+     *
+     * Adaptamos al contrato que espera el formulario:
+     *   `{ valid, correo?, message? }`.
+     */
     validateToken: async (token: string): Promise<ValidateTokenResponse> => {
         if (USE_MOCK) return mockValidateToken(token)
-        const response = await apiClient.get<ValidateTokenResponse>(
-            ENDPOINTS.auth.validateToken(token),
-        )
-        return response.data
+        try {
+            const response = await apiClient.post<{ correo: string }>(
+                ENDPOINTS.resetPassword.validate,
+                { token },
+            )
+            return { valid: true, correo: response.data.correo }
+        } catch (err) {
+            const status = isAppError(err) ? err.status : undefined
+            const message = isAppError(err)
+                ? err.message ?? 'El enlace de recuperación no es válido.'
+                : 'El enlace de recuperación no es válido.'
+            if (status === 400) return { valid: false, message }
+            // Cualquier otro error de red/servidor lo propagamos.
+            throw err
+        }
     },
 
-    resetPassword: async (token: string, password: string): Promise<ResetPasswordResponse> => {
+    /**
+     * Confirma el cambio de contraseña con el token.
+     *
+     * Backend: `POST /reset-password/reset` con `{ token, password, confirmPassword }`.
+     * El backend valida que `password === confirmPassword`. El frontend ya
+     * valida con Zod, pero enviamos ambos para que el backend no rechace por
+     * `confirmPassword` faltante.
+     */
+    resetPassword: async (
+        token: string,
+        password: string,
+        confirmPassword: string,
+    ): Promise<ResetPasswordResponse> => {
         if (USE_MOCK) return mockResetPassword(token, password)
-        const response = await apiClient.post<ResetPasswordResponse>(
-            ENDPOINTS.auth.resetPassword,
-            { token, password }
+        const response = await apiClient.post<{ ok: boolean }>(
+            ENDPOINTS.resetPassword.reset,
+            { token, password, confirmPassword },
         )
-        return response.data
+        return { message: response.data?.ok ? 'ok' : 'ok' }
     },
 
+    /**
+     * Activación de cuenta para usuarios invitados.
+     *
+     * TODO(coord-backend): el módulo correcto en el backend es `invitations`
+     * (no `/auth/activate`). El flujo correcto es:
+     *   1. GET  /invitations/info/:token  → datos de la invitación
+     *   2. POST /invitations/accept       → activa cuenta + define password
+     *
+     * Hasta que se haga el refactor del flujo, este método sigue apuntando al
+     * mock para no romper la UI existente.
+     */
     activateAccount: async (data: ActivateAccountRequest): Promise<ActivateAccountResponse> => {
         if (USE_MOCK) return mockActivateAccount(data)
         const response = await apiClient.post<ActivateAccountResponse>(
-            ENDPOINTS.auth.activate,
+            ENDPOINTS.invitations.accept,
             data,
         )
         return response.data
     },
 
     logout: async (): Promise<void> => {
+        // El backend no expone /auth/logout aún. El logout real ocurre en el
+        // cliente (clearSession + redirect). Este método queda como hook para
+        // cuando se implemente revoke server-side.
         return
     },
 }

@@ -114,7 +114,12 @@ export function useAuth() {
             resetMessages()
             setIsLoading(true)
             await authService.forgotPassword(data.correo)
-            setSuccess('Correo de recuperación enviado correctamente.')
+            // Mensaje neutral por diseño: el backend responde `{ ok: true }`
+            // aunque el correo no exista (anti-enumeración de usuarios).
+            // Revelar "enviado correctamente" delataría qué correos existen.
+            setSuccess(
+                'Si el correo está registrado en el sistema, recibirás un enlace de recuperación en los próximos minutos.',
+            )
         } catch (err: unknown) {
             setError(extractMessage(err, 'Error al enviar el correo. Intente nuevamente.'))
         } finally {
@@ -140,7 +145,8 @@ export function useAuth() {
         try {
             resetMessages()
             setIsLoading(true)
-            await authService.resetPassword(token, data.password)
+            // El backend exige los 3 campos (token + password + confirmPassword).
+            await authService.resetPassword(token, data.password, data.confirmPassword)
             setSuccess('Contraseña restablecida correctamente. Ya puede iniciar sesión.')
             setTimeout(() => router.push(ROUTES.auth.login), 2000)
         } catch (err: unknown) {
