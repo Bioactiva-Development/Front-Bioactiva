@@ -3,7 +3,6 @@ WORKDIR /app
 
 COPY bioactiva-crm/package.json ./
 COPY bioactiva-crm/package-lock.json ./
-
 RUN npm install
 
 FROM node:22-slim AS builder
