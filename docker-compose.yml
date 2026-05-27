@@ -24,8 +24,10 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
-        NEXT_PUBLIC_USE_MOCK: false
-        NEXT_PUBLIC_APP_NAME: "Bioactiva CRM"
+        NEXT_PUBLIC_USE_MOCK: ${NEXT_PUBLIC_USE_MOCK}
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME}
+    env_file:
+      - .env
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: ${PORT:-4000}

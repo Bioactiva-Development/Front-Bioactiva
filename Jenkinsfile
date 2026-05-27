@@ -63,12 +63,12 @@ pipeline {
 
         stage('Deploy (Docker Compose)') {
             steps {
-
                 withCredentials([
-                    string(credentialsId: 'BACKEND_BIOACTIVA', variable: 'NEXT_PUBLIC_API_BASE_URL')
+                    file(credentialsId: 'BIOACTIVA-SECRETS', variable: 'ENV_FILE')
                 ]) {
-
                     sh '''
+                        cp "$ENV_FILE" .env
+                        
                         docker compose \
                             -p front-bioactiva \
                             -f docker-compose.yml \
