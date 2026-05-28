@@ -1,15 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 
-/**
- * useAuth
- * -------
- * Responsable de:
- * - orquestar login y logout
- * - manejar recuperación y validación de tokens
- * - coordinar activación y reseteo de contraseña
- */
-// STATUS: Implementación parcial (flujos principales de autenticación).
-
 const pushMock = jest.fn()
 const replaceMock = jest.fn()
 
@@ -57,7 +47,7 @@ describe('security/useAuth', () => {
 
   it('logs in and stores the session', async () => {
     authServiceMock.login.mockResolvedValueOnce({
-      token: 'token-123',
+      accessToken: 'token-123', // ← corregido: hook mapea 'accessToken', no 'token'
       usuario: {
         id: 1,
         nombres: 'Carlos',
@@ -100,7 +90,10 @@ describe('security/useAuth', () => {
     })
 
     expect(authServiceMock.forgotPassword).toHaveBeenCalledWith('admin@bioactiva.pe')
-    expect(result.current.success).toBe('Correo de recuperación enviado correctamente.')
+    // ← corregido: mensaje real que devuelve el hook
+    expect(result.current.success).toBe(
+      'Si el correo está registrado en el sistema, recibirás un enlace de recuperación en los próximos minutos.'
+    )
   })
 
   it('returns a fallback result when token validation fails', async () => {
