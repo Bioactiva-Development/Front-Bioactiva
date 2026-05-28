@@ -42,18 +42,18 @@ export function ContactoForm({
     resolver: zodResolver(contactoSchema),
     defaultValues: contacto
       ? {
-          nombres:         contacto.nombres,
-          apellidos:       contacto.apellidos,
-          vocativo:        contacto.vocativo,
-          cargo:           contacto.cargo ?? '',
-          correo:          contacto.correo,
-          correo2:         contacto.correo2 ?? '',
-          telefono:        contacto.telefono ?? '',
-          comentarios:     contacto.comentarios ?? '',
-          id_organizacion: contacto.id_organizacion,
+          nombres:        contacto.nombres,
+          apellidos:      contacto.apellidos ?? '',
+          vocativo:       contacto.vocativo,
+          cargo:          contacto.cargo ?? '',
+          correo:         contacto.correo,
+          correo2:        contacto.correo2 ?? '',
+          telefono:       contacto.telefono ?? '',
+          comentarios:    contacto.comentarios ?? '',
+          idOrganizacion: contacto.idOrganizacion,
         }
       : {
-          id_organizacion: orgIdInicial ?? '',
+          idOrganizacion: orgIdInicial ?? '',
         },
   })
 
@@ -74,9 +74,9 @@ export function ContactoForm({
             Organización <span className="text-red-500">*</span>
           </label>
           <select
-            {...register('id_organizacion')}
+            {...register('idOrganizacion')}
             disabled={esEdicion}
-            className={`${inputClass(!!errors.id_organizacion)}
+            className={`${inputClass(!!errors.idOrganizacion)}
               ${esEdicion ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
           >
             <option value="">Seleccionar organización...</option>
@@ -86,8 +86,8 @@ export function ContactoForm({
               </option>
             ))}
           </select>
-          {errors.id_organizacion && (
-            <p className="text-red-500 text-xs">{errors.id_organizacion.message}</p>
+          {errors.idOrganizacion && (
+            <p className="text-red-500 text-xs">{errors.idOrganizacion.message}</p>
           )}
           {esEdicion && (
             <p className="text-xs text-gray-400">

@@ -35,7 +35,7 @@ export function ContactoFiltros({
   const handleOrganizacion = (value: string) => {
     onChange({
       ...filtros,
-      id_organizacion: value || undefined,
+      idOrganizacion: value || undefined,
       page: 1,
     })
   }
@@ -45,7 +45,7 @@ export function ContactoFiltros({
     onLimpiar()
   }
 
-  const hayFiltrosActivos = filtros.search || filtros.id_organizacion
+  const hayFiltrosActivos = filtros.search || filtros.idOrganizacion
 
   return (
     <div className="space-y-3">
@@ -84,7 +84,7 @@ export function ContactoFiltros({
 
       <div className="flex items-center gap-3 flex-wrap">
         <select
-          value={filtros.id_organizacion ?? ''}
+          value={filtros.idOrganizacion ?? ''}
           onChange={(e) => handleOrganizacion(e.target.value)}
           className="px-3 py-2 rounded-xl border border-gray-200 bg-white
             text-sm outline-none focus:border-emerald-400 text-gray-600

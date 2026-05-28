@@ -54,11 +54,11 @@ export const ENDPOINTS = {
     },
 
     contactos: {
-        list: '/api/contactos',
-        detail: (id: number) => `/api/contactos/${id}`,
-        create: '/api/contactos',
-        update: (id: number) => `/api/contactos/${id}`,
-        byOrganizacion: (orgId: string) => `/api/contactos/organizacion/${orgId}`,
+        list: '/contacts',
+        detail: (id: number) => `/contacts/${id}`,
+        create: '/contacts',
+        update: (id: number) => `/contacts/${id}`,
+        byOrganizacion: (orgId: string) => `/contacts/organization/${orgId}`,
     },
 
     leads: {

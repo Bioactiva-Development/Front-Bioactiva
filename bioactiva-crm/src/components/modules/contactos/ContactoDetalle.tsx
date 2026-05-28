@@ -44,7 +44,7 @@ export function ContactoDetalle({
   onEditar,
 }: ContactoDetalleProps) {
   const router    = useRouter()
-  const iniciales = `${contacto.nombres.charAt(0)}${contacto.apellidos.charAt(0)}`.toUpperCase()
+  const iniciales = `${contacto.nombres.charAt(0)}${contacto.apellidos?.charAt(0) ?? ''}`.toUpperCase()
 
   return (
     <div className="space-y-6">
