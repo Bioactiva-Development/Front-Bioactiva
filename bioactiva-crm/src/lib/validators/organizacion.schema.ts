@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { TipoEmpresa, TamanoEmpresa, Sector } from '../../types'
+import { TipoEmpresa, TamanoEmpresa, Sector } from '@/types'
 
 export const organizacionSchema = z.object({
     nombre: z
@@ -7,10 +7,11 @@ export const organizacionSchema = z.object({
         .min(1, 'El nombre es obligatorio')
         .max(120, 'Maximo 120 caracteres'),
 
+    // Backend: obligatorio, máximo 100 caracteres (POST /organizations)
     nombre_comercial: z
         .string()
         .min(1, 'El nombre comercial es obligatorio')
-        .max(100, 'Maximo 100 caracteres'),
+        .max(100, 'Máximo 100 caracteres'),
 
     ruc: z
         .string()
@@ -19,10 +20,12 @@ export const organizacionSchema = z.object({
         .optional()
         .or(z.literal('')),
 
+    // Backend: obligatorio (POST /organizations), máximo 20 caracteres.
+    // Si la organización no tiene RUC, debe generarse un código interno (RN-004).
     codigo_cliente: z
         .string()
-        .max(20, 'Maximo de 20 caracteres')
-        .optional(),
+        .min(1, 'El código de cliente es obligatorio')
+        .max(20, 'Máximo de 20 caracteres'),
 
     sub_area: z
         .string()
@@ -43,12 +46,12 @@ export const organizacionSchema = z.object({
 
     ubicacion: z
         .string()
-        .max(100, 'Maximo de 100 caracteres')
+        .max(200, 'Maximo de 200 caracteres')
         .optional(),
 
     actividad_economica: z
         .string()
-        .max(120, 'Maximo de 120 caracteres')
+        .max(200, 'Maximo de 200 caracteres')
         .optional(),
 
     linkedin: z
@@ -66,3 +69,5 @@ export const organizacionSchema = z.object({
         .optional(),
 
 })
+
+export type OrganizacionFormValues = z.infer<typeof organizacionSchema>

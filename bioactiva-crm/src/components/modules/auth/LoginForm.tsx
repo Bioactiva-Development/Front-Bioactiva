@@ -58,7 +58,7 @@ export function LoginForm() {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                    <form onSubmit={handleSubmit(onSubmit)} method="post" className="space-y-5">
                         <div className="space-y-1.5">
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 Correo electrónico
@@ -111,9 +111,7 @@ export function LoginForm() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-2 bg-[#1C7E3C] hover:bg-[#16642f]
-                disabled:bg-[#BCF7B3] disabled:cursor-not-allowed text-white font-semibold
-                py-3 px-4 rounded-xl text-sm transition-colors shadow-md shadow-[#BCF7B3]"
+                            className="w-full flex items-center justify-center gap-2 bg-[#1C7E3C] hover:bg-[#16642f] disabled:bg-[#BCF7B3] disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl text-sm transition-colors shadow-md shadow-[#BCF7B3]"
                         >
                             {isLoading ? (
                                 <>

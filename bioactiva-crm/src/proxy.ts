@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { RolUsuario } from '@/types/enums'
+import { COOKIE_TOKEN, COOKIE_ROL } from '@/lib/constants/config'
 
 const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password', '/activate', '/accept-invitation']
 const ADMIN_PATHS = ['/control-acceso']
 
 export function proxy(request: NextRequest) {
-    const token = request.cookies.get('bioactiva_token')?.value
-    const rol = request.cookies.get('bioactiva_rol')?.value
+    const token = request.cookies.get(COOKIE_TOKEN)?.value
+    const rol = request.cookies.get(COOKIE_ROL)?.value
     const { pathname } = request.nextUrl
 
     const isPublicPath = PUBLIC_PATHS.some(

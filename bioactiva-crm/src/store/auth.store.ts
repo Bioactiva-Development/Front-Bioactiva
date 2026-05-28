@@ -60,6 +60,7 @@ export const useAuthStore = create<AuthStore>()(
                     isLoading: false,
                 })
             },
+
             setLoading: (isLoading) => set({ isLoading }),
             isAdministrador: () => get().usuario?.rol === RolUsuario.Administrador,
             isWorker: () => get().usuario?.rol === RolUsuario.Trabajador,

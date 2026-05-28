@@ -1,36 +1,114 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BioActiva CRM — Frontend
 
-## Getting Started
+Aplicación Next.js 16 (App Router) del CRM comercial de BioActiva.
 
-First, run the development server:
+Para el contexto general del proyecto, casos de uso, arquitectura y estado de los módulos, ver el [README raíz](../README.md). Para convenciones técnicas detalladas, ENUMs, diccionario de datos y reglas críticas, ver [`AGENTS.md`](./AGENTS.md).
+
+---
+
+## Requisitos
+
+- Node.js v24 o superior
+- npm (o pnpm / yarn / bun)
+
+---
+
+## Instalación y desarrollo
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Comando | Descripción |
+|---|---|
+| `npm run dev` | Servidor de desarrollo con HMR |
+| `npm run build` | Build de producción |
+| `npm run start` | Sirve el build de producción |
+| `npm run lint` | Ejecuta ESLint |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Variables de entorno
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Crear un archivo `.env.local` en esta carpeta:
 
-## Deploy on Vercel
+```bash
+NEXT_PUBLIC_USE_MOCK=true                       # true: data mock | false: backend NestJS
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001  # URL del backend NestJS
+NEXT_PUBLIC_APP_NAME=BioActiva CRM
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+El switch mock ↔ API se controla **únicamente** en `src/services/modules/*.service.ts`. Cambiar `NEXT_PUBLIC_USE_MOCK=false` conecta toda la app al backend real sin tocar componentes, hooks ni páginas.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Estructura
+
+```
+src/
+├── app/
+│   ├── (auth)/             # login, forgot-password, reset-password, activate
+│   ├── (dashboard)/        # todas las rutas protegidas del CRM
+│   ├── layout.tsx
+│   ├── providers.tsx       # React Query Provider, etc.
+│   └── globals.css
+├── components/
+│   ├── ui/                 # átomos: Button, Modal, SearchBar, EmptyState, Spinner
+│   ├── layout/             # Sidebar, Navbar, PageHeader
+│   └── modules/            # componentes específicos por módulo de dominio
+├── hooks/                  # custom hooks por dominio (useDashboard, useLeads, etc.)
+├── services/
+│   ├── api/                # cliente Axios y endpoints centralizados
+│   ├── mock/               # data falsa por módulo
+│   └── modules/            # servicios que conmutan mock ↔ API real
+├── store/                  # auth.store, ui.store (Zustand)
+├── types/                  # interfaces de dominio + enums.ts
+├── lib/
+│   ├── constants/          # routes.ts, queryKeys.ts, config.ts
+│   ├── utils/              # date, format, validation, csv
+│   └── validators/         # schemas Zod por módulo
+├── styles/                 # globals.css, themes
+└── middleware.ts           # guards de sesión y rol
+```
+
+---
+
+## Convenciones críticas
+
+> Detalle completo en [`AGENTS.md §14`](./AGENTS.md). Resumen:
+
+- ❌ Nada de `fetch` o `axios` directo en componentes o páginas — siempre vía `services/`.
+- ❌ Sin URLs hardcodeadas fuera de `services/api/endpoints.ts`.
+- ❌ Sin rutas hardcodeadas fuera de `lib/constants/routes.ts`.
+- ❌ Sin ENUMs redefinidos fuera de `types/enums.ts`.
+- ❌ Sin `any` sin justificación.
+- ❌ Sin imports relativos largos (`../../../`); usar alias `@/`.
+- ❌ Sin lógica de negocio en `components/ui/`.
+- ❌ Sin borrado físico de organizaciones, contactos, leads ni cotizaciones (RN-003).
+
+---
+
+## Stack
+
+- **Next.js 16** (App Router) + **React 19**
+- **TypeScript 5** + **Tailwind CSS 4**
+- **Zustand** (estado global) + **TanStack React Query 5** (server state)
+- **Axios** (HTTP) + **React Hook Form 7** + **Zod 4** (formularios y validación)
+- **Recharts** (gráficas del dashboard)
+- **@dnd-kit** (Kanban del pipeline)
+- **Lucide React** (iconos)
+
+---
+
+## Deploy
+
+El frontend está contenerizado con el `Dockerfile` incluido. La estrategia de despliegue contempla 4 contenedores (frontend Next.js, backend NestJS, PostgreSQL, Redis) conectados por red interna. Detalles en el §11.3 del documento oficial de Análisis y Diseño.
+
+El prototipo de referencia está desplegado en Vercel: <https://a-frontend-bioactiva-73nc.vercel.app/>.

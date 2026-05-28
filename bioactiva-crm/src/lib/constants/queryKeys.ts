@@ -14,21 +14,21 @@ export const QUERY_KEYS = {
     },
 
     organizaciones: {
-        list: (filters?: Record<string, unknown>) => ['organizaciones', 'list', filters],
+        list: (filters?: Record<string, unknown> | unknown) => ['organizaciones', 'list', filters],
         detail: (id: string) => ['organizaciones', id],
         sunat: (query: string) => ['organizaciones', 'sunat', query],
     },
 
     contactos: {
-        list: (filters?: Record<string, unknown>) => ['contactos', 'list', filters],
-        detail: (id: number) => ['contactos', id],
-        byOrganizacion: (orgId: string) => ['contactos', 'org', orgId]
+      list:           (filters?: unknown) => ['contactos', 'list', filters],
+      detail:         (id: number) => ['contactos', id],
+      byOrganizacion: (orgId: string) => ['contactos', 'org', orgId],
     },
 
     leads: {
-        list: (filters?: Record<string, unknown>) => ['leads', 'list', filters],
+        list:     (filters?: unknown) => ['leads', 'list', filters],
         pipeline: () => ['leads', 'pipeline'],
-        detail: (id: number) => ['leads', id],
+        detail:   (id: number) => ['leads', id],
     },
 
     actividades: {
@@ -37,7 +37,7 @@ export const QUERY_KEYS = {
     },
 
     cotizaciones: {
-        list: (filters?: Record<string, unknown>) => ['cotizaciones', 'list', filters],
+        list:   (filters?: unknown) => ['cotizaciones', 'list', filters],
         detail: (id: number) => ['cotizaciones', id],
         byLead: (leadId: number) => ['cotizaciones', 'lead', leadId],
     },

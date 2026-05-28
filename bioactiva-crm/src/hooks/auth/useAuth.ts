@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth.store'
 import { authService } from '@/services/modules/auth.service'
 import { ROUTES } from '@/lib/constants/routes'
-import { RolUsuario, EstadoUsuario } from '@/types/enums'
+import { TOKEN_KEY, COOKIE_TOKEN, COOKIE_ROL } from '@/lib/constants/config'
+import { usuarioFromAccessToken } from '@/lib/utils/auth.mappers'
 import {
     LoginFormValues,
     ForgotPasswordFormValues,
@@ -39,7 +40,7 @@ export function useAuth() {
         clearSession,
         isAuthenticated,
         usuario,
-        isAdministrador
+        isAdministrador,
     } = useAuthStore()
 
     const [isLoading, setIsLoading] = useState(false)
@@ -59,36 +60,28 @@ export function useAuth() {
             const { accessToken } = await authService.login(data)
 
             if (typeof window !== 'undefined') {
-                localStorage.setItem('bioactiva_token', accessToken)
-                setCookie('bioactiva_token', accessToken)
+                localStorage.setItem(TOKEN_KEY, accessToken)
             }
 
             let usuarioData
-
             try {
                 usuarioData = await authService.getMe()
             } catch {
-                usuarioData = useAuthStore.getState().usuario ?? {
-                    id: 0,
-                    nombres: 'Usuario',
-                    apellidos: '',
-                    correo: data.correo,
-                    rol: RolUsuario.Trabajador,
-                    estado: EstadoUsuario.Activo,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                }
+                usuarioData =
+                    useAuthStore.getState().usuario ??
+                    usuarioFromAccessToken(accessToken, data.correo)
             }
 
             if (typeof window !== 'undefined') {
-                setCookie('bioactiva_rol', usuarioData.rol)
+                setCookie(COOKIE_TOKEN, accessToken)
+                setCookie(COOKIE_ROL, usuarioData.rol)
             }
 
             setSession(accessToken, usuarioData)
             router.push(ROUTES.dashboard)
         } catch (err: unknown) {
             if (typeof window !== 'undefined') {
-                localStorage.removeItem('bioactiva_token')
+                localStorage.removeItem(TOKEN_KEY)
             }
             setError(extractMessage(err, 'Error al iniciar sesión. Intente nuevamente.'))
         } finally {
@@ -102,8 +95,8 @@ export function useAuth() {
         } catch {
         } finally {
             if (typeof window !== 'undefined') {
-                clearCookie('bioactiva_token')
-                clearCookie('bioactiva_rol')
+                clearCookie(COOKIE_TOKEN)
+                clearCookie(COOKIE_ROL)
             }
             clearSession()
             router.push(ROUTES.auth.login)
@@ -115,7 +108,12 @@ export function useAuth() {
             resetMessages()
             setIsLoading(true)
             await authService.forgotPassword(data.correo)
-            setSuccess('Correo de recuperación enviado correctamente.')
+            // Mensaje neutral por diseño: el backend responde `{ ok: true }`
+            // aunque el correo no exista (anti-enumeración de usuarios).
+            // Revelar "enviado correctamente" delataría qué correos existen.
+            setSuccess(
+                'Si el correo está registrado en el sistema, recibirás un enlace de recuperación en los próximos minutos.',
+            )
         } catch (err: unknown) {
             setError(extractMessage(err, 'Error al enviar el correo. Intente nuevamente.'))
         } finally {

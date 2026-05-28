@@ -72,12 +72,9 @@ export enum EstadoSecuencia {
 }
 
 export enum Vocativo {
-    Sr = 'Sr',
-    Sra = 'Sra',
-    Dr = 'Dr',
-    Dra = 'Dra',
-    Ing = 'Ing',
-    Lic = 'Lic',
+    SR = 'SR',
+    SRA = 'SRA',
+    SRTA = 'SRTA',
 }
 
 export enum Sector {
