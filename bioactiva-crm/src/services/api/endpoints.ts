@@ -18,11 +18,14 @@ export const ENDPOINTS = {
         delete: (id: number) => `/invitations/${id}`,
     },
     usuarios: {
-        list: '/api/usuarios',
-        detail: (id: number) => `/api/usuarios/${id}`,
-        cambiarPassword: (id: number) => `/api/usuarios/${id}/password`,
-        disable: (id: number) => `/api/usuarios/${id}/disable`,
-        enable: (id: number) => `/api/usuarios/${id}/enable`,
+        // GET /users — implementado en backend (doc-endpoint.md, módulo `users`).
+        list: '/users',
+        // Endpoints marcados como "Pendiente" en el backend; se alinean a la
+        // convención documentada (`/users/:id`) para cuando se expongan por HTTP.
+        detail: (id: number) => `/users/${id}`,
+        cambiarPassword: (id: number) => `/users/${id}/password`,
+        disable: (id: number) => `/users/${id}/disable`,
+        enable: (id: number) => `/users/${id}/enable`,
     },
 
     perfil: {

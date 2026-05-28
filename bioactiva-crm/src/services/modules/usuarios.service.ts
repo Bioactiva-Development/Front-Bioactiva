@@ -13,10 +13,11 @@ import {
     mockGetInvitacionInfo,
     mockAcceptInvitacion,
 } from '@/services/mock/usuarios.mock'
-import { mapRole } from '@/lib/utils/auth.mappers'
+import { mapRole, mapEstado } from '@/lib/utils/auth.mappers'
 import {
     UsuariosResponse,
     UsuarioListItem,
+    UsuarioFilters,
     EditarUsuarioRequest,
     CambiarPasswordRequest,
     ListInvitacionesParams,
@@ -27,7 +28,57 @@ import {
     AcceptInvitacionRequest,
     AcceptInvitacionResponse,
 } from '@/types/usuario.types'
-import { EstadoToken } from '@/types/enums'
+import { EstadoToken, EstadoUsuario, RolUsuario } from '@/types/enums'
+
+// GET /users devuelve rol y estado como strings legibles (doc-endpoint.md):
+// rol ∈ { ADMINISTRADOR, TRABAJADOR }, estado ∈ { PENDIENTE, ACTIVO, SUSPENDIDO }.
+// Se toleran también valores numéricos por compatibilidad con /auth/me.
+const ROL_STR_MAP: Record<string, RolUsuario> = {
+    ADMINISTRADOR: RolUsuario.Administrador,
+    TRABAJADOR: RolUsuario.Trabajador,
+}
+
+const ESTADO_STR_MAP: Record<string, EstadoUsuario> = {
+    PENDIENTE: EstadoUsuario.Pendiente,
+    ACTIVO: EstadoUsuario.Activo,
+    SUSPENDIDO: EstadoUsuario.Inactivo,
+    INACTIVO: EstadoUsuario.Inactivo,
+}
+
+function mapRolUsuario(value: unknown): RolUsuario {
+    if (typeof value === 'number') return mapRole(value)
+    return ROL_STR_MAP[String(value ?? '').toUpperCase()] ?? RolUsuario.Trabajador
+}
+
+function mapEstadoUsuario(value: unknown): EstadoUsuario {
+    if (typeof value === 'number') return mapEstado(value)
+    return ESTADO_STR_MAP[String(value ?? '').toUpperCase()] ?? EstadoUsuario.Pendiente
+}
+
+// Sentido inverso: del enum del frontend al string que espera GET /users.
+const ROL_TO_BACKEND: Record<RolUsuario, string> = {
+    [RolUsuario.Administrador]: 'ADMINISTRADOR',
+    [RolUsuario.Trabajador]: 'TRABAJADOR',
+}
+
+const ESTADO_TO_BACKEND: Record<EstadoUsuario, string> = {
+    [EstadoUsuario.Pendiente]: 'PENDIENTE',
+    [EstadoUsuario.Activo]: 'ACTIVO',
+    [EstadoUsuario.Inactivo]: 'SUSPENDIDO',
+}
+
+// Construye el query string exactamente como lo define el contrato:
+// search, role, estado, page, limit (ver doc-endpoint.md, módulo `users`).
+function buildUsersQuery(filters?: UsuarioFilters): Record<string, string | number> {
+    const params: Record<string, string | number> = {}
+    if (!filters) return params
+    if (filters.search) params.search = filters.search
+    if (filters.rol) params.role = ROL_TO_BACKEND[filters.rol]
+    if (filters.estado) params.estado = ESTADO_TO_BACKEND[filters.estado]
+    if (filters.page) params.page = filters.page
+    if (filters.limit) params.limit = filters.limit
+    return params
+}
 
 const ESTADO_TOKEN_MAP: Record<number, EstadoToken> = {
     0: EstadoToken.Pendiente,
@@ -44,7 +95,9 @@ function mapInvitacionRaw(raw: InvitacionRaw): Invitacion {
             typeof raw.estado === 'number'
                 ? (ESTADO_TOKEN_MAP[raw.estado] ?? EstadoToken.Pendiente)
                 : (raw.estado as EstadoToken),
-        expires_at: raw.expires_at,
+        // El backend envía `expired_at`; se mantiene `expires_at` como nombre
+        // interno que consume la UI. Fallback a '' para no romper `.slice()`.
+        expires_at: raw.expired_at ?? raw.expires_at ?? '',
         consumed_at: raw.consumed_at,
         created_at: raw.created_at,
     }
@@ -53,10 +106,27 @@ function mapInvitacionRaw(raw: InvitacionRaw): Invitacion {
 export const usuariosService = {
     // ── Usuarios ────────────────────────────────────────────────────────────────
 
-    getUsuarios: async (): Promise<UsuariosResponse> => {
-        if (USE_MOCK) return mockGetUsuarios()
-        const response = await apiClient.get<UsuariosResponse>(ENDPOINTS.usuarios.list)
-        return response.data
+    getUsuarios: async (filters?: UsuarioFilters): Promise<UsuariosResponse> => {
+        if (USE_MOCK) return mockGetUsuarios(filters)
+        // Contrato GET /users: { data: [...], meta: { total, ... } }.
+        // Se toleran respuestas planas (array) o { usuarios: [...] } por robustez.
+        const { data } = await apiClient.get(ENDPOINTS.usuarios.list, { params: buildUsersQuery(filters) })
+        const rows = Array.isArray(data) ? data : (data.data ?? data.usuarios ?? [])
+        const usuarios: UsuarioListItem[] = rows.map((u: Record<string, unknown>) => ({
+            id: Number(u.id),
+            nombres: String(u.nombres ?? ''),
+            apellidos: String(u.apellidos ?? ''),
+            correo: String(u.correo ?? ''),
+            rol: mapRolUsuario(u.rol ?? u.role),
+            estado: mapEstadoUsuario(u.estado),
+            ultimo_acceso: (u.ultimo_acceso ?? u.ultimoAcceso) as string | undefined,
+            created_at: String(u.fechaRegistro ?? u.created_at ?? u.createdAt ?? ''),
+            updated_at: String(u.updated_at ?? u.updatedAt ?? u.fechaRegistro ?? ''),
+        }))
+        const meta = (data?.meta ?? {}) as Record<string, unknown>
+        const total = Number(meta.total ?? usuarios.length)
+        const activos = usuarios.filter((u) => u.estado === EstadoUsuario.Activo).length
+        return { usuarios, total, activos }
     },
 
     editar: async (data: EditarUsuarioRequest): Promise<UsuarioListItem> => {
@@ -90,14 +160,18 @@ export const usuariosService = {
 
     listInvitaciones: async (params?: ListInvitacionesParams): Promise<ListInvitacionesResponse> => {
         if (USE_MOCK) return mockListInvitaciones(params)
-        const response = await apiClient.get<Omit<ListInvitacionesResponse, 'data'> & { data: InvitacionRaw[] }>(
-            ENDPOINTS.invitaciones.list,
-            { params },
-        )
-        return {
-            ...response.data,
-            data: response.data.data.map(mapInvitacionRaw),
-        }
+        const { data: body } = await apiClient.get(ENDPOINTS.invitaciones.list, { params })
+        // El backend puede responder como array plano `[...]` o envuelto en
+        // `{ data: [...], total, page, limit }`. Se toleran ambas formas.
+        const rawList: InvitacionRaw[] = Array.isArray(body)
+            ? body
+            : (body?.data ?? body?.invitaciones ?? [])
+        const data = rawList.map(mapInvitacionRaw)
+        const meta = (Array.isArray(body) ? {} : (body ?? {})) as Record<string, unknown>
+        const total = Number(meta.total ?? (meta.meta as { total?: number })?.total ?? data.length)
+        const page = Number(meta.page ?? params?.page ?? 1)
+        const limit = Number(meta.limit ?? params?.limit ?? data.length)
+        return { data, total, page, limit }
     },
 
     createInvitacion: async (correo: string, rol: number): Promise<Invitacion> => {

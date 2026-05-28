@@ -18,6 +18,15 @@ export interface UsuariosResponse {
     activos: number
 }
 
+// Filtros aceptados por GET /users (doc-endpoint.md, módulo `users`).
+export interface UsuarioFilters {
+    search?: string
+    rol?: RolUsuario
+    estado?: EstadoUsuario
+    page?: number
+    limit?: number
+}
+
 export interface EditarUsuarioRequest {
     id: number
     nombre_completo: string
@@ -36,12 +45,17 @@ export interface InvitacionInfo {
     accepted: boolean
 }
 
+// Forma cruda tal como la entrega el backend (GET /invitations).
+// El backend usa `expired_at` (no `expires_at`) e incluye `token` e `invitador_id`.
 export interface InvitacionRaw {
     id: number
     correo: string
+    token?: string
     rol: number
+    invitador_id?: number
     estado: number | string
-    expires_at: string
+    expired_at?: string
+    expires_at?: string
     consumed_at: string | null
     created_at: string
 }
