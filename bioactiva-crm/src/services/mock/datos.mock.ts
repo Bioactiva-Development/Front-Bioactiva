@@ -16,12 +16,12 @@ import {
 // ─── Datos mock por entidad ────────────────────────────────────────────────
 
 const MOCK_ORG: RegistroPreview[] = [
-    { codigo_cliente: 'ORG-001', nombre: 'Tech Solutions SAC', ruc: '20123456789', tipo: TipoEmpresa.Privada, sector: Sector.Tecnologia, tamano: TamanoEmpresa.Mediana, ubicacion: 'Lima', actividad_economica: 'Desarrollo de software' },
-    { codigo_cliente: 'ORG-002', nombre: 'Agro Perú EIRL', ruc: '20987654321', tipo: TipoEmpresa.Privada, sector: Sector.Agroindustria, tamano: TamanoEmpresa.Pequena, ubicacion: 'Arequipa', actividad_economica: 'Procesamiento de alimentos' },
-    { codigo_cliente: 'ORG-003', nombre: 'InnoSalud SA', ruc: '20456789123', tipo: TipoEmpresa.Privada, sector: Sector.Salud, tamano: TamanoEmpresa.Grande, ubicacion: 'Lima', actividad_economica: 'Servicios de salud' },
-    { codigo_cliente: 'ORG-004', nombre: 'EduTech Corp', ruc: '20321654987', tipo: TipoEmpresa.Privada, sector: Sector.Educacion, tamano: TamanoEmpresa.Micro, ubicacion: 'Cusco', actividad_economica: 'Educación en línea' },
-    { codigo_cliente: 'ORG-005', nombre: 'Manufactura Global SAC', ruc: '20111222333', tipo: TipoEmpresa.Mixta, sector: Sector.Manufactura, tamano: TamanoEmpresa.Grande, ubicacion: 'Callao', actividad_economica: 'Fabricación de piezas industriales' },
-    { codigo_cliente: 'ORG-006', nombre: 'ConsultFund ONG', ruc: '', tipo: TipoEmpresa.ONG, sector: Sector.OtroSector, tamano: TamanoEmpresa.Pequena, ubicacion: 'Lima', actividad_economica: 'Consultoría sin fines de lucro' },
+    { codigo_cliente: 'ORG-001', nombre: 'Tech Solutions SAC', ruc: '20123456789', tipo: TipoEmpresa.Privada, sector: Sector.TECNOLOGIA, tamano: TamanoEmpresa.Mediana, ubicacion: 'Lima', actividad_economica: 'Desarrollo de software' },
+    { codigo_cliente: 'ORG-002', nombre: 'Agro Perú EIRL', ruc: '20987654321', tipo: TipoEmpresa.Privada, sector: Sector.AGROALIMENTARIA, tamano: TamanoEmpresa.Pequena, ubicacion: 'Arequipa', actividad_economica: 'Procesamiento de alimentos' },
+    { codigo_cliente: 'ORG-003', nombre: 'InnoSalud SA', ruc: '20456789123', tipo: TipoEmpresa.Privada, sector: Sector.SALUD, tamano: TamanoEmpresa.Grande, ubicacion: 'Lima', actividad_economica: 'Servicios de salud' },
+    { codigo_cliente: 'ORG-004', nombre: 'EduTech Corp', ruc: '20321654987', tipo: TipoEmpresa.Privada, sector: Sector.EDUCACION, tamano: TamanoEmpresa.Micro, ubicacion: 'Cusco', actividad_economica: 'Educación en línea' },
+    { codigo_cliente: 'ORG-005', nombre: 'Manufactura Global SAC', ruc: '20111222333', tipo: TipoEmpresa.Mixta, sector: Sector.MANUFACTURA, tamano: TamanoEmpresa.Grande, ubicacion: 'Callao', actividad_economica: 'Fabricación de piezas industriales' },
+    { codigo_cliente: 'ORG-006', nombre: 'ConsultFund ONG', ruc: '', tipo: TipoEmpresa.ONG, sector: Sector.OTROS, tamano: TamanoEmpresa.Pequena, ubicacion: 'Lima', actividad_economica: 'Consultoría sin fines de lucro' },
 ]
 const ORG_COLUMNAS = ['codigo_cliente', 'nombre', 'ruc', 'tipo', 'sector', 'tamano', 'ubicacion', 'actividad_economica']
 
@@ -147,10 +147,10 @@ const MOCK_PREVIEWS: Record<EntidadExportable, ImportPreviewResult> = {
     organizaciones: {
         entidad: 'organizaciones',
         registros: [
-            { nombre: 'Nueva Empresa SRL', ruc: '20555666777', tipo: TipoEmpresa.Privada, sector: Sector.Tecnologia, tamano: TamanoEmpresa.Mediana, ubicacion: 'Lima' },
-            { nombre: 'Tech Solutions SAC', ruc: '20123456789', tipo: TipoEmpresa.Privada, sector: Sector.Tecnologia, tamano: TamanoEmpresa.Mediana, ubicacion: 'Lima' },
-            { nombre: 'Empresa Sin Tipo', ruc: '', tipo: '', sector: Sector.Manufactura, tamano: TamanoEmpresa.Micro, ubicacion: '' },
-            { nombre: 'Global Innova SAC', ruc: '20444555666', tipo: TipoEmpresa.Mixta, sector: Sector.OtroSector, tamano: TamanoEmpresa.Grande, ubicacion: 'Callao' },
+            { nombre: 'Nueva Empresa SRL', ruc: '20555666777', tipo: TipoEmpresa.Privada, sector: Sector.TECNOLOGIA, tamano: TamanoEmpresa.Mediana, ubicacion: 'Lima' },
+            { nombre: 'Tech Solutions SAC', ruc: '20123456789', tipo: TipoEmpresa.Privada, sector: Sector.TECNOLOGIA, tamano: TamanoEmpresa.Mediana, ubicacion: 'Lima' },
+            { nombre: 'Empresa Sin Tipo', ruc: '', tipo: '', sector: Sector.MANUFACTURA, tamano: TamanoEmpresa.Micro, ubicacion: '' },
+            { nombre: 'Global Innova SAC', ruc: '20444555666', tipo: TipoEmpresa.Mixta, sector: Sector.OTROS, tamano: TamanoEmpresa.Grande, ubicacion: 'Callao' },
         ],
         conflictos: [
             { fila: 2, campo: 'ruc', valor: '20123456789', mensaje: 'Ya existe una organización con este RUC', tipo: 'duplicado' },
