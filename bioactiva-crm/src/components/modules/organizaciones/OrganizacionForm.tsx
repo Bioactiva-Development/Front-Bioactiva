@@ -11,6 +11,7 @@ import {
 } from '@/lib/validators/organizacion.schema'
 import { TipoEmpresa, TamanoEmpresa, Sector } from '@/types/enums'
 import { Organizacion, SunatRucResult } from '@/types/organizacion.types'
+import { generarCodigoCliente } from '@/lib/utils/organizacion.utils'
 import { ROUTES } from '@/lib/constants/routes'
 
 interface OrganizacionFormProps {
@@ -38,7 +39,6 @@ export function OrganizacionForm({
     register,
     handleSubmit,
     setValue,
-    getValues,
     control,
     formState: { errors },
   } = useForm<OrganizacionFormValues>({
@@ -73,14 +73,17 @@ export function OrganizacionForm({
     if (sunatData.nombreCompleto) setValue('nombre_comercial',    sunatData.nombreCompleto)
     if (sunatData.ubicacion)      setValue('ubicacion',           sunatData.ubicacion)
     if (sunatData.actividades)    setValue('actividad_economica', sunatData.actividades)
+
+    // Hay data de SUNAT: el código de cliente se autogenera con el patrón
+    // [iniciales del nombre comercial]-[últimos 3 dígitos del RUC].
+    const nombreComercial = sunatData.nombreCompleto || sunatData.nombre
+    setValue('codigo_cliente', generarCodigoCliente(nombreComercial, sunatData.ruc))
   }, [sunatData, setValue])
 
-  useEffect(() => {
-    if (!esEdicion && sinRuc && !getValues('codigo_cliente')) {
-      setValue('codigo_cliente', `ORG-${new Date().getFullYear()}-XXX`)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sinRuc, esEdicion])
+  // El código de cliente solo es editable en registro manual o cuando la
+  // búsqueda SUNAT no arrojó datos. Si proviene de SUNAT (o es edición), queda
+  // bloqueado y se gestiona automáticamente.
+  const codigoBloqueado = esEdicion || !!sunatData
 
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
@@ -96,15 +99,29 @@ export function OrganizacionForm({
 
         <div className="space-y-1.5">
           <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            ID Interno (generado automáticamente)
+            Código de Cliente{' '}
+            {codigoBloqueado
+              ? <span className="text-gray-400 normal-case font-normal">— generado automáticamente</span>
+              : <span className="text-red-500">*</span>}
           </label>
           <input
             type="text"
-            value={organizacion?.codigo_cliente ?? `ORG-${new Date().getFullYear()}-XXX`}
-            disabled
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200
-              bg-gray-50 text-sm text-gray-400 cursor-not-allowed"
+            placeholder="Ej: ORG-2026-001"
+            {...register('codigo_cliente')}
+            readOnly={codigoBloqueado}
+            aria-readonly={codigoBloqueado}
+            className={codigoBloqueado
+              ? `w-full px-4 py-2.5 rounded-xl border border-gray-200
+                bg-gray-50 text-sm text-gray-500 cursor-not-allowed`
+              : inputClass(!!errors.codigo_cliente)}
           />
+          {codigoBloqueado ? (
+            <p className="text-xs text-gray-400">
+              Generado a partir del nombre comercial y el RUC de SUNAT.
+            </p>
+          ) : errors.codigo_cliente ? (
+            <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
+          ) : null}
         </div>
 
         {!esEdicion && (
@@ -324,22 +341,6 @@ export function OrganizacionForm({
           />
         </div>
 
-        {sinRuc && (
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Código Interno <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Ej: ORG-2026-001"
-              {...register('codigo_cliente')}
-              className={inputClass(!!errors.codigo_cliente)}
-            />
-            {errors.codigo_cliente && (
-              <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
-            )}
-          </div>
-        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700

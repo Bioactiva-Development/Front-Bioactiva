@@ -20,7 +20,7 @@ function InfoItem({
 }: {
   icono:  React.ReactNode
   label:  string
-  valor?: string
+  valor?: string | null
 }) {
   if (!valor) return null
   return (

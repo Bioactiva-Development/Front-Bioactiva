@@ -2,6 +2,7 @@ import { RolUsuario, EstadoToken, EstadoUsuario } from '@/types/enums'
 import {
     UsuarioListItem,
     UsuariosResponse,
+    UsuarioFilters,
     EditarUsuarioRequest,
     CambiarPasswordRequest,
     Invitacion,
@@ -22,9 +23,24 @@ let mockUsuarios: UsuarioListItem[] = [
     { id: 6, nombres: 'Carlos', apellidos: 'Mamani', correo: 'cmamani@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, ultimo_acceso: 'Hace 11 min', created_at: '2024-01-06T08:00:00Z', updated_at: '2024-01-06T08:00:00Z' },
 ]
 
-export function mockGetUsuarios(): UsuariosResponse {
+export function mockGetUsuarios(filters?: UsuarioFilters): UsuariosResponse {
+    let result = [...mockUsuarios]
+
+    if (filters?.search) {
+        const s = filters.search.toLowerCase()
+        result = result.filter(
+            u =>
+                u.nombres.toLowerCase().includes(s) ||
+                u.apellidos.toLowerCase().includes(s) ||
+                u.correo.toLowerCase().includes(s),
+        )
+    }
+    if (filters?.rol) result = result.filter(u => u.rol === filters.rol)
+    if (filters?.estado) result = result.filter(u => u.estado === filters.estado)
+
+    // `activos` refleja el total de cuentas activas, no solo las filtradas.
     const activos = mockUsuarios.filter(u => u.estado === EstadoUsuario.Activo).length
-    return { usuarios: [...mockUsuarios], total: mockUsuarios.length, activos }
+    return { usuarios: result, total: result.length, activos }
 }
 
 export function mockEditarUsuario(data: EditarUsuarioRequest): UsuarioListItem {

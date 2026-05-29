@@ -14,15 +14,42 @@ import {
     ContactoFormData,
 } from '@/types/contacto.types'
 
+/**
+ * Normaliza la respuesta cruda del backend al modelo `Contacto` del front.
+ * Cambios del contrato (doc-endpoint.md, módulo `contacts`):
+ *  - El backend ahora envía `organizacionNombre` (camelCase) → se mapea a
+ *    `organizacion_nombre`, que es el campo que consumen los componentes.
+ *  - `updatedAt` ya no viene en la respuesta → fallback a `createdAt`.
+ */
+function normalizeContacto(raw: Record<string, unknown>): Contacto {
+    return {
+        id: Number(raw.id),
+        nombres: String(raw.nombres ?? ''),
+        apellidos: (raw.apellidos ?? null) as Contacto['apellidos'],
+        vocativo: raw.vocativo as Contacto['vocativo'],
+        cargo: (raw.cargo ?? null) as Contacto['cargo'],
+        correo: String(raw.correo ?? ''),
+        correo2: (raw.correo2 ?? null) as Contacto['correo2'],
+        telefono: (raw.telefono ?? null) as Contacto['telefono'],
+        comentarios: (raw.comentarios ?? null) as Contacto['comentarios'],
+        idOrganizacion: String(raw.idOrganizacion ?? ''),
+        idAuthor: Number(raw.idAuthor ?? 0),
+        estado_correo: (raw.estado_correo ?? 'VIGENTE') as Contacto['estado_correo'],
+        createdAt: String(raw.createdAt ?? ''),
+        updatedAt: String(raw.updatedAt ?? raw.createdAt ?? ''),
+        organizacion_nombre: (raw.organizacionNombre ?? raw.organizacion_nombre) as string | undefined,
+    }
+}
+
 export const contactosService = {
 
     getAll: async (filtros?: ContactoFiltros): Promise<ContactosResponse> => {
         if (USE_MOCK) return mockGetContactos(filtros)
-        const response = await apiClient.get<Contacto[]>(
+        const response = await apiClient.get<Record<string, unknown>[]>(
             ENDPOINTS.contactos.list,
             { params: filtros }
         )
-        const data = response.data
+        const data = response.data.map(normalizeContacto)
         return {
             data,
             total: data.length,
@@ -33,19 +60,19 @@ export const contactosService = {
 
     getById: async (id: number): Promise<Contacto> => {
         if (USE_MOCK) return mockGetContacto(id)
-        const response = await apiClient.get<Contacto>(
+        const response = await apiClient.get<Record<string, unknown>>(
             ENDPOINTS.contactos.detail(id)
         )
-        return response.data
+        return normalizeContacto(response.data)
     },
 
     create: async (data: ContactoFormData): Promise<Contacto> => {
         if (USE_MOCK) return mockCreateContacto(data)
-        const response = await apiClient.post<Contacto>(
+        const response = await apiClient.post<Record<string, unknown>>(
             ENDPOINTS.contactos.create,
             data
         )
-        return response.data
+        return normalizeContacto(response.data)
     },
 
     update: async (
@@ -53,11 +80,11 @@ export const contactosService = {
         data: Partial<ContactoFormData>
     ): Promise<Contacto> => {
         if (USE_MOCK) return mockUpdateContacto(id, data)
-        const response = await apiClient.patch<Contacto>(
+        const response = await apiClient.patch<Record<string, unknown>>(
             ENDPOINTS.contactos.update(id),
             data
         )
-        return response.data
+        return normalizeContacto(response.data)
     },
 
     getByOrganizacion: async (orgId: string): Promise<Contacto[]> => {
@@ -65,9 +92,9 @@ export const contactosService = {
             const response = await mockGetContactos({ idOrganizacion: orgId })
             return response.data
         }
-        const response = await apiClient.get<Contacto[]>(
+        const response = await apiClient.get<Record<string, unknown>[]>(
             ENDPOINTS.contactos.byOrganizacion(orgId)
         )
-        return response.data
+        return response.data.map(normalizeContacto)
     },
 }

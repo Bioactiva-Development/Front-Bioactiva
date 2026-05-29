@@ -118,24 +118,15 @@ const TAMANO_BACKEND_TO_DOMAIN: Record<string, TamanoEmpresa> = {
   GRANDE: TamanoEmpresa.Grande,
 }
 
-const SECTOR_DOMAIN_TO_BACKEND: Record<Sector, string> = {
-  [Sector.Agroindustria]: 'AGROINDUSTRIA',
-  [Sector.Manufactura]: 'MANUFACTURA',
-  [Sector.Tecnologia]: 'TECNOLOGIA',
-  [Sector.Salud]: 'SALUD',
-  [Sector.Educacion]: 'EDUCACION',
-  [Sector.OtroSector]: 'OTROS',
-}
+// Los valores del enum `Sector` coinciden 1:1 con los del backend, por lo que
+// el mapeo es identidad. Se generan dinámicamente para cubrir toda la lista.
+const SECTOR_DOMAIN_TO_BACKEND = Object.fromEntries(
+  Object.values(Sector).map((s) => [s, s]),
+) as Record<Sector, string>
 
-const SECTOR_BACKEND_TO_DOMAIN: Record<string, Sector> = {
-  AGROINDUSTRIA: Sector.Agroindustria,
-  MANUFACTURA: Sector.Manufactura,
-  TECNOLOGIA: Sector.Tecnologia,
-  SALUD: Sector.Salud,
-  EDUCACION: Sector.Educacion,
-  OTROS: Sector.OtroSector,
-  OTRO: Sector.OtroSector,
-}
+const SECTOR_BACKEND_TO_DOMAIN = Object.fromEntries(
+  Object.values(Sector).map((s) => [s, s]),
+) as Record<string, Sector>
 
 const safeMap = <K extends string, V>(table: Record<string, V>, key: K, fallback: V): V =>
   table[key] ?? fallback
@@ -155,8 +146,8 @@ export const fromOrganizacionDto = (dto: OrganizacionDtoOut): Organizacion => ({
   linkedin: dto.linkedin ?? undefined,
   ubicacion: dto.ubicacion ?? undefined,
   sector: dto.sector
-    ? safeMap(SECTOR_BACKEND_TO_DOMAIN, dto.sector, Sector.OtroSector)
-    : Sector.OtroSector,
+    ? safeMap(SECTOR_BACKEND_TO_DOMAIN, dto.sector, Sector.OTROS)
+    : Sector.OTROS,
   tamano: safeMap(TAMANO_BACKEND_TO_DOMAIN, dto.tamano, TamanoEmpresa.Micro),
   actividad_economica: dto.actividadEconomica ?? undefined,
   alianzas_estrategicas: dto.alianzasEstrategicas ?? undefined,
