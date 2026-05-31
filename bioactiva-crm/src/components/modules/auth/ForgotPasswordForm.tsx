@@ -3,13 +3,17 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, ArrowLeft, CheckCircle } from 'lucide-react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
+import ReCAPTCHA from 'react-google-recaptcha'
 import { forgotPasswordSchema, ForgotPasswordFormValues } from '@/lib/validators/auth.schema'
 import { useAuth } from '@/hooks/auth/useAuth'
 import { ROUTES } from '@/lib/constants/routes'
 
 export function ForgotPasswordForm() {
     const { forgotPassword, isLoading, error, success } = useAuth()
+    const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+    const recaptchaRef                    = useRef<ReCAPTCHA>(null)
 
     const {
         register,
@@ -20,7 +24,11 @@ export function ForgotPasswordForm() {
     })
 
     const onSubmit = async (data: ForgotPasswordFormValues) => {
-        await forgotPassword(data)
+        await forgotPassword(data, captchaToken)
+        if (error) {
+            recaptchaRef.current?.reset()
+            setCaptchaToken(null)
+        }
     }
 
     return (
@@ -89,9 +97,18 @@ export function ForgotPasswordForm() {
                                 )}
                             </div>
 
+                            <div className="flex justify-center">
+                                <ReCAPTCHA
+                                    ref={recaptchaRef}
+                                    sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                                    onChange={(token) => setCaptchaToken(token)}
+                                    onExpired={() => setCaptchaToken(null)}
+                                />
+                            </div>
+
                             <button
                                 type="submit"
-                                disabled={isLoading}
+                                disabled={isLoading || !captchaToken}
                                 className="w-full flex items-center justify-center gap-2 bg-[#1C7E3C] hover:bg-[#16642f]
                   disabled:bg-[#BCF7B3] disabled:cursor-not-allowed text-white font-semibold
                   py-3 px-4 rounded-xl text-sm transition-colors shadow-md shadow-[#BCF7B3]"
