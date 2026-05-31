@@ -3,24 +3,23 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-    Pencil, Lock, UserX, UserCheck, UserPlus, Users,
+    Pencil, UserX, UserCheck, UserPlus, Users,
     Mail, Clock, Search, ChevronLeft, ChevronRight, ShieldAlert,
 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { InvitarUsuarioModal } from '@/components/modules/control-acceso/InvitarUsuarioModal'
 import { EditarUsuarioModal } from '@/components/modules/control-acceso/EditarUsuarioModal'
-import { CambiarPasswordModal } from '@/components/modules/control-acceso/CambiarPasswordModal'
 import { DeshabilitarUsuarioModal } from '@/components/modules/control-acceso/DeshabilitarUsuarioModal'
 import { useUsuarios } from '@/hooks/usuarios/useUsuarios'
 import { useInvitaciones } from '@/hooks/usuarios/useInvitaciones'
 import { useAuthStore } from '@/store/auth.store'
 import { useDebounce } from '@/hooks/shared/useDebounce'
-import { UsuarioListItem, EditarUsuarioRequest, CambiarPasswordRequest, ListInvitacionesParams } from '@/types/usuario.types'
+import { UsuarioListItem, ListInvitacionesParams } from '@/types/usuario.types'
 import { RolUsuario, EstadoUsuario, EstadoToken } from '@/types/enums'
-import { InvitarUsuarioFormValues } from '@/lib/validators/usuario.schema'
+import { InvitarUsuarioFormValues, EditarUsuarioFormValues } from '@/lib/validators/usuario.schema'
 import { ROUTES } from '@/lib/constants/routes'
 
-type ModalType = 'invitar' | 'editar' | 'password' | 'estado' | null
+type ModalType = 'invitar' | 'editar' | 'estado' | null
 
 const LIMIT = 10
 
@@ -98,7 +97,7 @@ export default function ControlAccesoPage() {
     const {
         usuarios, total: totalUsuarios, activos,
         isLoading: isLoadingUsuarios, error: errorUsuarios, successMessage,
-        cargar, editar, cambiarPassword, deshabilitar, habilitar, clearMessages,
+        cargar, editar, deshabilitar, habilitar, clearMessages,
     } = useUsuarios()
 
     const [modalAbierto, setModalAbierto] = useState<ModalType>(null)
@@ -179,12 +178,13 @@ export default function ControlAccesoPage() {
         }
     }
 
-    const handleEditar = async (data: EditarUsuarioRequest): Promise<boolean> => {
-        return editar(data)
-    }
-
-    const handleCambiarPassword = async (id: number, password: string): Promise<boolean> => {
-        return cambiarPassword({ id, password } as CambiarPasswordRequest)
+    const handleEditar = async (data: EditarUsuarioFormValues & { id: number }): Promise<boolean> => {
+        return editar({
+            id: data.id,
+            rol: data.rol,
+            nombre_completo: [usuarioSeleccionado?.nombres, usuarioSeleccionado?.apellidos].filter(Boolean).join(' '),
+            correo: usuarioSeleccionado?.correo ?? '',
+        })
     }
 
     const handleEstado = async (): Promise<boolean> => {
@@ -327,13 +327,6 @@ export default function ControlAccesoPage() {
                                                     className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                                                 >
                                                     <Pencil size={15} />
-                                                </button>
-                                                <button
-                                                    onClick={() => abrirModal('password', u)}
-                                                    title="Cambiar contraseña"
-                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
-                                                >
-                                                    <Lock size={15} />
                                                 </button>
                                                 <button
                                                     onClick={() => abrirModal('estado', u)}
@@ -479,16 +472,6 @@ export default function ControlAccesoPage() {
                     error={errorUsuarios}
                     onClose={cerrarModal}
                     onSubmit={handleEditar}
-                />
-            )}
-
-            {modalAbierto === 'password' && usuarioSeleccionado && (
-                <CambiarPasswordModal
-                    usuario={usuarioSeleccionado}
-                    isLoading={isLoadingUsuarios}
-                    error={errorUsuarios}
-                    onClose={cerrarModal}
-                    onSubmit={handleCambiarPassword}
                 />
             )}
 
