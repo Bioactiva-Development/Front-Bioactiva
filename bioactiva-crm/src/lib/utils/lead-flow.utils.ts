@@ -14,6 +14,35 @@ export function getLeadStateFromCotizacion(
   return null
 }
 
+export function getCotizacionStateFromLeadClosure(
+  targetState: LeadState
+): EstadoCot | null {
+  if (targetState === LeadState.CierreVenta) return EstadoCot.Aceptada
+  if (targetState === LeadState.CierreSinVenta) return EstadoCot.Rechazada
+  return null
+}
+
+export function getCotizacionToResolveLeadClosure(
+  targetState: LeadState,
+  cotizaciones: Cotizacion[]
+): Cotizacion | null {
+  const targetCotState = getCotizacionStateFromLeadClosure(targetState)
+  if (!targetCotState) return null
+
+  const alreadyResolved = cotizaciones.find(
+    (cotizacion) => cotizacion.estado === targetCotState
+  )
+  if (alreadyResolved) return alreadyResolved
+
+  const viableStates = [EstadoCot.Enviada, EstadoCot.Pendiente]
+  return cotizaciones
+    .filter((cotizacion) => viableStates.includes(cotizacion.estado))
+    .sort(
+      (a, b) =>
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    )[0] ?? null
+}
+
 export function validateLeadStateTransition(
   targetState: LeadState,
   cotizaciones: Cotizacion[]

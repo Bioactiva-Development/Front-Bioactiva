@@ -1,6 +1,8 @@
 'use client'
 
 import type React from 'react'
+import { useDraggable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 import {
   AlertTriangle,
   Building2,
@@ -23,7 +25,22 @@ interface LeadCardProps {
   ) => void
 }
 
-export function LeadCard({ lead, onClick, onQuickAction }: LeadCardProps) {
+export function LeadCard({
+  lead,
+  onClick,
+  onQuickAction,
+}: LeadCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: `lead-${lead.id}`,
+    data: { lead },
+  })
+
   const handleAction = (
     event: React.MouseEvent<HTMLButtonElement>,
     action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
@@ -34,10 +51,21 @@ export function LeadCard({ lead, onClick, onQuickAction }: LeadCardProps) {
 
   return (
     <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      data-lead-id={lead.id}
+      aria-label={`Lead ${lead.codigo} - ${lead.organizacion_nombre}`}
+      style={{
+        transform: CSS.Translate.toString(transform),
+        zIndex: isDragging ? 20 : undefined,
+        touchAction: 'none',
+      }}
       onClick={() => onClick(lead)}
       className={`
         bg-white rounded-xl border shadow-sm p-4 cursor-pointer
         hover:shadow-md transition-all space-y-3
+        ${isDragging ? 'opacity-60 ring-2 ring-emerald-300' : ''}
         ${lead.tiene_alerta
           ? 'border-l-4 border-l-red-400 border-t-gray-100 border-r-gray-100 border-b-gray-100'
           : 'border-gray-100 hover:border-emerald-200'

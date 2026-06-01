@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus } from 'lucide-react'
-import { usePipeline } from '@/hooks/pipeline/useLeads'
+import { AlertCircle, Plus } from 'lucide-react'
+import { useMoverLeadPipeline, usePipeline } from '@/hooks/pipeline/useLeads'
 import { KanbanBoard } from '@/components/modules/pipeline/KanbanBoard'
 import { LeadFiltros } from '@/components/modules/pipeline/LeadFiltros'
 import { LeadDrawer } from '@/components/modules/pipeline/LeadDrawer'
 import { LeadFiltros as FiltrosType, Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
+import { getErrorMessage } from '@/lib/utils/error.utils'
 
 const FILTROS_INICIALES: FiltrosType = {}
 
@@ -16,8 +17,11 @@ export default function PipelinePage() {
   const router                          = useRouter()
   const [filtros, setFiltros]           = useState<FiltrosType>(FILTROS_INICIALES)
   const [leadSeleccionado, setLeadSeleccionado] = useState<Lead | null>(null)
+  const [dragError, setDragError]       = useState<string | null>(null)
 
   const { data: pipeline, isLoading, isError } = usePipeline(filtros)
+  const { mutateAsync: moverLead, isPending: actualizandoEstado } =
+    useMoverLeadPipeline()
 
   const handleLimpiarFiltros = () => setFiltros(FILTROS_INICIALES)
 
@@ -42,6 +46,15 @@ export default function PipelinePage() {
     } as const
 
     router.push(`/pipeline/${lead.id}${accionMap[action]}`)
+  }
+
+  const handleMoveLead = async (lead: Lead, estado: LeadState) => {
+    try {
+      setDragError(null)
+      await moverLead({ lead, estado })
+    } catch (err: unknown) {
+      setDragError(getErrorMessage(err, 'No se pudo actualizar el estado del lead.'))
+    }
   }
 
   const total = pipeline
@@ -82,6 +95,14 @@ export default function PipelinePage() {
         total={total}
       />
 
+      {dragError && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-200
+          bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <p>{dragError}</p>
+        </div>
+      )}
+
       {/* Loading */}
       {isLoading && (
         <div className="flex items-center justify-center py-16">
@@ -106,7 +127,15 @@ export default function PipelinePage() {
           onAddLead={handleAddLead}
           onClickLead={setLeadSeleccionado}
           onQuickAction={handleQuickAction}
+          onMoveLead={handleMoveLead}
         />
+      )}
+
+      {actualizandoEstado && (
+        <div className="fixed bottom-4 right-4 rounded-xl bg-emerald-700
+          px-4 py-3 text-sm font-semibold text-white shadow-lg">
+          Actualizando estado...
+        </div>
       )}
 
       {/* Drawer */}

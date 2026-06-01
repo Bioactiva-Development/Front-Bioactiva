@@ -1,5 +1,12 @@
 'use client'
 
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
 import { KanbanColumn } from '@/components/modules/pipeline/KanbanColumn'
 import { PipelineData, Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
@@ -12,6 +19,7 @@ interface KanbanBoardProps {
     lead: Lead,
     action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
   ) => void
+  onMoveLead: (lead: Lead, estado: LeadState) => void
 }
 
 const COLUMNAS = [
@@ -46,26 +54,43 @@ export function KanbanBoard({
   onAddLead,
   onClickLead,
   onQuickAction,
+  onMoveLead,
 }: KanbanBoardProps) {
-  return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
-      {COLUMNAS.map((col) => {
-        const leads = pipeline[col.key]
-        if (!Array.isArray(leads)) return null
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  )
 
-        return (
-          <KanbanColumn
-            key={col.key}
-            titulo={col.titulo}
-            estado={col.estado}
-            leads={leads}
-            color={col.color}
-            onAddLead={onAddLead}
-            onClickLead={onClickLead}
-            onQuickAction={onQuickAction}
-          />
-        )
-      })}
-    </div>
+  const handleDragEnd = (event: DragEndEvent) => {
+    const lead = event.active.data.current?.lead as Lead | undefined
+    const estado = event.over?.data.current?.estado as LeadState | undefined
+
+    if (!lead || !estado || lead.estado === estado) return
+    onMoveLead(lead, estado)
+  }
+
+  return (
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {COLUMNAS.map((col) => {
+          const leads = pipeline[col.key]
+          if (!Array.isArray(leads)) return null
+
+          return (
+            <KanbanColumn
+              key={col.key}
+              titulo={col.titulo}
+              estado={col.estado}
+              leads={leads}
+              color={col.color}
+              onAddLead={onAddLead}
+              onClickLead={onClickLead}
+              onQuickAction={onQuickAction}
+            />
+          )
+        })}
+      </div>
+    </DndContext>
   )
 }
