@@ -8,6 +8,7 @@ import { KanbanBoard } from '@/components/modules/pipeline/KanbanBoard'
 import { LeadFiltros } from '@/components/modules/pipeline/LeadFiltros'
 import { LeadDrawer } from '@/components/modules/pipeline/LeadDrawer'
 import { LeadFiltros as FiltrosType, Lead } from '@/types/lead.types'
+import { LeadState } from '@/types/enums'
 
 const FILTROS_INICIALES: FiltrosType = {}
 
@@ -19,6 +20,10 @@ export default function PipelinePage() {
   const { data: pipeline, isLoading, isError } = usePipeline(filtros)
 
   const handleLimpiarFiltros = () => setFiltros(FILTROS_INICIALES)
+
+  const handleAddLead = (estado: LeadState = LeadState.Prospecto) => {
+    router.push(`/pipeline/nuevo?estado=${encodeURIComponent(estado)}`)
+  }
 
   const handleQuickAction = (
     lead: Lead,
@@ -98,7 +103,7 @@ export default function PipelinePage() {
       {!isLoading && !isError && pipeline && (
         <KanbanBoard
           pipeline={pipeline}
-          onAddLead={() => router.push('/pipeline/nuevo')}
+          onAddLead={handleAddLead}
           onClickLead={setLeadSeleccionado}
           onQuickAction={handleQuickAction}
         />

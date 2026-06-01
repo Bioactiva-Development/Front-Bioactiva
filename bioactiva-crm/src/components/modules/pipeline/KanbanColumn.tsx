@@ -2,13 +2,15 @@
 
 import { Plus } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
+import { LeadState } from '@/types/enums'
 import { LeadCard } from '@/components/modules/pipeline/LeadCard'
 
 interface KanbanColumnProps {
   titulo:    string
+  estado:    LeadState
   leads:     Lead[]
   color:     string
-  onAddLead: () => void
+  onAddLead: (estado: LeadState) => void
   onClickLead: (lead: Lead) => void
   onQuickAction?: (
     lead: Lead,
@@ -18,6 +20,7 @@ interface KanbanColumnProps {
 
 export function KanbanColumn({
   titulo,
+  estado,
   leads,
   color,
   onAddLead,
@@ -39,7 +42,8 @@ export function KanbanColumn({
           </span>
         </div>
         <button
-          onClick={onAddLead}
+          onClick={() => onAddLead(estado)}
+          title={`Nuevo lead en ${titulo}`}
           className="p-1 rounded-lg text-gray-400 hover:text-emerald-600
             hover:bg-emerald-50 transition-colors"
         >

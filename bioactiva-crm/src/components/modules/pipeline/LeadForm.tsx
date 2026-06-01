@@ -15,6 +15,7 @@ import { useAuthStore } from '@/store'
 
 interface LeadFormProps {
   lead?:      Lead
+  estadoInicial?: LeadState
   onSubmit:   (data: LeadFormValues) => Promise<void>
   isLoading:  boolean
   error?:     string | null
@@ -29,6 +30,7 @@ const RESPONSABLES = [
 
 export function LeadForm({
   lead,
+  estadoInicial,
   onSubmit,
   isLoading,
   error,
@@ -63,7 +65,7 @@ export function LeadForm({
           fecha_proxima_actividad: lead.fecha_proxima_actividad ?? '',
         }
       : {
-          estado:          LeadState.Prospecto,
+          estado:          estadoInicial ?? LeadState.Prospecto,
           id_encargado:    usuario?.id ?? 1,
           encargado_correo: usuario?.correo ?? '',
         },
