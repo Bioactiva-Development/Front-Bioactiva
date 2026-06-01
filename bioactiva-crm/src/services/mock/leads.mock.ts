@@ -198,9 +198,12 @@ export const mockGetPipeline = async (
     const q = filtros.search.toLowerCase()
     resultado = resultado.filter(
       (l) =>
+        l.codigo.toLowerCase().includes(q) ||
         l.organizacion_nombre?.toLowerCase().includes(q) ||
+        l.contacto_nombre?.toLowerCase().includes(q) ||
         l.servicio_interes.toLowerCase().includes(q) ||
-        l.codigo.toLowerCase().includes(q)
+        l.encargado_nombre?.toLowerCase().includes(q) ||
+        l.encargado_correo?.toLowerCase().includes(q)
     )
   }
 
@@ -241,6 +244,19 @@ export const mockGetLeads = async (
   await delay()
 
   let resultado = MOCK_LEADS.map(withAlertState)
+
+  if (filtros?.search) {
+    const q = filtros.search.toLowerCase()
+    resultado = resultado.filter(
+      (l) =>
+        l.codigo.toLowerCase().includes(q) ||
+        l.organizacion_nombre?.toLowerCase().includes(q) ||
+        l.contacto_nombre?.toLowerCase().includes(q) ||
+        l.servicio_interes.toLowerCase().includes(q) ||
+        l.encargado_nombre?.toLowerCase().includes(q) ||
+        l.encargado_correo?.toLowerCase().includes(q)
+    )
+  }
 
   if (filtros?.estado) {
     resultado = resultado.filter((l) => l.estado === filtros.estado)

@@ -7,6 +7,10 @@ interface KanbanBoardProps {
   pipeline:    PipelineData
   onAddLead:   () => void
   onClickLead: (lead: Lead) => void
+  onQuickAction?: (
+    lead: Lead,
+    action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
+  ) => void
 }
 
 const COLUMNAS = [
@@ -16,7 +20,12 @@ const COLUMNAS = [
   { key: 'cierreSinVenta' as keyof PipelineData, titulo: 'Cierre sin venta', color: 'bg-red-400' },
 ]
 
-export function KanbanBoard({ pipeline, onAddLead, onClickLead }: KanbanBoardProps) {
+export function KanbanBoard({
+  pipeline,
+  onAddLead,
+  onClickLead,
+  onQuickAction,
+}: KanbanBoardProps) {
   return (
     <div className="flex gap-4 overflow-x-auto pb-4">
       {COLUMNAS.map((col) => {
@@ -31,6 +40,7 @@ export function KanbanBoard({ pipeline, onAddLead, onClickLead }: KanbanBoardPro
             color={col.color}
             onAddLead={onAddLead}
             onClickLead={onClickLead}
+            onQuickAction={onQuickAction}
           />
         )
       })}

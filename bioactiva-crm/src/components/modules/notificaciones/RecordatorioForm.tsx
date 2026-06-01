@@ -18,6 +18,8 @@ interface RecordatorioFormProps {
   isLoading: boolean
   error?: string | null
   onCancel?: () => void
+  leadIdInicial?: number
+  actividadIdInicial?: number
 }
 
 export function RecordatorioForm({
@@ -25,6 +27,8 @@ export function RecordatorioForm({
   isLoading,
   error,
   onCancel,
+  leadIdInicial,
+  actividadIdInicial,
 }: RecordatorioFormProps) {
   const { data: leadsResponse } = useLeads({ limit: 100 })
   const leads = leadsResponse?.data ?? []
@@ -40,8 +44,8 @@ export function RecordatorioForm({
   } = useForm<RecordatorioFormValues>({
     resolver: zodResolver(recordatorioSchema),
     defaultValues: {
-      id_lead: 0,
-      id_actividad: 0,
+      id_lead: leadIdInicial ?? 0,
+      id_actividad: actividadIdInicial ?? 0,
       id_plantilla: 0,
       fecha_envio: '',
       hora_envio: '',
@@ -59,6 +63,11 @@ export function RecordatorioForm({
   const selectedActividad = actividades.find(
     (actividad) => actividad.id === selectedActividadId
   )
+
+  useEffect(() => {
+    if (leadIdInicial) setValue('id_lead', leadIdInicial)
+    if (actividadIdInicial) setValue('id_actividad', actividadIdInicial)
+  }, [actividadIdInicial, leadIdInicial, setValue])
 
   const plantillasDisponibles = plantillasActivas.data?.filter(
     (plantilla) =>
@@ -90,6 +99,8 @@ export function RecordatorioForm({
 
     await onSubmit({
       ...data,
+      id_lead: selectedLead.id,
+      id_actividad: selectedActividad.id,
       fecha_envio: `${data.fecha_envio}T${data.hora_envio}`,
       destinatario: selectedLead.encargado_nombre ?? 'Responsable',
       lead_codigo: selectedLead.codigo,
@@ -133,6 +144,7 @@ export function RecordatorioForm({
             <select
               {...register('id_lead', { valueAsNumber: true })}
               className={inputClass(!!errors.id_lead)}
+              disabled={Boolean(leadIdInicial)}
             >
               <option value={0}>Selecciona un lead</option>
               {leads.map((lead) => (
@@ -153,7 +165,7 @@ export function RecordatorioForm({
             <select
               {...register('id_actividad', { valueAsNumber: true })}
               className={inputClass(!!errors.id_actividad)}
-              disabled={!selectedLead}
+              disabled={!selectedLead || Boolean(actividadIdInicial)}
             >
               <option value={0}>
                 {selectedLead ? 'Selecciona una actividad' : 'Selecciona primero un lead'}

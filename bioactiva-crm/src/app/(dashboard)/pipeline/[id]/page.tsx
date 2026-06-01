@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import {
   useLead,
@@ -14,8 +14,10 @@ import { getErrorMessage } from '@/lib/utils/error.utils'
 
 export default function LeadDetallePage() {
   const params                          = useParams()
+  const searchParams                    = useSearchParams()
   const id                              = Number(params.id)
-  const [editando, setEditando]         = useState(false)
+  const accionInicial                   = searchParams.get('accion')
+  const [editando, setEditando]         = useState(accionInicial === 'editar')
   const [errorGuardar, setErrorGuardar] = useState<string | null>(null)
 
   const { data: lead, isLoading, isError } = useLead(id)
@@ -81,6 +83,11 @@ export default function LeadDetallePage() {
     <LeadDetalle
       lead={lead}
       onEditar={() => setEditando(true)}
+      initialAction={
+        accionInicial === 'actividad' || accionInicial === 'seguimiento'
+          ? accionInicial
+          : undefined
+      }
     />
   )
 }

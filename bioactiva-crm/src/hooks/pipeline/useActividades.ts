@@ -65,6 +65,7 @@ export function useCompletarActividad(leadId: number) {
         queryKey: QUERY_KEYS.actividades.byLead(leadId),
       })
       queryClient.invalidateQueries({ queryKey: ['leads'] })
+      queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))

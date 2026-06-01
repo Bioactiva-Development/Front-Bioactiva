@@ -18,19 +18,30 @@ import { useActualizarEstadoLead } from '@/hooks/pipeline/useLeads'
 import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
 import {
   useCentroNotificaciones,
+  useCrearRecordatorio,
+  useCrearSeguimiento,
   useNotificacionesPorLead,
 } from '@/hooks/notificaciones/useNotificaciones'
+import { RecordatorioForm } from '@/components/modules/notificaciones/RecordatorioForm'
+import { SeguimientoForm } from '@/components/modules/notificaciones/SeguimientoForm'
 import { ActividadFormValues } from '@/lib/validators/actividad.schema'
+import {
+  RecordatorioFormValues,
+  SeguimientoFormValues,
+} from '@/lib/validators/notificacion.schema'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 import { validateLeadStateTransition } from '@/lib/utils/lead-flow.utils'
 import {
   getBlockingPendingActivity,
   isLeadStaleWithoutProgress,
 } from '@/lib/utils/activity-flow.utils'
+import { Actividad } from '@/types/actividad.types'
+import { NotificacionProgramada } from '@/types/notificacion.types'
 
 interface LeadDetalleProps {
   lead:     Lead
   onEditar: () => void
+  initialAction?: 'actividad' | 'seguimiento'
 }
 
 const ESTADO_COLORS: Record<LeadState, string> = {
@@ -108,15 +119,21 @@ function formatFecha(fecha?: string) {
   })
 }
 
-export function LeadDetalle({ lead, onEditar }: LeadDetalleProps) {
+export function LeadDetalle({ lead, onEditar, initialAction }: LeadDetalleProps) {
   const router                          = useRouter()
   const [tab, setTab]                   = useState<
     'info' | 'actividades' | 'cotizaciones' | 'historial'
-  >('info')
-  const [mostrarForm, setMostrarForm]   = useState(false)
+  >(initialAction ? 'actividades' : 'info')
+  const [mostrarForm, setMostrarForm]   = useState(initialAction === 'actividad')
   const [errorActividad, setErrorActividad] = useState<string | null>(null)
   const [estadoError, setEstadoError]   = useState<string | null>(null)
   const [actividadBloqueada, setActividadBloqueada] = useState<string | null>(null)
+  const [notificacionMode, setNotificacionMode] = useState<
+    'recordatorio' | 'seguimiento' | null
+  >(null)
+  const [actividadNotificacion, setActividadNotificacion] =
+    useState<Actividad | null>(null)
+  const [errorNotificacion, setErrorNotificacion] = useState<string | null>(null)
 
   const { data: actividades = [], isLoading: loadingActividades } =
     useActividades(lead.id)
@@ -130,6 +147,10 @@ export function LeadDetalle({ lead, onEditar }: LeadDetalleProps) {
 
   const { mutateAsync: actualizarEstado, isPending: actualizandoEstado } =
     useActualizarEstadoLead()
+  const { mutateAsync: crearRecordatorio, isPending: creandoRecordatorio } =
+    useCrearRecordatorio()
+  const { mutateAsync: crearSeguimiento, isPending: creandoSeguimiento } =
+    useCrearSeguimiento()
 
   const pendingActivity = useMemo(
     () => getBlockingPendingActivity(actividades),
@@ -166,6 +187,45 @@ export function LeadDetalle({ lead, onEditar }: LeadDetalleProps) {
       await actualizarEstado({ id: lead.id, estado })
     } catch (err: unknown) {
       setEstadoError(getErrorMessage(err, 'No se pudo cambiar el estado del lead.'))
+    }
+  }
+
+  const abrirProgramacion = (
+    mode: 'recordatorio' | 'seguimiento',
+    actividad: Actividad
+  ) => {
+    setErrorNotificacion(null)
+    setNotificacionMode(mode)
+    setActividadNotificacion(actividad)
+  }
+
+  const cerrarProgramacion = () => {
+    setNotificacionMode(null)
+    setActividadNotificacion(null)
+    setErrorNotificacion(null)
+  }
+
+  const handleCrearRecordatorio = async (
+    data: RecordatorioFormValues & Partial<NotificacionProgramada>
+  ) => {
+    try {
+      setErrorNotificacion(null)
+      await crearRecordatorio(data)
+      cerrarProgramacion()
+    } catch (err: unknown) {
+      setErrorNotificacion(getErrorMessage(err, 'No se pudo programar el recordatorio.'))
+    }
+  }
+
+  const handleCrearSeguimiento = async (
+    data: SeguimientoFormValues & Partial<NotificacionProgramada>
+  ) => {
+    try {
+      setErrorNotificacion(null)
+      await crearSeguimiento(data)
+      cerrarProgramacion()
+    } catch (err: unknown) {
+      setErrorNotificacion(getErrorMessage(err, 'No se pudo programar el seguimiento.'))
     }
   }
 
@@ -486,7 +546,7 @@ export function LeadDetalle({ lead, onEditar }: LeadDetalleProps) {
             </div>
           )}
 
-          {mostrarForm && (
+          {mostrarForm && !pendingActivity && (
             <div className="mb-4">
               <ActividadForm
                 leadId={lead.id}
@@ -495,6 +555,30 @@ export function LeadDetalle({ lead, onEditar }: LeadDetalleProps) {
                 isLoading={creando}
                 error={errorActividad}
               />
+            </div>
+          )}
+
+          {notificacionMode && actividadNotificacion && (
+            <div className="mb-4">
+              {notificacionMode === 'recordatorio' ? (
+                <RecordatorioForm
+                  leadIdInicial={lead.id}
+                  actividadIdInicial={actividadNotificacion.id}
+                  onSubmit={handleCrearRecordatorio}
+                  onCancel={cerrarProgramacion}
+                  isLoading={creandoRecordatorio}
+                  error={errorNotificacion}
+                />
+              ) : (
+                <SeguimientoForm
+                  leadIdInicial={lead.id}
+                  actividadIdInicial={actividadNotificacion.id}
+                  onSubmit={handleCrearSeguimiento}
+                  onCancel={cerrarProgramacion}
+                  isLoading={creandoSeguimiento}
+                  error={errorNotificacion}
+                />
+              )}
             </div>
           )}
 
@@ -507,6 +591,12 @@ export function LeadDetalle({ lead, onEditar }: LeadDetalleProps) {
             <ActividadHistorial
               leadId={lead.id}
               actividades={actividades}
+              onProgramarRecordatorio={(actividad) =>
+                abrirProgramacion('recordatorio', actividad)
+              }
+              onProgramarSeguimiento={(actividad) =>
+                abrirProgramacion('seguimiento', actividad)
+              }
             />
           )}
         </div>

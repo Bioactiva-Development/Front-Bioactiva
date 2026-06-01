@@ -20,6 +20,25 @@ export default function PipelinePage() {
 
   const handleLimpiarFiltros = () => setFiltros(FILTROS_INICIALES)
 
+  const handleQuickAction = (
+    lead: Lead,
+    action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
+  ) => {
+    if (action === 'cotizacion') {
+      router.push(`/cotizaciones/nueva?lead=${lead.id}`)
+      return
+    }
+
+    const accionMap = {
+      detalle: '',
+      editar: '?accion=editar',
+      actividad: '?accion=actividad',
+      seguimiento: '?accion=seguimiento',
+    } as const
+
+    router.push(`/pipeline/${lead.id}${accionMap[action]}`)
+  }
+
   const total = pipeline
     ? pipeline.prospecto.length +
       pipeline.ofertado.length +
@@ -81,6 +100,7 @@ export default function PipelinePage() {
           pipeline={pipeline}
           onAddLead={() => router.push('/pipeline/nuevo')}
           onClickLead={setLeadSeleccionado}
+          onQuickAction={handleQuickAction}
         />
       )}
 

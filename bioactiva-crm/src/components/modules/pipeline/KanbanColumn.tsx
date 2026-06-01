@@ -10,6 +10,10 @@ interface KanbanColumnProps {
   color:     string
   onAddLead: () => void
   onClickLead: (lead: Lead) => void
+  onQuickAction?: (
+    lead: Lead,
+    action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
+  ) => void
 }
 
 export function KanbanColumn({
@@ -18,6 +22,7 @@ export function KanbanColumn({
   color,
   onAddLead,
   onClickLead,
+  onQuickAction,
 }: KanbanColumnProps) {
   return (
     <div className="flex flex-col min-w-70 flex-1">
@@ -53,6 +58,7 @@ export function KanbanColumn({
               key={lead.id}
               lead={lead}
               onClick={onClickLead}
+              onQuickAction={onQuickAction}
             />
           ))
         )}

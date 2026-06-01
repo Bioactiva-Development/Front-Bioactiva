@@ -6,6 +6,7 @@ import {
   CheckCircle2, Clock, Trash2,
   ChevronDown, ChevronUp, Send,
   AlertTriangle,
+  Bell,
 } from 'lucide-react'
 import { Actividad } from '@/types/actividad.types'
 import { TipoActividad, EstadoActividad } from '@/types/enums'
@@ -19,6 +20,8 @@ import {
 interface ActividadHistorialProps {
   leadId:      number
   actividades: Actividad[]
+  onProgramarRecordatorio?: (actividad: Actividad) => void
+  onProgramarSeguimiento?: (actividad: Actividad) => void
 }
 
 const TIPO_ICONOS: Record<TipoActividad, React.ReactNode> = {
@@ -38,9 +41,13 @@ const TIPO_COLORS: Record<TipoActividad, string> = {
 function ActividadItem({
   actividad,
   leadId,
+  onProgramarRecordatorio,
+  onProgramarSeguimiento,
 }: {
   actividad: Actividad
   leadId:    number
+  onProgramarRecordatorio?: (actividad: Actividad) => void
+  onProgramarSeguimiento?: (actividad: Actividad) => void
 }) {
   const [expandido,   setExpandido]   = useState(false)
   const [nuevoComment, setNuevoComment] = useState('')
@@ -109,6 +116,28 @@ function ActividadItem({
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
+            {esPendiente && (
+              <>
+              <button
+                type="button"
+                onClick={() => onProgramarRecordatorio?.(actividad)}
+                title="Programar recordatorio"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+                  hover:bg-emerald-50 transition-colors"
+              >
+                <Bell size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onProgramarSeguimiento?.(actividad)}
+                title="Programar seguimiento"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+                  hover:bg-emerald-50 transition-colors"
+              >
+                <Send size={14} />
+              </button>
+              </>
+            )}
             {esPendiente && (
               <button
                 onClick={() => setMostrandoCierre((prev) => !prev)}
@@ -274,6 +303,8 @@ function ActividadItem({
 export function ActividadHistorial({
   leadId,
   actividades,
+  onProgramarRecordatorio,
+  onProgramarSeguimiento,
 }: ActividadHistorialProps) {
   const pendientes  = actividades.filter(
     (a) => a.estado === EstadoActividad.Pendiente
@@ -301,7 +332,13 @@ export function ActividadHistorial({
             Pendientes ({pendientes.length})
           </p>
           {pendientes.map((a) => (
-            <ActividadItem key={a.id} actividad={a} leadId={leadId} />
+            <ActividadItem
+              key={a.id}
+              actividad={a}
+              leadId={leadId}
+              onProgramarRecordatorio={onProgramarRecordatorio}
+              onProgramarSeguimiento={onProgramarSeguimiento}
+            />
           ))}
         </div>
       )}
@@ -312,7 +349,13 @@ export function ActividadHistorial({
             Completadas ({completadas.length})
           </p>
           {completadas.map((a) => (
-            <ActividadItem key={a.id} actividad={a} leadId={leadId} />
+            <ActividadItem
+              key={a.id}
+              actividad={a}
+              leadId={leadId}
+              onProgramarRecordatorio={onProgramarRecordatorio}
+              onProgramarSeguimiento={onProgramarSeguimiento}
+            />
           ))}
         </div>
       )}

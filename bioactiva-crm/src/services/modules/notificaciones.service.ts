@@ -7,6 +7,7 @@ import {
   mockMarcarLeida,
   mockMarcarTodasLeidas,
   mockCancelarProgramada,
+  mockCancelarPendientesPorActividad,
   mockCreateRecordatorio,
   mockCreateSeguimiento,
 } from '@/services/mock/notificaciones.mock'
@@ -94,6 +95,23 @@ export const notificacionesService = {
   cancelarProgramada: async (id: number): Promise<void> => {
     if (USE_MOCK) return mockCancelarProgramada(id)
     await apiClient.delete(ENDPOINTS.notificaciones.programada(id))
+  },
+
+  cancelarPendientesPorActividad: async (actividadId: number): Promise<void> => {
+    if (USE_MOCK) return mockCancelarPendientesPorActividad(actividadId)
+
+    const centro = await notificacionesService.getCentro()
+    const pendientes = centro.programadas.filter(
+      (programada) =>
+        programada.id_actividad === actividadId &&
+        programada.estado === 'Programada'
+    )
+
+    await Promise.all(
+      pendientes.map((programada) =>
+        apiClient.delete(ENDPOINTS.notificaciones.programada(programada.id))
+      )
+    )
   },
 
   createRecordatorio: async (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, ArrowLeft } from 'lucide-react'
@@ -36,6 +36,7 @@ export function LeadForm({
   const router    = useRouter()
   const esEdicion = !!lead
   const { usuario } = useAuthStore()
+  const [errorLocal, setErrorLocal] = useState<string | null>(null)
 
   const {
     register,
@@ -101,6 +102,23 @@ export function LeadForm({
       : 'border-gray-200 focus:border-emerald-400 bg-white'
     }`
 
+  const handleValidSubmit = async (data: LeadFormValues) => {
+    setErrorLocal(null)
+
+    if (data.id_contacto) {
+      const contactoPertenece = contactos.some(
+        (contacto) => contacto.id === data.id_contacto
+      )
+
+      if (!contactoPertenece) {
+        setErrorLocal('El contacto seleccionado no pertenece a la organización elegida.')
+        return
+      }
+    }
+
+    await onSubmit(data)
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
@@ -146,7 +164,9 @@ export function LeadForm({
             </span>
           </label>
           <select
-            {...register('id_contacto', { valueAsNumber: true })}
+            {...register('id_contacto', {
+              setValueAs: (value) => value ? Number(value) : undefined,
+            })}
             disabled={!orgSeleccionada}
             className={`${inputClass(!!errors.id_contacto)} cursor-pointer
               ${!orgSeleccionada ? 'opacity-60 cursor-not-allowed' : ''}`}
@@ -335,10 +355,10 @@ export function LeadForm({
           </div>
         </div>
 
-        {error && (
+        {(errorLocal || error) && (
           <div className="bg-red-50 border border-red-200 text-red-700
             text-sm rounded-xl px-4 py-3">
-            {error}
+            {errorLocal ?? error}
           </div>
         )}
 
@@ -355,7 +375,7 @@ export function LeadForm({
 
           <button
             type="button"
-            onClick={handleSubmit(onSubmit)}
+            onClick={handleSubmit(handleValidSubmit)}
             disabled={isLoading}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700
               disabled:bg-emerald-400 disabled:cursor-not-allowed text-white

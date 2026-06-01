@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Filter, ChevronUp, ChevronDown, X } from 'lucide-react'
+import { Filter, ChevronUp, ChevronDown, X, Search } from 'lucide-react'
 import { LeadFiltros as FiltrosType } from '@/types/lead.types'
 import { LeadState, Sector, TipoEmpresa, TamanoEmpresa } from '@/types/enums'
 
@@ -34,6 +34,8 @@ export function LeadFiltros({
   const [abierto, setAbierto] = useState(true)
 
   const hayFiltrosActivos =
+    filtros.search ||
+    filtros.estado ||
     filtros.id_encargado ||
     filtros.canal_captacion ||
     filtros.sector ||
@@ -68,6 +70,29 @@ export function LeadFiltros({
       {abierto && (
         <div className="px-6 pb-5 space-y-4 border-t border-gray-50">
 
+          <div className="pt-4">
+            <label className="block text-xs text-gray-400 font-medium mb-1">
+              Búsqueda comercial
+            </label>
+            <div className="relative">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                type="search"
+                value={filtros.search ?? ''}
+                onChange={(e) => onChange({
+                  ...filtros,
+                  search: e.target.value || undefined,
+                })}
+                placeholder="Buscar por código, organización, contacto, servicio o responsable"
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200
+                  bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
+                  placeholder:text-gray-400"
+              />
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 pt-4">
 

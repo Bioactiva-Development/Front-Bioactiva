@@ -15,6 +15,7 @@ import {
   ActividadFormData,
   ComentarioActividad,
 } from '@/types/actividad.types'
+import { notificacionesService } from '@/services/modules/notificaciones.service'
 
 export const actividadesService = {
 
@@ -48,12 +49,15 @@ export const actividadesService = {
   },
 
   complete: async (id: number, notas?: string): Promise<Actividad> => {
-    if (USE_MOCK) return mockCompleteActividad(id, notas)
-    const response = await apiClient.patch<Actividad>(
-      ENDPOINTS.actividades.complete(id),
-      notas ? { notas } : undefined
-    )
-    return response.data
+    const actividad = USE_MOCK
+      ? await mockCompleteActividad(id, notas)
+      : (await apiClient.patch<Actividad>(
+          ENDPOINTS.actividades.complete(id),
+          notas ? { notas } : undefined
+        )).data
+
+    await notificacionesService.cancelarPendientesPorActividad(id)
+    return actividad
   },
 
   delete: async (id: number): Promise<void> => {

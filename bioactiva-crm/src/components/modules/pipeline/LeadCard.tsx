@@ -1,14 +1,37 @@
 'use client'
 
-import { AlertTriangle, Building2, User, Briefcase } from 'lucide-react'
+import type React from 'react'
+import {
+  AlertTriangle,
+  Building2,
+  User,
+  Briefcase,
+  ExternalLink,
+  Pencil,
+  MessageSquarePlus,
+  FileText,
+  Send,
+} from 'lucide-react'
 import { Lead } from '@/types/lead.types'
 
 interface LeadCardProps {
   lead:     Lead
   onClick:  (lead: Lead) => void
+  onQuickAction?: (
+    lead: Lead,
+    action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
+  ) => void
 }
 
-export function LeadCard({ lead, onClick }: LeadCardProps) {
+export function LeadCard({ lead, onClick, onQuickAction }: LeadCardProps) {
+  const handleAction = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
+  ) => {
+    event.stopPropagation()
+    onQuickAction?.(lead, action)
+  }
+
   return (
     <div
       onClick={() => onClick(lead)}
@@ -63,6 +86,54 @@ export function LeadCard({ lead, onClick }: LeadCardProps) {
           </span>
         </div>
       )}
+
+      <div className="flex items-center justify-between gap-1 pt-2 border-t border-gray-50">
+        <button
+          type="button"
+          title="Ver detalle"
+          onClick={(event) => handleAction(event, 'detalle')}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+            hover:bg-emerald-50 transition-colors"
+        >
+          <ExternalLink size={14} />
+        </button>
+        <button
+          type="button"
+          title="Editar lead"
+          onClick={(event) => handleAction(event, 'editar')}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+            hover:bg-emerald-50 transition-colors"
+        >
+          <Pencil size={14} />
+        </button>
+        <button
+          type="button"
+          title="Registrar actividad"
+          onClick={(event) => handleAction(event, 'actividad')}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+            hover:bg-emerald-50 transition-colors"
+        >
+          <MessageSquarePlus size={14} />
+        </button>
+        <button
+          type="button"
+          title="Crear cotización"
+          onClick={(event) => handleAction(event, 'cotizacion')}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+            hover:bg-emerald-50 transition-colors"
+        >
+          <FileText size={14} />
+        </button>
+        <button
+          type="button"
+          title="Programar seguimiento"
+          onClick={(event) => handleAction(event, 'seguimiento')}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+            hover:bg-emerald-50 transition-colors"
+        >
+          <Send size={14} />
+        </button>
+      </div>
     </div>
   )
 }
