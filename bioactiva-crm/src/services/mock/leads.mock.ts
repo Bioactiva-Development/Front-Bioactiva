@@ -34,7 +34,7 @@ const MOCK_LEADS: Lead[] = [
     estado:              LeadState.Prospecto,
     servicio_interes:    'Ley 30309 - Deducción I+D+i',
     comentarios:         'Startup de tecnología agrícola con potencial',
-    id_encargado:        2,
+    id_encargado:        4,
     canal_captacion:     'Web / Redes sociales',
     sector:              'TECNOLOGIA',
     tipo_org:            'Privada',
@@ -56,7 +56,7 @@ const MOCK_LEADS: Lead[] = [
     servicio_interes:    'Ley 30309 - Deducción I+D+i',
     comentarios:         'Empresa interesada en deducción tributaria',
     desafio_oportunidad: 'Optimizar procesos de producción con I+D',
-    id_encargado:        3,
+    id_encargado:        2,
     canal_captacion:     'Prospección directa',
     sector:              'MANUFACTURA',
     tipo_org:            'Privada',
@@ -79,7 +79,7 @@ const MOCK_LEADS: Lead[] = [
     servicio_interes:    'Diagnóstico de innovación y hoja de ruta tecnológica',
     comentarios:         'Cliente con alta prioridad',
     desafio_oportunidad: 'Transformación digital y gestión de innovación',
-    id_encargado:        1,
+    id_encargado:        3,
     canal_captacion:     'Referido',
     sector:              'AGROALIMENTARIA',
     tipo_org:            'Privada',
@@ -185,6 +185,13 @@ const MOCK_COMENTARIOS: ComentarioActividad[] = [
 
 const delay = (ms: number = 600) =>
   new Promise((resolve) => setTimeout(resolve, ms))
+
+const RESPONSABLES_MOCK: Record<number, { nombre: string; correo: string }> = {
+  1: { nombre: 'Karien Diaz', correo: 'kdiaz@bioactiva.pe' },
+  2: { nombre: 'Luis Torres', correo: 'ltorres@bioactiva.pe' },
+  3: { nombre: 'Administración', correo: 'admin@bioactiva.pe' },
+  4: { nombre: 'Carlos Mamani', correo: 'cmamani@bioactiva.pe' },
+}
 
 const withAlertState = (lead: Lead): Lead => {
   const alertLabel = getLeadAlertLabel(
@@ -361,6 +368,7 @@ export const mockCreateLead = async (
 
   const anio   = new Date().getFullYear()
   const codigo = `LEAD-${anio}-${String(MOCK_LEADS.length + 1).padStart(3, '0')}`
+  const responsable = RESPONSABLES_MOCK[data.id_encargado ?? 3]
 
   const nuevo: Lead = {
     id:                  Date.now(),
@@ -381,8 +389,8 @@ export const mockCreateLead = async (
     created_at:          new Date().toISOString(),
     updated_at:          new Date().toISOString(),
     organizacion_nombre: data.organizacion_nombre,
-    encargado_nombre:    data.encargado_nombre ?? 'Administración',
-    encargado_correo:    data.encargado_correo,
+    encargado_nombre:    data.encargado_nombre ?? responsable.nombre,
+    encargado_correo:    data.encargado_correo ?? responsable.correo,
     tiene_alerta:        false,
   }
 
