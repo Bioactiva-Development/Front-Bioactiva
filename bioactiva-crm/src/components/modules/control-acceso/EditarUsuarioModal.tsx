@@ -28,11 +28,7 @@ export function EditarUsuarioModal({ usuario, isLoading, error, onClose, onSubmi
     })
 
     useEffect(() => {
-        reset({
-            nombre_completo: [usuario.nombres, usuario.apellidos].filter(Boolean).join(' '),
-            correo: usuario.correo,
-            rol: usuario.rol,
-        })
+        reset({ rol: usuario.rol })
     }, [usuario, reset])
 
     const handleFormSubmit = async (data: EditarUsuarioFormValues) => {
@@ -40,13 +36,15 @@ export function EditarUsuarioModal({ usuario, isLoading, error, onClose, onSubmi
         if (ok) onClose()
     }
 
+    const nombreCompleto = [usuario.nombres, usuario.apellidos].filter(Boolean).join(' ')
+
     return (
         <ModalShell onClose={onClose}>
             <ModalHeader
                 icon={<UserCog size={18} className="text-blue-600" />}
                 iconBg="bg-blue-50"
-                title="Editar usuario"
-                subtitle={usuario.correo}
+                title="Cambiar rol"
+                subtitle={nombreCompleto || usuario.correo}
                 onClose={onClose}
             />
 
@@ -56,24 +54,6 @@ export function EditarUsuarioModal({ usuario, isLoading, error, onClose, onSubmi
                         {error}
                     </div>
                 )}
-
-                <ModalFormField label="Nombre completo" error={errors.nombre_completo?.message}>
-                    <input
-                        type="text"
-                        placeholder="Nombres y apellidos"
-                        {...register('nombre_completo')}
-                        className={modalInputCn(!!errors.nombre_completo)}
-                    />
-                </ModalFormField>
-
-                <ModalFormField label="Correo institucional" error={errors.correo?.message}>
-                    <input
-                        type="email"
-                        placeholder="usuario@bioactiva.pe"
-                        {...register('correo')}
-                        className={modalInputCn(!!errors.correo)}
-                    />
-                </ModalFormField>
 
                 <ModalFormField label="Rol" error={errors.rol?.message}>
                     <select

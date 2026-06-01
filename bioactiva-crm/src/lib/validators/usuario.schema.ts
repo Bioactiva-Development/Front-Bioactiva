@@ -15,18 +15,6 @@ export const invitarUsuarioSchema = z.object({
 })
 
 export const editarUsuarioSchema = z.object({
-    nombre_completo: z
-        .string()
-        .min(2, 'El nombre debe tener al menos 2 caracteres')
-        .max(100, 'El nombre es demasiado largo'),
-    correo: z
-        .string()
-        .min(1, 'El correo es obligatorio')
-        .email('Formato de correo inválido')
-        .refine(
-            (val) => val.endsWith(`@${DOMINIO_INSTITUCIONAL}`),
-            `Debe ser un correo institucional (@${DOMINIO_INSTITUCIONAL})`,
-        ),
     rol: z.nativeEnum(RolUsuario),
 })
 
