@@ -15,6 +15,9 @@ const MOCK_LEADS: Lead[] = [
     desafio_oportunidad: 'Reducir carga tributaria mediante proyectos I+D',
     id_encargado:        1,
     canal_captacion:     'Referido',
+    sector:              'ADMINISTRACION_PUBLICA',
+    tipo_org:            'Publica',
+    tamano:              'Grande',
     id_author:           1,
     created_at:          '2025-03-01T08:00:00Z',
     updated_at:          '2025-03-01T08:00:00Z',
@@ -33,6 +36,9 @@ const MOCK_LEADS: Lead[] = [
     comentarios:         'Startup de tecnología agrícola con potencial',
     id_encargado:        2,
     canal_captacion:     'Web / Redes sociales',
+    sector:              'TECNOLOGIA',
+    tipo_org:            'Privada',
+    tamano:              'Pequena',
     id_author:           2,
     created_at:          '2026-01-15T08:00:00Z',
     updated_at:          '2026-01-15T08:00:00Z',
@@ -52,6 +58,9 @@ const MOCK_LEADS: Lead[] = [
     desafio_oportunidad: 'Optimizar procesos de producción con I+D',
     id_encargado:        3,
     canal_captacion:     'Prospección directa',
+    sector:              'MANUFACTURA',
+    tipo_org:            'Privada',
+    tamano:              'Mediana',
     id_author:           1,
     created_at:          '2025-04-01T08:00:00Z',
     updated_at:          '2025-04-01T08:00:00Z',
@@ -72,6 +81,9 @@ const MOCK_LEADS: Lead[] = [
     desafio_oportunidad: 'Transformación digital y gestión de innovación',
     id_encargado:        1,
     canal_captacion:     'Referido',
+    sector:              'AGROALIMENTARIA',
+    tipo_org:            'Privada',
+    tamano:              'Grande',
     id_author:           1,
     created_at:          '2025-03-15T08:00:00Z',
     updated_at:          '2025-04-03T08:00:00Z',
@@ -213,6 +225,28 @@ export const mockGetPipeline = async (
     )
   }
 
+  if (filtros?.estado) {
+    resultado = resultado.filter((l) => l.estado === filtros.estado)
+  }
+
+  if (filtros?.canal_captacion) {
+    resultado = resultado.filter(
+      (l) => l.canal_captacion === filtros.canal_captacion
+    )
+  }
+
+  if (filtros?.sector) {
+    resultado = resultado.filter((l) => l.sector === filtros.sector)
+  }
+
+  if (filtros?.tipo_org) {
+    resultado = resultado.filter((l) => l.tipo_org === filtros.tipo_org)
+  }
+
+  if (filtros?.tamano) {
+    resultado = resultado.filter((l) => l.tamano === filtros.tamano)
+  }
+
   if (filtros?.solo_alerta) {
     resultado = resultado.filter((l) => l.tiene_alerta)
   }
@@ -260,6 +294,46 @@ export const mockGetLeads = async (
 
   if (filtros?.estado) {
     resultado = resultado.filter((l) => l.estado === filtros.estado)
+  }
+
+  if (filtros?.id_encargado) {
+    resultado = resultado.filter(
+      (l) => l.id_encargado === filtros.id_encargado
+    )
+  }
+
+  if (filtros?.canal_captacion) {
+    resultado = resultado.filter(
+      (l) => l.canal_captacion === filtros.canal_captacion
+    )
+  }
+
+  if (filtros?.sector) {
+    resultado = resultado.filter((l) => l.sector === filtros.sector)
+  }
+
+  if (filtros?.tipo_org) {
+    resultado = resultado.filter((l) => l.tipo_org === filtros.tipo_org)
+  }
+
+  if (filtros?.tamano) {
+    resultado = resultado.filter((l) => l.tamano === filtros.tamano)
+  }
+
+  if (filtros?.solo_alerta) {
+    resultado = resultado.filter((l) => l.tiene_alerta)
+  }
+
+  if (filtros?.fecha_desde) {
+    resultado = resultado.filter(
+      (l) => new Date(l.created_at) >= new Date(filtros.fecha_desde!)
+    )
+  }
+
+  if (filtros?.fecha_hasta) {
+    resultado = resultado.filter(
+      (l) => new Date(l.created_at) <= new Date(filtros.fecha_hasta!)
+    )
   }
 
   const page  = filtros?.page  ?? 1

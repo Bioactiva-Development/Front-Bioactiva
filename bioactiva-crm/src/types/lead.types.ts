@@ -12,6 +12,9 @@ export interface Lead {
   notas_contacto?: string
   id_encargado: number
   canal_captacion?: string
+  sector?: string
+  tipo_org?: string
+  tamano?: string
   fecha_cierre?: string
   proxima_actividad?: string
   fecha_proxima_actividad?: string
