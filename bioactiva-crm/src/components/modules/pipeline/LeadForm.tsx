@@ -12,6 +12,9 @@ import { ROUTES } from '@/lib/constants/routes'
 import { useOrganizaciones } from '@/hooks/organizaciones/useOrganizaciones'
 import { useContactosPorOrganizacion } from '@/hooks/contactos/useContactos'
 import { useAuthStore } from '@/store'
+import { usuariosService } from '@/services/modules/usuarios.service'
+import { EstadoUsuario } from '@/types/enums'
+import { UsuarioListItem } from '@/types/usuario.types'
 
 interface LeadFormProps {
   lead?:      Lead
@@ -22,12 +25,17 @@ interface LeadFormProps {
   error?:     string | null
 }
 
-const RESPONSABLES = [
-  { id: 1, nombre: 'Karien Diaz',    correo: 'kdiaz@bioactiva.pe' },
-  { id: 2, nombre: 'Luis Torres',    correo: 'ltorres@bioactiva.pe' },
-  { id: 3, nombre: 'Administración', correo: 'admin@bioactiva.pe' },
-  { id: 4, nombre: 'Carlos Mamani',  correo: 'cmamani@bioactiva.pe' },
-]
+interface ResponsableOption {
+  id: number
+  nombre: string
+  correo: string
+}
+
+const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
+  id: usuario.id,
+  nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
+  correo: usuario.correo,
+})
 
 function getLeadFormDefaults(
   lead?: Lead,
@@ -71,6 +79,7 @@ export function LeadForm({
   const esEdicion = !!lead
   const { usuario } = useAuthStore()
   const [errorLocal, setErrorLocal] = useState<string | null>(null)
+  const [responsables, setResponsables] = useState<ResponsableOption[]>([])
 
   const {
     register,
@@ -105,6 +114,63 @@ export function LeadForm({
     lead.contacto_nombre &&
     !contactos.some((contacto) => contacto.id === lead.id_contacto)
   )
+  const usuarioActualOption = useMemo<ResponsableOption | null>(() => {
+    if (!usuario) return null
+    return {
+      id: usuario.id,
+      nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
+      correo: usuario.correo,
+    }
+  }, [usuario])
+  const responsablesDisponibles = useMemo(() => {
+    const options = [...responsables]
+
+    if (
+      usuarioActualOption &&
+      !options.some((responsable) => responsable.id === usuarioActualOption.id)
+    ) {
+      options.unshift(usuarioActualOption)
+    }
+
+    if (
+      lead?.id_encargado &&
+      lead.encargado_nombre &&
+      !options.some((responsable) => responsable.id === lead.id_encargado)
+    ) {
+      options.unshift({
+        id: lead.id_encargado,
+        nombre: lead.encargado_nombre,
+        correo: lead.encargado_correo ?? '',
+      })
+    }
+
+    return options
+  }, [lead, responsables, usuarioActualOption])
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function cargarResponsables() {
+      try {
+        const response = await usuariosService.getUsuarios({
+          estado: EstadoUsuario.Activo,
+          limit: 100,
+        })
+
+        if (!isMounted) return
+        setResponsables(response.usuarios.map(toResponsableOption))
+      } catch {
+        if (!isMounted) return
+        setResponsables(usuarioActualOption ? [usuarioActualOption] : [])
+      }
+    }
+
+    cargarResponsables()
+
+    return () => {
+      isMounted = false
+    }
+  }, [usuarioActualOption])
 
   useEffect(() => {
     reset(getLeadFormDefaults(lead, estadoInicial, usuario))
@@ -140,13 +206,39 @@ export function LeadForm({
   ])
 
   useEffect(() => {
-    const responsable = RESPONSABLES.find(
+    const responsable = responsablesDisponibles.find(
       (r) => r.id === Number(encargadoSelected)
     )
     if (responsable) {
       setValue('encargado_correo', responsable.correo)
     }
-  }, [encargadoSelected, setValue])
+  }, [encargadoSelected, responsablesDisponibles, setValue])
+
+  useEffect(() => {
+    if (esEdicion || responsablesDisponibles.length === 0) return
+
+    const selected = Number(encargadoSelected)
+    const selectedExists = responsablesDisponibles.some(
+      (responsable) => responsable.id === selected
+    )
+
+    if (selected && selectedExists) return
+
+    const fallback =
+      usuarioActualOption &&
+      responsablesDisponibles.some((responsable) => responsable.id === usuarioActualOption.id)
+        ? usuarioActualOption
+        : responsablesDisponibles[0]
+
+    setValue('id_encargado', fallback.id)
+    setValue('encargado_correo', fallback.correo)
+  }, [
+    encargadoSelected,
+    esEdicion,
+    responsablesDisponibles,
+    setValue,
+    usuarioActualOption,
+  ])
 
   useEffect(() => {
     if (!esEdicion) {
@@ -367,7 +459,7 @@ export function LeadForm({
               className={`${inputClass(!!errors.id_encargado)} cursor-pointer`}
             >
               <option value="">Seleccionar...</option>
-              {RESPONSABLES.map((r) => (
+              {responsablesDisponibles.map((r) => (
                 <option key={r.id} value={r.id}>{r.nombre}</option>
               ))}
             </select>

@@ -83,11 +83,14 @@ export const ENDPOINTS = {
     },
 
     cotizaciones: {
-        list: '/api/cotizaciones',
-        detail: (id: number) => `/api/cotizaciones/${id}`,
-        create: '/api/cotizaciones',
-        update: (id: number) => `/api/cotizaciones/${id}`,
-        byLead: (leadId: number) => `/api/leads/${leadId}/cotizaciones`,
+        list: '/quotations',
+        detail: (id: number) => `/quotations/${id}`,
+        create: '/quotations',
+        update: (id: number) => `/quotations/${id}`,
+        send: (id: number) => `/quotations/${id}/send`,
+        accept: (id: number) => `/quotations/${id}/accept`,
+        reject: (id: number) => `/quotations/${id}/reject`,
+        delete: (id: number) => `/quotations/${id}`,
     },
 
     notificaciones: {
