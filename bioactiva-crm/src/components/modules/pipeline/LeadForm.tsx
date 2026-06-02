@@ -16,6 +16,7 @@ import { useAuthStore } from '@/store'
 interface LeadFormProps {
   lead?:      Lead
   estadoInicial?: LeadState
+  estadoEditable?: boolean
   onSubmit:   (data: LeadFormValues) => Promise<void>
   isLoading:  boolean
   error?:     string | null
@@ -31,6 +32,7 @@ const RESPONSABLES = [
 export function LeadForm({
   lead,
   estadoInicial,
+  estadoEditable = false,
   onSubmit,
   isLoading,
   error,
@@ -190,20 +192,35 @@ export function LeadForm({
         </div>
 
 
-        <input type="hidden" {...register('estado')} />
+        {!estadoEditable && <input type="hidden" {...register('estado')} />}
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Estado del pipeline
             </label>
-            <div className="w-full px-4 py-2.5 rounded-xl border border-gray-200
-              bg-gray-50 text-sm text-gray-600">
-              {estadoActual}
-            </div>
+            {estadoEditable ? (
+              <select
+                {...register('estado')}
+                className={`${inputClass(!!errors.estado)} cursor-pointer`}
+              >
+                {Object.values(LeadState).map((estado) => (
+                  <option key={estado} value={estado}>
+                    {estado}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="w-full px-4 py-2.5 rounded-xl border border-gray-200
+                bg-gray-50 text-sm text-gray-600">
+                {estadoActual}
+              </div>
+            )}
             <p className="text-xs text-gray-400">
-              El cambio de estado se gestiona desde la ficha del lead y valida
-              las cotizaciones asociadas.
+              {estadoEditable
+                ? 'La cotización inicial se creará con el estado coherente al pipeline.'
+                : 'El cambio de estado se gestiona desde la ficha del lead y valida las cotizaciones asociadas.'
+              }
             </p>
             {errors.estado && (
               <p className="text-red-500 text-xs">{errors.estado.message}</p>

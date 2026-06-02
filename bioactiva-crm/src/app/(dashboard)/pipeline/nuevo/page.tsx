@@ -17,6 +17,7 @@ export default function NuevoLeadPage() {
 
   const { mutateAsync: crear, isPending } = useCrearLead()
   const estadoParam = searchParams.get('estado')
+  const hasEstadoParam = estadoParam !== null
   const estadoInicial = Object.values(LeadState).includes(
     estadoParam as LeadState
   )
@@ -42,6 +43,7 @@ export default function NuevoLeadPage() {
       />
       <LeadForm
         estadoInicial={estadoInicial}
+        estadoEditable={!hasEstadoParam}
         onSubmit={handleSubmit}
         isLoading={isPending}
         error={error}
