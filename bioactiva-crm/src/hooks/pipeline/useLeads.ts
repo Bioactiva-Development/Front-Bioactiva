@@ -10,7 +10,7 @@ import {
   getPrimaryCotizacion,
   validateLeadStateTransition,
 } from '@/lib/utils/lead-flow.utils'
-import { CotizacionFormData } from '@/types/cotizacion.types'
+import { Cotizacion, CotizacionFormData } from '@/types/cotizacion.types'
 
 export function usePipeline(filtros?: LeadFiltros) {
   return useQuery({
@@ -55,25 +55,79 @@ function buildDefaultCotizacion(lead: Lead): CotizacionFormData {
   }
 }
 
+function canMoveCotizacionToState(
+  cotizacion: Cotizacion,
+  targetState: EstadoCot
+) {
+  if (cotizacion.estado === targetState) return true
+  if (targetState === EstadoCot.Pendiente) return false
+
+  if (cotizacion.estado === EstadoCot.Pendiente) return true
+  if (
+    cotizacion.estado === EstadoCot.Enviada &&
+    (targetState === EstadoCot.Aceptada || targetState === EstadoCot.Rechazada)
+  ) {
+    return true
+  }
+
+  return false
+}
+
+async function ensurePrimaryCotizacionInState(
+  lead: Lead,
+  cotizaciones: Cotizacion[],
+  targetState: EstadoCot
+) {
+  const primaryCotizacion = getPrimaryCotizacion(cotizaciones)
+
+  if (!primaryCotizacion) {
+    return cotizacionesService.create({
+      ...buildDefaultCotizacion(lead),
+      estado: targetState,
+    })
+  }
+
+  if (primaryCotizacion.estado === targetState) {
+    return primaryCotizacion
+  }
+
+  if (canMoveCotizacionToState(primaryCotizacion, targetState)) {
+    return cotizacionesService.update(primaryCotizacion.id, {
+      estado: targetState,
+    })
+  }
+
+  return cotizacionesService.create({
+    ...buildDefaultCotizacion(lead),
+    estado: targetState,
+    observacion:
+      'Nueva cotización generada automáticamente para mantener coherencia con el pipeline.',
+  })
+}
+
 async function syncPrimaryCotizacionWithLead(lead: Lead) {
   const cotizacionState = getCotizacionStateFromLeadState(lead.estado) ??
     EstadoCot.Pendiente
   const cotizaciones = await cotizacionesService.getByLead(lead.id)
-  const cotizacion = getPrimaryCotizacion(cotizaciones)
 
-  if (!cotizacion) {
-    await cotizacionesService.create({
-      ...buildDefaultCotizacion(lead),
-      estado: cotizacionState,
-    })
-    return
+  await ensurePrimaryCotizacionInState(lead, cotizaciones, cotizacionState)
+}
+
+async function syncLeadAndCotizacionState(lead: Lead, estado: LeadState) {
+  const targetCotState = getCotizacionStateFromLeadState(estado)
+
+  if (targetCotState) {
+    const cotizaciones = await cotizacionesService.getByLead(lead.id)
+    await ensurePrimaryCotizacionInState(lead, cotizaciones, targetCotState)
   }
 
-  if (cotizacion.estado !== cotizacionState) {
-    await cotizacionesService.update(cotizacion.id, {
-      estado: cotizacionState,
-    })
+  const updatedLead = await leadsService.updateEstado(lead.id, estado)
+
+  if (!targetCotState) {
+    await syncPrimaryCotizacionWithLead(updatedLead)
   }
+
+  return updatedLead
 }
 
 export function useCrearLead() {
@@ -118,9 +172,8 @@ export function useActualizarEstadoLead() {
 
   return useMutation({
     mutationFn: async ({ id, estado }: { id: number; estado: LeadState }) => {
-      const lead = await leadsService.updateEstado(id, estado)
-      await syncPrimaryCotizacionWithLead(lead)
-      return lead
+      const lead = await leadsService.getById(id)
+      return syncLeadAndCotizacionState(lead, estado)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
@@ -162,19 +215,9 @@ export function useMoverLeadPipeline() {
       }
 
       const targetCotState = getCotizacionStateFromLeadState(estado)
-      const cotizacion = getPrimaryCotizacion(cotizaciones)
 
       if (targetCotState) {
-        if (!cotizacion) {
-          await cotizacionesService.create({
-            ...buildDefaultCotizacion(lead),
-            estado: targetCotState,
-          })
-        } else if (cotizacion.estado !== targetCotState) {
-          await cotizacionesService.update(cotizacion.id, {
-            estado: targetCotState,
-          })
-        }
+        await ensurePrimaryCotizacionInState(lead, cotizaciones, targetCotState)
       }
 
       await leadsService.updateEstado(lead.id, estado)

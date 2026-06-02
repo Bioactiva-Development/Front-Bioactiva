@@ -70,40 +70,9 @@ export function validateLeadStateTransition(
   targetState: LeadState,
   cotizaciones: Cotizacion[]
 ): LeadTransitionGuard {
-  if (targetState === LeadState.Prospecto) {
-    return { allowed: true }
-  }
+  void cotizaciones
 
-  if (targetState === LeadState.Ofertado) {
-    const hasCotizacion = cotizaciones.length > 0
-
-    return hasCotizacion
-      ? { allowed: true }
-      : {
-          allowed: false,
-          reason: 'Para pasar a Ofertado debe existir una cotización asociada al lead.',
-        }
-  }
-
-  if (targetState === LeadState.CierreVenta) {
-    const hasCotizacion = cotizaciones.length > 0
-    return hasCotizacion
-      ? { allowed: true }
-      : {
-          allowed: false,
-          reason: 'Para cerrar con venta debe existir una cotización asociada al lead.',
-        }
-  }
-
-  if (targetState === LeadState.CierreSinVenta) {
-    const hasCotizacion = cotizaciones.length > 0
-    return hasCotizacion
-      ? { allowed: true }
-      : {
-          allowed: false,
-          reason: 'Para cerrar sin venta debe existir una cotización asociada al lead.',
-        }
-  }
-
-  return { allowed: false, reason: 'Estado de pipeline no válido.' }
+  return Object.values(LeadState).includes(targetState)
+    ? { allowed: true }
+    : { allowed: false, reason: 'Estado de pipeline no válido.' }
 }

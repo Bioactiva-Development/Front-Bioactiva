@@ -73,7 +73,7 @@ describe('cotizaciones.mapper', () => {
     })).toEqual({
       idLead: 2,
       idRemitente: 1,
-      fechaCot: '2026-06-02',
+      fechaCot: '2026-06-02T00:00:00.000Z',
       dirigido: 'Valeria Torres',
       cliente: 'Banco de Crédito del Perú S.A.',
       nombreServicio: 'Deducción I+D+i',

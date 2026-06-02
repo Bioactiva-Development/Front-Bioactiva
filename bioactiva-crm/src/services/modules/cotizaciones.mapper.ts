@@ -77,6 +77,11 @@ const trimOrUndefined = (value?: string | null): string | undefined => {
   return trimmed.length > 0 ? trimmed : undefined
 }
 
+const toIsoDateTime = (value: string): string => {
+  if (value.includes('T')) return value
+  return new Date(`${value}T00:00:00.000Z`).toISOString()
+}
+
 const codigoFromCotizacion = (
   dto: Pick<CotizacionDtoOut, 'id' | 'createdAt'>
 ) => {
@@ -129,7 +134,7 @@ export const toCreateCotizacionDto = (
   data: CotizacionFormData
 ): CotizacionCreateDto => {
   const dto: CotizacionCreateDto = {
-    fechaCot: data.fecha_cot,
+    fechaCot: toIsoDateTime(data.fecha_cot),
     dirigido: data.dirigido,
     nombreServicio: data.nombre_servicio,
     monto: String(data.monto),
@@ -158,7 +163,7 @@ export const toUpdateCotizacionDto = (
 ): CotizacionUpdateDto => {
   const dto: CotizacionUpdateDto = {}
 
-  if (data.fecha_cot !== undefined) dto.fechaCot = data.fecha_cot
+  if (data.fecha_cot !== undefined) dto.fechaCot = toIsoDateTime(data.fecha_cot)
   if (data.dirigido !== undefined) dto.dirigido = data.dirigido
   if (data.nombre_servicio !== undefined) dto.nombreServicio = data.nombre_servicio
   if (data.monto !== undefined) dto.monto = String(data.monto)

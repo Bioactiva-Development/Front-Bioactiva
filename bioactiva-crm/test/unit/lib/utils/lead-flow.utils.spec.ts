@@ -43,10 +43,10 @@ describe('lead-flow.utils', () => {
     )
   })
 
-  it('requires an associated quotation before moving a lead to ofertado', () => {
+  it('allows moving a lead to ofertado even when a quotation must be created', () => {
     expect(
       validateLeadStateTransition(LeadState.Ofertado, []).allowed
-    ).toBe(false)
+    ).toBe(true)
 
     expect(
       validateLeadStateTransition(LeadState.Ofertado, [
@@ -55,10 +55,10 @@ describe('lead-flow.utils', () => {
     ).toBe(true)
   })
 
-  it('allows closing with sale when a quotation can be accepted by the move', () => {
+  it('allows closing with sale even when a quotation must be created', () => {
     expect(
       validateLeadStateTransition(LeadState.CierreVenta, []).allowed
-    ).toBe(false)
+    ).toBe(true)
 
     expect(
       validateLeadStateTransition(LeadState.CierreVenta, [
