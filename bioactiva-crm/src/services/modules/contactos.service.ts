@@ -14,13 +14,12 @@ import {
     ContactoFormData,
 } from '@/types/contacto.types'
 
-/**
- * Normaliza la respuesta cruda del backend al modelo `Contacto` del front.
- * Cambios del contrato (doc-endpoint.md, módulo `contacts`):
- *  - El backend ahora envía `organizacionNombre` (camelCase) → se mapea a
- *    `organizacion_nombre`, que es el campo que consumen los componentes.
- *  - `updatedAt` ya no viene en la respuesta → fallback a `createdAt`.
- */
+function stripEmptyStrings<T extends Record<string, unknown>>(data: T): Partial<T> {
+    return Object.fromEntries(
+        Object.entries(data).filter(([, v]) => v !== '')
+    ) as Partial<T>
+}
+
 function normalizeContacto(raw: Record<string, unknown>): Contacto {
     return {
         id: Number(raw.id),
@@ -70,7 +69,7 @@ export const contactosService = {
         if (USE_MOCK) return mockCreateContacto(data)
         const response = await apiClient.post<Record<string, unknown>>(
             ENDPOINTS.contactos.create,
-            data
+            stripEmptyStrings(data as unknown as Record<string, unknown>)
         )
         return normalizeContacto(response.data)
     },
@@ -82,7 +81,7 @@ export const contactosService = {
         if (USE_MOCK) return mockUpdateContacto(id, data)
         const response = await apiClient.patch<Record<string, unknown>>(
             ENDPOINTS.contactos.update(id),
-            data
+            stripEmptyStrings(data as unknown as Record<string, unknown>)
         )
         return normalizeContacto(response.data)
     },
