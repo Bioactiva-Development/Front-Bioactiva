@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { Search, X, Loader2 } from 'lucide-react'
 import { ContactoFiltros as FiltrosType } from '@/types/contacto.types'
 import { useDebounce } from '@/hooks/shared/useDebounce'
@@ -21,8 +21,8 @@ export function ContactoFiltros({
 }: ContactoFiltrosProps) {
   const [searchLocal, setSearchLocal] = useState(filtros.search ?? '')
   const debouncedSearch               = useDebounce(searchLocal, 400)
-  const filtrosRef                    = useRef(filtros)
-  filtrosRef.current                  = filtros
+  const filtrosRef = useRef(filtros)
+  useLayoutEffect(() => { filtrosRef.current = filtros })
 
   const { data: orgsData } = useOrganizaciones({ limit: 100 })
   const organizaciones     = orgsData?.data ?? []
