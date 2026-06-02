@@ -3,13 +3,17 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, ArrowLeft, CheckCircle } from 'lucide-react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
+import ReCAPTCHA from 'react-google-recaptcha'
 import { forgotPasswordSchema, ForgotPasswordFormValues } from '@/lib/validators/auth.schema'
 import { useAuth } from '@/hooks/auth/useAuth'
 import { ROUTES } from '@/lib/constants/routes'
 
 export function ForgotPasswordForm() {
     const { forgotPassword, isLoading, error, success } = useAuth()
+    const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+    const recaptchaRef                    = useRef<ReCAPTCHA>(null)
 
     const {
         register,
@@ -20,15 +24,19 @@ export function ForgotPasswordForm() {
     })
 
     const onSubmit = async (data: ForgotPasswordFormValues) => {
-        await forgotPassword(data)
+        await forgotPassword(data, captchaToken)
+        if (error) {
+            recaptchaRef.current?.reset()
+            setCaptchaToken(null)
+        }
     }
 
     return (
-        <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#1C7E3C] via-[#1C7E3C]/90 to-[#BCF7B3]">
+        <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-linear-to-br from-[#1C7E3C] via-[#1C7E3C]/90 to-[#BCF7B3]">
 
-            <div className="absolute top-[-80px] left-[-80px] w-72 h-72 rounded-full bg-white/10 blur-sm" />
-            <div className="absolute bottom-[-60px] right-[-60px] w-64 h-64 rounded-full bg-white/10 blur-sm" />
-            <div className="absolute top-1/2 left-[-120px] w-80 h-80 rounded-full bg-white/5" />
+            <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-white/10 blur-sm" />
+            <div className="absolute -bottom-60 -right-60 w-64 h-64 rounded-full bg-white/10 blur-sm" />
+            <div className="absolute top-1/2 -left-30 w-80 h-80 rounded-full bg-white/5" />
 
 
             <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl overflow-hidden shadow-2xl">
@@ -89,9 +97,18 @@ export function ForgotPasswordForm() {
                                 )}
                             </div>
 
+                            <div className="flex justify-center">
+                                <ReCAPTCHA
+                                    ref={recaptchaRef}
+                                    sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                                    onChange={(token) => setCaptchaToken(token)}
+                                    onExpired={() => setCaptchaToken(null)}
+                                />
+                            </div>
+
                             <button
                                 type="submit"
-                                disabled={isLoading}
+                                disabled={isLoading || !captchaToken}
                                 className="w-full flex items-center justify-center gap-2 bg-[#1C7E3C] hover:bg-[#16642f]
                   disabled:bg-[#BCF7B3] disabled:cursor-not-allowed text-white font-semibold
                   py-3 px-4 rounded-xl text-sm transition-colors shadow-md shadow-[#BCF7B3]"

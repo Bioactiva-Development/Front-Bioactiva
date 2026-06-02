@@ -10,6 +10,11 @@ export const TOKEN_KEY = 'bioactiva_token'
 
 export const USER_KEY = 'bioactiva_user'
 
+// Nombres de cookies usadas por el middleware de Next para los guards de
+// sesión y rol. Mantenerlos sincronizados con `middleware.ts`.
+export const COOKIE_TOKEN = 'bioactiva_token'
+export const COOKIE_ROL   = 'bioactiva_rol'
+
 export const DOMINIO_INSTITUCIONAL = 'bioactiva.pe'
 
 export const HORARIO_LABORAL = {

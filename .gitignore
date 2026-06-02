@@ -1,0 +1,97 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+bioactiva-crm/node_modules/
+bioactiva-crm/.next/
+bioactiva-crm/out/
+bioactiva-crm/build/
+
+
+#next.js
+**/node_modules
+**/.next
+**/out
+**/build
+
+# testing
+/coverage
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+**/__tests__/
+**/__mocks__/
+*.test.js
+*.spec.js
+.nyc_output/
+
+# next.js
+/.next/
+/out/
+
+#archivos temporales
+scratch.*
+temp.*
+tmp.*
+draft.*
+test-*
+*-test.*
+playground.*
+sandbox.*
+example-*
+demo-*
+prueba.*
+*-prueba.*
+
+#editores e IDEs
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+logs/
+*.log
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+# vercel
+.turbo/
+.eslintcache
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+#archivos de usuario
+/.context
+uploads/
+exports/
+*.csv
+*.xlsx
+*.xls

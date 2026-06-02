@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# Node
+**/node_modules
+**/.pnpm-store
+
+# Next.js
+**/.next
+**/out
+
+# Build artifacts
+**/dist
+**/build
+**/coverage
+
+# Logs
+**/*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+
+# Docker
+.dockerignore
+
+# Tests cache
+**/.turbo
+**/.cache
+
+# Documentation innecesaria para build
+**/README.md
+**/CLAUDE.md
+**/AGENTS.md
+
+# Jenkins
+Jenkinsfile.txt

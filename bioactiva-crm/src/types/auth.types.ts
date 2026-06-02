@@ -1,5 +1,6 @@
 import { RolUsuario, EstadoUsuario, TokenPurpose, EstadoToken } from "./enums"
 
+//Usuario Autenticado 
 export interface Usuario {
     id: number
     nombres: string
@@ -7,6 +8,19 @@ export interface Usuario {
     correo: string
     rol: RolUsuario
     estado: EstadoUsuario
+    created_at: string
+    updated_at: string
+}
+
+// Respuesta en /auth/me backend
+export interface UsuarioRaw {
+    id: number
+    nombres: string
+    apellidos: string
+    correo: string
+    password: string
+    role: number
+    estado: number
     created_at: string
     updated_at: string
 }
@@ -21,7 +35,7 @@ export interface JwtPayload {
 
 export interface AuthState {
     usuario: Usuario | null
-    token: string | null
+    accessToken: string | null
     isAuthenticated: boolean
     isLoading: boolean
 }
@@ -32,8 +46,13 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    token: string
-    usuario: Usuario
+    accessToken: string
+    accessTokenExpiresIn: number
+}
+
+export interface RefreshResponse {
+    accessToken: string
+    accessTokenExpiresIn: number
 }
 
 export interface ForgotPasswordRequest {
@@ -41,7 +60,7 @@ export interface ForgotPasswordRequest {
 }
 
 export interface ForgotPasswordResponse {
-    message: string
+    ok: boolean
 }
 
 export interface ResetPasswordRequest {
@@ -51,7 +70,13 @@ export interface ResetPasswordRequest {
 }
 
 export interface ResetPasswordResponse {
-    message: string
+    ok: boolean
+}
+
+export interface ValidateTokenResult {
+    valid: boolean
+    correo?: string
+    message?: string
 }
 
 export interface ActivateAccountRequest {
@@ -83,6 +108,6 @@ export interface UserToken {
 export interface ValidateTokenResponse {
     valid: boolean
     correo?: string
-    rol?: RolUsuario
     message?: string
 }
+

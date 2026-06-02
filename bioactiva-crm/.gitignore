@@ -9,11 +9,17 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+bioactiva-crm/node_modules/
+bioactiva-crm/.next/
+bioactiva-crm/out/
+bioactiva-crm/build/
+
 
 #next.js
-/.next/
-/out/
-/build
+**/node_modules
+**/.next
+**/out
+**/build
 
 # testing
 /coverage
@@ -26,6 +32,14 @@
 *.test.js
 *.spec.js
 .nyc_output/
+
+# Allow committing project test files under /test/
+!test/
+!test/**
+!test/**/*.test.ts
+!test/**/*.test.tsx
+!test/**/*.spec.ts
+!test/**/*.spec.tsx
 
 # next.js
 /.next/

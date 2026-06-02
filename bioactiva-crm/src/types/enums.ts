@@ -72,21 +72,39 @@ export enum EstadoSecuencia {
 }
 
 export enum Vocativo {
-    Sr = 'Sr',
-    Sra = 'Sra',
-    Dr = 'Dr',
-    Dra = 'Dra',
-    Ing = 'Ing',
-    Lic = 'Lic',
+    SR = 'SR',
+    SRA = 'SRA',
+    SRTA = 'SRTA',
 }
 
 export enum Sector {
-    Agroindustria = 'Agroindustria',
-    Manufactura = 'Manufactura',
-    Tecnologia = 'Tecnologia',
-    Salud = 'Salud',
-    Educacion = 'Educacion',
-    OtroSector = 'Otro',
+    ACUICULTURA = 'ACUICULTURA',
+    ADMINISTRACION_PUBLICA = 'ADMINISTRACION_PUBLICA',
+    AGRICOLA = 'AGRICOLA',
+    AGROALIMENTARIA = 'AGROALIMENTARIA',
+    AGROPECUARIO = 'AGROPECUARIO',
+    ALIMENTARIA = 'ALIMENTARIA',
+    ASESORIA = 'ASESORIA',
+    BANCA_Y_SEGUROS = 'BANCA_Y_SEGUROS',
+    CONSTRUCCION = 'CONSTRUCCION',
+    CONSULTORIA = 'CONSULTORIA',
+    COOPERACION_TECNICA = 'COOPERACION_TECNICA',
+    EDUCACION = 'EDUCACION',
+    ENERGIA = 'ENERGIA',
+    FERRETERIA = 'FERRETERIA',
+    FINANZAS = 'FINANZAS',
+    FORESTAL = 'FORESTAL',
+    GANADERIA = 'GANADERIA',
+    INFORMATICA = 'INFORMATICA',
+    MANUFACTURA = 'MANUFACTURA',
+    MINERIA = 'MINERIA',
+    OTROS = 'OTROS',
+    PESCA = 'PESCA',
+    SALUD = 'SALUD',
+    TECNOLOGIA = 'TECNOLOGIA',
+    TEXTIL = 'TEXTIL',
+    TRANSFORMACION = 'TRANSFORMACION',
+    TURISMO = 'TURISMO',
 }
 
 export enum EstadoToken {

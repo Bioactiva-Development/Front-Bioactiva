@@ -2,9 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Bell, ChevronDown, LogOut, User, Menu } from 'lucide-react'
+import Link from 'next/link'
 import { useAuthStore, useUIStore } from '@/store'
 import { useAuth } from '@/hooks/auth/useAuth'
+import { useCentroNotificaciones } from '@/hooks/notificaciones/useNotificaciones'
 import { RolUsuario } from '@/types/enums'
+import { ROUTES } from '@/lib/constants/routes'
 
 export function Navbar() {
     const { usuario } = useAuthStore()
@@ -22,6 +25,15 @@ export function Navbar() {
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
+
+    const { data: centroNotificaciones } = useCentroNotificaciones()
+    const { setNotificacionesPendientes } = useUIStore()
+
+    useEffect(() => {
+        if (centroNotificaciones?.sinLeer !== undefined) {
+            setNotificacionesPendientes(centroNotificaciones.sinLeer)
+        }
+    }, [centroNotificaciones?.sinLeer, setNotificacionesPendientes])
 
     const iniciales = usuario
         ? `${usuario.nombres.charAt(0)}${usuario.apellidos.charAt(0)}`.toUpperCase()
@@ -84,14 +96,15 @@ export function Navbar() {
                             </div>
 
                             <div className="py-1">
-                                <button
+                                <Link
+                                    href={ROUTES.perfil}
                                     onClick={() => setMenuOpen(false)}
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600
                     hover:bg-gray-50 transition-colors"
                                 >
                                     <User size={16} className="text-gray-400" />
                                     Mi perfil
-                                </button>
+                                </Link>
 
                                 <button
                                     onClick={() => {

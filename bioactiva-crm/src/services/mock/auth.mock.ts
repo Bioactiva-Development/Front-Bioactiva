@@ -3,6 +3,7 @@ import {
     LoginRequest, LoginResponse, ForgotPasswordResponse, ResetPasswordResponse,
     ActivateAccountRequest, ActivateAccountResponse, ValidateTokenResponse, Usuario,
 } from '@/types/auth.types'
+import { useAuthStore } from '@/store/auth.store'
 
 
 const MOCK_USUARIOS: Usuario[] = [
@@ -90,20 +91,27 @@ export const mockLogin = async (data: LoginRequest): Promise<LoginResponse> => {
         throw { status: 401, message: 'Correo o contraseña incorrectos.' }
     }
 
-    const token = `mock-jwt-token-${usuario.id}-${Date.now()}`
+    const accessToken = `mock-jwt-token-${usuario.id}-${Date.now()}`
 
-    return { token, usuario }
+    useAuthStore.getState().setSession(`mock-jwt-token-${usuario.id}-${Date.now()}`, usuario)
+
+    return { accessToken, accessTokenExpiresIn: 900 }
 }
 
-export const mockForgotPassword = async (correo: string): Promise<ForgotPasswordResponse> => {
-    await delay()
-
-    const usuario = MOCK_USUARIOS.find((u) => u.correo === correo)
-
-    if (!usuario) {
-        throw { status: 404, message: 'El correo ingresado no se encuentra registrado.' }
+function ofuscarCorreo(correo: string): string {
+    const [local, domain] = correo.split('@')
+    let ofuscado: string
+    if (local.length <= 2) {
+        ofuscado = local[0] + '*'
+    } else {
+        ofuscado = local[0] + '*'.repeat(local.length - 2) + local[local.length - 1]
     }
-    return { message: 'Correo de recuperación enviado correctamente.' }
+    return `${ofuscado}@${domain}`
+}
+
+export const mockForgotPassword = async (_correo: string): Promise<ForgotPasswordResponse> => {
+    await delay()
+    return { ok: true }
 }
 
 export const mockValidateToken = async (token: string): Promise<ValidateTokenResponse> => {
@@ -111,36 +119,30 @@ export const mockValidateToken = async (token: string): Promise<ValidateTokenRes
 
     const mockToken = MOCK_TOKENS.find((t) => t.token === token)
 
-    if (!mockToken) {
-        return { valid: false, message: 'El enlace no es válido.' }
+    if (!mockToken || mockToken.estado === EstadoToken.Consumido) {
+        throw { status: 400, message: 'Token de restablecimiento de contraseña inválido o ya utilizado.' }
     }
 
     const ahora = new Date()
     const expiracion = new Date(mockToken.expires_at)
     if (ahora > expiracion || mockToken.estado === EstadoToken.Expirado) {
-        return { valid: false, message: 'El enlace de recuperación ha expirado.' }
+        throw { status: 400, message: 'El token de restablecimiento de contraseña ha expirado.' }
     }
 
-    if (mockToken.estado === EstadoToken.Consumido) {
-        return { valid: false, message: 'Este enlace ya fue utilizado.' }
-    }
-    return {
-        valid: true,
-        correo: mockToken.correo,
-    }
+    return { valid: true, correo: ofuscarCorreo(mockToken.correo) }
 }
 
-export const mockResetPassword = async (token: string, password: string): Promise<ResetPasswordResponse> => {
+export const mockResetPassword = async (token: string, _password: string): Promise<ResetPasswordResponse> => {
     await delay()
 
     const mockToken = MOCK_TOKENS.find((t) => t.token === token)
 
     if (!mockToken || mockToken.estado !== EstadoToken.Pendiente) {
-        throw { status: 400, message: 'El enlace no es válido o ya fue utilizado.' }
+        throw { status: 400, message: 'Token de restablecimiento de contraseña inválido o ya utilizado.' }
     }
 
     mockToken.estado = EstadoToken.Consumido
-    return { message: 'Contraseña actualizada correctamente.' }
+    return { ok: true }
 }
 
 export const mockActivateAccount = async (data: ActivateAccountRequest): Promise<ActivateAccountResponse> => {
