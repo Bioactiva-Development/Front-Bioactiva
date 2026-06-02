@@ -1,6 +1,6 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -12,6 +12,7 @@ import { AuthLayout } from './AuthLayout'
 import { AuthAlertBanner } from './AuthAlertBanner'
 import { AuthTextField } from './AuthTextField'
 import { PasswordField } from './PasswordField'
+import { PasswordRequirements } from './PasswordRequirements'
 
 export function AcceptInvitationForm() {
     const searchParams = useSearchParams()
@@ -19,14 +20,16 @@ export function AcceptInvitationForm() {
     const { getInfo, accept, isLoading, error, success } = useAcceptInvitacion()
 
     const [showPassword, setShowPassword] = useState(false)
-    const [showConfirm, setShowConfirm] = useState(false)
+    const [showConfirm, setShowConfirm]   = useState(false)
     const [cargandoInfo, setCargandoInfo] = useState(true)
-    const [info, setInfo] = useState<InvitacionInfo | null>(null)
-    const [infoError, setInfoError] = useState('')
+    const [info, setInfo]                 = useState<InvitacionInfo | null>(null)
+    const [infoError, setInfoError]       = useState('')
 
-    const { register, handleSubmit, formState: { errors } } = useForm<AcceptInvitacionFormValues>({
+    const { register, handleSubmit, control, formState: { errors } } = useForm<AcceptInvitacionFormValues>({
         resolver: zodResolver(acceptInvitacionSchema),
     })
+
+    const passwordValue = useWatch({ control, name: 'password' }) ?? ''
 
     useEffect(() => {
         const cargar = async () => {
@@ -110,6 +113,8 @@ export function AcceptInvitationForm() {
                                 error={errors.password?.message}
                             />
 
+                            <PasswordRequirements password={passwordValue} />
+
                             <PasswordField
                                 label="Confirmar contraseña"
                                 show={showConfirm}
@@ -117,13 +122,6 @@ export function AcceptInvitationForm() {
                                 {...register('confirmPassword')}
                                 error={errors.confirmPassword?.message}
                             />
-
-                            <ul className="text-xs text-gray-400 space-y-1 list-disc list-inside">
-                                <li>Mínimo 8 caracteres</li>
-                                <li>Al menos una letra mayúscula</li>
-                                <li>Al menos un número</li>
-                                <li>Al menos un carácter especial (!@#$...)</li>
-                            </ul>
 
                             <button
                                 type="submit"

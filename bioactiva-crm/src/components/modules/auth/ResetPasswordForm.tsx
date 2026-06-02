@@ -1,6 +1,6 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, ArrowLeft } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -12,21 +12,24 @@ import { ROUTES } from '@/lib/constants/routes'
 import { AuthLayout } from './AuthLayout'
 import { AuthAlertBanner } from './AuthAlertBanner'
 import { PasswordField } from './PasswordField'
+import { PasswordRequirements } from './PasswordRequirements'
 
 export function ResetPasswordForm() {
     const searchParams = useSearchParams()
     const token = searchParams.get('token') ?? ''
     const { validateToken, resetPassword, isLoading, error, success } = useAuth()
 
-    const [showPassword, setShowPassword] = useState(false)
-    const [showConfirm, setShowConfirm] = useState(false)
-    const [tokenValido, setTokenValido] = useState<boolean | null>(null)
-    const [tokenMensaje, setTokenMensaje] = useState('')
+    const [showPassword, setShowPassword]   = useState(false)
+    const [showConfirm, setShowConfirm]     = useState(false)
+    const [tokenValido, setTokenValido]     = useState<boolean | null>(null)
+    const [tokenMensaje, setTokenMensaje]   = useState('')
     const [validandoToken, setValidandoToken] = useState(true)
 
-    const { register, handleSubmit, formState: { errors } } = useForm<ResetPasswordFormValues>({
+    const { register, handleSubmit, control, formState: { errors } } = useForm<ResetPasswordFormValues>({
         resolver: zodResolver(resetPasswordSchema),
     })
+
+    const passwordValue = useWatch({ control, name: 'password' }) ?? ''
 
     useEffect(() => {
         const verificar = async () => {
@@ -97,6 +100,8 @@ export function ResetPasswordForm() {
                                 error={errors.password?.message}
                             />
 
+                            <PasswordRequirements password={passwordValue} />
+
                             <PasswordField
                                 label="Confirmar contraseña"
                                 show={showConfirm}
@@ -104,13 +109,6 @@ export function ResetPasswordForm() {
                                 {...register('confirmPassword')}
                                 error={errors.confirmPassword?.message}
                             />
-
-                            <ul className="text-xs text-gray-400 space-y-1 list-disc list-inside">
-                                <li>Mínimo 8 caracteres</li>
-                                <li>Al menos una letra mayúscula</li>
-                                <li>Al menos un número</li>
-                                <li>Al menos un carácter especial (!@#$...)</li>
-                            </ul>
 
                             <button
                                 type="submit"
