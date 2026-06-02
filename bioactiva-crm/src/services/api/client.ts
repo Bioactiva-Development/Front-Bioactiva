@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
-import { API_BASE_URL, TOKEN_KEY, USER_KEY } from '@/lib/constants/config'
+import { API_BASE_URL, TOKEN_KEY } from '@/lib/constants/config'
 import { ROUTES } from '@/lib/constants/routes'
+import { useAuthStore } from '@/store/auth.store'
 
 const apiClient: AxiosInstance = axios.create({
     baseURL: API_BASE_URL,
@@ -13,6 +14,14 @@ const apiClient: AxiosInstance = axios.create({
 
 let isRefreshing = false
 let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = []
+
+function forceLogout(): void {
+    if (typeof window === 'undefined') return
+    useAuthStore.getState().clearSession()
+    window.location.href = ROUTES.auth.login
+}
+
+const JWT_EXPIRED_PATTERN = /jwt expired|token.*expired|invalid.*token/i
 
 const processQueue = (error: unknown, token: string | null) => {
     failedQueue.forEach(prom => {
@@ -82,12 +91,7 @@ apiClient.interceptors.response.use(
                 return apiClient(originalRequest)
             } catch (refreshError) {
                 processQueue(refreshError, null)
-
-                if (typeof window !== 'undefined') {
-                    localStorage.removeItem(TOKEN_KEY)
-                    localStorage.removeItem(USER_KEY)
-                    window.location.href = ROUTES.auth.login
-                }
+                forceLogout()
                 return Promise.reject(refreshError)
             } finally {
                 isRefreshing = false
@@ -96,6 +100,16 @@ apiClient.interceptors.response.use(
 
         const backendMessage =
             (error.response?.data as { message?: string | string[] })?.message
+
+        const rawMessage = Array.isArray(backendMessage) ? backendMessage[0] : backendMessage ?? ''
+
+        if (
+            JWT_EXPIRED_PATTERN.test(rawMessage) &&
+            !originalRequest.url?.includes('/auth/login')
+        ) {
+            forceLogout()
+            return Promise.reject({ status: error.response?.status, message: rawMessage })
+        }
 
         let mensajeFinal: string
         if (Array.isArray(backendMessage)) {
