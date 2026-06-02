@@ -2,13 +2,11 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, ArrowLeft } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { acceptInvitacionSchema, AcceptInvitacionFormValues } from '@/lib/validators/invitacion.schema'
 import { useAcceptInvitacion } from '@/hooks/usuarios/useAcceptInvitacion'
-import { ROUTES } from '@/lib/constants/routes'
 import { InvitacionInfo } from '@/types/usuario.types'
 import { AuthLayout } from './AuthLayout'
 import { AuthAlertBanner } from './AuthAlertBanner'
@@ -143,17 +141,6 @@ export function AcceptInvitationForm() {
                 </>
             )}
 
-            {!cargandoInfo && (
-                <div className="text-center pt-2">
-                    <Link
-                        href={ROUTES.auth.login}
-                        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#1C7E3C] transition-colors"
-                    >
-                        <ArrowLeft size={14} />
-                        Volver al inicio de sesión
-                    </Link>
-                </div>
-            )}
         </AuthLayout>
     )
 }
