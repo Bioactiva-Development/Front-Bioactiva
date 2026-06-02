@@ -383,7 +383,7 @@ export const mockCreateLead = async (
     codigo,
     id_org:              data.id_org!,
     id_contacto:         data.id_contacto,
-    estado:              LeadState.Prospecto,
+    estado:              data.estado ?? LeadState.Prospecto,
     servicio_interes:    data.servicio_interes!,
     comentarios:         data.comentarios,
     desafio_oportunidad: data.desafio_oportunidad,

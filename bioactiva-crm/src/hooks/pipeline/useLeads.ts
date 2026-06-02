@@ -60,11 +60,14 @@ export function useCrearLead() {
 
   return useMutation({
     mutationFn: async (data: LeadFormData) => {
-      const lead = await leadsService.create({
-        ...data,
-        estado: LeadState.Prospecto,
+      const lead = await leadsService.create(data)
+      const cotizacionState = getCotizacionStateFromLeadState(lead.estado) ??
+        EstadoCot.Pendiente
+
+      await cotizacionesService.create({
+        ...buildDefaultCotizacion(lead),
+        estado: cotizacionState,
       })
-      await cotizacionesService.create(buildDefaultCotizacion(lead))
       return lead
     },
     onSuccess: () => {
