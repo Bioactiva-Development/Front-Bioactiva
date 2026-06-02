@@ -21,6 +21,7 @@ COPY bioactiva-crm/ ./
 RUN npm run build
 
 FROM node:22-slim AS runner
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 WORKDIR /app
 
 COPY --from=builder /app/package.json ./

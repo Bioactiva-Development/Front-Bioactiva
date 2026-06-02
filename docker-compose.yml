@@ -1,3 +1,4 @@
+
 name: front-bioactiva
 
 services:
@@ -12,13 +13,34 @@ services:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
         NEXT_PUBLIC_USE_MOCK: ${NEXT_PUBLIC_USE_MOCK}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME}
+    env_file:
+      - .env
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: ${PORT:-4000}
 
   bioactiva-frontend-prod:
-    profiles: ["prod"]
-    container_name: bioactiva-frontend
+    profiles: ["testing"]
+    container_name: bioactiva-frontend-prod
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+        NEXT_PUBLIC_USE_MOCK: ${NEXT_PUBLIC_USE_MOCK}
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME}
+    env_file:
+      - ${BIOACTIVA_ENV_FILE}
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-4000}
+    networks:
+      - proxy_net
+    restart: unless-stopped
+
+  bioactiva-frontend-development:
+    profiles: ["development"]
+    container_name: bioactiva-frontend-development
     build:
       context: .
       dockerfile: Dockerfile
