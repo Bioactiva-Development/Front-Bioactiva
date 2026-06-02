@@ -25,10 +25,12 @@ pipeline {
             }
 
             steps {
-                sh '''
-                    npm install
-                    npm run test:cov
-                '''
+                dir('bioactiva-crm') {
+                    sh '''
+                        npm install
+                        npm run test:cov
+                    '''
+                }
             }
         }
 
