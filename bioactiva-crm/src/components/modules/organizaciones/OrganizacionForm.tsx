@@ -63,11 +63,10 @@ export function OrganizacionForm({
 
   const rucValue = useWatch({ control, name: 'ruc' })
 
-  const sinRuc = !rucValue && !organizacion?.ruc
-
   useEffect(() => {
     if (!sunatData) return
 
+    setBusquedaTab('ruc')
     setValue('ruc',    sunatData.ruc)
     setValue('nombre', sunatData.nombre)
     if (sunatData.nombreCompleto) setValue('nombre_comercial',    sunatData.nombreCompleto)
@@ -134,7 +133,7 @@ export function OrganizacionForm({
                   setValue('ruc', '')
                 }}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors
-                  ${busquedaTab === 'ruc' && !sinRuc
+                  ${busquedaTab === 'ruc'
                     ? 'bg-emerald-700 text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
@@ -148,7 +147,7 @@ export function OrganizacionForm({
                   setValue('ruc', '')
                 }}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors
-                  ${busquedaTab === 'razon' && !sinRuc
+                  ${busquedaTab === 'razon'
                     ? 'bg-emerald-700 text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
@@ -157,7 +156,7 @@ export function OrganizacionForm({
               </button>
             </div>
 
-            {!sinRuc && (
+            {busquedaTab === 'ruc' && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
