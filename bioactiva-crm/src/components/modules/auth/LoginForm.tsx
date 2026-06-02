@@ -3,15 +3,18 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
+import ReCAPTCHA from 'react-google-recaptcha'
 import { loginSchema, LoginFormValues } from '@/lib/validators/auth.schema'
 import { useAuth } from '@/hooks/auth/useAuth'
 import { ROUTES } from '@/lib/constants/routes'
 
 export function LoginForm() {
     const { login, isLoading, error } = useAuth()
-    const [showPassword, setShowPassword] = useState(false)
+    const [showPassword, setShowPassword]   = useState(false)
+    const [captchaToken, setCaptchaToken]   = useState<string | null>(null)
+    const recaptchaRef                      = useRef<ReCAPTCHA>(null)
 
     const {
         register,
@@ -22,7 +25,11 @@ export function LoginForm() {
     })
 
     const onSubmit = async (data: LoginFormValues) => {
-        await login(data)
+        await login(data, captchaToken)
+        if (error) {
+            recaptchaRef.current?.reset()
+            setCaptchaToken(null)
+        }
     }
 
     return (
@@ -108,9 +115,18 @@ export function LoginForm() {
                             )}
                         </div>
 
+                        <div className="flex justify-center">
+                            <ReCAPTCHA
+                                ref={recaptchaRef}
+                                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                                onChange={(token) => setCaptchaToken(token)}
+                                onExpired={() => setCaptchaToken(null)}
+                            />
+                        </div>
+
                         <button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={isLoading || !captchaToken}
                             className="w-full flex items-center justify-center gap-2 bg-[#1C7E3C] hover:bg-[#16642f] disabled:bg-[#BCF7B3] disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl text-sm transition-colors shadow-md shadow-[#BCF7B3]"
                         >
                             {isLoading ? (

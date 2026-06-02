@@ -52,12 +52,12 @@ export function useAuth() {
         setSuccess(null)
     }, [])
 
-    const login = async (data: LoginFormValues) => {
+    const login = async (data: LoginFormValues, captchaToken?: string | null) => {
         try {
             resetMessages()
             setIsLoading(true)
 
-            const { accessToken } = await authService.login(data)
+            const { accessToken } = await authService.login(data, captchaToken)
 
             if (typeof window !== 'undefined') {
                 localStorage.setItem(TOKEN_KEY, accessToken)
@@ -103,11 +103,11 @@ export function useAuth() {
         }
     }
 
-    const forgotPassword = async (data: ForgotPasswordFormValues) => {
+    const forgotPassword = async (data: ForgotPasswordFormValues, captchaToken?: string | null) => {
         try {
             resetMessages()
             setIsLoading(true)
-            await authService.forgotPassword(data.correo)
+            await authService.forgotPassword(data.correo, captchaToken)
             // Mensaje neutral por diseño: el backend responde `{ ok: true }`
             // aunque el correo no exista (anti-enumeración de usuarios).
             // Revelar "enviado correctamente" delataría qué correos existen.
