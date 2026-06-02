@@ -4,6 +4,7 @@ import {
   DndContext,
   DragEndEvent,
   PointerSensor,
+  pointerWithin,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
@@ -71,7 +72,11 @@ export function KanbanBoard({
   }
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={pointerWithin}
+      onDragEnd={handleDragEnd}
+    >
       <div className="flex gap-4 overflow-x-auto pb-4">
         {COLUMNAS.map((col) => {
           const leads = pipeline[col.key]

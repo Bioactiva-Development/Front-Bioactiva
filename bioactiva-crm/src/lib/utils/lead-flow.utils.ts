@@ -9,6 +9,7 @@ export interface LeadTransitionGuard {
 export function getLeadStateFromCotizacion(
   estado: EstadoCot
 ): LeadState | null {
+  if (estado === EstadoCot.Enviada) return LeadState.Ofertado
   if (estado === EstadoCot.Aceptada) return LeadState.CierreVenta
   if (estado === EstadoCot.Rechazada) return LeadState.CierreSinVenta
   return null
@@ -75,35 +76,32 @@ export function validateLeadStateTransition(
 
   if (targetState === LeadState.Ofertado) {
     const hasCotizacion = cotizaciones.length > 0
+
     return hasCotizacion
       ? { allowed: true }
       : {
           allowed: false,
-          reason: 'Para pasar a Ofertado registra primero una cotización asociada al lead.',
+          reason: 'Para pasar a Ofertado debe existir una cotización asociada al lead.',
         }
   }
 
   if (targetState === LeadState.CierreVenta) {
-    const hasAccepted = cotizaciones.some(
-      (cotizacion) => cotizacion.estado === EstadoCot.Aceptada
-    )
-    return hasAccepted
+    const hasCotizacion = cotizaciones.length > 0
+    return hasCotizacion
       ? { allowed: true }
       : {
           allowed: false,
-          reason: 'Para cerrar con venta debe existir una cotización aceptada.',
+          reason: 'Para cerrar con venta debe existir una cotización asociada al lead.',
         }
   }
 
   if (targetState === LeadState.CierreSinVenta) {
-    const hasRejected = cotizaciones.some(
-      (cotizacion) => cotizacion.estado === EstadoCot.Rechazada
-    )
-    return hasRejected
+    const hasCotizacion = cotizaciones.length > 0
+    return hasCotizacion
       ? { allowed: true }
       : {
           allowed: false,
-          reason: 'Para cerrar sin venta debe existir una cotización rechazada.',
+          reason: 'Para cerrar sin venta debe existir una cotización asociada al lead.',
         }
   }
 

@@ -7,7 +7,6 @@ import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 import {
   getCotizacionStateFromLeadState,
-  getCotizacionToResolveLeadClosure,
   getPrimaryCotizacion,
   validateLeadStateTransition,
 } from '@/lib/utils/lead-flow.utils'
@@ -112,44 +111,25 @@ export function useMoverLeadPipeline() {
   return useMutation({
     mutationFn: async ({ lead, estado }: { lead: Lead; estado: LeadState }) => {
       const cotizaciones = await cotizacionesService.getByLead(lead.id)
+      const guard = validateLeadStateTransition(estado, cotizaciones)
+
+      if (!guard.allowed) {
+        throw new Error(guard.reason ?? 'No se puede mover el lead a ese estado.')
+      }
+
       const targetCotState = getCotizacionStateFromLeadState(estado)
+      const cotizacion = getPrimaryCotizacion(cotizaciones)
 
       if (targetCotState) {
-        const cotizacion = estado === LeadState.Prospecto ||
-          estado === LeadState.Ofertado
-          ? getPrimaryCotizacion(cotizaciones)
-          : getCotizacionToResolveLeadClosure(estado, cotizaciones)
-
         if (!cotizacion) {
-          if (estado === LeadState.Prospecto || estado === LeadState.Ofertado) {
-            await cotizacionesService.create({
-              ...buildDefaultCotizacion(lead),
-              estado: targetCotState,
-            })
-            await leadsService.updateEstado(lead.id, estado)
-            return
-          }
-
-          const reason =
-            estado === LeadState.CierreVenta
-              ? 'Para cerrar con venta debe existir una cotización enviada o pendiente que pueda aceptarse.'
-              : 'Para cerrar sin venta debe existir una cotización enviada o pendiente que pueda rechazarse.'
-          throw new Error(reason)
-        }
-
-        if (cotizacion.estado !== targetCotState) {
+          await cotizacionesService.create({
+            ...buildDefaultCotizacion(lead),
+            estado: targetCotState,
+          })
+        } else if (cotizacion.estado !== targetCotState) {
           await cotizacionesService.update(cotizacion.id, {
             estado: targetCotState,
           })
-        }
-
-        await leadsService.updateEstado(lead.id, estado)
-
-        return
-      } else {
-        const guard = validateLeadStateTransition(estado, cotizaciones)
-        if (!guard.allowed) {
-          throw new Error(guard.reason ?? 'No se puede mover el lead a ese estado.')
         }
       }
 

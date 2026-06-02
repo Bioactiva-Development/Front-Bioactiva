@@ -43,7 +43,7 @@ const MOCK_COTIZACIONES: Cotizacion[] = [
     nombre_servicio:  'Diagnóstico de capacidades tecnológicas y hoja de ruta de innovación para línea café specialty',
     monto:            6500,
     tipo:             TipoMoneda.Soles,
-    estado:           EstadoCot.Aceptada,
+    estado:           EstadoCot.Enviada,
     observacion:      'Incluye dos visitas técnicas a planta y entrega de informe con roadmap de innovación.',
     id_author:        1,
     created_at:       '2025-03-11T08:00:00Z',
