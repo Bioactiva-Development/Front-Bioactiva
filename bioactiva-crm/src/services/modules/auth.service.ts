@@ -43,11 +43,11 @@ const isAppError = (e: unknown): e is AppError =>
     typeof e === 'object' && e !== null
 
 export const authService = {
-    login: async (data: LoginRequest, captchaToken?: string | null): Promise<LoginResponse> => {
+    login: async (data: LoginRequest, _captchaToken?: string | null): Promise<LoginResponse> => {
         if (USE_MOCK) return mockLogin(data)
         const response = await apiClient.post<LoginResponse>(
             ENDPOINTS.auth.login,
-            captchaToken ? { ...data, captchaToken } : data,
+            data,
         )
         return response.data
     },
@@ -73,11 +73,11 @@ export const authService = {
      * (anti-enumeración de usuarios). El frontend debe mostrar siempre un
      * mensaje neutral del tipo "Si el correo está registrado, recibirás...".
      */
-    forgotPassword: async (correo: string, captchaToken?: string | null): Promise<ForgotPasswordResponse> => {
+    forgotPassword: async (correo: string, _captchaToken?: string | null): Promise<ForgotPasswordResponse> => {
         if (USE_MOCK) return mockForgotPassword(correo)
         const response = await apiClient.post<{ ok: boolean }>(
             ENDPOINTS.resetPassword.request,
-            captchaToken ? { correo, captchaToken } : { correo },
+            { correo },
         )
         return { ok: response.data?.ok ?? true }
     },
