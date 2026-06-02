@@ -6,6 +6,7 @@ import { ROUTES } from '@/lib/constants/routes'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { AcceptInvitacionFormValues } from '@/lib/validators/invitacion.schema'
 import { InvitacionInfo } from '@/types/usuario.types'
+import { useAuthStore } from '@/store/auth.store'
 
 export function useAcceptInvitacion() {
     const router = useRouter()
@@ -38,6 +39,7 @@ export function useAcceptInvitacion() {
             setIsLoading(true)
             await usuariosService.acceptInvitacion({ token, ...data })
             setSuccess('Cuenta activada correctamente. Redirigiendo...')
+            useAuthStore.getState().clearSession()
             setTimeout(() => router.push(ROUTES.auth.login), 2000)
         } catch (err: unknown) {
             const e = err as { message?: string }
