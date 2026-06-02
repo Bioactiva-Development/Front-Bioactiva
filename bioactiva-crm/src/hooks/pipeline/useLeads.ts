@@ -55,19 +55,34 @@ function buildDefaultCotizacion(lead: Lead): CotizacionFormData {
   }
 }
 
+async function syncPrimaryCotizacionWithLead(lead: Lead) {
+  const cotizacionState = getCotizacionStateFromLeadState(lead.estado) ??
+    EstadoCot.Pendiente
+  const cotizaciones = await cotizacionesService.getByLead(lead.id)
+  const cotizacion = getPrimaryCotizacion(cotizaciones)
+
+  if (!cotizacion) {
+    await cotizacionesService.create({
+      ...buildDefaultCotizacion(lead),
+      estado: cotizacionState,
+    })
+    return
+  }
+
+  if (cotizacion.estado !== cotizacionState) {
+    await cotizacionesService.update(cotizacion.id, {
+      estado: cotizacionState,
+    })
+  }
+}
+
 export function useCrearLead() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (data: LeadFormData) => {
       const lead = await leadsService.create(data)
-      const cotizacionState = getCotizacionStateFromLeadState(lead.estado) ??
-        EstadoCot.Pendiente
-
-      await cotizacionesService.create({
-        ...buildDefaultCotizacion(lead),
-        estado: cotizacionState,
-      })
+      await syncPrimaryCotizacionWithLead(lead)
       return lead
     },
     onSuccess: () => {
@@ -82,10 +97,15 @@ export function useActualizarLead(id: number) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: Partial<LeadFormData>) =>
-      leadsService.update(id, data),
+    mutationFn: async (data: Partial<LeadFormData>) => {
+      const lead = await leadsService.update(id, data)
+      await syncPrimaryCotizacionWithLead(lead)
+      return lead
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
@@ -97,10 +117,31 @@ export function useActualizarEstadoLead() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, estado }: { id: number; estado: LeadState }) =>
-      leadsService.updateEstado(id, estado),
+    mutationFn: async ({ id, estado }: { id: number; estado: LeadState }) => {
+      const lead = await leadsService.updateEstado(id, estado)
+      await syncPrimaryCotizacionWithLead(lead)
+      return lead
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
+export function useEliminarLead() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => leadsService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))

@@ -436,6 +436,17 @@ export const mockUpdateEstadoLead = async (
   return mockUpdateLead(id, { estado })
 }
 
+export const mockDeleteLead = async (id: number): Promise<void> => {
+  await delay()
+
+  const index = MOCK_LEADS.findIndex((l) => l.id === id)
+  if (index === -1) {
+    throw { status: 404, message: 'Lead no encontrado.' }
+  }
+
+  MOCK_LEADS.splice(index, 1)
+}
+
 
 export const mockGetActividades = async (
   leadId: number

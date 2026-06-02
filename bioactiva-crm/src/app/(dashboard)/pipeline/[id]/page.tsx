@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react'
 import {
   useLead,
   useActualizarLead,
+  useEliminarLead,
 } from '@/hooks/pipeline/useLeads'
 import { LeadDetalle } from '@/components/modules/pipeline/LeadDetalle'
 import { LeadForm } from '@/components/modules/pipeline/LeadForm'
@@ -23,6 +24,7 @@ export default function LeadDetallePage() {
   const { data: lead, isLoading, isError } = useLead(id)
 
   const { mutateAsync: actualizar, isPending } = useActualizarLead(id)
+  const { mutateAsync: eliminar, isPending: eliminando } = useEliminarLead()
 
   const handleGuardar = async (data: LeadFormValues) => {
     try {
@@ -31,6 +33,22 @@ export default function LeadDetallePage() {
       setEditando(false)
     } catch (err: unknown) {
       setErrorGuardar(getErrorMessage(err, 'No se pudo guardar el lead.'))
+    }
+  }
+
+  const handleEliminar = async () => {
+    const confirmado = window.confirm(
+      '¿Eliminar este lead? Esta acción no se puede deshacer.'
+    )
+    if (!confirmado) return
+
+    try {
+      setErrorGuardar(null)
+      await eliminar(id)
+      await new Promise((resolve) => setTimeout(resolve, 100))
+      window.location.href = '/pipeline'
+    } catch (err: unknown) {
+      setErrorGuardar(getErrorMessage(err, 'No se pudo eliminar el lead.'))
     }
   }
 
@@ -71,8 +89,11 @@ export default function LeadDetallePage() {
         </div>
         <LeadForm
           lead={lead}
+          estadoEditable
           onSubmit={handleGuardar}
+          onDelete={handleEliminar}
           isLoading={isPending}
+          isDeleting={eliminando}
           error={errorGuardar}
         />
       </div>

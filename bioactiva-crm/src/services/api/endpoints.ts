@@ -71,6 +71,7 @@ export const ENDPOINTS = {
         create: '/api/leads',
         update: (id: number) => `/api/leads/${id}`,
         updateEstado: (id: number) => `/api/leads/${id}/estado`,
+        delete: (id: number) => `/api/leads/${id}`,
     },
 
     actividades: {

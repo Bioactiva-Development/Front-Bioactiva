@@ -8,6 +8,7 @@ import {
   mockCreateLead,
   mockUpdateLead,
   mockUpdateEstadoLead,
+  mockDeleteLead,
 } from '@/services/mock/leads.mock'
 import {
   Lead,
@@ -77,5 +78,10 @@ export const leadsService = {
       { estado }
     )
     return response.data
+  },
+
+  delete: async (id: number): Promise<void> => {
+    if (USE_MOCK) return mockDeleteLead(id)
+    await apiClient.delete(ENDPOINTS.leads.delete(id))
   },
 }
