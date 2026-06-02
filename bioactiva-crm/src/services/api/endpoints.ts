@@ -65,13 +65,12 @@ export const ENDPOINTS = {
     },
 
     leads: {
-        list: '/api/leads',
-        pipeline: '/api/leads/pipeline',
-        detail: (id: number) => `/api/leads/${id}`,
-        create: '/api/leads',
-        update: (id: number) => `/api/leads/${id}`,
-        updateEstado: (id: number) => `/api/leads/${id}/estado`,
-        delete: (id: number) => `/api/leads/${id}`,
+        list: '/leads',
+        detail: (id: number) => `/leads/${id}`,
+        create: '/leads',
+        update: (id: number) => `/leads/${id}`,
+        updateEstado: (id: number) => `/leads/${id}/status`,
+        delete: (id: number) => `/leads/${id}`,
     },
 
     actividades: {

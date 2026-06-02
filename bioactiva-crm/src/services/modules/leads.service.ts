@@ -18,42 +18,115 @@ import {
   PipelineData,
 } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
+import {
+  fromLeadDto,
+  LeadDtoOut,
+  LeadsDtoResponse,
+  toBackendLeadState,
+  toCreateLeadDto,
+  toLeadQueryParams,
+  toUpdateLeadDto,
+} from './leads.mapper'
+
+const PAGE_SIZE_PIPELINE = 100
+
+type RawLeadsResponse = LeadDtoOut[] | LeadsDtoResponse
+
+const normalizeLeadsResponse = (
+  raw: RawLeadsResponse,
+  filtros?: LeadFiltros
+): LeadsResponse => {
+  if (Array.isArray(raw)) {
+    const data = raw.map(fromLeadDto)
+    return {
+      data,
+      total: data.length,
+      page: filtros?.page ?? 1,
+      limit: filtros?.limit ?? data.length,
+    }
+  }
+
+  const data = raw.data.map(fromLeadDto)
+  return {
+    data,
+    total: raw.meta?.total ?? data.length,
+    page: raw.meta?.page ?? filtros?.page ?? 1,
+    limit: raw.meta?.limit ?? filtros?.limit ?? data.length,
+  }
+}
+
+const buildPipeline = (leads: Lead[]): PipelineData => ({
+  prospecto: leads.filter((lead) => lead.estado === LeadState.Prospecto),
+  ofertado: leads.filter((lead) => lead.estado === LeadState.Ofertado),
+  cierreVenta: leads.filter((lead) => lead.estado === LeadState.CierreVenta),
+  cierreSinVenta: leads.filter((lead) => lead.estado === LeadState.CierreSinVenta),
+  total: leads.length,
+})
+
+const fetchLeadsPage = async (filtros?: LeadFiltros): Promise<LeadsResponse> => {
+  const response = await apiClient.get<RawLeadsResponse>(
+    ENDPOINTS.leads.list,
+    { params: toLeadQueryParams(filtros) }
+  )
+  return normalizeLeadsResponse(response.data, filtros)
+}
 
 export const leadsService = {
 
   getPipeline: async (filtros?: LeadFiltros): Promise<PipelineData> => {
     if (USE_MOCK) return mockGetPipeline(filtros)
-    const response = await apiClient.get<PipelineData>(
-      ENDPOINTS.leads.pipeline,
-      { params: filtros }
+
+    const firstPage = await fetchLeadsPage({
+      ...filtros,
+      page: 1,
+      limit: PAGE_SIZE_PIPELINE,
+    })
+    const totalPages = firstPage.limit > 0
+      ? Math.ceil(firstPage.total / firstPage.limit)
+      : 1
+
+    const remainingPages = await Promise.all(
+      Array.from({ length: Math.max(totalPages - 1, 0) }, (_, index) =>
+        fetchLeadsPage({
+          ...filtros,
+          page: index + 2,
+          limit: PAGE_SIZE_PIPELINE,
+        })
+      )
     )
-    return response.data
+
+    return buildPipeline([
+      ...firstPage.data,
+      ...remainingPages.flatMap((page) => page.data),
+    ])
   },
 
   getAll: async (filtros?: LeadFiltros): Promise<LeadsResponse> => {
     if (USE_MOCK) return mockGetLeads(filtros)
-    const response = await apiClient.get<LeadsResponse>(
-      ENDPOINTS.leads.list,
-      { params: filtros }
-    )
-    return response.data
+    return fetchLeadsPage(filtros)
   },
 
   getById: async (id: number): Promise<Lead> => {
     if (USE_MOCK) return mockGetLead(id)
-    const response = await apiClient.get<Lead>(
+    const response = await apiClient.get<LeadDtoOut>(
       ENDPOINTS.leads.detail(id)
     )
-    return response.data
+    return fromLeadDto(response.data)
   },
 
   create: async (data: LeadFormData): Promise<Lead> => {
     if (USE_MOCK) return mockCreateLead(data)
-    const response = await apiClient.post<Lead>(
+    const response = await apiClient.post<LeadDtoOut>(
       ENDPOINTS.leads.create,
-      data
+      toCreateLeadDto(data)
     )
-    return response.data
+    const lead = fromLeadDto(response.data)
+
+    if (data.estado && data.estado !== LeadState.Prospecto) {
+      return leadsService.updateEstado(lead.id, data.estado)
+    }
+
+    return lead
   },
 
   update: async (
@@ -61,11 +134,23 @@ export const leadsService = {
     data: Partial<LeadFormData>
   ): Promise<Lead> => {
     if (USE_MOCK) return mockUpdateLead(id, data)
-    const response = await apiClient.patch<Lead>(
-      ENDPOINTS.leads.update(id),
-      data
-    )
-    return response.data
+    const payload = toUpdateLeadDto(data)
+    const hasBusinessPayload = Object.keys(payload).length > 0
+
+    let lead = hasBusinessPayload
+      ? fromLeadDto((
+          await apiClient.patch<LeadDtoOut>(
+            ENDPOINTS.leads.update(id),
+            payload
+          )
+        ).data)
+      : await leadsService.getById(id)
+
+    if (data.estado && data.estado !== lead.estado) {
+      lead = await leadsService.updateEstado(id, data.estado)
+    }
+
+    return lead
   },
 
   updateEstado: async (
@@ -73,11 +158,11 @@ export const leadsService = {
     estado: LeadState
   ): Promise<Lead> => {
     if (USE_MOCK) return mockUpdateEstadoLead(id, estado)
-    const response = await apiClient.patch<Lead>(
+    const response = await apiClient.patch<LeadDtoOut>(
       ENDPOINTS.leads.updateEstado(id),
-      { estado }
+      { estado: toBackendLeadState(estado) }
     )
-    return response.data
+    return fromLeadDto(response.data)
   },
 
   delete: async (id: number): Promise<void> => {
