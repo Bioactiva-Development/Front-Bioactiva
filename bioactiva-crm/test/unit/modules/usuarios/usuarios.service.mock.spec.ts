@@ -78,21 +78,19 @@ describe('usuarios/usuarios.service (mock mode)', () => {
   })
 
   it('delegates deshabilitar to mockDeshabilitarUsuario', async () => {
-    mockDeshabilitarUsuario.mockResolvedValueOnce({ id: 1, nombres: '', apellidos: '', correo: '', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Inactivo, created_at: '', updated_at: '' })
+    mockDeshabilitarUsuario.mockResolvedValueOnce(undefined)
 
-    const result = await usuariosService.deshabilitar(1)
+    await usuariosService.deshabilitar(1)
 
     expect(mockDeshabilitarUsuario).toHaveBeenCalledWith(1)
-    expect(result.estado).toBe(EstadoUsuario.Inactivo)
   })
 
   it('delegates habilitar to mockHabilitarUsuario', async () => {
-    mockHabilitarUsuario.mockResolvedValueOnce({ id: 1, nombres: '', apellidos: '', correo: '', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, created_at: '', updated_at: '' })
+    mockHabilitarUsuario.mockResolvedValueOnce(undefined)
 
-    const result = await usuariosService.habilitar(1)
+    await usuariosService.habilitar(1)
 
     expect(mockHabilitarUsuario).toHaveBeenCalledWith(1)
-    expect(result.estado).toBe(EstadoUsuario.Activo)
   })
 
   it('delegates listInvitaciones to mockListInvitaciones', async () => {
