@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Save, ArrowLeft, Trash2 } from 'lucide-react'
+import { Loader2, Save, ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { leadSchema, LeadFormValues } from '@/lib/validators/lead.schema'
 import { LeadState } from '@/types/enums'
@@ -18,9 +18,7 @@ interface LeadFormProps {
   estadoInicial?: LeadState
   estadoEditable?: boolean
   onSubmit:   (data: LeadFormValues) => Promise<void>
-  onDelete?:   () => void
   isLoading:  boolean
-  isDeleting?: boolean
   error?:     string | null
 }
 
@@ -36,9 +34,7 @@ export function LeadForm({
   estadoInicial,
   estadoEditable = false,
   onSubmit,
-  onDelete,
   isLoading,
-  isDeleting = false,
   error,
 }: LeadFormProps) {
   const router    = useRouter()
@@ -386,41 +382,20 @@ export function LeadForm({
         )}
 
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => router.push(ROUTES.pipeline)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm
-                text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              <ArrowLeft size={16} />
-              Volver al pipeline
-            </button>
-
-            {esEdicion && onDelete && (
-              <button
-                type="button"
-                onClick={onDelete}
-                disabled={isLoading || isDeleting}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl
-                  text-sm font-semibold border border-red-200 text-red-600
-                  hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed
-                  transition-colors"
-              >
-                {isDeleting ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Trash2 size={16} />
-                )}
-                Eliminar Lead
-              </button>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => router.push(ROUTES.pipeline)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm
+              text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Volver al pipeline
+          </button>
 
           <button
             type="button"
             onClick={handleSubmit(handleValidSubmit)}
-            disabled={isLoading || isDeleting}
+            disabled={isLoading}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700
               disabled:bg-emerald-400 disabled:cursor-not-allowed text-white
               font-semibold py-2.5 px-6 rounded-xl text-sm transition-colors"

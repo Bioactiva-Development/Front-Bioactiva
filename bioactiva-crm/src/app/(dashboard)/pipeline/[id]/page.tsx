@@ -91,9 +91,7 @@ export default function LeadDetallePage() {
           lead={lead}
           estadoEditable
           onSubmit={handleGuardar}
-          onDelete={handleEliminar}
           isLoading={isPending}
-          isDeleting={eliminando}
           error={errorGuardar}
         />
       </div>
@@ -104,6 +102,8 @@ export default function LeadDetallePage() {
     <LeadDetalle
       lead={lead}
       onEditar={() => setEditando(true)}
+      onEliminar={handleEliminar}
+      eliminando={eliminando}
       initialAction={
         accionInicial === 'actividad' || accionInicial === 'seguimiento'
           ? accionInicial

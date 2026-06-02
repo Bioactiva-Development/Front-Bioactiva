@@ -7,6 +7,7 @@ import {
   Briefcase, Calendar, Mail, Phone,
   Plus, MessageSquare, FileText, History,
   ExternalLink, AlertCircle, DollarSign, Bell,
+  Trash2, Loader2,
 } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
 import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
@@ -41,6 +42,8 @@ import { NotificacionProgramada } from '@/types/notificacion.types'
 interface LeadDetalleProps {
   lead:     Lead
   onEditar: () => void
+  onEliminar?: () => void
+  eliminando?: boolean
   initialAction?: 'actividad' | 'seguimiento'
 }
 
@@ -119,7 +122,13 @@ function formatFecha(fecha?: string) {
   })
 }
 
-export function LeadDetalle({ lead, onEditar, initialAction }: LeadDetalleProps) {
+export function LeadDetalle({
+  lead,
+  onEditar,
+  onEliminar,
+  eliminando = false,
+  initialAction,
+}: LeadDetalleProps) {
   const router                          = useRouter()
   const [tab, setTab]                   = useState<
     'info' | 'actividades' | 'cotizaciones' | 'historial'
@@ -317,15 +326,35 @@ export function LeadDetalle({ lead, onEditar, initialAction }: LeadDetalleProps)
             </div>
           </div>
 
-          <button
-            onClick={onEditar}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
-              font-semibold border border-emerald-600 text-emerald-600
-              hover:bg-emerald-50 transition-colors"
-          >
-            <Pencil size={14} />
-            Editar lead
-          </button>
+          <div className="flex items-center gap-2">
+            {onEliminar && (
+              <button
+                onClick={onEliminar}
+                disabled={eliminando}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl
+                  text-sm font-semibold border border-red-200 text-red-600
+                  hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed
+                  transition-colors"
+              >
+                {eliminando ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Trash2 size={14} />
+                )}
+                Eliminar Lead
+              </button>
+            )}
+
+            <button
+              onClick={onEditar}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
+                font-semibold border border-emerald-600 text-emerald-600
+                hover:bg-emerald-50 transition-colors"
+            >
+              <Pencil size={14} />
+              Editar lead
+            </button>
+          </div>
         </div>
 
         <div className="mt-4 pt-4 border-t border-gray-50">
