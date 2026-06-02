@@ -3,13 +3,15 @@ import { leadsService } from '@/services/modules/leads.service'
 import { cotizacionesService } from '@/services/modules/cotizaciones.service'
 import { QUERY_KEYS } from '@/lib/constants/queryKeys'
 import { Lead, LeadFiltros, LeadFormData } from '@/types/lead.types'
-import { LeadState } from '@/types/enums'
+import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 import {
-  getCotizacionStateFromLeadClosure,
+  getCotizacionStateFromLeadState,
   getCotizacionToResolveLeadClosure,
+  getPrimaryCotizacion,
   validateLeadStateTransition,
 } from '@/lib/utils/lead-flow.utils'
+import { CotizacionFormData } from '@/types/cotizacion.types'
 
 export function usePipeline(filtros?: LeadFiltros) {
   return useQuery({
@@ -35,13 +37,41 @@ export function useLead(id: number) {
   })
 }
 
+function buildDefaultCotizacion(lead: Lead): CotizacionFormData {
+  const now = new Date().toISOString()
+
+  return {
+    id_lead:          lead.id,
+    id_remitente:     lead.id_encargado,
+    fecha_cot:        now,
+    dirigido:         lead.contacto_nombre ?? 'Contacto por definir',
+    cliente:          lead.organizacion_nombre ?? 'Organización por definir',
+    producto:         lead.servicio_interes,
+    nombre_remitente: lead.encargado_nombre ?? 'Responsable asignado',
+    nombre_servicio:  lead.servicio_interes,
+    monto:            0,
+    tipo:             TipoMoneda.Soles,
+    estado:           EstadoCot.Pendiente,
+    observacion:      'Cotización inicial generada automáticamente al crear el lead.',
+  }
+}
+
 export function useCrearLead() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: LeadFormData) => leadsService.create(data),
+    mutationFn: async (data: LeadFormData) => {
+      const lead = await leadsService.create({
+        ...data,
+        estado: LeadState.Prospecto,
+      })
+      await cotizacionesService.create(buildDefaultCotizacion(lead))
+      return lead
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -82,18 +112,28 @@ export function useMoverLeadPipeline() {
   return useMutation({
     mutationFn: async ({ lead, estado }: { lead: Lead; estado: LeadState }) => {
       const cotizaciones = await cotizacionesService.getByLead(lead.id)
-      const targetCotState = getCotizacionStateFromLeadClosure(estado)
+      const targetCotState = getCotizacionStateFromLeadState(estado)
 
       if (targetCotState) {
-        const cotizacion = getCotizacionToResolveLeadClosure(
-          estado,
-          cotizaciones
-        )
+        const cotizacion = estado === LeadState.Prospecto ||
+          estado === LeadState.Ofertado
+          ? getPrimaryCotizacion(cotizaciones)
+          : getCotizacionToResolveLeadClosure(estado, cotizaciones)
 
         if (!cotizacion) {
-          const reason = estado === LeadState.CierreVenta
-            ? 'Para cerrar con venta debe existir una cotización enviada o pendiente que pueda aceptarse.'
-            : 'Para cerrar sin venta debe existir una cotización enviada o pendiente que pueda rechazarse.'
+          if (estado === LeadState.Prospecto || estado === LeadState.Ofertado) {
+            await cotizacionesService.create({
+              ...buildDefaultCotizacion(lead),
+              estado: targetCotState,
+            })
+            await leadsService.updateEstado(lead.id, estado)
+            return
+          }
+
+          const reason =
+            estado === LeadState.CierreVenta
+              ? 'Para cerrar con venta debe existir una cotización enviada o pendiente que pueda aceptarse.'
+              : 'Para cerrar sin venta debe existir una cotización enviada o pendiente que pueda rechazarse.'
           throw new Error(reason)
         }
 
@@ -101,8 +141,11 @@ export function useMoverLeadPipeline() {
           await cotizacionesService.update(cotizacion.id, {
             estado: targetCotState,
           })
-          return
         }
+
+        await leadsService.updateEstado(lead.id, estado)
+
+        return
       } else {
         const guard = validateLeadStateTransition(estado, cotizaciones)
         if (!guard.allowed) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { LeadForm } from '@/components/modules/pipeline/LeadForm'
 import { useCrearLead } from '@/hooks/pipeline/useLeads'
 import { LeadFormValues } from '@/lib/validators/lead.schema'
@@ -10,16 +10,9 @@ import { ROUTES } from '@/lib/constants/routes'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 import { LeadState } from '@/types/enums'
 
-const ESTADOS_VALIDOS = new Set<string>(Object.values(LeadState))
-
 export default function NuevoLeadPage() {
   const router            = useRouter()
-  const searchParams      = useSearchParams()
   const [error, setError] = useState<string | null>(null)
-  const estadoParam       = searchParams.get('estado')
-  const estadoInicial     = estadoParam && ESTADOS_VALIDOS.has(estadoParam)
-    ? estadoParam as LeadState
-    : undefined
 
   const { mutateAsync: crear, isPending } = useCrearLead()
 
@@ -41,7 +34,7 @@ export default function NuevoLeadPage() {
         descripcion="Registra una nueva oportunidad comercial"
       />
       <LeadForm
-        estadoInicial={estadoInicial}
+        estadoInicial={LeadState.Prospecto}
         onSubmit={handleSubmit}
         isLoading={isPending}
         error={error}

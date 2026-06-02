@@ -14,12 +14,32 @@ export function getLeadStateFromCotizacion(
   return null
 }
 
-export function getCotizacionStateFromLeadClosure(
+export function getCotizacionStateFromLeadState(
   targetState: LeadState
 ): EstadoCot | null {
+  if (targetState === LeadState.Prospecto) return EstadoCot.Pendiente
+  if (targetState === LeadState.Ofertado) return EstadoCot.Enviada
   if (targetState === LeadState.CierreVenta) return EstadoCot.Aceptada
   if (targetState === LeadState.CierreSinVenta) return EstadoCot.Rechazada
   return null
+}
+
+export function getPrimaryCotizacion(
+  cotizaciones: Cotizacion[]
+): Cotizacion | null {
+  return [...cotizaciones].sort(
+    (a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  )[0] ?? null
+}
+
+export function getCotizacionStateFromLeadClosure(
+  targetState: LeadState
+): EstadoCot | null {
+  return targetState === LeadState.CierreVenta ||
+    targetState === LeadState.CierreSinVenta
+    ? getCotizacionStateFromLeadState(targetState)
+    : null
 }
 
 export function getCotizacionToResolveLeadClosure(
@@ -35,12 +55,14 @@ export function getCotizacionToResolveLeadClosure(
   if (alreadyResolved) return alreadyResolved
 
   const viableStates = [EstadoCot.Enviada, EstadoCot.Pendiente]
-  return cotizaciones
+  const viableCotizacion = cotizaciones
     .filter((cotizacion) => viableStates.includes(cotizacion.estado))
     .sort(
       (a, b) =>
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-    )[0] ?? null
+    )[0]
+
+  return viableCotizacion ?? getPrimaryCotizacion(cotizaciones)
 }
 
 export function validateLeadStateTransition(

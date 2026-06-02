@@ -2,6 +2,8 @@ import { LeadState, TipoActividad, EstadoActividad } from '@/types/enums'
 import { Lead, LeadFiltros, LeadsResponse, PipelineData } from '@/types/lead.types'
 import { Actividad, ComentarioActividad } from '@/types/actividad.types'
 import { getLeadAlertLabel } from '@/lib/utils/activity-flow.utils'
+import { mockGetOrganizacion } from '@/services/mock/organizaciones.mock'
+import { mockGetContacto } from '@/services/mock/contactos.mock'
 
 const MOCK_LEADS: Lead[] = [
   {
@@ -369,13 +371,19 @@ export const mockCreateLead = async (
   const anio   = new Date().getFullYear()
   const codigo = `LEAD-${anio}-${String(MOCK_LEADS.length + 1).padStart(3, '0')}`
   const responsable = RESPONSABLES_MOCK[data.id_encargado ?? 3]
+  const organizacion = data.id_org
+    ? await mockGetOrganizacion(data.id_org).catch(() => null)
+    : null
+  const contacto = data.id_contacto
+    ? await mockGetContacto(data.id_contacto).catch(() => null)
+    : null
 
   const nuevo: Lead = {
     id:                  Date.now(),
     codigo,
     id_org:              data.id_org!,
     id_contacto:         data.id_contacto,
-    estado:              data.estado ?? LeadState.Prospecto,
+    estado:              LeadState.Prospecto,
     servicio_interes:    data.servicio_interes!,
     comentarios:         data.comentarios,
     desafio_oportunidad: data.desafio_oportunidad,
@@ -388,7 +396,9 @@ export const mockCreateLead = async (
     id_author:           1,
     created_at:          new Date().toISOString(),
     updated_at:          new Date().toISOString(),
-    organizacion_nombre: data.organizacion_nombre,
+    organizacion_nombre: data.organizacion_nombre ?? organizacion?.nombre,
+    contacto_nombre:     data.contacto_nombre ??
+      (contacto ? `${contacto.nombres} ${contacto.apellidos ?? ''}`.trim() : undefined),
     encargado_nombre:    data.encargado_nombre ?? responsable.nombre,
     encargado_correo:    data.encargado_correo ?? responsable.correo,
     tiene_alerta:        false,

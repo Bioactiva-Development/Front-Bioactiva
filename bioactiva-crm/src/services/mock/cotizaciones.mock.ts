@@ -75,6 +75,28 @@ const MOCK_COTIZACIONES: Cotizacion[] = [
     organizacion_nombre: 'Inversiones Pisco S.A.',
     periodo:          'Abril 2025',
   },
+  {
+    id:               4,
+    codigo:           'COT-2026-001',
+    id_lead:          2,
+    id_remitente:     4,
+    fecha_cot:        '2026-01-15T08:00:00Z',
+    dirigido:         'Contacto por definir',
+    cliente:          'AgroTech Innova',
+    producto:         'Ley 30309 - Deducción I+D+i',
+    nombre_remitente: 'Carlos Mamani',
+    nombre_servicio:  'Ley 30309 - Deducción I+D+i',
+    monto:            0,
+    tipo:             TipoMoneda.Soles,
+    estado:           EstadoCot.Pendiente,
+    observacion:      'Cotización inicial generada automáticamente para lead en prospecto.',
+    id_author:        2,
+    created_at:       '2026-01-15T08:00:00Z',
+    updated_at:       '2026-01-15T08:00:00Z',
+    lead_codigo:      'LEAD-2026-001',
+    organizacion_nombre: 'AgroTech Innova',
+    periodo:          'Enero 2026',
+  },
 ]
 
 const delay = (ms: number = 600) =>
