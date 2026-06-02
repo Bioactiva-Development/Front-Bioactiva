@@ -87,7 +87,7 @@ export function AcceptInvitationForm() {
                     {success ? (
                         <div className="space-y-3">
                             <AuthAlertBanner variant="success" message={success} withIcon />
-                            <p className="text-sm text-gray-500 text-center">Redirigiendo al login...</p>
+                            <p className="text-sm text-gray-500 text-center">Redirigiendo al sistema...</p>
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
