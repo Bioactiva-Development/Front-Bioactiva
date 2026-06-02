@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, ArrowLeft } from 'lucide-react'
@@ -29,6 +29,36 @@ const RESPONSABLES = [
   { id: 4, nombre: 'Carlos Mamani',  correo: 'cmamani@bioactiva.pe' },
 ]
 
+function getLeadFormDefaults(
+  lead?: Lead,
+  estadoInicial?: LeadState,
+  usuario?: { id?: number; correo?: string } | null
+): Partial<LeadFormValues> {
+  if (lead) {
+    return {
+      id_org:                  lead.id_org,
+      id_contacto:             lead.id_contacto,
+      estado:                  lead.estado,
+      servicio_interes:        lead.servicio_interes,
+      comentarios:             lead.comentarios ?? '',
+      desafio_oportunidad:     lead.desafio_oportunidad ?? '',
+      notas_contacto:          lead.notas_contacto ?? '',
+      id_encargado:            lead.id_encargado,
+      encargado_correo:        lead.encargado_correo ?? '',
+      canal_captacion:         lead.canal_captacion ?? '',
+      fecha_cierre:            lead.fecha_cierre ?? '',
+      proxima_actividad:       lead.proxima_actividad ?? '',
+      fecha_proxima_actividad: lead.fecha_proxima_actividad ?? '',
+    }
+  }
+
+  return {
+    estado:          estadoInicial ?? LeadState.Prospecto,
+    id_encargado:    usuario?.id ?? 1,
+    encargado_correo: usuario?.correo ?? '',
+  }
+}
+
 export function LeadForm({
   lead,
   estadoInicial,
@@ -46,31 +76,12 @@ export function LeadForm({
     register,
     handleSubmit,
     setValue,
+    reset,
     control,
     formState: { errors },
   } = useForm<LeadFormValues>({
     resolver: zodResolver(leadSchema),
-    defaultValues: lead
-      ? {
-          id_org:                  lead.id_org,
-          id_contacto:             lead.id_contacto,
-          estado:                  lead.estado,
-          servicio_interes:        lead.servicio_interes,
-          comentarios:             lead.comentarios ?? '',
-          desafio_oportunidad:     lead.desafio_oportunidad ?? '',
-          notas_contacto:          lead.notas_contacto ?? '',
-          id_encargado:            lead.id_encargado,
-          encargado_correo:        lead.encargado_correo ?? '',
-          canal_captacion:         lead.canal_captacion ?? '',
-          fecha_cierre:            lead.fecha_cierre ?? '',
-          proxima_actividad:       lead.proxima_actividad ?? '',
-          fecha_proxima_actividad: lead.fecha_proxima_actividad ?? '',
-        }
-      : {
-          estado:          estadoInicial ?? LeadState.Prospecto,
-          id_encargado:    usuario?.id ?? 1,
-          encargado_correo: usuario?.correo ?? '',
-        },
+    defaultValues: getLeadFormDefaults(lead, estadoInicial, usuario),
   })
 
   const orgSeleccionada   = useWatch({ control, name: 'id_org' })
@@ -78,9 +89,55 @@ export function LeadForm({
   const estadoActual      = useWatch({ control, name: 'estado' }) ?? LeadState.Prospecto
 
   const { data: orgsData }      = useOrganizaciones({ limit: 100 })
-  const organizaciones          = orgsData?.data ?? []
+  const organizaciones          = useMemo(
+    () => orgsData?.data ?? [],
+    [orgsData?.data]
+  )
   const { data: contactosOrg }  = useContactosPorOrganizacion(orgSeleccionada)
   const contactos               = contactosOrg ?? []
+  const includeCurrentOrgOption = Boolean(
+    lead?.id_org &&
+    lead.organizacion_nombre &&
+    !organizaciones.some((org) => org.id === lead.id_org)
+  )
+  const includeCurrentContactOption = Boolean(
+    lead?.id_contacto &&
+    lead.contacto_nombre &&
+    !contactos.some((contacto) => contacto.id === lead.id_contacto)
+  )
+
+  useEffect(() => {
+    reset(getLeadFormDefaults(lead, estadoInicial, usuario))
+  }, [estadoInicial, lead, reset, usuario])
+
+  useEffect(() => {
+    if (!esEdicion || orgSeleccionada) return
+
+    if (lead?.id_org && organizaciones.some((org) => org.id === lead.id_org)) {
+      setValue('id_org', lead.id_org)
+      return
+    }
+
+    if (!lead?.organizacion_nombre) return
+
+    const organizacionActual = organizaciones.find(
+      (org) =>
+        org.nombre.toLowerCase() === lead.organizacion_nombre!.toLowerCase() ||
+        org.nombre_comercial.toLowerCase() ===
+          lead.organizacion_nombre!.toLowerCase()
+    )
+
+    if (organizacionActual) {
+      setValue('id_org', organizacionActual.id)
+    }
+  }, [
+    esEdicion,
+    lead?.id_org,
+    lead?.organizacion_nombre,
+    organizaciones,
+    orgSeleccionada,
+    setValue,
+  ])
 
   useEffect(() => {
     const responsable = RESPONSABLES.find(
@@ -151,6 +208,9 @@ export function LeadForm({
               ${esEdicion ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
             <option value="">Buscar organización existente...</option>
+            {includeCurrentOrgOption && (
+              <option value={lead!.id_org}>{lead!.organizacion_nombre}</option>
+            )}
             {organizaciones.map((org) => (
               <option key={org.id} value={org.id}>{org.nombre}</option>
             ))}
@@ -181,6 +241,11 @@ export function LeadForm({
                 : 'Primero selecciona una organización'
               }
             </option>
+            {includeCurrentContactOption && (
+              <option value={lead!.id_contacto}>
+                {lead!.contacto_nombre}
+              </option>
+            )}
             {contactos.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.vocativo ? `${c.vocativo}. ` : ''}
