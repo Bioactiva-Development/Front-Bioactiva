@@ -48,7 +48,23 @@ export const contactosService = {
             ENDPOINTS.contactos.list,
             { params: filtros }
         )
-        const data = response.data.map(normalizeContacto)
+        let data = response.data.map(normalizeContacto)
+
+        if (filtros?.search) {
+            const q = filtros.search.toLowerCase()
+            data = data.filter(
+                (c) =>
+                    `${c.nombres} ${c.apellidos}`.toLowerCase().includes(q) ||
+                    c.correo.toLowerCase().includes(q) ||
+                    (c.cargo?.toLowerCase().includes(q) ?? false) ||
+                    (c.organizacion_nombre?.toLowerCase().includes(q) ?? false),
+            )
+        }
+
+        if (filtros?.idOrganizacion) {
+            data = data.filter((c) => c.idOrganizacion === filtros.idOrganizacion)
+        }
+
         return {
             data,
             total: data.length,

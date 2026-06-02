@@ -67,7 +67,7 @@ export function ContactoForm({
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-4">
 
         <div className="space-y-1.5">
           <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -205,7 +205,7 @@ export function ContactoForm({
 
         <div className="space-y-1.5">
           <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Comentarios{' '}
+            Comentarios {' '}
             <span className="text-gray-400 normal-case font-normal">Opcional</span>
           </label>
           <textarea
