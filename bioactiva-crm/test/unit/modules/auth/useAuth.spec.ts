@@ -83,7 +83,7 @@ describe('security/useAuth', () => {
     expect(authServiceMock.login).toHaveBeenCalledWith({
       correo: 'admin@bioactiva.pe',
       password: 'Secret123!',
-    })
+    }, undefined)
     expect(pushMock).toHaveBeenCalledWith('/dashboard')
   })
 
@@ -96,7 +96,7 @@ describe('security/useAuth', () => {
       await result.current.forgotPassword({ correo: 'admin@bioactiva.pe' })
     })
 
-    expect(authServiceMock.forgotPassword).toHaveBeenCalledWith('admin@bioactiva.pe')
+    expect(authServiceMock.forgotPassword).toHaveBeenCalledWith('admin@bioactiva.pe', undefined)
     expect(result.current.success).toBe(
       'Si el correo está registrado en el sistema, recibirás un enlace de recuperación en los próximos minutos.'
     )
