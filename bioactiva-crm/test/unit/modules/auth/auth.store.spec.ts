@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/store/auth.store'
+import { TOKEN_KEY, USER_KEY } from '@/lib/constants/config'
 import { RolUsuario, EstadoUsuario } from '@/types/enums'
 
 /**
@@ -73,5 +74,55 @@ describe('security/auth.store', () => {
 
     expect(useAuthStore.getState().isAdministrador()).toBe(false)
     expect(useAuthStore.getState().isWorker()).toBe(true)
+  })
+
+  it('detects Administrador role correctly', () => {
+    useAuthStore.setState({
+      usuario: {
+        id: 2,
+        nombres: 'Carlos',
+        apellidos: 'Ramírez',
+        correo: 'admin@bioactiva.pe',
+        rol: RolUsuario.Administrador,
+        estado: EstadoUsuario.Activo,
+        created_at: '2025-01-01T08:00:00Z',
+        updated_at: '2025-01-01T08:00:00Z',
+      },
+    })
+
+    expect(useAuthStore.getState().isAdministrador()).toBe(true)
+    expect(useAuthStore.getState().isWorker()).toBe(false)
+  })
+
+  it('updates token with updateToken', () => {
+    useAuthStore.getState().setSession('old-token', {
+      id: 1,
+      nombres: 'Carlos',
+      apellidos: 'Ramírez',
+      correo: 'admin@bioactiva.pe',
+      rol: RolUsuario.Administrador,
+      estado: EstadoUsuario.Activo,
+      created_at: '2025-01-01T08:00:00Z',
+      updated_at: '2025-01-01T08:00:00Z',
+    })
+
+    useAuthStore.getState().updateToken('new-token')
+
+    expect(useAuthStore.getState().accessToken).toBe('new-token')
+    expect(localStorage.getItem('bioactiva_token')).toBe('new-token')
+    expect(useAuthStore.getState().isAuthenticated).toBe(true)
+  })
+
+  it('sets loading state with setLoading', () => {
+    useAuthStore.getState().setLoading(true)
+    expect(useAuthStore.getState().isLoading).toBe(true)
+
+    useAuthStore.getState().setLoading(false)
+    expect(useAuthStore.getState().isLoading).toBe(false)
+  })
+
+  it('returns false for role helpers when usuario is null', () => {
+    expect(useAuthStore.getState().isAdministrador()).toBe(false)
+    expect(useAuthStore.getState().isWorker()).toBe(false)
   })
 })

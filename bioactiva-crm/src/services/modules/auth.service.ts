@@ -6,7 +6,6 @@ import {
     mockForgotPassword,
     mockValidateToken,
     mockResetPassword,
-    mockActivateAccount,
 } from '@/services/mock/auth.mock'
 import {
     LoginRequest,
@@ -14,8 +13,6 @@ import {
     RefreshResponse,
     ForgotPasswordResponse,
     ResetPasswordResponse,
-    ActivateAccountRequest,
-    ActivateAccountResponse,
     ValidateTokenResponse,
     UsuarioRaw,
 } from '@/types/auth.types'
@@ -43,7 +40,7 @@ const isAppError = (e: unknown): e is AppError =>
     typeof e === 'object' && e !== null
 
 export const authService = {
-    login: async (data: LoginRequest): Promise<LoginResponse> => {
+    login: async (data: LoginRequest, _captchaToken?: string | null): Promise<LoginResponse> => {
         if (USE_MOCK) return mockLogin(data)
         const response = await apiClient.post<LoginResponse>(
             ENDPOINTS.auth.login,
@@ -73,7 +70,7 @@ export const authService = {
      * (anti-enumeración de usuarios). El frontend debe mostrar siempre un
      * mensaje neutral del tipo "Si el correo está registrado, recibirás...".
      */
-    forgotPassword: async (correo: string): Promise<ForgotPasswordResponse> => {
+    forgotPassword: async (correo: string, _captchaToken?: string | null): Promise<ForgotPasswordResponse> => {
         if (USE_MOCK) return mockForgotPassword(correo)
         const response = await apiClient.post<{ ok: boolean }>(
             ENDPOINTS.resetPassword.request,
@@ -121,26 +118,6 @@ export const authService = {
             { token, password, confirmPassword },
         )
         return { ok: response.data?.ok ?? true }
-    },
-
-    /**
-     * Activación de cuenta para usuarios invitados.
-     *
-     * TODO(coord-backend): el módulo correcto en el backend es `invitations`
-     * (no `/auth/activate`). El flujo correcto es:
-     *   1. GET  /invitations/info/:token  → datos de la invitación
-     *   2. POST /invitations/accept       → activa cuenta + define password
-     *
-     * Hasta que se haga el refactor del flujo, este método sigue apuntando al
-     * mock para no romper la UI existente.
-     */
-    activateAccount: async (data: ActivateAccountRequest): Promise<ActivateAccountResponse> => {
-        if (USE_MOCK) return mockActivateAccount(data)
-        const response = await apiClient.post<ActivateAccountResponse>(
-            ENDPOINTS.invitations.accept,
-            data,
-        )
-        return response.data
     },
 
     logout: async (): Promise<void> => {

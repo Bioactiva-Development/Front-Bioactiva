@@ -173,8 +173,11 @@ export default function ControlAccesoPage() {
             await createInvitacion({ correo: data.correo, rol: rolNumerico })
             return true
         } catch (err: unknown) {
-            const e = err as { message?: string }
-            setInviteError(e?.message ?? 'Error al enviar la invitación.')
+            const raw = (err as { message?: string })?.message ?? ''
+            const msg = /unique constraint|already exists|correo/i.test(raw)
+                ? 'Ya existe una invitación o cuenta registrada con ese correo. No es posible enviar una nueva invitación.'
+                : 'Error al enviar la invitación. Intente nuevamente.'
+            setInviteError(msg)
             return false
         }
     }

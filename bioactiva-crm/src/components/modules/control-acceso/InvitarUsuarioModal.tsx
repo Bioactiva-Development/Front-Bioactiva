@@ -2,9 +2,10 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { X, Loader2, Mail } from 'lucide-react'
+import { Loader2, Mail } from 'lucide-react'
 import { RolUsuario } from '@/types/enums'
 import { invitarUsuarioSchema, InvitarUsuarioFormValues } from '@/lib/validators/usuario.schema'
+import { ModalShell, ModalHeader, ModalFormField, modalInputCn } from '@/components/ui'
 
 interface Props {
     isLoading: boolean
@@ -29,94 +30,63 @@ export function InvitarUsuarioModal({ isLoading, error, onClose, onSubmit }: Pro
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+        <ModalShell onClose={onClose}>
+            <ModalHeader
+                icon={<Mail size={18} className="text-[#1C7E3C]" />}
+                iconBg="bg-[#1C7E3C]/10"
+                title="Invitar usuario"
+                subtitle="Se enviará un correo de activación"
+                onClose={onClose}
+            />
 
-            <div className="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[#1C7E3C]/10 flex items-center justify-center">
-                            <Mail size={18} className="text-[#1C7E3C]" />
-                        </div>
-                        <div>
-                            <h2 className="text-base font-bold text-gray-900">Invitar usuario</h2>
-                            <p className="text-xs text-gray-500">Se enviará un correo de activación</p>
-                        </div>
+            <form onSubmit={handleSubmit(handleFormSubmit)} className="px-6 py-5 space-y-4">
+                {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+                        {error}
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                )}
+
+                <ModalFormField label="Correo institucional" error={errors.correo?.message}>
+                    <input
+                        type="text"
+                        placeholder="usuario@bioactiva.pe"
+                        autoComplete="off"
+                        {...register('correo')}
+                        className={modalInputCn(!!errors.correo)}
+                    />
+                </ModalFormField>
+
+                <ModalFormField label="Rol" error={errors.rol?.message}>
+                    <select
+                        {...register('rol')}
+                        className={modalInputCn(!!errors.rol)}
                     >
-                        <X size={16} />
+                        <option value={RolUsuario.Trabajador}>Trabajador</option>
+                        <option value={RolUsuario.Administrador}>Administrador</option>
+                    </select>
+                </ModalFormField>
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#1C7E3C] hover:bg-[#16642f] disabled:bg-[#BCF7B3] disabled:cursor-not-allowed rounded-xl transition-colors"
+                    >
+                        {isLoading ? (
+                            <><Loader2 size={14} className="animate-spin" />Enviando...</>
+                        ) : (
+                            'Enviar invitación'
+                        )}
                     </button>
                 </div>
-
-                <form onSubmit={handleSubmit(handleFormSubmit)} className="px-6 py-5 space-y-4">
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
-                            {error}
-                        </div>
-                    )}
-
-                    <div className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                            Correo institucional
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="usuario@bioactiva.pe"
-                            autoComplete="off"
-                            {...register('correo')}
-                            className={`w-full px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 rounded-xl border-2 outline-none transition-colors bg-gray-50
-                                ${errors.correo ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-[#1C7E3C]'}`}
-                        />
-                        {errors.correo && (
-                            <p className="text-red-500 text-xs">{errors.correo.message}</p>
-                        )}
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                            Rol
-                        </label>
-                        <select
-                            {...register('rol')}
-                            className={`w-full px-4 py-2.5 text-sm text-gray-900 rounded-xl border-2 outline-none transition-colors bg-gray-50
-                                ${errors.rol ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-[#1C7E3C]'}`}
-                        >
-                            <option value={RolUsuario.Trabajador}>Trabajador</option>
-                            <option value={RolUsuario.Administrador}>Administrador</option>
-                        </select>
-                        {errors.rol && (
-                            <p className="text-red-500 text-xs">{errors.rol.message}</p>
-                        )}
-                    </div>
-
-                    <div className="flex items-center justify-end gap-3 pt-2">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#1C7E3C] hover:bg-[#16642f] disabled:bg-[#BCF7B3] disabled:cursor-not-allowed rounded-xl transition-colors"
-                        >
-                            {isLoading ? (
-                                <>
-                                    <Loader2 size={14} className="animate-spin" />
-                                    Enviando...
-                                </>
-                            ) : (
-                                'Enviar invitación'
-                            )}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+            </form>
+        </ModalShell>
     )
 }

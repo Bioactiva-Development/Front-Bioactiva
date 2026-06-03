@@ -14,13 +14,12 @@ import {
     ContactoFormData,
 } from '@/types/contacto.types'
 
-/**
- * Normaliza la respuesta cruda del backend al modelo `Contacto` del front.
- * Cambios del contrato (doc-endpoint.md, módulo `contacts`):
- *  - El backend ahora envía `organizacionNombre` (camelCase) → se mapea a
- *    `organizacion_nombre`, que es el campo que consumen los componentes.
- *  - `updatedAt` ya no viene en la respuesta → fallback a `createdAt`.
- */
+function stripEmptyStrings<T extends Record<string, unknown>>(data: T): Partial<T> {
+    return Object.fromEntries(
+        Object.entries(data).filter(([, v]) => v !== '')
+    ) as Partial<T>
+}
+
 function normalizeContacto(raw: Record<string, unknown>): Contacto {
     return {
         id: Number(raw.id),
@@ -45,11 +44,27 @@ export const contactosService = {
 
     getAll: async (filtros?: ContactoFiltros): Promise<ContactosResponse> => {
         if (USE_MOCK) return mockGetContactos(filtros)
-        const response = await apiClient.get<Record<string, unknown>[]>(
-            ENDPOINTS.contactos.list,
-            { params: filtros }
-        )
-        const data = response.data.map(normalizeContacto)
+
+        // Cuando se filtra por organización usar el endpoint dedicado en vez de
+        // traer todos los contactos y filtrar en cliente
+        const url = filtros?.idOrganizacion
+            ? ENDPOINTS.contactos.byOrganizacion(filtros.idOrganizacion)
+            : ENDPOINTS.contactos.list
+
+        const response = await apiClient.get<Record<string, unknown>[]>(url)
+        let data = response.data.map(normalizeContacto)
+
+        if (filtros?.search) {
+            const q = filtros.search.toLowerCase()
+            data = data.filter(
+                (c) =>
+                    `${c.nombres} ${c.apellidos}`.toLowerCase().includes(q) ||
+                    c.correo.toLowerCase().includes(q) ||
+                    (c.cargo?.toLowerCase().includes(q) ?? false) ||
+                    (c.organizacion_nombre?.toLowerCase().includes(q) ?? false),
+            )
+        }
+
         return {
             data,
             total: data.length,
@@ -70,7 +85,7 @@ export const contactosService = {
         if (USE_MOCK) return mockCreateContacto(data)
         const response = await apiClient.post<Record<string, unknown>>(
             ENDPOINTS.contactos.create,
-            data
+            stripEmptyStrings(data as unknown as Record<string, unknown>)
         )
         return normalizeContacto(response.data)
     },
@@ -82,7 +97,7 @@ export const contactosService = {
         if (USE_MOCK) return mockUpdateContacto(id, data)
         const response = await apiClient.patch<Record<string, unknown>>(
             ENDPOINTS.contactos.update(id),
-            data
+            stripEmptyStrings(data as unknown as Record<string, unknown>)
         )
         return normalizeContacto(response.data)
     },

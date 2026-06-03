@@ -259,7 +259,16 @@ export const mockCreateContacto = async (
 
     const existe = MOCK_CONTACTOS.find((c) => c.correo === data.correo)
     if (existe) {
-        throw { status: 409, message: 'El contacto ya se encuentra registrado.' }
+        throw { status: 409, message: 'El correo ya se encuentra registrado.' }
+    }
+
+    if (data.correo2) {
+        const existe2 = MOCK_CONTACTOS.find(
+            (c) => c.correo === data.correo2 || c.correo2 === data.correo2
+        )
+        if (existe2) {
+            throw { status: 409, message: 'El correo secundario ya se encuentra registrado.' }
+        }
     }
 
     const nuevo: Contacto = {

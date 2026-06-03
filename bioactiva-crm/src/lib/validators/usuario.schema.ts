@@ -24,7 +24,7 @@ export const editarUsuarioSchema = z.object({
         .min(1, 'El correo es obligatorio')
         .email('Formato de correo inválido')
         .refine(
-            (val) => val.endsWith(`@${DOMINIO_INSTITUCIONAL}`),
+            (val) => val.endsWith(`@${DOMINIO_INSTITUCIONAL}`) || val.endsWith('@utec.edu.pe'),
             `Debe ser un correo institucional (@${DOMINIO_INSTITUCIONAL})`,
         ),
     rol: z.nativeEnum(RolUsuario),

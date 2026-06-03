@@ -11,7 +11,6 @@ import {
     LoginFormValues,
     ForgotPasswordFormValues,
     ResetPasswordFormValues,
-    ActivateAccountFormValues,
 } from '@/lib/validators/auth.schema'
 import { ValidateTokenResult } from '@/types/auth.types'
 
@@ -52,12 +51,12 @@ export function useAuth() {
         setSuccess(null)
     }, [])
 
-    const login = async (data: LoginFormValues) => {
+    const login = async (data: LoginFormValues, captchaToken?: string | null) => {
         try {
             resetMessages()
             setIsLoading(true)
 
-            const { accessToken } = await authService.login(data)
+            const { accessToken, accessTokenExpiresIn } = await authService.login(data, captchaToken)
 
             if (typeof window !== 'undefined') {
                 localStorage.setItem(TOKEN_KEY, accessToken)
@@ -77,7 +76,7 @@ export function useAuth() {
                 setCookie(COOKIE_ROL, usuarioData.rol)
             }
 
-            setSession(accessToken, usuarioData)
+            setSession(accessToken, usuarioData, accessTokenExpiresIn)
             router.push(ROUTES.dashboard)
         } catch (err: unknown) {
             if (typeof window !== 'undefined') {
@@ -103,11 +102,11 @@ export function useAuth() {
         }
     }
 
-    const forgotPassword = async (data: ForgotPasswordFormValues) => {
+    const forgotPassword = async (data: ForgotPasswordFormValues, captchaToken?: string | null) => {
         try {
             resetMessages()
             setIsLoading(true)
-            await authService.forgotPassword(data.correo)
+            await authService.forgotPassword(data.correo, captchaToken)
             // Mensaje neutral por diseño: el backend responde `{ ok: true }`
             // aunque el correo no exista (anti-enumeración de usuarios).
             // Revelar "enviado correctamente" delataría qué correos existen.
@@ -148,20 +147,6 @@ export function useAuth() {
         }
     }
 
-    const activateAccount = async (token: string, data: ActivateAccountFormValues) => {
-        try {
-            resetMessages()
-            setIsLoading(true)
-            await authService.activateAccount({ token, ...data })
-            setSuccess('Cuenta activada correctamente. Redirigiendo...')
-            setTimeout(() => router.push(ROUTES.auth.login), 2000)
-        } catch (err: unknown) {
-            setError(extractMessage(err, 'Error al activar la cuenta. Intente nuevamente.'))
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
     return {
         isLoading,
         error,
@@ -174,7 +159,6 @@ export function useAuth() {
         forgotPassword,
         validateToken,
         resetPassword,
-        activateAccount,
         resetMessages,
     }
 }
