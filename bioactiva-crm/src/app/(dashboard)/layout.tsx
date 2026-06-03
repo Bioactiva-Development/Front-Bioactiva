@@ -6,7 +6,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { Navbar } from '@/components/layout/Navbar'
 import { useAuthStore, useUIStore } from '@/store'
 import { authService } from '@/services/modules/auth.service'
-import { USE_MOCK } from '@/lib/constants/config'
+import { USE_MOCK, COOKIE_TOKEN, COOKIE_ROL } from '@/lib/constants/config'
 import { ROUTES } from '@/lib/constants/routes'
 import { useProactiveRefresh } from '@/hooks/auth/useProactiveRefresh'
 
@@ -14,6 +14,10 @@ const MAX_AGE = 8 * 60 * 60
 
 function setCookie(name: string, value: string): void {
     document.cookie = `${name}=${value}; path=/; max-age=${MAX_AGE}; SameSite=Strict`
+}
+
+function clearCookie(name: string): void {
+    document.cookie = `${name}=; path=/; max-age=0; SameSite=Strict`
 }
 
 export default function DashboardLayout({
@@ -31,6 +35,8 @@ export default function DashboardLayout({
         if (!_hasHydrated) return
 
         if (!isAuthenticated || !accessToken) {
+            clearCookie(COOKIE_TOKEN)
+            clearCookie(COOKIE_ROL)
             router.replace(ROUTES.auth.login)
             return
         }
@@ -48,6 +54,8 @@ export default function DashboardLayout({
                     setCookie('bioactiva_rol', u.rol)
                 })
                 .catch(() => {
+                    clearCookie(COOKIE_TOKEN)
+                    clearCookie(COOKIE_ROL)
                     clearSession()
                     router.replace(ROUTES.auth.login)
                 })

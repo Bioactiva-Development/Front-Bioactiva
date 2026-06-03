@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
-import { API_BASE_URL, TOKEN_KEY } from '@/lib/constants/config'
+import { API_BASE_URL, TOKEN_KEY, COOKIE_TOKEN, COOKIE_ROL } from '@/lib/constants/config'
 import { ROUTES } from '@/lib/constants/routes'
 import { useAuthStore } from '@/store/auth.store'
 
@@ -18,6 +18,8 @@ let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown
 function forceLogout(): void {
     if (typeof window === 'undefined') return
     useAuthStore.getState().clearSession()
+    document.cookie = `${COOKIE_TOKEN}=; path=/; max-age=0; SameSite=Strict`
+    document.cookie = `${COOKIE_ROL}=; path=/; max-age=0; SameSite=Strict`
     window.location.href = ROUTES.auth.login
 }
 
