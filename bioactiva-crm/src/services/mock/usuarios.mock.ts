@@ -218,5 +218,5 @@ export const mockGetInvitacionInfo = async (token: string): Promise<InvitacionIn
 
 export const mockAcceptInvitacion = async (): Promise<AcceptInvitacionResponse> => {
     await delay()
-    return { message: 'Cuenta activada correctamente.' }
+    return { accessToken: 'mock-token-activacion', accessTokenExpiresIn: 900 }
 }

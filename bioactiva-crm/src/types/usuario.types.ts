@@ -84,7 +84,8 @@ export interface AcceptInvitacionRequest {
 }
 
 export interface AcceptInvitacionResponse {
-    message?: string
+    accessToken: string
+    accessTokenExpiresIn: number
 }
 
 export interface ListInvitacionesParams {

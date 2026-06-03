@@ -130,11 +130,11 @@ describe('usuarios/usuarios.service (mock mode)', () => {
   })
 
   it('delegates acceptInvitacion to mockAcceptInvitacion', async () => {
-    mockAcceptInvitacion.mockResolvedValueOnce({ message: 'Cuenta activada correctamente.' })
+    mockAcceptInvitacion.mockResolvedValueOnce({ accessToken: 'mock-token', accessTokenExpiresIn: 900 })
 
     const result = await usuariosService.acceptInvitacion({ token: 't', password: 'P1!', confirmPassword: 'P1!', nombres: 'Juan', apellidos: 'Pérez' })
 
     expect(mockAcceptInvitacion).toHaveBeenCalledWith()
-    expect(result.message).toBe('Cuenta activada correctamente.')
+    expect(result.accessToken).toBe('mock-token')
   })
 })

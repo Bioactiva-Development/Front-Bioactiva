@@ -317,7 +317,7 @@ describe('usuarios/usuarios.service (API mode)', () => {
 
   describe('acceptInvitacion', () => {
     it('POSTs to correct endpoint', async () => {
-      postMock.mockResolvedValueOnce({ data: { message: 'Cuenta activada correctamente.' } })
+      postMock.mockResolvedValueOnce({ data: { accessToken: 'jwt-abc', accessTokenExpiresIn: 900 } })
 
       const result = await usuariosService.acceptInvitacion({
         token: 't',
@@ -334,7 +334,7 @@ describe('usuarios/usuarios.service (API mode)', () => {
         nombres: 'Juan',
         apellidos: 'Pérez',
       })
-      expect(result.message).toBe('Cuenta activada correctamente.')
+      expect(result.accessToken).toBe('jwt-abc')
     })
   })
 })
