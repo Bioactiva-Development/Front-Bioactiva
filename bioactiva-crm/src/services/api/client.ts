@@ -75,7 +75,7 @@ apiClient.interceptors.response.use(
             isRefreshing = true
 
             try {
-                const { data } = await apiClient.post<{ accessToken: string }>(
+                const { data } = await apiClient.post<{ accessToken: string; accessTokenExpiresIn: number }>(
                     '/auth/refresh',
                 )
 
@@ -85,6 +85,7 @@ apiClient.interceptors.response.use(
                     localStorage.setItem(TOKEN_KEY, newToken)
                 }
 
+                useAuthStore.getState().updateToken(newToken, data.accessTokenExpiresIn)
                 originalRequest.headers.Authorization = `Bearer ${newToken}`
 
                 processQueue(null, newToken)

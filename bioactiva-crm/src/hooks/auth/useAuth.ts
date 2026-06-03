@@ -57,7 +57,7 @@ export function useAuth() {
             resetMessages()
             setIsLoading(true)
 
-            const { accessToken } = await authService.login(data, captchaToken)
+            const { accessToken, accessTokenExpiresIn } = await authService.login(data, captchaToken)
 
             if (typeof window !== 'undefined') {
                 localStorage.setItem(TOKEN_KEY, accessToken)
@@ -77,7 +77,7 @@ export function useAuth() {
                 setCookie(COOKIE_ROL, usuarioData.rol)
             }
 
-            setSession(accessToken, usuarioData)
+            setSession(accessToken, usuarioData, accessTokenExpiresIn)
             router.push(ROUTES.dashboard)
         } catch (err: unknown) {
             if (typeof window !== 'undefined') {

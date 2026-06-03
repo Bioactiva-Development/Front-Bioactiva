@@ -36,6 +36,7 @@ export interface JwtPayload {
 export interface AuthState {
     usuario: Usuario | null
     accessToken: string | null
+    tokenExpiresAt: number | null
     isAuthenticated: boolean
     isLoading: boolean
 }
