@@ -186,24 +186,22 @@ describe('usuarios/usuarios.service (API mode)', () => {
   })
 
   describe('deshabilitar', () => {
-    it('PATCHes to disable endpoint', async () => {
-      patchMock.mockResolvedValueOnce({ data: { id: 1, estado: 'Inactivo' } })
+    it('PATCHes to disable endpoint and returns void', async () => {
+      patchMock.mockResolvedValueOnce({ data: undefined })
 
-      const result = await usuariosService.deshabilitar(1)
+      await usuariosService.deshabilitar(1)
 
       expect(patchMock).toHaveBeenCalledWith('/users/1/disable')
-      expect(result.estado).toBe('Inactivo')
     })
   })
 
   describe('habilitar', () => {
-    it('PATCHes to enable endpoint', async () => {
-      patchMock.mockResolvedValueOnce({ data: { id: 1, estado: 'Activo' } })
+    it('PATCHes to enable endpoint and returns void', async () => {
+      patchMock.mockResolvedValueOnce({ data: undefined })
 
-      const result = await usuariosService.habilitar(1)
+      await usuariosService.habilitar(1)
 
       expect(patchMock).toHaveBeenCalledWith('/users/1/enable')
-      expect(result.estado).toBe('Activo')
     })
   })
 

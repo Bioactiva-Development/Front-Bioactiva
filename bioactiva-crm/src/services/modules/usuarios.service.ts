@@ -131,7 +131,7 @@ export const usuariosService = {
 
     editar: async (data: EditarUsuarioRequest): Promise<UsuarioListItem> => {
         if (USE_MOCK) return mockEditarUsuario(data)
-        const response = await apiClient.put<UsuarioListItem>(ENDPOINTS.usuarios.detail(data.id), data)
+        const response = await apiClient.patch<UsuarioListItem>(ENDPOINTS.usuarios.detail(data.id), data)
         return response.data
     },
 
@@ -144,16 +144,14 @@ export const usuariosService = {
         return response.data
     },
 
-    deshabilitar: async (id: number): Promise<UsuarioListItem> => {
-        if (USE_MOCK) return mockDeshabilitarUsuario(id)
-        const response = await apiClient.patch<UsuarioListItem>(ENDPOINTS.usuarios.disable(id))
-        return response.data
+    deshabilitar: async (id: number): Promise<void> => {
+        if (USE_MOCK) { await mockDeshabilitarUsuario(id); return }
+        await apiClient.patch(ENDPOINTS.usuarios.disable(id))
     },
 
-    habilitar: async (id: number): Promise<UsuarioListItem> => {
-        if (USE_MOCK) return mockHabilitarUsuario(id)
-        const response = await apiClient.patch<UsuarioListItem>(ENDPOINTS.usuarios.enable(id))
-        return response.data
+    habilitar: async (id: number): Promise<void> => {
+        if (USE_MOCK) { await mockHabilitarUsuario(id); return }
+        await apiClient.patch(ENDPOINTS.usuarios.enable(id))
     },
 
     // ── Invitaciones ────────────────────────────────────────────────────────────
