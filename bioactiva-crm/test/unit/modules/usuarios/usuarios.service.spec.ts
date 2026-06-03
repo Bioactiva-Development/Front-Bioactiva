@@ -155,7 +155,7 @@ describe('usuarios/usuarios.service (API mode)', () => {
 
   describe('editar', () => {
     it('PUTs to correct endpoint', async () => {
-      putMock.mockResolvedValueOnce({ data: { id: 1 } })
+      patchMock.mockResolvedValueOnce({ data: { id: 1 } })
 
       const result = await usuariosService.editar({
         id: 1,
@@ -164,7 +164,7 @@ describe('usuarios/usuarios.service (API mode)', () => {
         rol: RolUsuario.Administrador,
       })
 
-      expect(putMock).toHaveBeenCalledWith('/users/1', {
+      expect(patchMock).toHaveBeenCalledWith('/users/1', {
         id: 1,
         nombre_completo: 'Admin User',
         correo: 'admin@bioactiva.pe',
