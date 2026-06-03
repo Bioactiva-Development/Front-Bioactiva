@@ -44,10 +44,14 @@ export const contactosService = {
 
     getAll: async (filtros?: ContactoFiltros): Promise<ContactosResponse> => {
         if (USE_MOCK) return mockGetContactos(filtros)
-        const response = await apiClient.get<Record<string, unknown>[]>(
-            ENDPOINTS.contactos.list,
-            { params: filtros }
-        )
+
+        // Cuando se filtra por organización usar el endpoint dedicado en vez de
+        // traer todos los contactos y filtrar en cliente
+        const url = filtros?.idOrganizacion
+            ? ENDPOINTS.contactos.byOrganizacion(filtros.idOrganizacion)
+            : ENDPOINTS.contactos.list
+
+        const response = await apiClient.get<Record<string, unknown>[]>(url)
         let data = response.data.map(normalizeContacto)
 
         if (filtros?.search) {
@@ -59,10 +63,6 @@ export const contactosService = {
                     (c.cargo?.toLowerCase().includes(q) ?? false) ||
                     (c.organizacion_nombre?.toLowerCase().includes(q) ?? false),
             )
-        }
-
-        if (filtros?.idOrganizacion) {
-            data = data.filter((c) => c.idOrganizacion === filtros.idOrganizacion)
         }
 
         return {
