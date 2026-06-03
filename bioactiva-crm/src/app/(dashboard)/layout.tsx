@@ -1,13 +1,14 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Navbar } from '@/components/layout/Navbar'
 import { useAuthStore, useUIStore } from '@/store'
 import { authService } from '@/services/modules/auth.service'
-import { USE_MOCK, TOKEN_KEY } from '@/lib/constants/config'
+import { USE_MOCK } from '@/lib/constants/config'
 import { ROUTES } from '@/lib/constants/routes'
+import { useProactiveRefresh } from '@/hooks/auth/useProactiveRefresh'
 
 const MAX_AGE = 8 * 60 * 60
 
@@ -21,33 +22,10 @@ export default function DashboardLayout({
     children: React.ReactNode
 }) {
     const router = useRouter()
-    const { isAuthenticated, usuario, accessToken, tokenExpiresAt, setSession, updateToken, clearSession, _hasHydrated } = useAuthStore()
+    const { isAuthenticated, usuario, accessToken, setSession, clearSession, _hasHydrated } = useAuthStore()
     const { sidebarCollapsed, sidebarOpen } = useUIStore()
-    const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    useEffect(() => {
-        if (USE_MOCK || !accessToken || !tokenExpiresAt) return
-
-        // Refresh 60 seconds before the token actually expires
-        const delay = tokenExpiresAt - Date.now() - 60_000
-
-        refreshTimerRef.current = setTimeout(async () => {
-            try {
-                const { accessToken: newToken, accessTokenExpiresIn } = await authService.refresh()
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem(TOKEN_KEY, newToken)
-                }
-                updateToken(newToken, accessTokenExpiresIn)
-            } catch {
-                clearSession()
-                router.replace(ROUTES.auth.login)
-            }
-        }, Math.max(delay, 0))
-
-        return () => {
-            if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
-        }
-    }, [accessToken, tokenExpiresAt, updateToken, clearSession, router])
+    useProactiveRefresh()
 
     useEffect(() => {
         if (!_hasHydrated) return

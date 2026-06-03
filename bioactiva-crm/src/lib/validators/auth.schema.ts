@@ -40,30 +40,4 @@ export const resetPasswordSchema = z
 
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
 
-export const activateAccountSchema = z
-    .object({
-        nombres: z
-            .string()
-            .min(1, 'El nombre es obligatorio')
-            .max(90, 'Maximo de 90 caracteres'),
-        apellidos: z
-            .string()
-            .min(1, 'Los apellidos son obligatorios')
-            .max(90, 'Maximo de 90 caracteres'),
-        password: z
-            .string()
-            .min(8, 'La contraseña debe tener al menos 8 caracteres')
-            .regex(/[A-Z]/, 'Debe contener al menos una letra mayúscula')
-            .regex(/[0-9]/, 'Debe contener al menos un número')
-            .regex(/[^A-Za-z0-9]/, 'Debe contener al menos un carácter especial'),
-        confirmPassword: z
-            .string()
-            .min(1, 'Confirme su contraseña'),
 
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-        message: 'Las contraseñas no coinciden',
-        path: ['confirmPassword'],
-    })
-
-export type ActivateAccountFormValues = z.infer<typeof activateAccountSchema>

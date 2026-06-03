@@ -125,24 +125,6 @@ describe('security/auth.service (API mode)', () => {
     expect(response).toEqual({ ok: true })
   })
 
-  it('sends activate account request', async () => {
-    const activateData = {
-      token: 'token-activation',
-      nombres: 'Maria',
-      apellidos: 'Torres',
-      password: 'Secret123!',
-      confirmPassword: 'Secret123!',
-    }
-    postMock.mockResolvedValueOnce({
-      data: { message: 'Cuenta activada correctamente.', usuario: { id: 10 } },
-    })
-
-    const response = await authService.activateAccount(activateData)
-
-    expect(postMock).toHaveBeenCalledWith('/invitations/accept', activateData)
-    expect(response).toEqual({ message: 'Cuenta activada correctamente.', usuario: { id: 10 } })
-  })
-
   it('gets token validation from the dynamic endpoint', async () => {
     postMock.mockResolvedValueOnce({ data: { valid: true, correo: 'admin@bioactiva.pe' } })
 

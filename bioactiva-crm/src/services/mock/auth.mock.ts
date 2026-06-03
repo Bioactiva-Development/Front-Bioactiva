@@ -1,7 +1,7 @@
 import { RolUsuario, EstadoUsuario, TokenPurpose, EstadoToken } from '@/types/enums'
 import {
     LoginRequest, LoginResponse, ForgotPasswordResponse, ResetPasswordResponse,
-    ActivateAccountRequest, ActivateAccountResponse, ValidateTokenResponse, Usuario,
+    ValidateTokenResponse, Usuario,
 } from '@/types/auth.types'
 import { useAuthStore } from '@/store/auth.store'
 
@@ -145,39 +145,3 @@ export const mockResetPassword = async (token: string, _password: string): Promi
     return { ok: true }
 }
 
-export const mockActivateAccount = async (data: ActivateAccountRequest): Promise<ActivateAccountResponse> => {
-    await delay()
-    const mockToken = MOCK_TOKENS.find((t) => t.token === data.token)
-
-    if (!mockToken || mockToken.estado !== EstadoToken.Pendiente) {
-        throw { status: 400, message: 'El enlace de activación no es válido o ya fue utilizado.' }
-    }
-
-    const ahora = new Date()
-    const expiracion = new Date(mockToken.expires_at)
-
-    if (ahora > expiracion) {
-        throw {
-            status: 400,
-            message: 'El tiempo para definir las credenciales venció. Solicite un nuevo correo.',
-        }
-    }
-
-    mockToken.estado = EstadoToken.Consumido
-
-    const nuevoUsuario: Usuario = {
-        id: Date.now(),
-        nombres: data.nombres,
-        apellidos: data.apellidos,
-        correo: mockToken.correo,
-        rol: RolUsuario.Trabajador,
-        estado: EstadoUsuario.Activo,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-    }
-
-    return {
-        message: 'Cuenta activada correctamente.',
-        usuario: nuevoUsuario,
-    }
-}

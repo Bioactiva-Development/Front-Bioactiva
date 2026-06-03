@@ -11,7 +11,6 @@ import {
     LoginFormValues,
     ForgotPasswordFormValues,
     ResetPasswordFormValues,
-    ActivateAccountFormValues,
 } from '@/lib/validators/auth.schema'
 import { ValidateTokenResult } from '@/types/auth.types'
 
@@ -148,20 +147,6 @@ export function useAuth() {
         }
     }
 
-    const activateAccount = async (token: string, data: ActivateAccountFormValues) => {
-        try {
-            resetMessages()
-            setIsLoading(true)
-            await authService.activateAccount({ token, ...data })
-            setSuccess('Cuenta activada correctamente. Redirigiendo...')
-            setTimeout(() => router.push(ROUTES.auth.login), 2000)
-        } catch (err: unknown) {
-            setError(extractMessage(err, 'Error al activar la cuenta. Intente nuevamente.'))
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
     return {
         isLoading,
         error,
@@ -174,7 +159,6 @@ export function useAuth() {
         forgotPassword,
         validateToken,
         resetPassword,
-        activateAccount,
         resetMessages,
     }
 }

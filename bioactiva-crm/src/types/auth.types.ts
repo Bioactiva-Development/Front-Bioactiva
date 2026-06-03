@@ -80,18 +80,6 @@ export interface ValidateTokenResult {
     message?: string
 }
 
-export interface ActivateAccountRequest {
-    token: string
-    nombres: string
-    apellidos: string
-    password: string
-    confirmPassword: string
-}
-
-export interface ActivateAccountResponse {
-    message: string
-    usuario: Usuario
-}
 
 export interface UserToken {
     id: number

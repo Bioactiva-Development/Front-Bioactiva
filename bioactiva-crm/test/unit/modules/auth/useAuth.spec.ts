@@ -183,56 +183,6 @@ describe('security/useAuth', () => {
     jest.useRealTimers()
   })
 
-  it('activates account successfully and shows success message', async () => {
-    authServiceMock.activateAccount.mockResolvedValueOnce({
-      message: 'Cuenta activada correctamente.',
-      usuario: usuarioAdmin,
-    })
-    jest.useFakeTimers()
-
-    const { result } = renderHook(() => useAuth())
-
-    await act(async () => {
-      await result.current.activateAccount('token-abc', {
-        nombres: 'Maria',
-        apellidos: 'Torres',
-        password: 'Secret123!',
-        confirmPassword: 'Secret123!',
-      })
-    })
-
-    expect(authServiceMock.activateAccount).toHaveBeenCalledWith({
-      token: 'token-abc',
-      nombres: 'Maria',
-      apellidos: 'Torres',
-      password: 'Secret123!',
-      confirmPassword: 'Secret123!',
-    })
-    expect(result.current.success).toBe('Cuenta activada correctamente. Redirigiendo...')
-
-    act(() => { jest.advanceTimersByTime(2000) })
-    expect(pushMock).toHaveBeenCalledWith(ROUTES.auth.login)
-
-    jest.useRealTimers()
-  })
-
-  it('handles activate account error', async () => {
-    authServiceMock.activateAccount.mockRejectedValueOnce({ message: 'El enlace ya expiró' })
-
-    const { result } = renderHook(() => useAuth())
-
-    await act(async () => {
-      await result.current.activateAccount('expired-token', {
-        nombres: 'Maria',
-        apellidos: 'Torres',
-        password: 'Secret123!',
-        confirmPassword: 'Secret123!',
-      })
-    })
-
-    expect(result.current.error).toBe('El enlace ya expiró')
-  })
-
   it('exposes auth state from store', () => {
     useAuthStore.setState({
       usuario: usuarioAdmin,
