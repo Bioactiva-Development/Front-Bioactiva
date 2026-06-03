@@ -99,6 +99,16 @@ apiClient.interceptors.response.use(
             }
         }
 
+        // 403: rol insuficiente — el refresh no ayuda (doc: "401 vs 403")
+        if (error.response?.status === 403) {
+            return Promise.reject({
+                status: 403,
+                message: 'No tienes permisos para realizar esta acción.',
+                errorCode: (error.response.data as { error?: string })?.error,
+                data: error.response.data,
+            })
+        }
+
         const backendMessage =
             (error.response?.data as { message?: string | string[] })?.message
 
@@ -114,22 +124,25 @@ apiClient.interceptors.response.use(
 
         let mensajeFinal: string
         if (Array.isArray(backendMessage)) {
-            mensajeFinal = backendMessage[0]
+            // Mostrar todos los mensajes de validación, no solo el primero
+            mensajeFinal = backendMessage.join('. ')
         } else if (backendMessage) {
             mensajeFinal = backendMessage
         } else if (error.code === 'ECONNABORTED' || /timeout/i.test(error.message)) {
-            // Sin response: la request fue abortada por timeout local.
             mensajeFinal = 'La consulta tardó demasiado en responder. Inténtalo nuevamente.'
         } else if (!error.response) {
-            // Sin response y sin timeout: probablemente fallo de red o CORS.
             mensajeFinal = 'No se pudo conectar con el servidor. Verifica tu conexión.'
         } else {
             mensajeFinal = 'Ocurrió un error inesperado'
         }
 
+        // errorCode: identificador estable del extended shape (ej: "ActivityNotFoundException")
+        const errorCode = (error.response?.data as { error?: string })?.error
+
         return Promise.reject({
             status: error.response?.status,
             message: mensajeFinal,
+            errorCode,
             data: error.response?.data,
         })
     }
