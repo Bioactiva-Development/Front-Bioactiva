@@ -174,51 +174,16 @@ const delay = (ms: number = 600) =>
   new Promise((resolve) => setTimeout(resolve, ms))
 
 
-export const mockGetPipeline = async (
-  filtros?: LeadFiltros
-): Promise<PipelineData> => {
-  await delay()
+export const mockGetPipeline = async (): Promise<PipelineData> => {
+  await delay(200)
 
-  let resultado = [...MOCK_LEADS]
-
-  if (filtros?.search) {
-    const q = filtros.search.toLowerCase()
-    resultado = resultado.filter(
-      (l) =>
-        l.organizacion_nombre?.toLowerCase().includes(q) ||
-        l.servicio_interes.toLowerCase().includes(q) ||
-        l.codigo.toLowerCase().includes(q)
-    )
-  }
-
-  if (filtros?.id_encargado) {
-    resultado = resultado.filter(
-      (l) => l.id_encargado === filtros.id_encargado
-    )
-  }
-
-  if (filtros?.solo_alerta) {
-    resultado = resultado.filter((l) => l.tiene_alerta)
-  }
-
-  if (filtros?.fecha_desde) {
-    resultado = resultado.filter(
-      (l) => new Date(l.created_at) >= new Date(filtros.fecha_desde!)
-    )
-  }
-
-  if (filtros?.fecha_hasta) {
-    resultado = resultado.filter(
-      (l) => new Date(l.created_at) <= new Date(filtros.fecha_hasta!)
-    )
-  }
-
+  const leads = [...MOCK_LEADS]
   return {
-    prospecto:      resultado.filter((l) => l.estado === LeadState.Prospecto),
-    ofertado:       resultado.filter((l) => l.estado === LeadState.Ofertado),
-    cierreVenta:    resultado.filter((l) => l.estado === LeadState.CierreVenta),
-    cierreSinVenta: resultado.filter((l) => l.estado === LeadState.CierreSinVenta),
-    total:          resultado.length,
+    prospecto:      leads.filter((l) => l.estado === LeadState.Prospecto),
+    ofertado:       leads.filter((l) => l.estado === LeadState.Ofertado),
+    cierreVenta:    leads.filter((l) => l.estado === LeadState.CierreVenta),
+    cierreSinVenta: leads.filter((l) => l.estado === LeadState.CierreSinVenta),
+    total:          leads.length,
   }
 }
 
@@ -379,6 +344,10 @@ export const mockDeleteActividad = async (id: number): Promise<void> => {
 
 export const mockCompleteActividad = async (id: number): Promise<Actividad> => {
   return mockUpdateActividad(id, { estado: EstadoActividad.Completada })
+}
+
+export const mockCancelarActividad = async (id: number): Promise<Actividad> => {
+  return mockUpdateActividad(id, { estado: EstadoActividad.Cancelada })
 }
 
 

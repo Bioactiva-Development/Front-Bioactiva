@@ -10,28 +10,35 @@ import { SunatBuscador } from '@/components/modules/organizaciones/SunatBuscador
 import { PageHeader } from '@/components/layout/PageHeader'
 import { useRouter } from 'next/navigation'
 
-const FILTROS_INICIALES: FiltrosType = {
-  page:  1,
-  limit: 10,
-}
+const ITEMS_POR_PAGINA  = 10
+const FILTROS_INICIALES: FiltrosType = {}
 
 export default function OrganizacionesPage() {
-  const router                          = useRouter()
+  const router = useRouter()
   const [filtros, setFiltros]           = useState<FiltrosType>(FILTROS_INICIALES)
+  const [pagina, setPagina]             = useState(1)
   const [sunatAbierto, setSunatAbierto] = useState(false)
 
-  const { data, isLoading, isError } = useOrganizaciones(filtros)
+  // Filtros + paginación van al hook: el servicio (mock o API) aplica todo.
+  // keepPreviousData en el hook garantiza que data nunca sea undefined entre queries.
+  const { data, isLoading, isError } = useOrganizaciones({
+    ...filtros,
+    page:  pagina,
+    limit: ITEMS_POR_PAGINA,
+  })
 
   const organizaciones = data?.data    ?? []
   const total          = data?.total   ?? 0
-  const paginaActual   = data?.page    ?? 1
-  const limit          = data?.limit   ?? 10
-  const totalPaginas   = Math.ceil(total / limit)
+  const totalPaginas   = Math.ceil(total / ITEMS_POR_PAGINA)
 
-  const handleLimpiarFiltros = () => setFiltros(FILTROS_INICIALES)
+  const handleFiltrosChange = (nuevos: FiltrosType) => {
+    setFiltros(nuevos)
+    setPagina(1)
+  }
 
-  const handlePagina = (pagina: number) => {
-    setFiltros((prev) => ({ ...prev, page: pagina }))
+  const handleLimpiarFiltros = () => {
+    setFiltros(FILTROS_INICIALES)
+    setPagina(1)
   }
 
   return (
@@ -65,9 +72,8 @@ export default function OrganizacionesPage() {
 
       <OrganizacionFiltros
         filtros={filtros}
-        onChange={setFiltros}
+        onChange={handleFiltrosChange}
         onLimpiar={handleLimpiarFiltros}
-        isLoading={isLoading}
       />
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -79,7 +85,7 @@ export default function OrganizacionesPage() {
           </div>
         )}
 
-        {isError && (
+        {isError && !isLoading && (
           <div className="flex items-center justify-center py-16">
             <p className="text-sm text-red-500">
               Error al cargar organizaciones. Intente nuevamente.
@@ -122,64 +128,52 @@ export default function OrganizacionesPage() {
                 </th>
               </tr>
             </thead>
-
             <tbody>
               {organizaciones.map((org) => (
-                <OrganizacionCard
-                  key={org.id}
-                  organizacion={org}
-                />
+                <OrganizacionCard key={org.id} organizacion={org} />
               ))}
             </tbody>
           </table>
         )}
 
-        {!isLoading && totalPaginas > 1 && (
+        {!isLoading && total > 0 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-50">
             <p className="text-sm text-gray-500">
-              Mostrando {((paginaActual - 1) * limit) + 1} – {Math.min(paginaActual * limit, total)} de {total}
+              Mostrando {((pagina - 1) * ITEMS_POR_PAGINA) + 1}–{Math.min(pagina * ITEMS_POR_PAGINA, total)} de {total}
             </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handlePagina(paginaActual - 1)}
-                disabled={paginaActual === 1}
-                className="p-2 rounded-lg text-gray-400 hover:text-gray-600
-                  hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed
-                  transition-colors"
-              >
-                ‹
-              </button>
-              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((p) => (
+            {totalPaginas > 1 && (
+              <div className="flex items-center gap-2">
                 <button
-                  key={p}
-                  onClick={() => handlePagina(p)}
-                  className={`w-8 h-8 rounded-lg text-sm font-semibold transition-colors
-                    ${p === paginaActual
-                      ? 'bg-emerald-600 text-white'
-                      : 'text-gray-500 hover:bg-gray-50'
-                    }`}
+                  onClick={() => setPagina((p) => p - 1)}
+                  disabled={pagina === 1}
+                  className="p-2 rounded-lg text-gray-400 hover:text-gray-600
+                    hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {p}
+                  ‹
                 </button>
-              ))}
-              <button
-                onClick={() => handlePagina(paginaActual + 1)}
-                disabled={paginaActual === totalPaginas}
-                className="p-2 rounded-lg text-gray-400 hover:text-gray-600
-                  hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed
-                  transition-colors"
-              >
-                ›
-              </button>
-            </div>
-          </div>
-        )}
-
-        {!isLoading && totalPaginas <= 1 && organizaciones.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-50">
-            <p className="text-sm text-gray-500">
-              Mostrando 1 – {organizaciones.length} de {total}
-            </p>
+                {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPagina(p)}
+                    className={`w-8 h-8 rounded-lg text-sm font-semibold transition-colors
+                      ${p === pagina
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-gray-500 hover:bg-gray-50'
+                      }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPagina((p) => p + 1)}
+                  disabled={pagina === totalPaginas}
+                  className="p-2 rounded-lg text-gray-400 hover:text-gray-600
+                    hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  ›
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

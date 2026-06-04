@@ -173,14 +173,20 @@ export default function PlantillasPage() {
 
       {confirmEliminar && (
         <div
-          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
-          onClick={() => setConfirmEliminar(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="dialog-title-plantilla"
         >
-          <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-bold text-gray-900">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/40 cursor-default"
+            onClick={() => setConfirmEliminar(null)}
+            aria-label="Cerrar diálogo"
+            tabIndex={-1}
+          />
+          <div className="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <h3 id="dialog-title-plantilla" className="text-lg font-bold text-gray-900">
               Eliminar plantilla
             </h3>
             <p className="text-sm text-gray-600">

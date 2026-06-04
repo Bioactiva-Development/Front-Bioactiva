@@ -94,7 +94,7 @@ export default function DashboardPage() {
 
   const handlePeriodo = (key: string) => {
     setPeriodoActivo(key)
-    const anio = parseInt(anioActivo)
+    const anio = Number.parseInt(anioActivo)
     switch (key) {
       case 'anio':
         setFechaInicio(`${anio}-01-01`)
@@ -200,8 +200,9 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-2 gap-4 items-end">
             <div className="space-y-1">
-              <label className="text-xs text-gray-500">Fecha inicio</label>
+              <label htmlFor="dash-fecha-inicio" className="text-xs text-gray-500">Fecha inicio</label>
               <input
+                id="dash-fecha-inicio"
                 type="date"
                 value={fechaInicio}
                 onChange={(e) => setFechaInicio(e.target.value)}
@@ -211,8 +212,9 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-end gap-3">
               <div className="flex-1 space-y-1">
-                <label className="text-xs text-gray-500">Fecha fin</label>
+                <label htmlFor="dash-fecha-fin" className="text-xs text-gray-500">Fecha fin</label>
                 <input
+                  id="dash-fecha-fin"
                   type="date"
                   value={fechaFin}
                   onChange={(e) => setFechaFin(e.target.value)}

@@ -35,9 +35,9 @@ export const ENDPOINTS = {
     },
 
     integraciones: {
-        list: '/api/integraciones',
-        microsoftAuthUrl: '/api/integraciones/microsoft/auth-url',
-        microsoftDisconnect: '/api/integraciones/microsoft/disconnect',
+        microsoftStatus:     '/microsoft/status',
+        microsoftConnect:    '/microsoft/connect',
+        microsoftDisconnect: '/microsoft/disconnect',
     },
 
     invitaciones: {
@@ -53,6 +53,7 @@ export const ENDPOINTS = {
         detail: (id: string) => `/organizations/${id}`,
         create: '/organizations',
         update: (id: string) => `/organizations/${id}`,
+        delete: (id: string) => `/organizations/${id}`,
         sunat: (query: string) => `/organizations/sunat/${encodeURIComponent(query)}`,
     },
 
@@ -65,29 +66,32 @@ export const ENDPOINTS = {
     },
 
     leads: {
-        list: '/api/leads',
-        pipeline: '/api/leads/pipeline',
-        detail: (id: number) => `/api/leads/${id}`,
-        create: '/api/leads',
-        update: (id: number) => `/api/leads/${id}`,
-        updateEstado: (id: number) => `/api/leads/${id}/estado`,
+        list: '/leads',
+        detail: (id: number) => `/leads/${id}`,
+        create: '/leads',
+        update: (id: number) => `/leads/${id}`,
+        updateEstado: (id: number) => `/leads/${id}/status`,
     },
 
     actividades: {
-        byLead: (leadId: number) => `/api/leads/${leadId}/actividades`,
-        detail: (id: number) => `/api/actividades/${id}`,
-        create: (leadId: number) => `/api/leads/${leadId}/actividades`,
-        update: (id: number) => `/api/actividades/${id}`,
-        complete: (id: number) => `/api/actividades/${id}/complete`,
-        delete: (id: number) => `/api/actividades/${id}`,
+        list:     '/activities',
+        detail:   (id: number) => `/activities/${id}`,
+        create:   '/activities',
+        update:   (id: number) => `/activities/${id}`,
+        complete: (id: number) => `/activities/${id}/complete`,
+        cancel:   (id: number) => `/activities/${id}/cancel`,
+        delete:   (id: number) => `/activities/${id}`,
     },
 
     cotizaciones: {
-        list: '/api/cotizaciones',
-        detail: (id: number) => `/api/cotizaciones/${id}`,
-        create: '/api/cotizaciones',
-        update: (id: number) => `/api/cotizaciones/${id}`,
-        byLead: (leadId: number) => `/api/leads/${leadId}/cotizaciones`,
+        list:    '/quotations',
+        detail:  (id: number) => `/quotations/${id}`,
+        create:  '/quotations',
+        update:  (id: number) => `/quotations/${id}`,
+        delete:  (id: number) => `/quotations/${id}`,
+        send:    (id: number) => `/quotations/${id}/send`,
+        accept:  (id: number) => `/quotations/${id}/accept`,
+        reject:  (id: number) => `/quotations/${id}/reject`,
     },
 
     notificaciones: {

@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { leadSchema, LeadFormValues } from '@/lib/validators/lead.schema'
-import { LeadState } from '@/types/enums'
 import { Lead } from '@/types/lead.types'
 import { ROUTES } from '@/lib/constants/routes'
 import { useOrganizaciones } from '@/hooks/organizaciones/useOrganizaciones'
@@ -49,7 +48,6 @@ export function LeadForm({
       ? {
           id_org:                  lead.id_org,
           id_contacto:             lead.id_contacto,
-          estado:                  lead.estado,
           servicio_interes:        lead.servicio_interes,
           comentarios:             lead.comentarios ?? '',
           desafio_oportunidad:     lead.desafio_oportunidad ?? '',
@@ -62,8 +60,7 @@ export function LeadForm({
           fecha_proxima_actividad: lead.fecha_proxima_actividad ?? '',
         }
       : {
-          estado:          LeadState.Prospecto,
-          id_encargado:    usuario?.id ?? 1,
+          id_encargado:     usuario?.id ?? 1,
           encargado_correo: usuario?.correo ?? '',
         },
   })
@@ -167,36 +164,20 @@ export function LeadForm({
         </div>
 
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Estado inicial <span className="text-red-500">*</span>
-            </label>
-            <select
-              {...register('estado')}
-              className={`${inputClass(!!errors.estado)} cursor-pointer`}
-            >
-              {Object.values(LeadState).map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            {errors.estado && (
-              <p className="text-red-500 text-xs">{errors.estado.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Fecha de creación
-            </label>
-            <input
-              type="text"
-              value={new Date().toISOString().split('T')[0]}
-              disabled
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200
-                bg-gray-50 text-sm text-gray-400 cursor-not-allowed"
-            />
-          </div>
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Estado inicial
+          </label>
+          <input
+            type="text"
+            value="En prospecto (asignado automáticamente)"
+            disabled
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200
+              bg-gray-50 text-sm text-gray-400 cursor-not-allowed"
+          />
+          <p className="text-xs text-gray-400">
+            Todo lead empieza en "En prospecto". Usa el pipeline para avanzar el estado.
+          </p>
         </div>
 
         <div className="space-y-1.5">

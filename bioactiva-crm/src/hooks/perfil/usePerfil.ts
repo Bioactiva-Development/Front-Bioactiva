@@ -82,8 +82,8 @@ export function usePerfil() {
         try {
             setIsLoadingIntegracion(true)
             setIntegracionInfo(null)
-            const { authUrl } = await integracionesService.getMicrosoftAuthUrl()
-            window.location.href = authUrl
+            const { url } = await integracionesService.getMicrosoftAuthUrl()
+            window.location.href = url
         } catch (err: unknown) {
             setIntegracionInfo(extractMessage(err, 'Error al obtener la URL de autorización.'))
             setTimeout(() => setIntegracionInfo(null), 5000)

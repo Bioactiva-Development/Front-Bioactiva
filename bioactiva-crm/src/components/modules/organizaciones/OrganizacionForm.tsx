@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Save, ArrowLeft } from 'lucide-react'
+import { Loader2, Save, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import {
   organizacionSchema,
@@ -11,7 +11,7 @@ import {
 } from '@/lib/validators/organizacion.schema'
 import { TipoEmpresa, TamanoEmpresa, Sector } from '@/types/enums'
 import { Organizacion, SunatRucResult } from '@/types/organizacion.types'
-import { generarCodigoCliente } from '@/lib/utils/organizacion.utils'
+import { generarCodigoCliente, formatSector } from '@/lib/utils/organizacion.utils'
 import { ROUTES } from '@/lib/constants/routes'
 
 interface OrganizacionFormProps {
@@ -206,8 +206,7 @@ export function OrganizacionForm({
 
         <div className="space-y-1.5">
           <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Nombre Comercial{' '}
-            <span className="text-gray-400 normal-case font-normal">Opcional</span>
+            Nombre Comercial <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -281,7 +280,7 @@ export function OrganizacionForm({
           >
             <option value="">Seleccionar...</option>
             {Object.values(Sector).map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>{formatSector(s)}</option>
             ))}
           </select>
           {errors.sector && (
@@ -351,12 +350,13 @@ export function OrganizacionForm({
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <button
             type="button"
-            onClick={() => router.push(ROUTES.organizaciones)}
+            onClick={() => router.back()}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm
-              text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+              text-gray-500 hover:text-gray-700 hover:bg-gray-50
+              border border-gray-200 transition-colors"
           >
-            <ArrowLeft size={16} />
-            Volver a Organizaciones
+            <X size={16} />
+            Cancelar
           </button>
 
           <button

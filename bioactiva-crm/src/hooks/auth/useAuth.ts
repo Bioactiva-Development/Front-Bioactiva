@@ -114,6 +114,9 @@ export function useAuth() {
                 'Si el correo está registrado en el sistema, recibirás un enlace de recuperación en los próximos minutos.',
             )
         } catch (err: unknown) {
+            // El backend retorna errores diferenciados (400 dominio no permitido,
+            // 404 correo no registrado o inactivo, 409 solicitud activa en <5 min).
+            // extractMessage pasa el mensaje del servidor directamente al formulario.
             setError(extractMessage(err, 'Error al enviar el correo. Intente nuevamente.'))
         } finally {
             setIsLoading(false)

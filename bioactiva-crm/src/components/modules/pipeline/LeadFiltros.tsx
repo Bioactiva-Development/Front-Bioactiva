@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { Filter, ChevronUp, ChevronDown, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Filter, ChevronUp, ChevronDown, X, Search } from 'lucide-react'
 import { LeadFiltros as FiltrosType } from '@/types/lead.types'
 import { LeadState, Sector, TipoEmpresa, TamanoEmpresa } from '@/types/enums'
+import { useDebounce } from '@/hooks/shared/useDebounce'
 
 interface LeadFiltrosProps {
   filtros:   FiltrosType
@@ -31,9 +32,24 @@ export function LeadFiltros({
   onLimpiar,
   total,
 }: LeadFiltrosProps) {
-  const [abierto, setAbierto] = useState(true)
+  const [abierto, setAbierto]       = useState(true)
+  const [searchLocal, setSearchLocal] = useState(filtros.search ?? '')
+  const debouncedSearch               = useDebounce(searchLocal, 350)
+
+  useEffect(() => {
+    if (debouncedSearch !== filtros.search) {
+      onChange({ ...filtros, search: debouncedSearch || undefined })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch])
+
+  // Sincronizar si el padre limpia los filtros
+  useEffect(() => {
+    if (!filtros.search) setSearchLocal('')
+  }, [filtros.search])
 
   const hayFiltrosActivos =
+    filtros.search ||
     filtros.id_encargado ||
     filtros.canal_captacion ||
     filtros.sector ||
@@ -68,8 +84,33 @@ export function LeadFiltros({
       {abierto && (
         <div className="px-6 pb-5 space-y-4 border-t border-gray-50">
 
+          {/* Búsqueda con debounce */}
+          <div className="relative pt-4">
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 translate-y-[calc(-50%+8px)] text-gray-400 pointer-events-none"
+            />
+            <input
+              type="text"
+              value={searchLocal}
+              onChange={(e) => setSearchLocal(e.target.value)}
+              placeholder="Buscar por organización, servicio o encargado..."
+              className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-200
+                bg-white text-sm text-gray-900 outline-none focus:border-emerald-400
+                placeholder:text-gray-400 transition-colors"
+            />
+            {searchLocal && (
+              <button
+                onClick={() => setSearchLocal('')}
+                className="absolute right-3 top-1/2 translate-y-[calc(-50%+8px)]
+                  text-gray-400 hover:text-gray-600"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 pt-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
 
             <div className="space-y-1">
               <label className="text-xs text-gray-400 font-medium">Estado</label>
