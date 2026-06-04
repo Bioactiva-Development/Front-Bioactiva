@@ -415,8 +415,8 @@ export default function ControlAccesoPage() {
                                             <td className="py-4 text-sm text-gray-900">{inv.correo}</td>
                                             <td className="py-4"><RolBadge rol={inv.rol} /></td>
                                             <td className="py-4"><EstadoInvitacionBadge estado={inv.estado} /></td>
-                                            <td className="py-4 text-sm text-gray-500">{inv.created_at.slice(0, 10)}</td>
-                                            <td className="py-4 text-sm text-gray-500">{inv.expires_at.slice(0, 10)}</td>
+                                            <td className="py-4 text-sm text-gray-500">{new Date(inv.created_at).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                                            <td className="py-4 text-sm text-gray-500">{new Date(inv.expires_at).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                                             <td className="py-4 text-right">
                                                 {inv.estado === EstadoToken.Pendiente && (
                                                     <button
