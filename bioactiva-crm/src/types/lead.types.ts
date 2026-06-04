@@ -32,11 +32,6 @@ export interface LeadFiltros {
   estado?: LeadState
   id_encargado?: number
   canal_captacion?: string
-  sector?: string
-  tipo_org?: string
-  tamano?: string
-  fecha_desde?: string
-  fecha_hasta?: string
   solo_alerta?: boolean
   page?: number
   limit?: number

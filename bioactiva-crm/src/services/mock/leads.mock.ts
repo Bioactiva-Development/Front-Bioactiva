@@ -244,32 +244,8 @@ export const mockGetPipeline = async (
     )
   }
 
-  if (filtros?.sector) {
-    resultado = resultado.filter((l) => l.sector === filtros.sector)
-  }
-
-  if (filtros?.tipo_org) {
-    resultado = resultado.filter((l) => l.tipo_org === filtros.tipo_org)
-  }
-
-  if (filtros?.tamano) {
-    resultado = resultado.filter((l) => l.tamano === filtros.tamano)
-  }
-
   if (filtros?.solo_alerta) {
     resultado = resultado.filter((l) => l.tiene_alerta)
-  }
-
-  if (filtros?.fecha_desde) {
-    resultado = resultado.filter(
-      (l) => new Date(l.created_at) >= new Date(filtros.fecha_desde!)
-    )
-  }
-
-  if (filtros?.fecha_hasta) {
-    resultado = resultado.filter(
-      (l) => new Date(l.created_at) <= new Date(filtros.fecha_hasta!)
-    )
   }
 
   return {
@@ -317,32 +293,8 @@ export const mockGetLeads = async (
     )
   }
 
-  if (filtros?.sector) {
-    resultado = resultado.filter((l) => l.sector === filtros.sector)
-  }
-
-  if (filtros?.tipo_org) {
-    resultado = resultado.filter((l) => l.tipo_org === filtros.tipo_org)
-  }
-
-  if (filtros?.tamano) {
-    resultado = resultado.filter((l) => l.tamano === filtros.tamano)
-  }
-
   if (filtros?.solo_alerta) {
     resultado = resultado.filter((l) => l.tiene_alerta)
-  }
-
-  if (filtros?.fecha_desde) {
-    resultado = resultado.filter(
-      (l) => new Date(l.created_at) >= new Date(filtros.fecha_desde!)
-    )
-  }
-
-  if (filtros?.fecha_hasta) {
-    resultado = resultado.filter(
-      (l) => new Date(l.created_at) <= new Date(filtros.fecha_hasta!)
-    )
   }
 
   const page  = filtros?.page  ?? 1

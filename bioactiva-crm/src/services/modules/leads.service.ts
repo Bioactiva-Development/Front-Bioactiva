@@ -27,6 +27,7 @@ import {
   toLeadQueryParams,
   toUpdateLeadDto,
 } from './leads.mapper'
+import { isLeadStaleWithoutProgress } from '@/lib/utils/activity-flow.utils'
 
 const PAGE_SIZE_PIPELINE = 100
 
@@ -119,6 +120,25 @@ const buildPipeline = (leads: Lead[]): PipelineData => ({
   total: leads.length,
 })
 
+const applyClientFilters = (leads: Lead[], filtros?: LeadFiltros) =>
+  leads.filter((lead) => {
+    if (
+      filtros?.canal_captacion &&
+      lead.canal_captacion !== filtros.canal_captacion
+    ) {
+      return false
+    }
+
+    if (
+      filtros?.solo_alerta &&
+      !(lead.tiene_alerta || isLeadStaleWithoutProgress(lead))
+    ) {
+      return false
+    }
+
+    return true
+  })
+
 const fetchLeadsPage = async (filtros?: LeadFiltros): Promise<LeadsResponse> => {
   const response = await apiClient.get<RawLeadsResponse>(
     ENDPOINTS.leads.list,
@@ -151,15 +171,23 @@ export const leadsService = {
       )
     )
 
-    return buildPipeline([
+    const leads = [
       ...firstPage.data,
       ...remainingPages.flatMap((page) => page.data),
-    ])
+    ]
+
+    return buildPipeline(applyClientFilters(leads, filtros))
   },
 
   getAll: async (filtros?: LeadFiltros): Promise<LeadsResponse> => {
     if (USE_MOCK) return mockGetLeads(filtros)
-    return fetchLeadsPage(filtros)
+    const response = await fetchLeadsPage(filtros)
+    const data = applyClientFilters(response.data, filtros)
+    return {
+      ...response,
+      data,
+      total: data.length,
+    }
   },
 
   getById: async (id: number): Promise<Lead> => {

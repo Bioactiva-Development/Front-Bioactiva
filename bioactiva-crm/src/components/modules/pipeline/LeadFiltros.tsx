@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { Filter, ChevronUp, ChevronDown, X, Search } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { ChevronDown, ChevronUp, Filter, Search, X } from 'lucide-react'
 import { LeadFiltros as FiltrosType } from '@/types/lead.types'
-import { LeadState, Sector, TipoEmpresa, TamanoEmpresa } from '@/types/enums'
+import { EstadoUsuario, LeadState } from '@/types/enums'
+import { usuariosService } from '@/services/modules/usuarios.service'
+import { UsuarioListItem } from '@/types/usuario.types'
 
 interface LeadFiltrosProps {
   filtros:   FiltrosType
@@ -12,18 +14,29 @@ interface LeadFiltrosProps {
   total?:    number
 }
 
-const ENCARGADOS = [
-  { id: 1, nombre: 'Karien Diaz' },
-  { id: 2, nombre: 'Luis Torres' },
-  { id: 3, nombre: 'Administración' },
-  { id: 4, nombre: 'Carlos Mamani' },
-]
+interface ResponsableOption {
+  id: number
+  nombre: string
+}
 
 const CANALES = [
   'Web / Redes sociales',
   'Referido',
   'Prospección directa',
 ]
+
+const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
+  id: usuario.id,
+  nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
+})
+
+const sanitizeFiltros = (filtros: FiltrosType): FiltrosType => ({
+  search: filtros.search,
+  estado: filtros.estado,
+  id_encargado: filtros.id_encargado,
+  canal_captacion: filtros.canal_captacion,
+  solo_alerta: filtros.solo_alerta,
+})
 
 export function LeadFiltros({
   filtros,
@@ -32,18 +45,45 @@ export function LeadFiltros({
   total,
 }: LeadFiltrosProps) {
   const [abierto, setAbierto] = useState(true)
+  const [responsables, setResponsables] = useState<ResponsableOption[]>([])
+
+  const filtrosBasicos = useMemo(() => sanitizeFiltros(filtros), [filtros])
 
   const hayFiltrosActivos =
-    filtros.search ||
-    filtros.estado ||
-    filtros.id_encargado ||
-    filtros.canal_captacion ||
-    filtros.sector ||
-    filtros.tipo_org ||
-    filtros.tamano ||
-    filtros.fecha_desde ||
-    filtros.fecha_hasta ||
-    filtros.solo_alerta
+    filtrosBasicos.search ||
+    filtrosBasicos.estado ||
+    filtrosBasicos.id_encargado ||
+    filtrosBasicos.canal_captacion ||
+    filtrosBasicos.solo_alerta
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function cargarResponsables() {
+      try {
+        const response = await usuariosService.getUsuarios({
+          estado: EstadoUsuario.Activo,
+          limit: 100,
+        })
+
+        if (!isMounted) return
+        setResponsables(response.usuarios.map(toResponsableOption))
+      } catch {
+        if (!isMounted) return
+        setResponsables([])
+      }
+    }
+
+    cargarResponsables()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const updateFiltros = (next: FiltrosType) => {
+    onChange(sanitizeFiltros(next))
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -81,9 +121,9 @@ export function LeadFiltros({
               />
               <input
                 type="search"
-                value={filtros.search ?? ''}
-                onChange={(e) => onChange({
-                  ...filtros,
+                value={filtrosBasicos.search ?? ''}
+                onChange={(e) => updateFiltros({
+                  ...filtrosBasicos,
                   search: e.target.value || undefined,
                 })}
                 placeholder="Buscar por código, organización, contacto, servicio o responsable"
@@ -94,23 +134,22 @@ export function LeadFiltros({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 pt-4">
-
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
             <div className="space-y-1">
               <label className="text-xs text-gray-400 font-medium">Estado</label>
               <select
-                value={filtros.estado ?? ''}
-                onChange={(e) => onChange({
-                  ...filtros,
-                  estado: e.target.value ? e.target.value as LeadState : undefined
+                value={filtrosBasicos.estado ?? ''}
+                onChange={(e) => updateFiltros({
+                  ...filtrosBasicos,
+                  estado: e.target.value ? e.target.value as LeadState : undefined,
                 })}
                 className="w-full px-3 py-2 rounded-xl border border-gray-200
                   bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
                   cursor-pointer"
               >
-                <option value="">Estado</option>
-                {Object.values(LeadState).map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                <option value="">Todos los estados</option>
+                {Object.values(LeadState).map((estado) => (
+                  <option key={estado} value={estado}>{estado}</option>
                 ))}
               </select>
             </div>
@@ -118,18 +157,20 @@ export function LeadFiltros({
             <div className="space-y-1">
               <label className="text-xs text-gray-400 font-medium">Encargado</label>
               <select
-                value={filtros.id_encargado ?? ''}
-                onChange={(e) => onChange({
-                  ...filtros,
-                  id_encargado: e.target.value ? Number(e.target.value) : undefined
+                value={filtrosBasicos.id_encargado ?? ''}
+                onChange={(e) => updateFiltros({
+                  ...filtrosBasicos,
+                  id_encargado: e.target.value ? Number(e.target.value) : undefined,
                 })}
                 className="w-full px-3 py-2 rounded-xl border border-gray-200
                   bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
                   cursor-pointer"
               >
-                <option value="">Encargado</option>
-                {ENCARGADOS.map((e) => (
-                  <option key={e.id} value={e.id}>{e.nombre}</option>
+                <option value="">Todos los encargados</option>
+                {responsables.map((responsable) => (
+                  <option key={responsable.id} value={responsable.id}>
+                    {responsable.nombre}
+                  </option>
                 ))}
               </select>
             </div>
@@ -137,145 +178,55 @@ export function LeadFiltros({
             <div className="space-y-1">
               <label className="text-xs text-gray-400 font-medium">Canal</label>
               <select
-                value={filtros.canal_captacion ?? ''}
-                onChange={(e) => onChange({
-                  ...filtros,
-                  canal_captacion: e.target.value || undefined
+                value={filtrosBasicos.canal_captacion ?? ''}
+                onChange={(e) => updateFiltros({
+                  ...filtrosBasicos,
+                  canal_captacion: e.target.value || undefined,
                 })}
                 className="w-full px-3 py-2 rounded-xl border border-gray-200
                   bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
                   cursor-pointer"
               >
-                <option value="">Canal</option>
-                {CANALES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400 font-medium">Sector</label>
-              <select
-                value={filtros.sector ?? ''}
-                onChange={(e) => onChange({
-                  ...filtros,
-                  sector: e.target.value || undefined
-                })}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200
-                  bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
-                  cursor-pointer"
-              >
-                <option value="">Sector</option>
-                {Object.values(Sector).map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400 font-medium">Tipo org.</label>
-              <select
-                value={filtros.tipo_org ?? ''}
-                onChange={(e) => onChange({
-                  ...filtros,
-                  tipo_org: e.target.value || undefined
-                })}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200
-                  bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
-                  cursor-pointer"
-              >
-                <option value="">Tipo org.</option>
-                {Object.values(TipoEmpresa).map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400 font-medium">Tamaño</label>
-              <select
-                value={filtros.tamano ?? ''}
-                onChange={(e) => onChange({
-                  ...filtros,
-                  tamano: e.target.value || undefined
-                })}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200
-                  bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
-                  cursor-pointer"
-              >
-                <option value="">Tamaño</option>
-                {Object.values(TamanoEmpresa).map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                <option value="">Todos los canales</option>
+                {CANALES.map((canal) => (
+                  <option key={canal} value={canal}>{canal}</option>
                 ))}
               </select>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                Creado desde
-              </span>
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
-                type="date"
-                value={filtros.fecha_desde ?? ''}
-                onChange={(e) => onChange({
-                  ...filtros,
-                  fecha_desde: e.target.value || undefined
+                type="checkbox"
+                checked={filtrosBasicos.solo_alerta ?? false}
+                onChange={(e) => updateFiltros({
+                  ...filtrosBasicos,
+                  solo_alerta: e.target.checked || undefined,
                 })}
-                className="px-3 py-2 rounded-xl border border-gray-200 bg-white
-                  text-sm text-gray-700 outline-none focus:border-emerald-400"
+                className="w-4 h-4 rounded border-gray-300 text-emerald-600
+                  focus:ring-emerald-500"
               />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                Hasta
-              </span>
-              <input
-                type="date"
-                value={filtros.fecha_hasta ?? ''}
-                onChange={(e) => onChange({
-                  ...filtros,
-                  fecha_hasta: e.target.value || undefined
-                })}
-                className="px-3 py-2 rounded-xl border border-gray-200 bg-white
-                  text-sm text-gray-700 outline-none focus:border-emerald-400"
-              />
-            </div>
+              <span className="text-sm text-gray-600">Solo con alerta activa</span>
+            </label>
 
-            <div className="ml-auto flex items-center gap-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={filtros.solo_alerta ?? false}
-                  onChange={(e) => onChange({
-                    ...filtros,
-                    solo_alerta: e.target.checked || undefined
-                  })}
-                  className="w-4 h-4 rounded border-gray-300 text-emerald-600
-                    focus:ring-emerald-500"
-                />
-                <span className="text-sm text-gray-600">Solo con alerta activa</span>
-              </label>
-
-              {hayFiltrosActivos && (
-                <button
-                  onClick={onLimpiar}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl
-                    text-sm text-red-500 hover:bg-red-50 border border-red-200
-                    transition-colors"
-                >
-                  <X size={14} />
-                  Limpiar
-                </button>
-              )}
-            </div>
+            {hayFiltrosActivos && (
+              <button
+                onClick={onLimpiar}
+                className="ml-auto flex items-center gap-1.5 px-3 py-2
+                  rounded-xl text-sm text-red-500 hover:bg-red-50
+                  border border-red-200 transition-colors"
+              >
+                <X size={14} />
+                Limpiar
+              </button>
+            )}
           </div>
 
           {total !== undefined && (
             <p className="text-sm text-gray-500">
-              Mostrando <span className="font-semibold text-emerald-600">{total}</span> de{' '}
-              <span className="font-semibold">{total}</span> leads
+              Mostrando <span className="font-semibold text-emerald-600">{total}</span>{' '}
+              leads
             </p>
           )}
         </div>
