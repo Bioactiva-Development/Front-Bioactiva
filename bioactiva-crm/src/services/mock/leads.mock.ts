@@ -391,7 +391,6 @@ export const mockCreateLead = async (
     id_encargado:        data.id_encargado!,
     canal_captacion:     data.canal_captacion,
     fecha_cierre:        data.fecha_cierre,
-    proxima_actividad:   data.proxima_actividad,
     id_author:           1,
     created_at:          new Date().toISOString(),
     updated_at:          new Date().toISOString(),

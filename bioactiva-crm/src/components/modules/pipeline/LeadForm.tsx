@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Save, ArrowLeft } from 'lucide-react'
+import { Loader2, Save } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { leadSchema, LeadFormValues } from '@/lib/validators/lead.schema'
 import { LeadState } from '@/types/enums'
@@ -55,7 +55,6 @@ function getLeadFormDefaults(
       encargado_correo:        lead.encargado_correo ?? '',
       canal_captacion:         lead.canal_captacion ?? '',
       fecha_cierre:            lead.fecha_cierre ?? '',
-      proxima_actividad:       lead.proxima_actividad ?? '',
     }
   }
 
@@ -480,7 +479,7 @@ export function LeadForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Canal de captación
@@ -490,18 +489,6 @@ export function LeadForm({
               placeholder="Ej: Referido, LinkedIn, Evento presencial"
               {...register('canal_captacion')}
               className={inputClass(!!errors.canal_captacion)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Próxima actividad
-            </label>
-            <input
-              type="text"
-              placeholder="Ej: Enviar propuesta técnica"
-              {...register('proxima_actividad')}
-              className={inputClass(!!errors.proxima_actividad)}
             />
           </div>
         </div>
@@ -533,8 +520,7 @@ export function LeadForm({
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm
               text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            <ArrowLeft size={16} />
-            Volver al pipeline
+            Cancelar
           </button>
 
           <button

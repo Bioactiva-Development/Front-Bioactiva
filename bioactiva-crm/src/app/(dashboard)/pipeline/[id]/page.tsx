@@ -78,15 +78,7 @@ export default function LeadDetallePage() {
 
   if (editando) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setEditando(false)}
-            className="text-sm text-gray-500 hover:text-emerald-600 transition-colors"
-          >
-            ← Cancelar edición
-          </button>
-        </div>
+      <div>
         <LeadForm
           lead={lead}
           estadoEditable
