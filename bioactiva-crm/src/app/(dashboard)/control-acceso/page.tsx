@@ -333,17 +333,19 @@ export default function ControlAccesoPage() {
                                                 >
                                                     <Lock size={15} />
                                                 </button>
-                                                <button
-                                                    onClick={() => abrirModal('estado', u)}
-                                                    title={u.estado === EstadoUsuario.Activo ? 'Deshabilitar' : 'Habilitar'}
-                                                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors
-                                                        ${u.estado === EstadoUsuario.Activo
-                                                            ? 'text-gray-400 hover:bg-red-50 hover:text-red-500'
-                                                            : 'text-gray-400 hover:bg-green-50 hover:text-green-600'
-                                                        }`}
-                                                >
-                                                    {u.estado === EstadoUsuario.Activo ? <UserX size={15} /> : <UserCheck size={15} />}
-                                                </button>
+                                                {u.estado !== EstadoUsuario.Pendiente && (
+                                                    <button
+                                                        onClick={() => abrirModal('estado', u)}
+                                                        title={u.estado === EstadoUsuario.Activo ? 'Deshabilitar' : 'Habilitar'}
+                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors
+                                                            ${u.estado === EstadoUsuario.Activo
+                                                                ? 'text-gray-400 hover:bg-red-50 hover:text-red-500'
+                                                                : 'text-gray-400 hover:bg-green-50 hover:text-green-600'
+                                                            }`}
+                                                    >
+                                                        {u.estado === EstadoUsuario.Activo ? <UserX size={15} /> : <UserCheck size={15} />}
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
