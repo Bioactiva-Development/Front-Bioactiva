@@ -42,7 +42,7 @@ function InfoItem({
 export function ContactoDetalle({
   contacto,
   onEditar,
-}: ContactoDetalleProps) {
+}: Readonly<ContactoDetalleProps>) {
   const router    = useRouter()
   const iniciales = `${contacto.nombres.charAt(0)}${contacto.apellidos?.charAt(0) ?? ''}`.toUpperCase()
 

@@ -2,8 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import {
-  X, ExternalLink, Building2, User,
-  Briefcase, Radio, Calendar, AlertTriangle,
+  X, ExternalLink, User, AlertTriangle,
 } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
 import { LeadState, TipoActividad, EstadoActividad } from '@/types/enums'
@@ -29,14 +28,9 @@ const TIPO_ICONOS: Record<TipoActividad, string> = {
   [TipoActividad.Otro]:    '📌',
 }
 
-export function LeadDrawer({ lead, onCerrar }: LeadDrawerProps) {
+export function LeadDrawer({ lead, onCerrar }: Readonly<LeadDrawerProps>) {
   const router = useRouter()
   const { data: actividades = [] } = useActividades(lead.id)
-
-  const actividadesVencidas = actividades.filter(
-    (a) => a.estado === EstadoActividad.Pendiente &&
-      new Date(a.fecha_fin) < new Date()
-  )
 
   const formatFecha = (fecha: string) =>
     new Date(fecha).toLocaleDateString('es-PE', {
@@ -47,8 +41,12 @@ export function LeadDrawer({ lead, onCerrar }: LeadDrawerProps) {
   return (
     <>
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Cerrar panel"
         className="fixed inset-0 bg-black/30 z-40"
         onClick={onCerrar}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onCerrar() }}
       />
 
       <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white

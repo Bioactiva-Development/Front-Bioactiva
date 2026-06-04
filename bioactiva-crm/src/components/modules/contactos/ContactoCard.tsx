@@ -9,7 +9,7 @@ interface ContactoCardProps {
   contacto: Contacto
 }
 
-export function ContactoCard({ contacto }: ContactoCardProps) {
+export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
   const router   = useRouter()
   const iniciales = `${contacto.nombres.charAt(0)}${contacto.apellidos?.charAt(0) ?? ''}`.toUpperCase()
 

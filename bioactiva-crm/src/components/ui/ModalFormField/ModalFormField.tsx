@@ -6,7 +6,7 @@ interface ModalFormFieldProps {
     children: ReactNode
 }
 
-export function ModalFormField({ label, error, children }: ModalFormFieldProps) {
+export function ModalFormField({ label, error, children }: Readonly<ModalFormFieldProps>) {
     return (
         <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">

@@ -25,7 +25,7 @@ export function SeguimientoForm({
   isLoading,
   error,
   onCancel,
-}: SeguimientoFormProps) {
+}: Readonly<SeguimientoFormProps>) {
   const { data: leadsResponse } = useLeads({ limit: 100 })
   const leads = leadsResponse?.data ?? []
   const plantillasActivas = usePlantillasActivas()

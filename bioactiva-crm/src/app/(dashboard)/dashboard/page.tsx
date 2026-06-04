@@ -41,7 +41,7 @@ const MOCK_KPIS = {
   propuestaVenta:     0,
   tiempoCierre:       0,
   tiempoEtapa:        7,
-  seguimientosPorLead: 0.0,
+  seguimientosPorLead: 0,
   montoEnPipeline:    0,
   ingresosCerrados:   0,
   leadsSinAvance:     75,
@@ -60,7 +60,7 @@ const PERIODOS: PeriodoTab[] = [
 
 const ANIOS = ['2024', '2025', '2026']
 
-function KpiCard({ label, valor, descripcion, icono, iconoBg, extra }: KpiCardProps) {
+function KpiCard({ label, valor, descripcion, icono, iconoBg, extra }: Readonly<KpiCardProps>) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-3">
       <div className="flex items-start justify-between">
@@ -347,8 +347,8 @@ export default function DashboardPage() {
                 }}
               />
               <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
-                {MOCK_PIPELINE_DATA.map((entry, index) => (
-                  <Cell key={index} fill={entry.color} />
+                {MOCK_PIPELINE_DATA.map((entry) => (
+                  <Cell key={entry.estado} fill={entry.color} />
                 ))}
               </Bar>
             </BarChart>
@@ -381,8 +381,8 @@ export default function DashboardPage() {
                   paddingAngle={3}
                   dataKey="value"
                 >
-                  {MOCK_COTIZACIONES_DATA.map((entry, index) => (
-                    <Cell key={index} fill={entry.color} />
+                  {MOCK_COTIZACIONES_DATA.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip />

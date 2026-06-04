@@ -193,11 +193,13 @@ export default function ControlAccesoPage() {
     }
 
     const handleEstado = async (): Promise<boolean> => {
-        if (!usuarioSeleccionado) return false
-        if (usuarioSeleccionado.estado === EstadoUsuario.Activo) {
-            return deshabilitar(usuarioSeleccionado.id)
+        if (usuarioSeleccionado) {
+            if (usuarioSeleccionado.estado === EstadoUsuario.Activo) {
+                return deshabilitar(usuarioSeleccionado.id)
+            }
+            return habilitar(usuarioSeleccionado.id)
         }
-        return habilitar(usuarioSeleccionado.id)
+        return false
     }
 
     const handleRevocar = async (id: number) => {

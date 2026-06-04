@@ -219,7 +219,7 @@ export const mockGetOrganizacion = async (
 
   const org = MOCK_ORGANIZACIONES.find((o) => o.id === id)
   if (!org) {
-    throw { status: 404, message: 'Organización no encontrada.' }
+    throw Object.assign(new Error('Organización no encontrada.'), { status: 404 })
   }
   return org
 }
@@ -253,14 +253,14 @@ export const mockCreateOrganizacion = async (
     (o) => o.nombre.toLowerCase() === nueva.nombre.toLowerCase()
   )
   if (existe) {
-    throw { status: 409, message: 'La organización ya se encuentra registrada.' }
+    throw Object.assign(new Error('La organización ya se encuentra registrada.'), { status: 409 })
   }
 
 
   if (nueva.ruc) {
     const existeRuc = MOCK_ORGANIZACIONES.find((o) => o.ruc === nueva.ruc)
     if (existeRuc) {
-      throw { status: 409, message: 'El RUC ya se encuentra registrado.' }
+      throw Object.assign(new Error('El RUC ya se encuentra registrado.'), { status: 409 })
     }
   }
 
@@ -270,7 +270,7 @@ export const mockCreateOrganizacion = async (
       (o) => o.codigo_cliente === nueva.codigo_cliente
     )
     if (existeCodigo) {
-      throw { status: 409, message: 'El código interno ya se encuentra registrado.' }
+      throw Object.assign(new Error('El código interno ya se encuentra registrado.'), { status: 409 })
     }
   }
 
@@ -286,7 +286,7 @@ export const mockUpdateOrganizacion = async (
 
   const index = MOCK_ORGANIZACIONES.findIndex((o) => o.id === id)
   if (index === -1) {
-    throw { status: 404, message: 'Organización no encontrada.' }
+    throw Object.assign(new Error('Organización no encontrada.'), { status: 404 })
   }
 
 
@@ -295,7 +295,7 @@ export const mockUpdateOrganizacion = async (
       (o) => o.nombre.toLowerCase() === data.nombre!.toLowerCase() && o.id !== id
     )
     if (existe) {
-      throw { status: 409, message: 'La organización ya se encuentra registrada.' }
+      throw Object.assign(new Error('La organización ya se encuentra registrada.'), { status: 409 })
     }
   }
 
@@ -315,7 +315,7 @@ export const mockDeleteOrganizacion = async (id: string): Promise<void> => {
 
   const index = MOCK_ORGANIZACIONES.findIndex((o) => o.id === id)
   if (index === -1) {
-    throw { status: 404, message: 'Organización no encontrada.' }
+    throw Object.assign(new Error('Organización no encontrada.'), { status: 404 })
   }
   MOCK_ORGANIZACIONES.splice(index, 1)
 }
@@ -371,7 +371,7 @@ export const mockSunatPorRuc = async (
 
   const resultado = MOCK_SUNAT[ruc]
   if (!resultado) {
-    throw { status: 404, message: 'No se encontraron resultados en SUNAT para el RUC consultado.' }
+    throw Object.assign(new Error('No se encontraron resultados en SUNAT para el RUC consultado.'), { status: 404 })
   }
 
   return resultado
@@ -407,7 +407,7 @@ export const mockGetOrganizacionConRelaciones = async (
 
   const org = MOCK_ORGANIZACIONES.find((o) => o.id === id)
   if (!org) {
-    throw { status: 404, message: 'Organización no encontrada.' }
+    throw Object.assign(new Error('Organización no encontrada.'), { status: 404 })
   }
 
   return {

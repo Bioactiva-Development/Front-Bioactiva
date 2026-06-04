@@ -71,6 +71,11 @@ export function ExportarForm() {
     const leadFiltros = filtros as FiltrosLead
     const cotFiltros = filtros as FiltrosCotizacion
 
+    let searchPlaceholder = 'Cliente, servicio...'
+    if (entidad === 'organizaciones') searchPlaceholder = 'Nombre, RUC...'
+    else if (entidad === 'contactos') searchPlaceholder = 'Nombre, correo...'
+    else if (entidad === 'leads') searchPlaceholder = 'Organización, servicio...'
+
     return (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {/* Header */}
@@ -125,12 +130,7 @@ export function ExportarForm() {
                                 type="text"
                                 value={busqueda}
                                 onChange={e => setBusqueda(e.target.value)}
-                                placeholder={
-                                    entidad === 'organizaciones' ? 'Nombre, RUC...' :
-                                    entidad === 'contactos' ? 'Nombre, correo...' :
-                                    entidad === 'leads' ? 'Organización, servicio...' :
-                                    'Cliente, servicio...'
-                                }
+                                placeholder={searchPlaceholder}
                                 className="w-full pl-9 pr-9 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
                             />
                             {busqueda && (

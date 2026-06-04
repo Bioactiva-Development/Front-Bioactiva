@@ -13,7 +13,7 @@ export function NotificacionFiltros({
   filtros,
   onChange,
   onLimpiar,
-}: NotificacionFiltrosProps) {
+}: Readonly<NotificacionFiltrosProps>) {
   const handleTipoChange = (value: string) => {
     onChange({
       ...filtros,

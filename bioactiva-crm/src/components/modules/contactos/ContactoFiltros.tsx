@@ -16,7 +16,7 @@ export function ContactoFiltros({
   filtros,
   onChange,
   onLimpiar,
-}: ContactoFiltrosProps) {
+}: Readonly<ContactoFiltrosProps>) {
   const [searchLocal, setSearchLocal] = useState(filtros.search ?? '')
   const debouncedSearch               = useDebounce(searchLocal, 400)
   const filtrosRef = useRef(filtros)

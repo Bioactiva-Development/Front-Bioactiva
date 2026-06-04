@@ -12,7 +12,7 @@ interface InvitarUsuarioFormProps {
     onClose: () => void
 }
 
-export function InvitarUsuarioForm({ onSubmit, isLoading, error, onClose }: InvitarUsuarioFormProps) {
+export function InvitarUsuarioForm({ onSubmit, isLoading, error, onClose }: Readonly<InvitarUsuarioFormProps>) {
     const { register, handleSubmit, formState: { errors } } = useForm<CreateInvitacionFormValues>({
         resolver: zodResolver(createInvitacionSchema),
         defaultValues: { rol: 1 },

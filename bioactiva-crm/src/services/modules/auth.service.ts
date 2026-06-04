@@ -50,7 +50,7 @@ export const authService = {
     },
 
     refresh: async (): Promise<RefreshResponse> => {
-        if (USE_MOCK) throw { status: 501, message: 'No implementado en mock' }
+        if (USE_MOCK) throw Object.assign(new Error('No implementado en mock'), { status: 501 })
         const response = await apiClient.post<RefreshResponse>(
             ENDPOINTS.auth.refresh,
         )
@@ -58,7 +58,7 @@ export const authService = {
     },
 
     getMe: async () => {
-        if (USE_MOCK) throw { status: 501, message: 'No implementado en mock' }
+        if (USE_MOCK) throw Object.assign(new Error('No implementado en mock'), { status: 501 })
         const response = await apiClient.get<UsuarioRaw>(ENDPOINTS.auth.me)
         return mapUsuarioRaw(response.data)
     },

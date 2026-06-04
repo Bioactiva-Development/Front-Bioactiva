@@ -21,7 +21,7 @@ export function KanbanColumn({
   color,
   onAddLead,
   onClickLead,
-}: KanbanColumnProps) {
+}: Readonly<KanbanColumnProps>) {
   const { setNodeRef, isOver } = useDroppable({ id })
 
   return (

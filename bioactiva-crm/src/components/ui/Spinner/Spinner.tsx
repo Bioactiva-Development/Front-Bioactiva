@@ -3,7 +3,7 @@ interface SpinnerProps {
     className?: string
 }
 
-export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
+export function Spinner({ size = 'md', className = '' }: Readonly<SpinnerProps>) {
     const sizeClasses = {
         sm: 'w-4 h-4 border-2',
         md: 'w-8 h-8 border-3',
@@ -11,9 +11,8 @@ export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
     }
 
     return (
-        <div
+        <output
             className={`${sizeClasses[size]} border-[#BCF7B3] border-t-[#1C7E3C] rounded-full animate-spin ${className}`}
-            role="status"
             aria-label="Cargando"
         />
     )

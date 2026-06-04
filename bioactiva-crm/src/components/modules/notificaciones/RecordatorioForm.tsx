@@ -25,7 +25,7 @@ export function RecordatorioForm({
   isLoading,
   error,
   onCancel,
-}: RecordatorioFormProps) {
+}: Readonly<RecordatorioFormProps>) {
   const { data: leadsResponse } = useLeads({ limit: 100 })
   const leads = leadsResponse?.data ?? []
   const plantillasActivas = usePlantillasActivas()

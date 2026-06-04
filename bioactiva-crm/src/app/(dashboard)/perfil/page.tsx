@@ -21,7 +21,7 @@ const editarPerfilSchema = z.object({
 })
 type EditarPerfilFormValues = z.infer<typeof editarPerfilSchema>
 
-function RolBadge({ rol }: { rol: RolUsuario }) {
+function RolBadge({ rol }: Readonly<{ rol: RolUsuario }>) {
     if (rol === RolUsuario.Administrador) {
         return (
             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 uppercase tracking-wide">
@@ -36,7 +36,7 @@ function RolBadge({ rol }: { rol: RolUsuario }) {
     )
 }
 
-function EstadoBadge({ estado }: { estado: EstadoUsuario }) {
+function EstadoBadge({ estado }: Readonly<{ estado: EstadoUsuario }>) {
     return (
         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide
             ${estado === EstadoUsuario.Activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -47,7 +47,7 @@ function EstadoBadge({ estado }: { estado: EstadoUsuario }) {
 }
 
 // Icono SVG de Microsoft
-function MicrosoftIcon({ size = 20 }: { size?: number }) {
+function MicrosoftIcon({ size = 20 }: Readonly<{ size?: number }>) {
     return (
         <svg width={size} height={size} viewBox="0 0 21 21" fill="none">
             <rect x="1" y="1" width="9" height="9" fill="#F25022" />

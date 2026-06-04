@@ -31,7 +31,7 @@ export function LeadForm({
   onSubmit,
   isLoading,
   error,
-}: LeadFormProps) {
+}: Readonly<LeadFormProps>) {
   const router    = useRouter()
   const esEdicion = !!lead
   const { usuario } = useAuthStore()

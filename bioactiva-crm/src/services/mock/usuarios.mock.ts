@@ -176,7 +176,7 @@ export const mockCreateInvitacion = async (correo: string, rol: number): Promise
         (i) => i.correo === correo && i.estado === EstadoToken.Pendiente,
     )
     if (existing) {
-        throw { status: 400, message: 'Ya existe una invitación pendiente para este correo.' }
+        throw Object.assign(new Error('Ya existe una invitación pendiente para este correo.'), { status: 400 })
     }
 
     const nueva: Invitacion = {
@@ -198,7 +198,7 @@ export const mockRevokeInvitacion = async (id: number): Promise<Invitacion> => {
 
     const invitacion = MOCK_INVITACIONES.find((i) => i.id === id)
     if (!invitacion) {
-        throw { status: 400, message: 'La invitación no existe.' }
+        throw Object.assign(new Error('La invitación no existe.'), { status: 400 })
     }
 
     invitacion.estado = EstadoToken.Expirado
@@ -210,7 +210,7 @@ export const mockGetInvitacionInfo = async (token: string): Promise<InvitacionIn
 
     const info = MOCK_TOKENS[token]
     if (!info) {
-        throw { status: 400, message: 'El token de invitación no es válido.' }
+        throw Object.assign(new Error('El token de invitación no es válido.'), { status: 400 })
     }
 
     return info

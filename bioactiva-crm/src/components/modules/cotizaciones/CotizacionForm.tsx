@@ -36,7 +36,7 @@ export function CotizacionForm({
   isLoading,
   error,
   leadIdInicial,
-}: CotizacionFormProps) {
+}: Readonly<CotizacionFormProps>) {
   const router    = useRouter()
   const esEdicion = !!cotizacion
   const { usuario } = useAuthStore()

@@ -11,7 +11,7 @@ interface LeadCardProps {
   isOverlay?:  boolean
 }
 
-export function LeadCard({ lead, onClick, isOverlay = false }: LeadCardProps) {
+export function LeadCard({ lead, onClick, isOverlay = false }: Readonly<LeadCardProps>) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
   })
@@ -60,8 +60,11 @@ export function LeadCard({ lead, onClick, isOverlay = false }: LeadCardProps) {
       </div>
 
       <div
+        role="button"
+        tabIndex={0}
         className="space-y-2"
         onClick={() => !isDragging && onClick(lead)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') !isDragging && onClick(lead) }}
       >
         <div className="flex items-center gap-2">
           <Building2 size={14} className="text-emerald-600 shrink-0" />

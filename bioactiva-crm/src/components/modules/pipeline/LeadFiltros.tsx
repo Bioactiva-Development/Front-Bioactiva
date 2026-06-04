@@ -31,7 +31,7 @@ export function LeadFiltros({
   onChange,
   onLimpiar,
   total,
-}: LeadFiltrosProps) {
+}: Readonly<LeadFiltrosProps>) {
   const [abierto, setAbierto]       = useState(true)
   const [searchLocal, setSearchLocal] = useState(filtros.search ?? '')
   const debouncedSearch               = useDebounce(searchLocal, 350)

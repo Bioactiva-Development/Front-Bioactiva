@@ -17,7 +17,7 @@ const ESTADO_COLORS: Record<EstadoCot, string> = {
   [EstadoCot.Rechazada]:  'bg-red-50 text-red-600',
 }
 
-export function CotizacionCard({ cotizacion }: CotizacionCardProps) {
+export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
   const router = useRouter()
 
   const formatMonto = (monto: number, tipo: TipoMoneda) => {

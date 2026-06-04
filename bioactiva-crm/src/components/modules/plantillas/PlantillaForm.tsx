@@ -31,7 +31,7 @@ export function PlantillaForm({
   onSubmit,
   isLoading,
   error,
-}: PlantillaFormProps) {
+}: Readonly<PlantillaFormProps>) {
   const router    = useRouter()
   const esEdicion = !!plantilla
   const cuerpoRef = useRef<HTMLTextAreaElement | null>(null)
