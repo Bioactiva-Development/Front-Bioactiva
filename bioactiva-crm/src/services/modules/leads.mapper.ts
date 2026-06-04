@@ -19,6 +19,9 @@ export interface LeadDtoOut {
   createdAt: string
   updatedAt: string
   ultimoCambioEstado: string
+  fechaCierre?: string | null
+  fechaCierreEstimada?: string | null
+  fecha_cierre?: string | null
 }
 
 export interface LeadsDtoResponse {
@@ -40,6 +43,7 @@ export interface LeadCreateDto {
   desafioOportunidad?: string
   notasContacto?: string
   canalCaptacion?: string
+  fechaCierre?: string
 }
 
 export type LeadUpdateDto = Partial<LeadCreateDto>
@@ -64,6 +68,11 @@ const trimOrUndefined = (value?: string | null): string | undefined => {
   return trimmed.length > 0 ? trimmed : undefined
 }
 
+const toIsoDateTime = (value: string): string => {
+  if (value.includes('T')) return value
+  return new Date(`${value}T00:00:00.000Z`).toISOString()
+}
+
 const codigoFromLead = (dto: Pick<LeadDtoOut, 'id' | 'createdAt'>) => {
   const year = dto.createdAt ? new Date(dto.createdAt).getFullYear() : new Date().getFullYear()
   return `LEAD-${year}-${String(dto.id).padStart(3, '0')}`
@@ -81,6 +90,11 @@ export const fromLeadDto = (dto: LeadDtoOut): Lead => ({
   notas_contacto: dto.notasContacto ?? undefined,
   id_encargado: dto.idEncargado,
   canal_captacion: dto.canalCaptacion ?? undefined,
+  fecha_cierre:
+    dto.fechaCierre ??
+    dto.fechaCierreEstimada ??
+    dto.fecha_cierre ??
+    undefined,
   id_author: dto.idAuthor,
   created_at: dto.createdAt,
   updated_at: dto.ultimoCambioEstado ?? dto.updatedAt,
@@ -125,6 +139,9 @@ export const toCreateLeadDto = (data: LeadFormData): LeadCreateDto => {
   const canalCaptacion = trimOrUndefined(data.canal_captacion)
   if (canalCaptacion !== undefined) dto.canalCaptacion = canalCaptacion
 
+  const fechaCierre = trimOrUndefined(data.fecha_cierre)
+  if (fechaCierre !== undefined) dto.fechaCierre = toIsoDateTime(fechaCierre)
+
   return dto
 }
 
@@ -147,6 +164,9 @@ export const toUpdateLeadDto = (data: Partial<LeadFormData>): LeadUpdateDto => {
 
   const canalCaptacion = trimOrUndefined(data.canal_captacion)
   if (canalCaptacion !== undefined) dto.canalCaptacion = canalCaptacion
+
+  const fechaCierre = trimOrUndefined(data.fecha_cierre)
+  if (fechaCierre !== undefined) dto.fechaCierre = toIsoDateTime(fechaCierre)
 
   return dto
 }

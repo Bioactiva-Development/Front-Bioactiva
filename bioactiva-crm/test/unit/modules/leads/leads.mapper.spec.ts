@@ -27,6 +27,7 @@ describe('leads.mapper', () => {
       createdAt: '2026-06-02T10:00:00.000Z',
       updatedAt: '2026-06-02T11:00:00.000Z',
       ultimoCambioEstado: '2026-06-02T12:00:00.000Z',
+      fechaCierre: '2026-06-30T00:00:00.000Z',
     })
 
     expect(lead).toMatchObject({
@@ -41,6 +42,7 @@ describe('leads.mapper', () => {
       organizacion_nombre: 'Altomayo',
       contacto_nombre: 'Patricia Ccopa Mamani',
       encargado_nombre: 'Administración',
+      fecha_cierre: '2026-06-30T00:00:00.000Z',
       updated_at: '2026-06-02T12:00:00.000Z',
     })
   })
@@ -72,20 +74,24 @@ describe('leads.mapper', () => {
       notas_contacto: '',
       id_encargado: 3,
       canal_captacion: 'Referido',
+      fecha_cierre: '2026-06-30',
     })).toEqual({
       idOrg: '123e4567-e89b-12d3-a456-426614174000',
       idContacto: 4,
       servicioInteres: 'Ley 30309',
       desafioOportunidad: 'Oportunidad',
       canalCaptacion: 'Referido',
+      fechaCierre: '2026-06-30T00:00:00.000Z',
       idEncargado: 3,
     })
 
     expect(toUpdateLeadDto({
       servicio_interes: 'Nuevo servicio',
+      fecha_cierre: '2026-07-15',
       estado: LeadState.CierreSinVenta,
     })).toEqual({
       servicioInteres: 'Nuevo servicio',
+      fechaCierre: '2026-07-15T00:00:00.000Z',
     })
   })
 })

@@ -6,6 +6,7 @@ import {
   mockGetCotizacion,
   mockCreateCotizacion,
   mockUpdateCotizacion,
+  mockDeleteCotizacion,
   mockGetKpis,
 } from '@/services/mock/cotizaciones.mock'
 import { leadsService } from '@/services/modules/leads.service'
@@ -165,5 +166,10 @@ export const cotizacionesService = {
       { params: toCotizacionQueryParams({ idLead: leadId, limit: 100 }) }
     )
     return normalizeCotizacionesResponse(response.data, { limit: 100 }).data
+  },
+
+  delete: async (id: number): Promise<void> => {
+    if (USE_MOCK) return mockDeleteCotizacion(id)
+    await apiClient.delete(ENDPOINTS.cotizaciones.delete(id))
   },
 }

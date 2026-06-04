@@ -7,6 +7,7 @@
 
 ---
 
+
 ## 1. Contexto del Proyecto
 
 **BioActiva** es una empresa peruana especializada en gestión de innovación, I+D+i, formulación de proyectos, vigilancia tecnológica y propiedad intelectual. Este CRM centraliza su operación comercial reemplazando hojas de Excel manuales.

@@ -204,6 +204,17 @@ export const mockUpdateCotizacion = async (
   return actualizada
 }
 
+export const mockDeleteCotizacion = async (id: number): Promise<void> => {
+  await delay(300)
+
+  const index = MOCK_COTIZACIONES.findIndex((c) => c.id === id)
+  if (index === -1) {
+    throw { status: 404, message: 'Cotización no encontrada.' }
+  }
+
+  MOCK_COTIZACIONES.splice(index, 1)
+}
+
 export const mockGetKpis = async (): Promise<CotizacionKpis> => {
   await delay(300)
 

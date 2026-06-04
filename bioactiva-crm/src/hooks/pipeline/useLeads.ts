@@ -97,6 +97,8 @@ async function ensurePrimaryCotizacionInState(
     })
   }
 
+  await cotizacionesService.delete(primaryCotizacion.id)
+
   return cotizacionesService.create({
     ...buildDefaultCotizacion(lead),
     estado: targetState,
