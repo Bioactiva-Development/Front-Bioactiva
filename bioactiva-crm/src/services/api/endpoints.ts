@@ -10,13 +10,6 @@ export const ENDPOINTS = {
         validate: '/reset-password/validate',
         reset:    '/reset-password/reset',
     },
-    invitations: {
-        info:   (token: string) => `/invitations/info/${token}`,
-        accept: '/invitations/accept',
-        create: '/invitations',
-        list:   '/invitations',
-        delete: (id: number) => `/invitations/${id}`,
-    },
     usuarios: {
         // GET /users — implementado en backend (doc-endpoint.md, módulo `users`).
         list: '/users',

@@ -29,6 +29,7 @@ const ESTADO_OPTIONS = [
     { value: '0', label: 'Pendiente' },
     { value: '1', label: 'Aceptada' },
     { value: '2', label: 'Expirada' },
+    { value: '3', label: 'Revocada' },
 ]
 
 function getInitials(nombres: string, apellidos: string) {
@@ -81,7 +82,8 @@ function EstadoInvitacionBadge({ estado }: { estado: EstadoToken }) {
     const map: Record<EstadoToken, { label: string; className: string }> = {
         [EstadoToken.Pendiente]: { label: 'Pendiente', className: 'bg-amber-100 text-amber-700' },
         [EstadoToken.Consumido]: { label: 'Aceptada', className: 'bg-green-100 text-green-700' },
-        [EstadoToken.Expirado]: { label: 'Expirada', className: 'bg-gray-100 text-gray-500' },
+        [EstadoToken.Expirado]:  { label: 'Expirada', className: 'bg-gray-100 text-gray-500' },
+        [EstadoToken.Revocado]:  { label: 'Revocada', className: 'bg-red-100 text-red-500' },
     }
     const { label, className } = map[estado] ?? { label: estado, className: 'bg-gray-100 text-gray-500' }
     return (

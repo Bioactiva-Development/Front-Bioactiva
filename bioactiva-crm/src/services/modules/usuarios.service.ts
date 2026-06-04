@@ -84,6 +84,7 @@ const ESTADO_TOKEN_MAP: Record<number, EstadoToken> = {
     0: EstadoToken.Pendiente,
     1: EstadoToken.Consumido,
     2: EstadoToken.Expirado,
+    3: EstadoToken.Revocado,
 }
 
 function mapInvitacionRaw(raw: InvitacionRaw): Invitacion {

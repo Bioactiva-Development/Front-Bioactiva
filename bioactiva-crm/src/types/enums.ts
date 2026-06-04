@@ -111,4 +111,5 @@ export enum EstadoToken {
     Pendiente = 'Pendiente',
     Consumido = 'Consumido',
     Expirado = 'Expirado',
+    Revocado = 'Revocado',
 }
