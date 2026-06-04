@@ -224,4 +224,35 @@ describe('security/useAuth', () => {
 
     expect(result.current.error).toBe('Error de red')
   })
+
+  it('handles login error that is an Error instance', async () => {
+    authServiceMock.login.mockRejectedValueOnce(new Error('Network failure'))
+
+    const { result } = renderHook(() => useAuth())
+
+    await act(async () => {
+      await result.current.login({
+        correo: 'admin@bioactiva.pe',
+        password: 'Secret123!',
+      })
+    })
+
+    expect(result.current.error).toBe('Network failure')
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
+  })
+
+  it('uses fallback message when login error is a primitive', async () => {
+    authServiceMock.login.mockRejectedValueOnce('raw string error')
+
+    const { result } = renderHook(() => useAuth())
+
+    await act(async () => {
+      await result.current.login({
+        correo: 'admin@bioactiva.pe',
+        password: 'Secret123!',
+      })
+    })
+
+    expect(result.current.error).toBe('Error al iniciar sesión. Intente nuevamente.')
+  })
 })

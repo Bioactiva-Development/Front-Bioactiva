@@ -79,6 +79,21 @@ describe('organizaciones/organizaciones.mapper', () => {
       expect(result.sector).toBe(Sector.OTROS)
     })
 
+    it('maps null ruc to undefined', () => {
+      const result = fromOrganizacionDto({ ...dto, ruc: null })
+      expect(result.ruc).toBeUndefined()
+    })
+
+    it('maps null ubicacion to undefined', () => {
+      const result = fromOrganizacionDto({ ...dto, ubicacion: null })
+      expect(result.ubicacion).toBeUndefined()
+    })
+
+    it('maps null actividadEconomica to undefined', () => {
+      const result = fromOrganizacionDto({ ...dto, actividadEconomica: null })
+      expect(result.actividad_economica).toBeUndefined()
+    })
+
     it('falls back to Privada for unknown tipo', () => {
       const result = fromOrganizacionDto({ ...dto, tipo: 'UNKNOWN_TYPE' })
       expect(result.tipo).toBe(TipoEmpresa.Privada)
@@ -209,6 +224,35 @@ describe('organizaciones/organizaciones.mapper', () => {
 
       expect(result.nombreComercial).toBe('Altomayo')
     })
+
+    it('defaults codigo_cliente to empty string when undefined', () => {
+      const result = toCreateOrganizacionDto(
+        {
+          nombre: 'Test',
+          nombre_comercial: 'Test',
+          tipo: TipoEmpresa.Privada,
+          tamano: TamanoEmpresa.Micro,
+        },
+        1
+      )
+
+      expect(result.codigoCliente).toBe('')
+    })
+
+    it('omits sector from DTO when not provided', () => {
+      const result = toCreateOrganizacionDto(
+        {
+          nombre: 'Test',
+          nombre_comercial: 'Test',
+          codigo_cliente: 'TST-001',
+          tipo: TipoEmpresa.Privada,
+          tamano: TamanoEmpresa.Micro,
+        },
+        1
+      )
+
+      expect(result.sector).toBeUndefined()
+    })
   })
 
   describe('toUpdateOrganizacionDto', () => {
@@ -235,6 +279,86 @@ describe('organizaciones/organizaciones.mapper', () => {
     it('does not include idAuthor', () => {
       const result = toUpdateOrganizacionDto({ nombre: 'Test' })
       expect(result).not.toHaveProperty('idAuthor')
+    })
+
+    it('omits optional fields when they are empty string', () => {
+      const result = toUpdateOrganizacionDto({
+        nombre: 'Test',
+        sub_area: '',
+        ruc: '',
+        linkedin: '',
+        ubicacion: '',
+        actividad_economica: '',
+        alianzas_estrategicas: '',
+      })
+      expect(result.subArea).toBeUndefined()
+      expect(result.ruc).toBeUndefined()
+      expect(result.linkedin).toBeUndefined()
+      expect(result.ubicacion).toBeUndefined()
+      expect(result.actividadEconomica).toBeUndefined()
+      expect(result.alianzasEstrategicas).toBeUndefined()
+    })
+
+    it('trims whitespace from optional fields', () => {
+      const result = toUpdateOrganizacionDto({
+        nombre: 'Test',
+        sub_area: '  Innovación  ',
+        ruc: '  20601258529  ',
+      })
+      expect(result.subArea).toBe('Innovación')
+      expect(result.ruc).toBe('20601258529')
+    })
+
+    it('maps sector from domain to backend value', () => {
+      const result = toUpdateOrganizacionDto({
+        nombre: 'Test',
+        sector: Sector.AGROALIMENTARIA,
+      })
+      expect(result.sector).toBe('AGROALIMENTARIA')
+    })
+
+    it('includes id_contacto_activo when it is 0', () => {
+      const result = toUpdateOrganizacionDto({
+        nombre: 'Test',
+        id_contacto_activo: 0,
+      })
+      expect(result.idContactoActivo).toBe(0)
+    })
+
+    it('omits id_contacto_activo when it is null', () => {
+      const result = toUpdateOrganizacionDto({
+        nombre: 'Test',
+        id_contacto_activo: null,
+      })
+      expect(result.idContactoActivo).toBeUndefined()
+    })
+
+    it('includes codigo_cliente when explicitly provided', () => {
+      const result = toUpdateOrganizacionDto({ codigo_cliente: 'ALT-002' })
+      expect(result.codigoCliente).toBe('ALT-002')
+    })
+
+    it('includes nombre_comercial when explicitly provided', () => {
+      const result = toUpdateOrganizacionDto({ nombre_comercial: 'Comercial Test' })
+      expect(result.nombreComercial).toBe('Comercial Test')
+    })
+
+    it('includes linkedin when explicitly provided', () => {
+      const result = toUpdateOrganizacionDto({
+        nombre: 'Test',
+        linkedin: 'https://linkedin.com/company/test',
+      })
+      expect(result.linkedin).toBe('https://linkedin.com/company/test')
+    })
+
+    it('includes actividad_economica and alianzas_estrategicas when provided', () => {
+      const result = toUpdateOrganizacionDto({
+        nombre: 'Test',
+        actividad_economica: 'Agroindustria',
+        alianzas_estrategicas: 'Gobierno Regional',
+      })
+      expect(result.actividadEconomica).toBe('Agroindustria')
+      expect(result.alianzasEstrategicas).toBe('Gobierno Regional')
     })
   })
 
