@@ -1,284 +1,211 @@
-# Front-Bioactiva — CRM BioActiva
+# BioActiva CRM Frontend
 
-Frontend del CRM comercial de **BioActiva**, una plataforma centralizada que reemplaza la gestión actual en hojas de Excel y unifica el ciclo comercial completo: identificación de prospectos, seguimiento, propuestas, cierre, notificaciones, importación/exportación y dashboards.
+Frontend web para el CRM comercial de BioActiva. La aplicacion gestiona pipeline de leads, actividades de seguimiento, cotizaciones, organizaciones y contactos, conectandose al backend documentado en Mintlify.
 
-> Documento de Análisis y Diseño de referencia: `BIOACTIVA-UTEC / Documento de Análisis y Diseño v1.6` (132 páginas, 11 casos de uso, 65 requerimientos funcionales, 16 no funcionales, 14 reglas de negocio, 13 entidades).
->
-> Prototipo desplegado: <https://a-frontend-bioactiva-73nc.vercel.app/>
+## Documentacion vigente
 
----
+Usa estas fuentes antes de analizar o modificar integraciones:
 
-## 1. Contexto
+- Backend actual: https://bioactiva.mintlify.app/introduction
+- Indice para agentes: https://bioactiva.mintlify.app/llms.txt
+- Leads: https://bioactiva.mintlify.app/api/leads/overview
+- Cotizaciones: https://bioactiva.mintlify.app/api/quotations/overview
+- Actividades: https://bioactiva.mintlify.app/api/activities/overview
+- Usuarios: https://bioactiva.mintlify.app/api/users/list
 
-BioActiva es una empresa peruana especializada en gestión de la innovación, formulación de proyectos de I+D+i, vigilancia tecnológica, propiedad intelectual y fortalecimiento de capacidades empresariales.
+Si hay conflicto entre mocks, comentarios antiguos, documentos locales o supuestos previos y Mintlify, prioriza Mintlify. El backend es estricto: si se envia una propiedad no documentada, puede responder errores como `property <campo> should not exist`.
 
-**Problemas que resuelve el CRM**:
+## Stack
 
-- Duplicidad de datos en hojas de Excel.
-- Pérdida de seguimiento de oportunidades comerciales.
-- Falta de visibilidad sobre el avance del proceso comercial.
-- Dificultad para validar organizaciones y mantener integridad de la información.
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- TanStack Query
+- Axios
+- Zustand
+- Zod
 
-**Objetivo general**: gestionar la información comercial de manera ordenada, garantizar unicidad de las entidades registradas y conservar el historial de interacciones durante todo el ciclo de venta, con apoyo de notificaciones automáticas, dashboards e importación/exportación.
-
----
-
-## 2. Roles del sistema
-
-| Rol | Permisos |
-|---|---|
-| **Administrador** | Acceso total. Único que puede gestionar usuarios (invitar, habilitar, deshabilitar, asignar roles). Accede a todos los módulos. |
-| **Trabajador** | Usuario operativo. Gestiona organizaciones, contactos, leads, cotizaciones, notificaciones, plantillas, dashboard, importación y exportación. **No** accede a control de acceso. |
-
-Actores externos: **SUNAT** (consulta de RUC/razón social por web scraping vía backend) y **Microsoft 365** (Outlook Mail, Outlook Calendar y Teams vía Microsoft Graph API + OAuth 2.0 / Azure AD).
-
----
-
-## 3. Casos de uso y módulos
-
-| CU | Módulo | Ruta principal | Roles |
-|---|---|---|---|
-| CU001 | Autenticación e inicio de sesión | `/login`, `/forgot-password`, `/reset-password`, `/activate` | Público |
-| CU002 | Gestión de Usuarios (invitación por correo institucional, activación por token, deshabilitación) | `/control-acceso` | Administrador |
-| CU003 | Gestión de Organizaciones (consulta SUNAT por RUC o razón social, código interno único cuando no hay RUC) | `/organizaciones`, `/organizaciones/[id]` | Ambos |
-| CU004 | Gestión de Contactos (vinculación obligatoria a una organización, correo principal único) | `/contactos`, `/contactos/[id]` | Ambos |
-| CU005 | Pipeline de Leads (vista Kanban con 4 estados, drag & drop, actividades de seguimiento) | `/pipeline`, `/pipeline/[id]` | Ambos |
-| CU006 | Gestión de Cotizaciones (vinculadas a un lead, automatización de cierre del lead según estado) | `/cotizaciones`, `/cotizaciones/[id]` | Ambos |
-| CU007 | Notificaciones (recordatorios internos, secuencias de seguimiento con correo interno + externo, alerta automática a leads sin avance >30 días) | `/notificaciones` | Ambos |
-| CU008 | Dashboard comercial (8 KPIs, filtros por periodo y tipo de servicio) | `/dashboard` | Ambos |
-| CU009 | Importación de datos (3 etapas: subir, preview/conflictos, confirmar; `.xlsx/.xls/.csv`) | `/datos` | Ambos |
-| CU010 | Exportación de datos (CSV con filtros por tipo de entidad) | `/datos` | Ambos |
-| CU011 | Plantillas de correo (CRUD, activación/desactivación, eliminación física si no están en uso) | `/plantillas` | Ambos |
-
----
-
-## 4. Estado actual de los módulos
-
-| Módulo | Estado | Notas |
-|---|---|---|
-| Autenticación | 🚧 UI completa con login y guards de middleware | Falta validación de dominio institucional; faltan mensajes específicos del CU001 |
-| Control de Acceso | 🚧 Página existe; formularios `InvitarUsuarioForm.tsx` y `UsuarioItem.tsx` están vacíos | Pendiente flujo completo de invitación con token |
-| Organizaciones | 🚧 CRUD funcional con React Query | Falta integración SUNAT (RF-0005), redirección a Contactos con filtro cuando hay >6 contactos (RF-0044) |
-| Contactos | 🚧 CRUD funcional, validación de correo único | Falta campo `estado` (Vigente/Vencido) requerido por RF-0065 |
-| Pipeline / Leads | 🚧 Vista Kanban con DnD, actividades | Pendiente RN-008 (bloqueo de nueva actividad si la anterior está Pendiente), RF-0065 |
-| Cotizaciones | 🚧 CRUD con autocompletado desde lead | Pendiente verificar automatización Aceptada→CierreVenta / Rechazada→CierreSinVenta (RF-0037, RF-0038) y monto = 0 permitido (RF-0015) |
-| Notificaciones | 🚧 Listado y formularios básicos | **Pendiente el motor de secuencias y pasos** (entidades `SECUENCIAS_SEGUIMIENTO`, `PASOS_SEGUIMIENTO`, `RECORDATORIOS_ACTIVIDAD`), alerta automática 30 días sin avance (RF-0027), cancelación en cascada (RF-0051) |
-| Dashboard | 🚧 UI completa con 8 KPIs y filtros de periodo | Datos hardcodeados en la página; faltan `dashboard.service.ts`, `dashboard.mock.ts`, `dashboard.types.ts`, `useDashboard.ts`, `KpiCard.tsx`, `DashboardFiltros.tsx`, `ConversionChart.tsx`, `PipelineChart.tsx` (todos vacíos); falta filtro **tipo de servicio** (consultoría / formulación de proyecto, RF-0060 y §CU008) |
-| Importación / Exportación | 🚧 Páginas existen | Verificar flujo de 3 etapas (CU009) y filtros específicos por entidad (CU010) |
-| Plantillas | 🚧 CRUD básico | Falta campo `categoria` opcional (CU011 paso 5d) y regla "no eliminar si está en uso → solo desactivar" |
-| Integración Microsoft | ❌ No implementado | Requiere OAuth 2.0 + Azure AD App Registration + Microsoft Graph API |
-| Integración SUNAT | ❌ No implementado | Web scraping vía backend; el frontend solo invoca el endpoint |
-
-Leyenda: ✅ listo · 🚧 en progreso · ❌ pendiente
-
----
-
-## 5. Arquitectura (resumen del §11 del documento de Análisis y Diseño)
-
-Monolito modular orientado a servicios, contenerizado y desplegado en servidor centralizado.
-
-### 5.1. Vista lógica (por capas)
-
-| Capa | Componente | Tecnología |
-|---|---|---|
-| Presentación | SPA web (este repo) | **Next.js 16 + React 19 + TypeScript + Tailwind CSS 4** |
-| Aplicación / Negocio | Backend CRM (REST API) | **NestJS** (controladores, servicios, módulos) |
-| Integración | Microsoft 365 | Microsoft Graph API + OAuth 2.0 + Azure AD |
-| Integración | SUNAT | Web scraping desde backend |
-| Persistencia | Base de datos relacional | **PostgreSQL** |
-| Persistencia | Cache / sesiones | **Redis** |
-
-### 5.2. Vista física
-
-Servidor on-premise centralizado que aloja front, back, BD y cache. Los clientes acceden por navegador desde red institucional o Internet. La comunicación con SUNAT y Microsoft 365 se realiza por HTTPS.
-
-### 5.3. Vista de despliegue (Docker)
-
-Cuatro contenedores: **frontend (Next.js)**, **backend (NestJS)**, **PostgreSQL**, **Redis**, comunicados por una red interna controlada.
-
-### 5.4. Vista de integración
-
-- **Microsoft 365**: REST API vía Microsoft Graph; OAuth 2.0 + Azure AD; sincronización de calendarios, reuniones, correos y vinculación de interacciones con leads/contactos.
-- **SUNAT**: web scraping del portal de consulta; recuperación de información empresarial por RUC o razón social en tiempo real.
-- **Interna**: front ↔ back vía REST; el backend centraliza el acceso a persistencia, cache e integraciones externas.
-
----
-
-## 6. Stack del frontend
-
-| Capa | Librería |
-|---|---|
-| Framework | Next.js 16 (App Router) |
-| UI | React 19 |
-| Lenguaje | TypeScript 5 |
-| Estilos | Tailwind CSS 4 |
-| Estado global | Zustand 5 |
-| Server state / cache | TanStack React Query 5 |
-| HTTP client | Axios |
-| Formularios | React Hook Form 7 |
-| Validación | Zod 4 |
-| Iconos | Lucide React |
-| Gráficas | Recharts 3 |
-| Drag & drop (Kanban) | @dnd-kit/core + @dnd-kit/sortable |
-
----
-
-## 7. Estructura del repositorio
-
-```
-Front-Bioactiva/
-├── README.md                         # este archivo
-└── bioactiva-crm/                    # aplicación Next.js
-    ├── AGENTS.md                     # guía técnica completa para agentes IA y humanos
-    ├── CLAUDE.md                     # apunta a AGENTS.md
-    ├── README.md                     # guía rápida de desarrollo
-    ├── Dockerfile                    # contenedor del frontend
-    ├── next.config.ts
-    ├── package.json
-    ├── tsconfig.json
-    ├── public/
-    └── src/
-        ├── app/
-        │   ├── (auth)/               # login, forgot-password, reset-password, activate
-        │   ├── (dashboard)/          # área protegida con todos los módulos
-        │   ├── layout.tsx
-        │   ├── providers.tsx         # React Query Provider, etc.
-        │   └── globals.css
-        ├── components/
-        │   ├── ui/                   # átomos reutilizables (Button, Modal, SearchBar, EmptyState, Spinner)
-        │   ├── layout/               # Sidebar, Navbar, PageHeader
-        │   └── modules/              # componentes específicos por módulo
-        ├── hooks/                    # hooks personalizados por dominio
-        ├── services/
-        │   ├── api/                  # cliente Axios + endpoints
-        │   ├── mock/                 # data falsa por módulo
-        │   └── modules/              # servicios que conmutan mock ↔ API real
-        ├── store/                    # stores Zustand (auth, ui)
-        ├── types/                    # interfaces de dominio + enums
-        ├── lib/
-        │   ├── constants/            # routes, queryKeys, config
-        │   ├── utils/                # date, format, validation, csv
-        │   └── validators/           # esquemas Zod
-        ├── styles/                   # globals, temas
-        └── middleware.ts             # guards de sesión y rol
-```
-
----
-
-## 8. Cómo iniciar el proyecto
+## Inicio rapido
 
 ```bash
-cd bioactiva-crm
 npm install
 npm run dev
 ```
 
-Abrir <http://localhost:3000>.
-
-### Scripts disponibles (`bioactiva-crm/`)
-
-| Comando | Descripción |
-|---|---|
-| `npm run dev` | Levanta el servidor de desarrollo |
-| `npm run build` | Build de producción |
-| `npm run start` | Sirve el build de producción |
-| `npm run lint` | Ejecuta ESLint |
-
-### Variables de entorno
-
-Crear `bioactiva-crm/.env.local`:
+Variables recomendadas:
 
 ```bash
-NEXT_PUBLIC_USE_MOCK=true                       # true para usar mocks, false para conectar al backend NestJS
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3001  # URL del backend
+NEXT_PUBLIC_USE_MOCK=false
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
 NEXT_PUBLIC_APP_NAME=BioActiva CRM
 ```
 
-El switch mock ↔ API se aplica en `src/services/modules/*.service.ts` mediante la constante `USE_MOCK`. Cambiar de mock a API real **no requiere** modificar componentes, hooks ni páginas.
+Usa `NEXT_PUBLIC_USE_MOCK=true` solo para escenarios mock. Para integracion real, los servicios deben funcionar con `NEXT_PUBLIC_USE_MOCK=false`.
 
----
+## Arquitectura
 
-## 9. Cuentas demo (entorno de prototipo)
+El frontend debe mantener esta direccion de dependencias:
 
-> Disponibles únicamente en el prototipo desplegado, no en desarrollo local.
+```text
+pages/components -> hooks -> services -> api client/endpoints
+                         -> mappers -> types
+```
 
-| Rol | Correo | Contraseña | Datos asociados |
-|---|---|---|---|
-| Administrador | `admin@bioactiva.pe` | `Bioactiva2025!` | — |
-| Trabajador | `karien@bioactiva.pe` | `Bioactiva2025!` | LEAD-2025-003, LN-001 recordatorio programado |
-| Trabajador | `ltorres@bioactiva.pe` | `Bioactiva2025!` | LEAD-2025-005, LN-003 seguimiento enviado |
-| Trabajador | `arojas@bioactiva.pe` | `Bioactiva2025!` | sin notificaciones de email |
-| Trabajador | `mquispe@bioactiva.pe` | `Bioactiva2025!` | sin notificaciones de email |
-| Trabajador | `cmamani@bioactiva.pe` | `Bioactiva2025!` | LEAD-2025-008 con una actividad registrada |
+Reglas practicas:
 
----
+- Los componentes no deben hacer `fetch` ni `axios` directo.
+- Las URLs viven en `src/services/api/endpoints.ts`.
+- Los servicios por dominio viven en `src/services/modules/*.service.ts`.
+- Los mappers por dominio viven en `src/services/modules/*.mapper.ts`.
+- Los tipos compartidos viven en `src/types`.
+- Los validadores viven en `src/lib/validators`.
 
-## 10. Reglas de negocio críticas para el frontend
+## Contrato backend actual
 
-| Código | Regla | Impacto |
-|---|---|---|
-| RN-001 | Sesión válida obligatoria | Guard en `middleware.ts` y layout protegido |
-| RN-002 | Acceso por rol | Ocultar `/control-acceso` para Trabajador |
-| RN-003 | Sin borrado físico de organizaciones, contactos, leads y cotizaciones | No mostrar botón "Eliminar", usar "Desactivar" o no exponerlo. **Plantillas sí pueden eliminarse físicamente si no están en uso** (CU011) |
-| RN-004 | Org sin RUC → código interno obligatorio | Validación condicional en `OrganizacionForm` |
-| RN-005 | Contacto vinculado a una organización obligatoriamente | Validación en `ContactoForm` |
-| RN-006 | Lead vinculado a una organización obligatoriamente | Validación en `LeadForm` |
-| RN-007 | Cotización Aceptada → lead a Cierre con venta; Rechazada → Cierre sin venta | Lógica en `cotizaciones.service.ts` (RF-0037, RF-0038) |
-| RN-008 | No nueva actividad si la anterior está Pendiente | Bloquear `ActividadForm` (RF-0039) |
-| RN-009 | Estados válidos del pipeline únicamente | Usar enum `LeadState` |
-| RN-013 | Una sola notificación por actividad | Validar en `RecordatorioForm` y `SeguimientoForm` (RF-0061) |
-| RN-014 | Integración Microsoft opcional — el sistema debe seguir operando si está desactivada | Tolerancia a fallos en `integraciones.service.ts` (RNF-0011) |
-| RF-0015 | Monto de cotización mayor o igual a 0 (incluye 0) | Schema Zod `cotizacion.schema.ts` |
-| RF-0027 | Alerta automática si lead supera 30 días sin cambio de estado | Job en backend; el frontend solo visualiza |
-| RF-0044 | Org con >6 contactos → redirección a `/contactos` con filtro de organización aplicado | Navegación desde `OrganizacionDetalle` |
-| RF-0065 | Bloquear creación de leads con contactos vencidos | Validación en `LeadForm`; requiere campo `estado` en `Contacto` |
+Los modulos principales usan rutas REST en ingles, sin prefijo `/api`:
 
----
+| Dominio | Endpoints principales |
+| --- | --- |
+| Auth | `POST /auth/login`, `GET /auth/me`, `POST /auth/refresh` |
+| Users | `GET /users`, `PATCH /users/:id/enable`, `PATCH /users/:id/disable` |
+| Organizations | `GET/POST /organizations`, `GET/PATCH /organizations/:id`, `GET /organizations/sunat/:query` |
+| Contacts | `GET/POST /contacts`, `GET/PATCH /contacts/:id`, `GET /contacts/organization/:orgId` |
+| Leads | `GET/POST /leads`, `GET/PATCH/DELETE /leads/:id`, `PATCH /leads/:id/status` |
+| Activities | `GET/POST /activities`, `GET/PATCH/DELETE /activities/:id`, `PATCH /activities/:id/complete`, `PATCH /activities/:id/cancel` |
+| Quotations | `GET/POST /quotations`, `GET/PATCH/DELETE /quotations/:id`, `PATCH /quotations/:id/send`, `PATCH /quotations/:id/accept`, `PATCH /quotations/:id/reject` |
 
-## 11. Volumen estimado (§10 del documento)
+No uses rutas antiguas como `/api/leads`, `/api/leads/:id/actividades`, `/api/actividades` o `/api/cotizaciones`.
 
-| Operación | Volumen |
-|---|---|
-| Usuarios concurrentes | Hasta 9 en horario laboral |
-| Organizaciones nuevas | 15–30 / mes |
-| Contactos nuevos | 50–100 / mes |
-| Leads activos | 20–30 / mes |
-| Actividades registradas | 5–10 / día |
-| Cotizaciones generadas | 10–20 / mes |
-| Consultas SUNAT | Hasta 20 / día |
-| Exportaciones CSV | Hasta 5 / semana |
-| Importaciones CSV | Hasta 3 / mes |
+## Formato de datos
 
----
+El backend usa camelCase y enums uppercase:
 
-## 12. Requerimientos no funcionales destacados
+- `idLead`, `idOrg`, `fechaInicio`, `fechaFin`, `nombreActividad`.
+- `EN_PROSPECTO`, `OFERTADO`, `CIERRE_CON_VENTA`, `CIERRE_SIN_VENTA`.
+- `PENDIENTE`, `ENVIADA`, `ACEPTADA`, `RECHAZADA`.
 
-- **RNF-0001** Seguridad de sesión: JWT con expiración controlada.
-- **RNF-0003 / RNF-0004** Rendimiento: consultas y dashboards < 5 s en condiciones normales.
-- **RNF-0007** Usabilidad: validación inline en formularios, toasts solo para éxito o errores de red.
-- **RNF-0008** Responsividad: PC, laptop y tablet (no mobile como requisito).
-- **RNF-0011** Tolerancia a fallos en servicios externos (SUNAT, Microsoft): degradación elegante.
-- **RNF-0013** Mantenibilidad: arquitectura modular por dominio.
-- **RNF-0015** Registro de errores críticos en autenticación, integraciones, notificaciones, importaciones y exportaciones.
+El frontend usa snake_case y labels en espanol:
 
----
+- `id_lead`, `id_org`, `fecha_inicio`, `fecha_fin`, `nombre_actividad`.
+- `En prospecto`, `Ofertado`, `Cierre con venta`, `Cierre sin venta`.
 
-## 13. Documentación complementaria
+La conversion debe ocurrir en mappers, nunca dentro de componentes.
 
-- [`bioactiva-crm/AGENTS.md`](./bioactiva-crm/AGENTS.md) — guía técnica completa: convenciones, ENUMs, diccionario de datos, patrón mock→API, skills del equipo, reglas críticas no negociables.
-- [`bioactiva-crm/README.md`](./bioactiva-crm/README.md) — guía rápida de desarrollo de la app.
-- Documento oficial: `BIOACTIVA-UTEC / Documento de Análisis y Diseño v1.6` (fuente de toda decisión funcional y arquitectónica).
+## Logica de negocio clave
 
----
+### Pipeline y cotizaciones
 
-## 14. Equipo
+La cotizacion visible de un lead debe ser coherente con la columna del pipeline:
 
-| Rol | Integrantes |
-|---|---|
-| Project Manager | Gonzalo Andrés Valladolid Jiménez |
-| Analistas funcionales | Josué Renzo Hernández Yataco, Joel Modesto Cayllahua Hilario |
-| Frontend | Jean Paul Cuzcano Ponce, Luis Anthony Romero Padilla |
-| Backend | Yuri Abel Escobar Perez, Joseph Anderson Cose Roja |
-| Testers | Paulo Isael Miranda Barrientos, Fabricio Alonso Lanche Pacsi |
-| Revisor TCH | Teofilo Chambilla Aquino |
-| Aprobadores | Karien Diaz, Katia Samanud |
+| Estado del lead | Estado backend | Cotizacion coherente |
+| --- | --- | --- |
+| En prospecto | `EN_PROSPECTO` | `PENDIENTE` |
+| Ofertado | `OFERTADO` | `ENVIADA` |
+| Cierre con venta | `CIERRE_CON_VENTA` | `ACEPTADA` |
+| Cierre sin venta | `CIERRE_SIN_VENTA` | `RECHAZADA` |
+
+Al crear un lead se crea automaticamente una cotizacion inicial coherente. Al mover una tarjeta por drag and drop o cambiar el estado desde edicion/detalle, tambien debe sincronizarse la cotizacion principal.
+
+Ten en cuenta que `ACEPTADA` y `RECHAZADA` son estados terminales en backend. Para enviar, aceptar o rechazar cotizaciones se usan los endpoints de lifecycle. Si el flujo requiere volver desde una cotizacion terminal hacia otro estado, el frontend debe conservar una sola cotizacion visible y coherente con el lead, respetando las restricciones reales del backend.
+
+### Leads
+
+`POST /leads` y `PATCH /leads/:id` aceptan campos como:
+
+- `idOrg`
+- `idContacto`
+- `servicioInteres`
+- `idEncargado`
+- `comentarios`
+- `desafioOportunidad`
+- `notasContacto`
+- `canalCaptacion`
+
+El backend actual no acepta `fechaCierre`. El frontend mantiene la fecha de cierre estimada como dato local de UI (`fecha_cierre`) mediante `leads.service.ts`, porque el backend no la persiste todavia. No envies `fechaCierre` al backend.
+
+El estado inicial del backend es `EN_PROSPECTO`. Si el usuario crea un lead desde otra columna o desde `+ Nuevo Lead` con otro estado elegido, primero se crea el lead y luego se usa `PATCH /leads/:id/status`.
+
+### Actividades
+
+Las actividades se crean con `POST /activities`, no con rutas anidadas bajo leads.
+
+El formulario muestra un solo campo `Fecha`, pero el backend exige:
+
+- `fechaInicio`
+- `fechaFin`
+- `fechaInicio` estrictamente anterior a `fechaFin`
+
+La implementacion actual genera `fechaFin` una hora despues de la fecha seleccionada. Solo puede existir una actividad `PENDIENTE` por lead. Los responsables deben cargarse desde `GET /users`; no hardcodear IDs.
+
+### Cotizaciones
+
+Las cotizaciones se crean con `POST /quotations`. El monto se envia como string decimal en `monto`. El estado no se cambia con `PATCH /quotations/:id`; se cambia con:
+
+- `PATCH /quotations/:id/send`
+- `PATCH /quotations/:id/accept`
+- `PATCH /quotations/:id/reject`
+
+`DELETE /quotations/:id` es soft delete.
+
+### Filtros del pipeline
+
+El filtro basico del pipeline debe limitarse a:
+
+- Busqueda comercial
+- Estado
+- Encargado
+- Canal
+- Solo con alerta activa
+
+No reintroducir filtros de sector, tipo de organizacion, tamano o fecha de creacion en el pipeline si el backend de leads no los soporta directamente.
+
+## Errores comunes de integracion
+
+| Mensaje | Causa probable | Correccion |
+| --- | --- | --- |
+| `Cannot POST /api/leads/:id/actividades` | Ruta antigua | Usar `POST /activities` |
+| `Cannot GET /api/cotizaciones...` | Ruta antigua | Usar `GET /quotations` |
+| `property fechaCierre should not exist` | Campo no soportado | No enviar `fechaCierre` |
+| `Responsable con id X no encontrado` | ID hardcodeado o usuario inexistente | Cargar usuarios reales con `GET /users` |
+| Cotizaciones duplicadas o historicas visibles | Listado no sincronizado con leads activos | Filtrar contra pipeline activo y soft deletes |
+
+## Archivos importantes
+
+- `src/services/api/client.ts`
+- `src/services/api/endpoints.ts`
+- `src/services/modules/leads.service.ts`
+- `src/services/modules/leads.mapper.ts`
+- `src/services/modules/cotizaciones.service.ts`
+- `src/services/modules/cotizaciones.mapper.ts`
+- `src/services/modules/actividades.service.ts`
+- `src/services/modules/actividades.mapper.ts`
+- `src/hooks/pipeline/useLeads.ts`
+- `src/components/modules/pipeline/LeadFiltros.tsx`
+- `src/components/modules/pipeline/LeadForm.tsx`
+- `src/components/modules/pipeline/ActividadForm.tsx`
+
+## Verificacion
+
+Para cambios de codigo, ejecuta verificaciones focalizadas:
+
+```bash
+npx tsc --noEmit
+npx eslint <archivos-modificados>
+npm test -- --runInBand <test-relevante>
+```
+
+Pruebas unitarias utiles:
+
+- `test/unit/modules/leads/leads.mapper.spec.ts`
+- `test/unit/modules/cotizaciones/cotizaciones.mapper.spec.ts`
+- `test/unit/modules/actividades/actividades.mapper.spec.ts`
+
+## Guias para agentes
+
+Los agentes deben leer:
+
+- `AGENTS.md`: guia operativa completa.
+- `CLAUDE.md`: recordatorio especifico para Claude.
+
+Estos archivos resumen la logica de negocio, el contrato backend actual y los errores recurrentes del proyecto.
