@@ -113,8 +113,9 @@ export function LeadFiltros({
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
 
             <div className="space-y-1">
-              <label className="text-xs text-gray-400 font-medium">Estado</label>
+              <label htmlFor="lflt-estado" className="text-xs text-gray-400 font-medium">Estado</label>
               <select
+                id="lflt-estado"
                 value={filtros.estado ?? ''}
                 onChange={(e) => onChange({
                   ...filtros,
@@ -132,8 +133,9 @@ export function LeadFiltros({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs text-gray-400 font-medium">Encargado</label>
+              <label htmlFor="lflt-encargado" className="text-xs text-gray-400 font-medium">Encargado</label>
               <select
+                id="lflt-encargado"
                 value={filtros.id_encargado ?? ''}
                 onChange={(e) => onChange({
                   ...filtros,
@@ -151,8 +153,9 @@ export function LeadFiltros({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs text-gray-400 font-medium">Canal</label>
+              <label htmlFor="lflt-canal" className="text-xs text-gray-400 font-medium">Canal</label>
               <select
+                id="lflt-canal"
                 value={filtros.canal_captacion ?? ''}
                 onChange={(e) => onChange({
                   ...filtros,
@@ -170,8 +173,9 @@ export function LeadFiltros({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs text-gray-400 font-medium">Sector</label>
+              <label htmlFor="lflt-sector" className="text-xs text-gray-400 font-medium">Sector</label>
               <select
+                id="lflt-sector"
                 value={filtros.sector ?? ''}
                 onChange={(e) => onChange({
                   ...filtros,
@@ -189,8 +193,9 @@ export function LeadFiltros({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs text-gray-400 font-medium">Tipo org.</label>
+              <label htmlFor="lflt-tipo-org" className="text-xs text-gray-400 font-medium">Tipo org.</label>
               <select
+                id="lflt-tipo-org"
                 value={filtros.tipo_org ?? ''}
                 onChange={(e) => onChange({
                   ...filtros,
@@ -208,8 +213,9 @@ export function LeadFiltros({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs text-gray-400 font-medium">Tamaño</label>
+              <label htmlFor="lflt-tamano" className="text-xs text-gray-400 font-medium">Tamaño</label>
               <select
+                id="lflt-tamano"
                 value={filtros.tamano ?? ''}
                 onChange={(e) => onChange({
                   ...filtros,

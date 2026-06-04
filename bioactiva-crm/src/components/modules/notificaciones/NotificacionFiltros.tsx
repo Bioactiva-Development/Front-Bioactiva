@@ -52,10 +52,11 @@ export function NotificacionFiltros({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <label htmlFor="nf-tipo" className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
             Tipo
           </label>
           <select
+            id="nf-tipo"
             value={filtros.tipo ?? ''}
             onChange={(event) => handleTipoChange(event.target.value)}
             className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-emerald-400 transition-colors"
@@ -68,10 +69,11 @@ export function NotificacionFiltros({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <label htmlFor="nf-estado" className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
             Estado
           </label>
           <select
+            id="nf-estado"
             value={filtros.estado ?? ''}
             onChange={(event) => handleEstadoChange(event.target.value)}
             className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-emerald-400 transition-colors"

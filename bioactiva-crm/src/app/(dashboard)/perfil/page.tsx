@@ -158,10 +158,11 @@ export default function PerfilPage() {
 
                     <form onSubmit={perfilForm.handleSubmit(onGuardarPerfil)} className="space-y-4">
                         <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <label htmlFor="prf-nombre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 Nombre completo
                             </label>
                             <input
+                                id="prf-nombre"
                                 type="text"
                                 {...perfilForm.register('nombre_completo')}
                                 className={`w-full px-4 py-2.5 text-sm text-gray-900 rounded-xl border-2 outline-none transition-colors bg-gray-50
@@ -175,10 +176,11 @@ export default function PerfilPage() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <label htmlFor="prf-correo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 Correo institucional
                             </label>
                             <input
+                                id="prf-correo"
                                 type="email"
                                 value={usuario?.correo ?? ''}
                                 readOnly
@@ -229,11 +231,12 @@ export default function PerfilPage() {
 
                     <form onSubmit={passwordForm.handleSubmit(onCambiarPassword)} className="space-y-4">
                         <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <label htmlFor="prf-password" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 Nueva contraseña
                             </label>
                             <div className="relative">
                                 <input
+                                    id="prf-password"
                                     type={showPassword ? 'text' : 'password'}
                                     placeholder="Mínimo 6 caracteres"
                                     {...passwordForm.register('password')}
@@ -251,11 +254,12 @@ export default function PerfilPage() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <label htmlFor="prf-confirm" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 Confirmar contraseña
                             </label>
                             <div className="relative">
                                 <input
+                                    id="prf-confirm"
                                     type={showConfirm ? 'text' : 'password'}
                                     placeholder="Repita la contraseña"
                                     {...passwordForm.register('confirmPassword')}
@@ -334,7 +338,7 @@ export default function PerfilPage() {
                                         </span>
                                     ) : (
                                         <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />{' '}
                                             No conectado
                                         </span>
                                     )}
@@ -365,7 +369,7 @@ export default function PerfilPage() {
                                         </span>
                                     ) : (
                                         <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />{' '}
                                             No conectado
                                         </span>
                                     )}

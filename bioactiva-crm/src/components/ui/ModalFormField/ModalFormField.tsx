@@ -9,10 +9,12 @@ interface ModalFormFieldProps {
 export function ModalFormField({ label, error, children }: Readonly<ModalFormFieldProps>) {
     return (
         <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                {label}
+            <label className="block">
+                <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                    {label}
+                </span>
+                {children}
             </label>
-            {children}
             {error && <p className="text-red-500 text-xs">{error}</p>}
         </div>
     )

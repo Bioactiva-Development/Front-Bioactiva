@@ -37,10 +37,7 @@ export function useCrearOrganizacion() {
   return useMutation({
     mutationFn: (data: OrganizacionFormData) => {
       if (!idAuthor) {
-        return Promise.reject({
-          status: 401,
-          message: 'Sesión expirada. Vuelve a iniciar sesión para registrar una organización.',
-        })
+        return Promise.reject(new Error('Sesión expirada. Vuelve a iniciar sesión para registrar una organización.'))
       }
       return organizacionesService.create(data, idAuthor)
     },

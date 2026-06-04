@@ -103,13 +103,14 @@ export function OrganizacionForm({
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-codigo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Código de Cliente{' '}
             {codigoBloqueado
               ? <span className="text-gray-400 normal-case font-normal">— generado automáticamente</span>
               : <span className="text-red-500">*</span>}
           </label>
           <input
+            id="of-codigo"
             type="text"
             placeholder="Ej: ORG-2026-001"
             {...register('codigo_cliente')}
@@ -159,7 +160,7 @@ export function OrganizacionForm({
             {busquedaTab === 'ruc' && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  <label htmlFor="of-ruc" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     RUC
                   </label>
                   <span className={`text-xs font-medium
@@ -168,6 +169,7 @@ export function OrganizacionForm({
                   </span>
                 </div>
                 <input
+                  id="of-ruc"
                   type="text"
                   placeholder="Ingresa RUC (11 dígitos)..."
                   maxLength={11}
@@ -190,10 +192,11 @@ export function OrganizacionForm({
         )}
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-nombre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Nombre / Razón Social <span className="text-red-500">*</span>
           </label>
           <input
+            id="of-nombre"
             type="text"
             placeholder="Nombre de la organización..."
             {...register('nombre')}
@@ -205,10 +208,11 @@ export function OrganizacionForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-nombre-comercial" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Nombre Comercial <span className="text-red-500">*</span>
           </label>
           <input
+            id="of-nombre-comercial"
             type="text"
             placeholder="Nombre comercial o marca..."
             {...register('nombre_comercial')}
@@ -220,11 +224,12 @@ export function OrganizacionForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-sub-area" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Área / Departamento{' '}
             <span className="text-gray-400 normal-case font-normal">Opcional</span>
           </label>
           <input
+            id="of-sub-area"
             type="text"
             placeholder="Ej: Área de Innovación, Gerencia de Proyectos"
             {...register('sub_area')}
@@ -234,10 +239,11 @@ export function OrganizacionForm({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="of-tipo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Tipo <span className="text-red-500">*</span>
             </label>
             <select
+              id="of-tipo"
               {...register('tipo')}
               className={inputClass(!!errors.tipo)}
             >
@@ -252,10 +258,11 @@ export function OrganizacionForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="of-tamano" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Tamaño <span className="text-red-500">*</span>
             </label>
             <select
+              id="of-tamano"
               {...register('tamano')}
               className={inputClass(!!errors.tamano)}
             >
@@ -271,10 +278,11 @@ export function OrganizacionForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-sector" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Sector <span className="text-red-500">*</span>
           </label>
           <select
+            id="of-sector"
             {...register('sector')}
             className={inputClass(!!errors.sector)}
           >
@@ -289,10 +297,11 @@ export function OrganizacionForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-ubicacion" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Ubicación
           </label>
           <input
+            id="of-ubicacion"
             type="text"
             placeholder="Ciudad, Región..."
             {...register('ubicacion')}
@@ -301,13 +310,14 @@ export function OrganizacionForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-actividad" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Actividades Económicas{' '}
             <span className="text-gray-400 normal-case font-normal">
               Opcional — SUNAT lo completa
             </span>
           </label>
           <input
+            id="of-actividad"
             type="text"
             placeholder="Ej: Fabricación de productos orgánicos..."
             {...register('actividad_economica')}
@@ -316,10 +326,11 @@ export function OrganizacionForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-linkedin" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             LinkedIn
           </label>
           <input
+            id="of-linkedin"
             type="text"
             placeholder="linkedin.com/company/ejemplo"
             {...register('linkedin')}
@@ -328,10 +339,11 @@ export function OrganizacionForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-alianzas" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Alianzas Estratégicas
           </label>
           <input
+            id="of-alianzas"
             type="text"
             placeholder="Ej: USAID, Rainforest Alliance"
             {...register('alianzas_estrategicas')}

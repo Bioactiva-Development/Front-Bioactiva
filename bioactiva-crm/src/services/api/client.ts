@@ -106,12 +106,11 @@ apiClient.interceptors.response.use(
 
         // 403: rol insuficiente — el refresh no ayuda (doc: "401 vs 403")
         if (error.response?.status === 403) {
-            throw {
+            throw Object.assign(new Error('No tienes permisos para realizar esta acción.'), {
                 status: 403,
-                message: 'No tienes permisos para realizar esta acción.',
                 errorCode: (error.response.data as { error?: string })?.error,
                 data: error.response.data,
-            }
+            })
         }
 
         const backendMessage =
@@ -125,7 +124,7 @@ apiClient.interceptors.response.use(
             !originalRequest.url?.includes('/invitations')
         ) {
             forceLogout()
-            throw { status: error.response?.status, message: rawMessage }
+            throw Object.assign(new Error(rawMessage), { status: error.response?.status })
         }
 
         let mensajeFinal: string
@@ -145,12 +144,11 @@ apiClient.interceptors.response.use(
         // errorCode: identificador estable del extended shape (ej: "ActivityNotFoundException")
         const errorCode = (error.response?.data as { error?: string })?.error
 
-        throw {
+        throw Object.assign(new Error(mensajeFinal), {
             status: error.response?.status,
-            message: mensajeFinal,
             errorCode,
             data: error.response?.data,
-        }
+        })
     }
 )
 

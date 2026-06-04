@@ -127,10 +127,11 @@ export function ImportarStepper() {
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5 shadow-sm">
                     {/* Selector de entidad */}
                     <div className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        <label htmlFor="imp-entidad" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                             ¿Qué vas a importar?
                         </label>
                         <select
+                            id="imp-entidad"
                             value={entidad}
                             onChange={e => setEntidad(e.target.value as EntidadExportable)}
                             className="w-full sm:w-64 px-3 py-2.5 text-sm text-gray-800 bg-[#F1FFEC] border-2 border-[#BCF7B3] rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"

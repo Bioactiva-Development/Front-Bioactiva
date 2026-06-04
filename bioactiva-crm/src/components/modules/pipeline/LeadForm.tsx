@@ -102,10 +102,11 @@ export function LeadForm({
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="ldf-codigo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             ID Lead (se genera al guardar)
           </label>
           <input
+            id="ldf-codigo"
             type="text"
             value={lead?.codigo ?? `LEAD-${new Date().getFullYear()}-XXX`}
             disabled
@@ -115,10 +116,11 @@ export function LeadForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="ldf-org" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Organización <span className="text-red-500">*</span>
           </label>
           <select
+            id="ldf-org"
             {...register('id_org')}
             disabled={esEdicion}
             className={`${inputClass(!!errors.id_org)} cursor-pointer
@@ -135,13 +137,14 @@ export function LeadForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="ldf-contacto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Contacto{' '}
             <span className="text-gray-400 normal-case font-normal">
               (opcional — puedes vincularlo después)
             </span>
           </label>
           <select
+            id="ldf-contacto"
             {...register('id_contacto', { valueAsNumber: true })}
             disabled={!orgSeleccionada}
             className={`${inputClass(!!errors.id_contacto)} cursor-pointer
@@ -165,10 +168,11 @@ export function LeadForm({
 
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="ldf-estado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Estado inicial
           </label>
           <input
+            id="ldf-estado"
             type="text"
             value="En prospecto (asignado automáticamente)"
             disabled
@@ -181,10 +185,11 @@ export function LeadForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="ldf-servicio" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Servicio de interés <span className="text-red-500">*</span>
           </label>
           <input
+            id="ldf-servicio"
             type="text"
             placeholder="Ej: Formulación de proyecto Innovasuyu"
             {...register('servicio_interes')}
@@ -196,10 +201,11 @@ export function LeadForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="ldf-comentarios" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Comentarios
           </label>
           <textarea
+            id="ldf-comentarios"
             rows={3}
             placeholder="Notas internas del lead..."
             {...register('comentarios')}
@@ -208,10 +214,11 @@ export function LeadForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="ldf-desafio" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Desafío u oportunidad
           </label>
           <textarea
+            id="ldf-desafio"
             rows={3}
             placeholder="Problema concreto o necesidad comercial detectada..."
             {...register('desafio_oportunidad')}
@@ -220,10 +227,11 @@ export function LeadForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="ldf-historial" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Historial de contacto
           </label>
           <textarea
+            id="ldf-historial"
             rows={3}
             placeholder="Resumen de reuniones, correos o contexto previo..."
             {...register('notas_contacto')}
@@ -233,10 +241,11 @@ export function LeadForm({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="ldf-encargado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Encargado <span className="text-red-500">*</span>
             </label>
             <select
+              id="ldf-encargado"
               {...register('id_encargado', { valueAsNumber: true })}
               className={`${inputClass(!!errors.id_encargado)} cursor-pointer`}
             >
@@ -251,10 +260,11 @@ export function LeadForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="ldf-encargado-correo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Correo del encargado
             </label>
             <input
+              id="ldf-encargado-correo"
               type="email"
               placeholder="correo@bioactiva.pe"
               {...register('encargado_correo')}
@@ -265,10 +275,11 @@ export function LeadForm({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="ldf-canal" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Canal de captación
             </label>
             <input
+              id="ldf-canal"
               type="text"
               placeholder="Ej: Referido, LinkedIn, Evento presencial"
               {...register('canal_captacion')}
@@ -277,10 +288,11 @@ export function LeadForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="ldf-proxima" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Próxima actividad
             </label>
             <input
+              id="ldf-proxima"
               type="text"
               placeholder="Ej: Enviar propuesta técnica"
               {...register('proxima_actividad')}
@@ -291,10 +303,11 @@ export function LeadForm({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="ldf-fecha-proxima" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Fecha próxima actividad
             </label>
             <input
+              id="ldf-fecha-proxima"
               type="date"
               {...register('fecha_proxima_actividad')}
               className={inputClass(!!errors.fecha_proxima_actividad)}
@@ -302,10 +315,11 @@ export function LeadForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="ldf-fecha-cierre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Fecha de cierre
             </label>
             <input
+              id="ldf-fecha-cierre"
               type="date"
               {...register('fecha_cierre')}
               className={inputClass(!!errors.fecha_cierre)}
