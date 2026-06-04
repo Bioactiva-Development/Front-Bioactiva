@@ -31,13 +31,69 @@ import {
 const PAGE_SIZE_PIPELINE = 100
 
 type RawLeadsResponse = LeadDtoOut[] | LeadsDtoResponse
+type LeadLocalFields = Pick<Lead, 'fecha_cierre'>
+type LeadLocalFieldsMap = Record<number, LeadLocalFields>
+
+const LOCAL_LEAD_FIELDS_KEY = 'bioactiva:lead-local-fields'
+
+const canUseLocalStorage = () =>
+  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+
+const readLeadLocalFields = (): LeadLocalFieldsMap => {
+  if (!canUseLocalStorage()) return {}
+
+  try {
+    return JSON.parse(
+      window.localStorage.getItem(LOCAL_LEAD_FIELDS_KEY) ?? '{}'
+    ) as LeadLocalFieldsMap
+  } catch {
+    return {}
+  }
+}
+
+const writeLeadLocalFields = (fields: LeadLocalFieldsMap) => {
+  if (!canUseLocalStorage()) return
+  window.localStorage.setItem(LOCAL_LEAD_FIELDS_KEY, JSON.stringify(fields))
+}
+
+const mergeLeadLocalFields = (lead: Lead): Lead => {
+  const localFields = readLeadLocalFields()[lead.id]
+  if (!localFields) return lead
+  return { ...lead, ...localFields }
+}
+
+const persistLeadLocalFields = (
+  id: number,
+  data: Partial<LeadFormData>
+) => {
+  if (!Object.prototype.hasOwnProperty.call(data, 'fecha_cierre')) return
+
+  const fields = readLeadLocalFields()
+  const fechaCierre = data.fecha_cierre?.trim()
+
+  if (fechaCierre) {
+    fields[id] = { ...fields[id], fecha_cierre: fechaCierre }
+  } else if (fields[id]) {
+    delete fields[id].fecha_cierre
+    if (Object.keys(fields[id]).length === 0) delete fields[id]
+  }
+
+  writeLeadLocalFields(fields)
+}
+
+const removeLeadLocalFields = (id: number) => {
+  const fields = readLeadLocalFields()
+  if (!fields[id]) return
+  delete fields[id]
+  writeLeadLocalFields(fields)
+}
 
 const normalizeLeadsResponse = (
   raw: RawLeadsResponse,
   filtros?: LeadFiltros
 ): LeadsResponse => {
   if (Array.isArray(raw)) {
-    const data = raw.map(fromLeadDto)
+    const data = raw.map(fromLeadDto).map(mergeLeadLocalFields)
     return {
       data,
       total: data.length,
@@ -46,7 +102,7 @@ const normalizeLeadsResponse = (
     }
   }
 
-  const data = raw.data.map(fromLeadDto)
+  const data = raw.data.map(fromLeadDto).map(mergeLeadLocalFields)
   return {
     data,
     total: raw.meta?.total ?? data.length,
@@ -111,7 +167,7 @@ export const leadsService = {
     const response = await apiClient.get<LeadDtoOut>(
       ENDPOINTS.leads.detail(id)
     )
-    return fromLeadDto(response.data)
+    return mergeLeadLocalFields(fromLeadDto(response.data))
   },
 
   create: async (data: LeadFormData): Promise<Lead> => {
@@ -121,12 +177,15 @@ export const leadsService = {
       toCreateLeadDto(data)
     )
     const lead = fromLeadDto(response.data)
+    persistLeadLocalFields(lead.id, data)
 
     if (data.estado && data.estado !== LeadState.Prospecto) {
-      return leadsService.updateEstado(lead.id, data.estado)
+      return mergeLeadLocalFields(
+        await leadsService.updateEstado(lead.id, data.estado)
+      )
     }
 
-    return lead
+    return mergeLeadLocalFields(lead)
   },
 
   update: async (
@@ -150,7 +209,8 @@ export const leadsService = {
       lead = await leadsService.updateEstado(id, data.estado)
     }
 
-    return lead
+    persistLeadLocalFields(id, data)
+    return mergeLeadLocalFields(lead)
   },
 
   updateEstado: async (
@@ -162,11 +222,12 @@ export const leadsService = {
       ENDPOINTS.leads.updateEstado(id),
       { estado: toBackendLeadState(estado) }
     )
-    return fromLeadDto(response.data)
+    return mergeLeadLocalFields(fromLeadDto(response.data))
   },
 
   delete: async (id: number): Promise<void> => {
     if (USE_MOCK) return mockDeleteLead(id)
     await apiClient.delete(ENDPOINTS.leads.delete(id))
+    removeLeadLocalFields(id)
   },
 }

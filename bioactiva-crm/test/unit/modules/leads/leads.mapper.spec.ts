@@ -81,7 +81,6 @@ describe('leads.mapper', () => {
       servicioInteres: 'Ley 30309',
       desafioOportunidad: 'Oportunidad',
       canalCaptacion: 'Referido',
-      fechaCierre: '2026-06-30T00:00:00.000Z',
       idEncargado: 3,
     })
 
@@ -91,7 +90,6 @@ describe('leads.mapper', () => {
       estado: LeadState.CierreSinVenta,
     })).toEqual({
       servicioInteres: 'Nuevo servicio',
-      fechaCierre: '2026-07-15T00:00:00.000Z',
     })
   })
 })

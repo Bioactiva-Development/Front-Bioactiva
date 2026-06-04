@@ -43,7 +43,6 @@ export interface LeadCreateDto {
   desafioOportunidad?: string
   notasContacto?: string
   canalCaptacion?: string
-  fechaCierre?: string
 }
 
 export type LeadUpdateDto = Partial<LeadCreateDto>
@@ -66,11 +65,6 @@ const trimOrUndefined = (value?: string | null): string | undefined => {
   if (value == null) return undefined
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : undefined
-}
-
-const toIsoDateTime = (value: string): string => {
-  if (value.includes('T')) return value
-  return new Date(`${value}T00:00:00.000Z`).toISOString()
 }
 
 const codigoFromLead = (dto: Pick<LeadDtoOut, 'id' | 'createdAt'>) => {
@@ -139,9 +133,6 @@ export const toCreateLeadDto = (data: LeadFormData): LeadCreateDto => {
   const canalCaptacion = trimOrUndefined(data.canal_captacion)
   if (canalCaptacion !== undefined) dto.canalCaptacion = canalCaptacion
 
-  const fechaCierre = trimOrUndefined(data.fecha_cierre)
-  if (fechaCierre !== undefined) dto.fechaCierre = toIsoDateTime(fechaCierre)
-
   return dto
 }
 
@@ -164,9 +155,6 @@ export const toUpdateLeadDto = (data: Partial<LeadFormData>): LeadUpdateDto => {
 
   const canalCaptacion = trimOrUndefined(data.canal_captacion)
   if (canalCaptacion !== undefined) dto.canalCaptacion = canalCaptacion
-
-  const fechaCierre = trimOrUndefined(data.fecha_cierre)
-  if (fechaCierre !== undefined) dto.fechaCierre = toIsoDateTime(fechaCierre)
 
   return dto
 }
