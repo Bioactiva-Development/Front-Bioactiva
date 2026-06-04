@@ -63,11 +63,6 @@ export const leadSchema = z.object({
     .max(120, 'Máximo 120 caracteres')
     .optional()
     .or(z.literal('')),
-
-  fecha_proxima_actividad: z
-    .string()
-    .optional()
-    .or(z.literal('')),
 })
 
 export type LeadFormValues = z.infer<typeof leadSchema>

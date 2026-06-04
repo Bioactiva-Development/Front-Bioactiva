@@ -17,7 +17,6 @@ export interface Lead {
   tamano?: string
   fecha_cierre?: string
   proxima_actividad?: string
-  fecha_proxima_actividad?: string
   id_author: number
   created_at: string
   updated_at: string
@@ -72,5 +71,4 @@ export interface LeadFormData {
   canal_captacion?: string
   fecha_cierre?: string
   proxima_actividad?: string
-  fecha_proxima_actividad?: string
 }

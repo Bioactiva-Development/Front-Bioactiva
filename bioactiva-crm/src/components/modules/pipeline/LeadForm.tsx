@@ -56,7 +56,6 @@ function getLeadFormDefaults(
       canal_captacion:         lead.canal_captacion ?? '',
       fecha_cierre:            lead.fecha_cierre ?? '',
       proxima_actividad:       lead.proxima_actividad ?? '',
-      fecha_proxima_actividad: lead.fecha_proxima_actividad ?? '',
     }
   }
 
@@ -507,18 +506,7 @@ export function LeadForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Fecha próxima actividad
-            </label>
-            <input
-              type="date"
-              {...register('fecha_proxima_actividad')}
-              className={inputClass(!!errors.fecha_proxima_actividad)}
-            />
-          </div>
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Fecha de cierre
