@@ -30,7 +30,7 @@ export function ActividadForm({
   onCancelar,
   isLoading,
   error,
-}: ActividadFormProps) {
+}: Readonly<ActividadFormProps>) {
   const {
     register,
     handleSubmit,

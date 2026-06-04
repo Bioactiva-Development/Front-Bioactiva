@@ -72,7 +72,7 @@ export function OrganizacionDetalle({
   onEditar,
   onEliminar,
   eliminando = false,
-}: OrganizacionDetalleProps) {
+}: Readonly<OrganizacionDetalleProps>) {
   const router                              = useRouter()
   const [confirmarEliminar, setConfirmar]   = useState(false)
   const inicial                             = organizacion.nombre.charAt(0).toUpperCase()
@@ -338,10 +338,13 @@ export function OrganizacionDetalle({
             {organizacion.leads.map((lead) => (
               <div
                 key={lead.id}
+                role="button"
+                tabIndex={0}
                 className="flex items-center justify-between p-4 border border-gray-100
                   rounded-xl hover:border-emerald-200 hover:bg-emerald-50/30
                   transition-colors cursor-pointer"
                 onClick={() => router.push(ROUTES.lead(lead.id))}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') router.push(ROUTES.lead(lead.id)) }}
               >
                 <div>
                   <p className="text-sm font-semibold text-gray-800">

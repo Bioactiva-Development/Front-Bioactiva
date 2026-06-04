@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
 import { CotizacionForm } from '@/components/modules/cotizaciones/CotizacionForm'
 import { useCrearCotizacion } from '@/hooks/cotizaciones/useCotizaciones'
 import { CotizacionFormValues } from '@/lib/validators/cotizacion.schema'

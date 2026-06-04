@@ -29,7 +29,7 @@ const ESTADO_COLORS: Record<EstadoCot, string> = {
   [EstadoCot.Rechazada]: 'bg-red-50 text-red-600',
 }
 
-function InfoItem({ label, valor }: { label: string; valor?: string | null }) {
+function InfoItem({ label, valor }: Readonly<{ label: string; valor?: string | null }>) {
   if (!valor) return null
   return (
     <div>
@@ -41,7 +41,7 @@ function InfoItem({ label, valor }: { label: string; valor?: string | null }) {
   )
 }
 
-export function CotizacionDetalle({ cotizacion, onEditar }: CotizacionDetalleProps) {
+export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionDetalleProps>) {
   const router  = useRouter()
   const [accionError, setAccionError] = useState<string | null>(null)
 

@@ -13,7 +13,7 @@ interface SunatBuscadorProps {
 
 type TabType = 'ruc' | 'nombre'
 
-export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: SunatBuscadorProps) {
+export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: Readonly<SunatBuscadorProps>) {
   const [tab,         setTab]         = useState<TabType>('ruc')
   const [inputRuc,    setInputRuc]    = useState('')
   const [inputNombre, setInputNombre] = useState('')
@@ -53,8 +53,12 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label="Cerrar modal"
       className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
       onClick={onCerrar}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onCerrar() }}
     >
       <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col"
@@ -113,7 +117,7 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
                   type="text"
                   value={inputRuc}
                   onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '').slice(0, 11)
+                    const val = e.target.value.replaceAll(/\D/g, '').slice(0, 11)
                     setInputRuc(val)
                   }}
                   onKeyDown={(e) => e.key === 'Enter' && handleBuscarRuc()}

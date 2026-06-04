@@ -104,7 +104,7 @@ function mapInvitacionRaw(raw: InvitacionRaw): Invitacion {
     return {
         id: raw.id,
         correo: raw.correo,
-        rol: typeof raw.rol === 'number' ? mapRole(raw.rol) : (raw.rol as never),
+        rol: mapRole(raw.rol),
         estado,
         // El backend envía `expired_at`; se mantiene `expires_at` como nombre interno.
         expires_at,
@@ -154,12 +154,12 @@ export const usuariosService = {
     },
 
     deshabilitar: async (id: number): Promise<void> => {
-        if (USE_MOCK) { await mockDeshabilitarUsuario(id); return }
+        if (USE_MOCK) { mockDeshabilitarUsuario(id); return }
         await apiClient.patch(ENDPOINTS.usuarios.disable(id))
     },
 
     habilitar: async (id: number): Promise<void> => {
-        if (USE_MOCK) { await mockHabilitarUsuario(id); return }
+        if (USE_MOCK) { mockHabilitarUsuario(id); return }
         await apiClient.patch(ENDPOINTS.usuarios.enable(id))
     },
 

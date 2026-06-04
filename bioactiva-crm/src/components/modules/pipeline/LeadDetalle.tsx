@@ -62,7 +62,7 @@ function InfoItem({
   )
 }
 
-export function LeadDetalle({ lead, onEditar }: LeadDetalleProps) {
+export function LeadDetalle({ lead, onEditar }: Readonly<LeadDetalleProps>) {
   const router                          = useRouter()
   const [tab, setTab]                   = useState<'info' | 'actividades'>('info')
   const [mostrarForm, setMostrarForm]   = useState(false)

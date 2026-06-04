@@ -41,7 +41,7 @@ export function KanbanBoard({
   onAddLead,
   onClickLead,
   onEstadoChange,
-}: KanbanBoardProps) {
+}: Readonly<KanbanBoardProps>) {
   const [activeLead, setActiveLead] = useState<Lead | null>(null)
 
   const sensors = useSensors(

@@ -211,7 +211,7 @@ export const mockGetLead = async (id: number): Promise<Lead> => {
 
   const lead = MOCK_LEADS.find((l) => l.id === id)
   if (!lead) {
-    throw { status: 404, message: 'Lead no encontrado.' }
+    throw Object.assign(new Error('Lead no encontrado.'), { status: 404 })
   }
   return lead
 }
@@ -260,7 +260,7 @@ export const mockUpdateLead = async (
 
   const index = MOCK_LEADS.findIndex((l) => l.id === id)
   if (index === -1) {
-    throw { status: 404, message: 'Lead no encontrado.' }
+    throw Object.assign(new Error('Lead no encontrado.'), { status: 404 })
   }
 
   const actualizado = {
@@ -323,7 +323,7 @@ export const mockUpdateActividad = async (
 
   const index = MOCK_ACTIVIDADES.findIndex((a) => a.id === id)
   if (index === -1) {
-    throw { status: 404, message: 'Actividad no encontrada.' }
+    throw Object.assign(new Error('Actividad no encontrada.'), { status: 404 })
   }
 
   const actualizada = {

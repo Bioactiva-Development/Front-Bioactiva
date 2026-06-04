@@ -17,7 +17,7 @@ export function OrganizacionFiltros({
   filtros,
   onChange,
   onLimpiar,
-}: OrganizacionFiltrosProps) {
+}: Readonly<OrganizacionFiltrosProps>) {
   const [searchLocal, setSearchLocal] = useState(filtros.search ?? '')
   const debouncedSearch               = useDebounce(searchLocal, 400)
 

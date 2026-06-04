@@ -30,7 +30,7 @@ export function OrganizacionForm({
   isLoading,
   error,
   sunatData,
-}: OrganizacionFormProps) {
+}: Readonly<OrganizacionFormProps>) {
   const router                        = useRouter()
   const esEdicion                     = !!organizacion
   const [busquedaTab, setBusquedaTab] = useState<BusquedaTab>('ruc')
@@ -92,6 +92,12 @@ export function OrganizacionForm({
       : 'border-gray-200 focus:border-emerald-400 bg-white'
     }`
 
+  const codigoClienteHint = codigoBloqueado
+    ? <p className="text-xs text-gray-400">Generado a partir del nombre comercial y el RUC de SUNAT.</p>
+    : errors.codigo_cliente
+      ? <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
+      : null
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
@@ -114,13 +120,7 @@ export function OrganizacionForm({
                 bg-gray-50 text-sm text-gray-500 cursor-not-allowed`
               : inputClass(!!errors.codigo_cliente)}
           />
-          {codigoBloqueado ? (
-            <p className="text-xs text-gray-400">
-              Generado a partir del nombre comercial y el RUC de SUNAT.
-            </p>
-          ) : errors.codigo_cliente ? (
-            <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
-          ) : null}
+          {codigoClienteHint}
         </div>
 
         {!esEdicion && (
@@ -173,7 +173,7 @@ export function OrganizacionForm({
                   maxLength={11}
                   {...register('ruc')}
                   onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '').slice(0, 11)
+                    const val = e.target.value.replaceAll(/\D/g, '').slice(0, 11)
                     setValue('ruc', val)
                   }}
                   className={inputClass(!!errors.ruc)}

@@ -88,6 +88,10 @@ export function ImportarStepper() {
         resetImport()
     }, [resetImport])
 
+    let dropZoneColor = 'border-gray-200 bg-gray-50 hover:border-[#1C7E3C]/50 hover:bg-[#F1FFEC]/30'
+    if (archivo) dropZoneColor = 'border-[#1C7E3C] bg-[#F1FFEC]'
+    else if (isDragging) dropZoneColor = 'border-[#1C7E3C] bg-[#F1FFEC]/60'
+
     return (
         <div className="space-y-6">
             {/* Step indicator */}
@@ -96,11 +100,16 @@ export function ImportarStepper() {
                     const n = (i + 1) as Step
                     const active = step === n
                     const done = step > n
+                    let labelColor = 'text-gray-400'
+                    if (active) labelColor = 'text-[#1C7E3C]'
+                    else if (done) labelColor = 'text-[#1C7E3C]/60'
+                    let dotColor = 'bg-gray-100 text-gray-400'
+                    if (active) dotColor = 'bg-[#1C7E3C] text-white'
+                    else if (done) dotColor = 'bg-[#BCF7B3] text-[#1C7E3C]'
                     return (
                         <div key={n} className="flex items-center gap-2">
-                            <div className={`flex items-center gap-2 ${active ? 'text-[#1C7E3C]' : done ? 'text-[#1C7E3C]/60' : 'text-gray-400'}`}>
-                                <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors
-                                    ${active ? 'bg-[#1C7E3C] text-white' : done ? 'bg-[#BCF7B3] text-[#1C7E3C]' : 'bg-gray-100 text-gray-400'}`}>
+                            <div className={`flex items-center gap-2 ${labelColor}`}>
+                                <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${dotColor}`}>
                                     {done ? <CheckCircle size={14} /> : n}
                                 </span>
                                 <span className="text-sm font-medium hidden sm:block">{label}</span>
@@ -134,12 +143,14 @@ export function ImportarStepper() {
 
                     {/* Zona de drop */}
                     <div
+                        role="button"
+                        tabIndex={0}
                         onDrop={handleDrop}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onClick={() => !archivo && inputRef.current?.click()}
-                        className={`relative flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed py-14 transition-colors cursor-pointer
-                            ${archivo ? 'border-[#1C7E3C] bg-[#F1FFEC]' : isDragging ? 'border-[#1C7E3C] bg-[#F1FFEC]/60' : 'border-gray-200 bg-gray-50 hover:border-[#1C7E3C]/50 hover:bg-[#F1FFEC]/30'}`}
+                        onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !archivo) inputRef.current?.click() }}
+                        className={`relative flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed py-14 transition-colors cursor-pointer ${dropZoneColor}`}
                     >
                         <input
                             ref={inputRef}

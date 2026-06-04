@@ -108,7 +108,7 @@ export const mockGetCotizaciones = async (
 export const mockGetCotizacion = async (id: number): Promise<Cotizacion> => {
   await delay(400)
   const cot = MOCK_COTIZACIONES.find((c) => c.id === id)
-  if (!cot) throw { status: 404, message: 'Cotización no encontrada.' }
+  if (!cot) throw Object.assign(new Error('Cotización no encontrada.'), { status: 404 })
   return cot
 }
 
@@ -153,11 +153,11 @@ export const mockUpdateCotizacion = async (
   await delay()
 
   const index = MOCK_COTIZACIONES.findIndex((c) => c.id === id)
-  if (index === -1) throw { status: 404, message: 'Cotización no encontrada.' }
+  if (index === -1) throw Object.assign(new Error('Cotización no encontrada.'), { status: 404 })
 
   const actual = MOCK_COTIZACIONES[index]
   if (actual.estado === EstadoCot.Aceptada || actual.estado === EstadoCot.Rechazada) {
-    throw { status: 400, message: 'No se puede modificar una cotización en estado terminal.' }
+    throw Object.assign(new Error('No se puede modificar una cotización en estado terminal.'), { status: 400 })
   }
 
   MOCK_COTIZACIONES[index] = {
@@ -171,9 +171,9 @@ export const mockUpdateCotizacion = async (
 export const mockEnviarCotizacion = async (id: number): Promise<Cotizacion> => {
   await delay(400)
   const index = MOCK_COTIZACIONES.findIndex((c) => c.id === id)
-  if (index === -1) throw { status: 404, message: 'Cotización no encontrada.' }
+  if (index === -1) throw Object.assign(new Error('Cotización no encontrada.'), { status: 404 })
   if (MOCK_COTIZACIONES[index].estado !== EstadoCot.Pendiente) {
-    throw { status: 400, message: 'Solo se puede enviar una cotización Pendiente.' }
+    throw Object.assign(new Error('Solo se puede enviar una cotización Pendiente.'), { status: 400 })
   }
   MOCK_COTIZACIONES[index] = {
     ...MOCK_COTIZACIONES[index],
@@ -186,10 +186,10 @@ export const mockEnviarCotizacion = async (id: number): Promise<Cotizacion> => {
 export const mockAceptarCotizacion = async (id: number): Promise<Cotizacion> => {
   await delay(400)
   const index = MOCK_COTIZACIONES.findIndex((c) => c.id === id)
-  if (index === -1) throw { status: 404, message: 'Cotización no encontrada.' }
+  if (index === -1) throw Object.assign(new Error('Cotización no encontrada.'), { status: 404 })
   const { estado } = MOCK_COTIZACIONES[index]
   if (estado !== EstadoCot.Pendiente && estado !== EstadoCot.Enviada) {
-    throw { status: 400, message: 'Solo se puede aceptar una cotización Pendiente o Enviada.' }
+    throw Object.assign(new Error('Solo se puede aceptar una cotización Pendiente o Enviada.'), { status: 400 })
   }
   MOCK_COTIZACIONES[index] = {
     ...MOCK_COTIZACIONES[index],
@@ -202,10 +202,10 @@ export const mockAceptarCotizacion = async (id: number): Promise<Cotizacion> => 
 export const mockRechazarCotizacion = async (id: number): Promise<Cotizacion> => {
   await delay(400)
   const index = MOCK_COTIZACIONES.findIndex((c) => c.id === id)
-  if (index === -1) throw { status: 404, message: 'Cotización no encontrada.' }
+  if (index === -1) throw Object.assign(new Error('Cotización no encontrada.'), { status: 404 })
   const { estado } = MOCK_COTIZACIONES[index]
   if (estado !== EstadoCot.Pendiente && estado !== EstadoCot.Enviada) {
-    throw { status: 400, message: 'Solo se puede rechazar una cotización Pendiente o Enviada.' }
+    throw Object.assign(new Error('Solo se puede rechazar una cotización Pendiente o Enviada.'), { status: 400 })
   }
   MOCK_COTIZACIONES[index] = {
     ...MOCK_COTIZACIONES[index],
@@ -218,7 +218,7 @@ export const mockRechazarCotizacion = async (id: number): Promise<Cotizacion> =>
 export const mockEliminarCotizacion = async (id: number): Promise<void> => {
   await delay(400)
   const index = MOCK_COTIZACIONES.findIndex((c) => c.id === id)
-  if (index === -1) throw { status: 404, message: 'Cotización no encontrada.' }
+  if (index === -1) throw Object.assign(new Error('Cotización no encontrada.'), { status: 404 })
   MOCK_COTIZACIONES.splice(index, 1)
 }
 

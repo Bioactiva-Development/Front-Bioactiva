@@ -22,9 +22,9 @@ function clearCookie(name: string): void {
 
 export default function DashboardLayout({
     children,
-}: {
+}: Readonly<{
     children: React.ReactNode
-}) {
+}>) {
     const router = useRouter()
     const { isAuthenticated, usuario, accessToken, setSession, clearSession, _hasHydrated } = useAuthStore()
     const { sidebarCollapsed, sidebarOpen } = useUIStore()
@@ -65,20 +65,17 @@ export default function DashboardLayout({
     if (!_hasHydrated) return null
     if (!isAuthenticated || !accessToken) return null
 
+    let sidebarMargin = 'ml-0'
+    if (sidebarOpen) {
+        sidebarMargin = sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60'
+    }
+
     return (
         <div className="min-h-screen bg-gray-50">
             <Sidebar />
 
             <div
-                className={`
-          transition-all duration-300 flex flex-col min-h-screen
-          ${sidebarOpen
-                        ? sidebarCollapsed
-                            ? 'lg:ml-16'
-                            : 'lg:ml-60'
-                        : 'ml-0'
-                    }
-        `}
+                className={`transition-all duration-300 flex flex-col min-h-screen ${sidebarMargin}`}
             >
                 <Navbar />
 

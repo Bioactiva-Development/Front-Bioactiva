@@ -27,7 +27,7 @@ export function ContactoForm({
   isLoading,
   error,
   orgIdInicial,
-}: ContactoFormProps) {
+}: Readonly<ContactoFormProps>) {
   const router    = useRouter()
   const esEdicion = !!contacto
 
@@ -213,7 +213,7 @@ export function ContactoForm({
 
         <div className="space-y-1.5">
           <label htmlFor="cf-comentarios" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Comentarios
+            Comentarios{' '}
             <span className="text-gray-400 normal-case font-normal ml-1">Opcional</span>
           </label>
           <textarea

@@ -13,7 +13,7 @@ interface ModalShellProps {
     children: ReactNode
 }
 
-export function ModalShell({ onClose, maxWidth = 'md', children }: ModalShellProps) {
+export function ModalShell({ onClose, maxWidth = 'md', children }: Readonly<ModalShellProps>) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <button

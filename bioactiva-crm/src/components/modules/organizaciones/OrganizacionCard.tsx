@@ -16,7 +16,7 @@ const TAMAÑO_COLORS: Record<TamanoEmpresa, string> = {
   [TamanoEmpresa.Grande]:  'bg-emerald-50 text-emerald-700',
 }
 
-export function OrganizacionCard({ organizacion }: OrganizacionCardProps) {
+export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProps>) {
   const router  = useRouter()
   const inicial = organizacion.nombre.charAt(0).toUpperCase()
 

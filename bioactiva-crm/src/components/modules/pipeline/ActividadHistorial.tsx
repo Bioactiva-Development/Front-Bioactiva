@@ -253,7 +253,7 @@ function ActividadItem({
 export function ActividadHistorial({
   leadId,
   actividades,
-}: ActividadHistorialProps) {
+}: Readonly<ActividadHistorialProps>) {
   const pendientes  = actividades.filter((a) => a.estado === EstadoActividad.Pendiente)
   const completadas = actividades.filter((a) => a.estado === EstadoActividad.Completada)
   const canceladas  = actividades.filter((a) => a.estado === EstadoActividad.Cancelada)

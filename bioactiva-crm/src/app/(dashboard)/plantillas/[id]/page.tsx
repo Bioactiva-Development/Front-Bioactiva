@@ -6,13 +6,12 @@ import { Pencil } from 'lucide-react'
 import { usePlantilla } from '@/hooks/plantillas/usePlantillas'
 import { PageHeader } from '@/components/layout/PageHeader/PageHeader'
 import { ROUTES } from '@/lib/constants/routes'
-import { getErrorMessage } from '@/lib/utils/error.utils'
 
 export default function PlantillaDetallePage() {
   const params = useParams()
   const router = useRouter()
   const id = Number(params.id)
-  const [error, setError] = useState<string | null>(null)
+  const [error] = useState<string | null>(null)
 
   const { data: plantilla, isLoading, isError } = usePlantilla(id)
 

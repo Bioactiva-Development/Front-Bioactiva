@@ -26,7 +26,7 @@ export function CotizacionFiltros({
   onChange,
   onLimpiar,
   isLoading,
-}: CotizacionFiltrosProps) {
+}: Readonly<CotizacionFiltrosProps>) {
   const [searchLocal, setSearchLocal] = useState(filtros.search ?? '')
   const debouncedSearch               = useDebounce(searchLocal, 400)
 
@@ -89,7 +89,7 @@ export function CotizacionFiltros({
         />
         {searchLocal && (
           <button
-            onClick={() => setSearchLocal('')}
+            onClick={handleLimpiar}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400
               hover:text-gray-600 transition-colors"
           >
