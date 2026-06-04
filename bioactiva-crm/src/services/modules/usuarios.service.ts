@@ -88,17 +88,26 @@ const ESTADO_TOKEN_MAP: Record<number, EstadoToken> = {
 }
 
 function mapInvitacionRaw(raw: InvitacionRaw): Invitacion {
+    const expires_at = raw.expired_at ?? raw.expires_at ?? ''
+
+    let estado: EstadoToken =
+        typeof raw.estado === 'number'
+            ? (ESTADO_TOKEN_MAP[raw.estado] ?? EstadoToken.Pendiente)
+            : (raw.estado as EstadoToken)
+
+    // El backend no actualiza el estado cuando la invitación expira.
+    // Si aún figura como Pendiente pero la fecha de vigencia ya pasó, se corrige localmente.
+    if (estado === EstadoToken.Pendiente && expires_at && new Date(expires_at) < new Date()) {
+        estado = EstadoToken.Expirado
+    }
+
     return {
         id: raw.id,
         correo: raw.correo,
         rol: typeof raw.rol === 'number' ? mapRole(raw.rol) : (raw.rol as never),
-        estado:
-            typeof raw.estado === 'number'
-                ? (ESTADO_TOKEN_MAP[raw.estado] ?? EstadoToken.Pendiente)
-                : (raw.estado as EstadoToken),
-        // El backend envía `expired_at`; se mantiene `expires_at` como nombre
-        // interno que consume la UI. Fallback a '' para no romper `.slice()`.
-        expires_at: raw.expired_at ?? raw.expires_at ?? '',
+        estado,
+        // El backend envía `expired_at`; se mantiene `expires_at` como nombre interno.
+        expires_at,
         consumed_at: raw.consumed_at,
         created_at: raw.created_at,
     }
