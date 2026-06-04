@@ -122,7 +122,7 @@ export default function ControlAccesoPage() {
     const {
         invitaciones, total: totalInvitaciones,
         isLoading: isLoadingInvitaciones,
-        createInvitacion, isCreating, createError,
+        createInvitacion, isCreating,
         revokeInvitacion, isRevoking, revokingId,
     } = useInvitaciones(params)
 
@@ -466,7 +466,7 @@ export default function ControlAccesoPage() {
             {modalAbierto === 'invitar' && (
                 <InvitarUsuarioModal
                     isLoading={isCreating}
-                    error={inviteError ?? (createError?.message ?? null)}
+                    error={inviteError}
                     onClose={cerrarModal}
                     onSubmit={handleInvitar}
                 />
