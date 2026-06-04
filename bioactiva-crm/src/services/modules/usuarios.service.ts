@@ -120,7 +120,6 @@ export const usuariosService = {
             correo: String(u.correo ?? ''),
             rol: mapRolUsuario(u.rol ?? u.role),
             estado: mapEstadoUsuario(u.estado),
-            ultimo_acceso: (u.ultimo_acceso ?? u.ultimoAcceso) as string | undefined,
             created_at: String(u.fechaRegistro ?? u.created_at ?? u.createdAt ?? ''),
             updated_at: String(u.updated_at ?? u.updatedAt ?? u.fechaRegistro ?? ''),
         }))

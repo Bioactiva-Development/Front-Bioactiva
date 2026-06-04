@@ -15,12 +15,12 @@ import {
 // ── Usuario mocks ──────────────────────────────────────────────────────────────
 
 let mockUsuarios: UsuarioListItem[] = [
-    { id: 1, nombres: 'Administración', apellidos: '', correo: 'admin@bioactiva.pe', rol: RolUsuario.Administrador, estado: EstadoUsuario.Activo, ultimo_acceso: 'Hace 11 min', created_at: '2024-01-01T08:00:00Z', updated_at: '2024-01-01T08:00:00Z' },
-    { id: 2, nombres: 'Karien', apellidos: 'Diaz', correo: 'karien@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, ultimo_acceso: 'Hace 11 min', created_at: '2024-01-02T08:00:00Z', updated_at: '2024-01-02T08:00:00Z' },
-    { id: 3, nombres: 'Luis', apellidos: 'Torres', correo: 'ltorres@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, ultimo_acceso: 'Hace 11 min', created_at: '2024-01-03T08:00:00Z', updated_at: '2024-01-03T08:00:00Z' },
-    { id: 4, nombres: 'Ana', apellidos: 'Rojas', correo: 'arojas@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, ultimo_acceso: 'Hace 11 min', created_at: '2024-01-04T08:00:00Z', updated_at: '2024-01-04T08:00:00Z' },
-    { id: 5, nombres: 'María', apellidos: 'Quispe', correo: 'mquispe@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, ultimo_acceso: 'Hace 11 min', created_at: '2024-01-05T08:00:00Z', updated_at: '2024-01-05T08:00:00Z' },
-    { id: 6, nombres: 'Carlos', apellidos: 'Mamani', correo: 'cmamani@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, ultimo_acceso: 'Hace 11 min', created_at: '2024-01-06T08:00:00Z', updated_at: '2024-01-06T08:00:00Z' },
+    { id: 1, nombres: 'Administración', apellidos: '', correo: 'admin@bioactiva.pe', rol: RolUsuario.Administrador, estado: EstadoUsuario.Activo, created_at: '2024-01-01T08:00:00Z', updated_at: '2024-01-01T08:00:00Z' },
+    { id: 2, nombres: 'Karien', apellidos: 'Diaz', correo: 'karien@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, created_at: '2024-01-02T08:00:00Z', updated_at: '2024-01-02T08:00:00Z' },
+    { id: 3, nombres: 'Luis', apellidos: 'Torres', correo: 'ltorres@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, created_at: '2024-01-03T08:00:00Z', updated_at: '2024-01-03T08:00:00Z' },
+    { id: 4, nombres: 'Ana', apellidos: 'Rojas', correo: 'arojas@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, created_at: '2024-01-04T08:00:00Z', updated_at: '2024-01-04T08:00:00Z' },
+    { id: 5, nombres: 'María', apellidos: 'Quispe', correo: 'mquispe@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, created_at: '2024-01-05T08:00:00Z', updated_at: '2024-01-05T08:00:00Z' },
+    { id: 6, nombres: 'Carlos', apellidos: 'Mamani', correo: 'cmamani@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, created_at: '2024-01-06T08:00:00Z', updated_at: '2024-01-06T08:00:00Z' },
 ]
 
 export function mockGetUsuarios(filters?: UsuarioFilters): UsuariosResponse {

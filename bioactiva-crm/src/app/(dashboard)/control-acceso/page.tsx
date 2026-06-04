@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
     Pencil, Lock, UserX, UserCheck, UserPlus, Users,
-    Mail, Clock, Search, ChevronLeft, ChevronRight, ShieldAlert,
+    Mail, Search, ChevronLeft, ChevronRight, ShieldAlert,
 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { InvitarUsuarioModal } from '@/components/modules/control-acceso/InvitarUsuarioModal'
@@ -290,7 +290,6 @@ export default function ControlAccesoPage() {
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Usuario</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Rol</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Último acceso</th>
                                     <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Acciones</th>
                                 </tr>
                             </thead>
@@ -317,12 +316,6 @@ export default function ControlAccesoPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <EstadoBadge estado={u.estado} />
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                                                <Clock size={12} />
-                                                {u.ultimo_acceso ?? '—'}
-                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-1">
