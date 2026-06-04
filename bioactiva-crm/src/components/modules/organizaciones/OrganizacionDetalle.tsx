@@ -1,19 +1,23 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Building2, MapPin,
-  ExternalLink, ArrowLeft, Pencil,
+  ExternalLink, ArrowLeft, Pencil, Trash2,
   FileText, DollarSign, Globe,
   Mail, Phone, Users,
 } from 'lucide-react'
 import { OrganizacionConRelaciones } from '@/types/organizacion.types'
 import { ROUTES } from '@/lib/constants/routes'
 import { TamanoEmpresa } from '@/types/enums'
+import { formatSector } from '@/lib/utils/organizacion.utils'
 
 interface OrganizacionDetalleProps {
   organizacion: OrganizacionConRelaciones
   onEditar:     () => void
+  onEliminar?:  () => void
+  eliminando?:  boolean
 }
 
 const TAMANO_COLORS: Record<TamanoEmpresa, string> = {
@@ -66,9 +70,12 @@ function InfoItem({
 export function OrganizacionDetalle({
   organizacion,
   onEditar,
+  onEliminar,
+  eliminando = false,
 }: OrganizacionDetalleProps) {
-  const router        = useRouter()
-  const inicial       = organizacion.nombre.charAt(0).toUpperCase()
+  const router                              = useRouter()
+  const [confirmarEliminar, setConfirmar]   = useState(false)
+  const inicial                             = organizacion.nombre.charAt(0).toUpperCase()
   const MAX_CONTACTOS = 6
   const contactosVisibles  = organizacion.contactos.slice(0, MAX_CONTACTOS)
   const contactosRestantes = organizacion.contactos.length - MAX_CONTACTOS
@@ -125,7 +132,7 @@ export function OrganizacionDetalle({
                 </span>
                 <span className="text-xs bg-emerald-50 text-emerald-600 px-2.5 py-1
                   rounded-lg font-medium">
-                  {organizacion.sector}
+                  {formatSector(organizacion.sector)}
                   {organizacion.actividad_economica && ` / ${organizacion.actividad_economica}`}
                 </span>
                 {organizacion.ubicacion && (
@@ -138,7 +145,7 @@ export function OrganizacionDetalle({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => router.push(ROUTES.organizaciones)}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
@@ -148,6 +155,43 @@ export function OrganizacionDetalle({
               <ArrowLeft size={14} />
               Volver a Organizaciones
             </button>
+
+            {onEliminar && !confirmarEliminar && (
+              <button
+                onClick={() => setConfirmar(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
+                  text-red-500 hover:text-red-700 hover:bg-red-50
+                  border border-red-200 transition-colors"
+              >
+                <Trash2 size={14} />
+                Eliminar
+              </button>
+            )}
+
+            {onEliminar && confirmarEliminar && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-red-600 font-semibold">
+                  ¿Confirmar eliminación?
+                </span>
+                <button
+                  onClick={onEliminar}
+                  disabled={eliminando}
+                  className="px-3 py-2 rounded-xl text-xs font-bold text-white
+                    bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors"
+                >
+                  {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
+                </button>
+                <button
+                  onClick={() => setConfirmar(false)}
+                  disabled={eliminando}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold text-gray-600
+                    hover:bg-gray-100 border border-gray-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
+
             <button
               onClick={onEditar}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm

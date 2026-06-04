@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react'
 import {
   useOrganizacionConRelaciones,
   useActualizarOrganizacion,
+  useEliminarOrganizacion,
 } from '@/hooks/organizaciones/useOrganizaciones'
 import { OrganizacionDetalle } from '@/components/modules/organizaciones/OrganizacionDetalle'
 import { OrganizacionForm } from '@/components/modules/organizaciones/OrganizacionForm'
@@ -21,7 +22,16 @@ export default function OrganizacionDetallePage() {
   const { data: organizacion, isLoading, isError } =
     useOrganizacionConRelaciones(id)
 
-  const { mutateAsync: actualizar, isPending } = useActualizarOrganizacion(id)
+  const { mutateAsync: actualizar, isPending }   = useActualizarOrganizacion(id)
+  const { mutateAsync: eliminar, isPending: eliminando } = useEliminarOrganizacion()
+
+  const handleEliminar = async () => {
+    try {
+      await eliminar(id)
+    } catch {
+      // La navegación falla solo si el mock/API lanza — ignoramos silenciosamente
+    }
+  }
 
   const handleGuardar = async (data: OrganizacionFormValues) => {
     try {
@@ -82,6 +92,8 @@ export default function OrganizacionDetallePage() {
     <OrganizacionDetalle
       organizacion={organizacion}
       onEditar={() => setEditando(true)}
+      onEliminar={handleEliminar}
+      eliminando={eliminando}
     />
   )
 }

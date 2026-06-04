@@ -38,10 +38,8 @@ export function useCotizacionesPorLead(leadId: number) {
 
 export function useCrearCotizacion() {
   const queryClient = useQueryClient()
-
   return useMutation({
-    mutationFn: (data: CotizacionFormData) =>
-      cotizacionesService.create(data),
+    mutationFn: (data: CotizacionFormData) => cotizacionesService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
     },
@@ -53,15 +51,67 @@ export function useCrearCotizacion() {
 
 export function useActualizarCotizacion(id: number) {
   const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: (data: Partial<CotizacionFormData>) =>
       cotizacionesService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.cotizaciones.detail(id),
-      })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
+export function useEnviarCotizacion() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => cotizacionesService.send(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
+export function useAceptarCotizacion() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => cotizacionesService.accept(id),
+    onSuccess: () => {
+      // Al aceptar, el lead cambia a CierreVenta — invalidar también leads
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
+export function useRechazarCotizacion() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => cotizacionesService.reject(id),
+    onSuccess: () => {
+      // Al rechazar, el lead cambia a CierreSinVenta — invalidar también leads
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
+export function useEliminarCotizacion() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => cotizacionesService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))

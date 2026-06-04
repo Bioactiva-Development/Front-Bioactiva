@@ -19,11 +19,12 @@ export function ResetPasswordForm() {
     const token = searchParams.get('token') ?? ''
     const { validateToken, resetPassword, isLoading, error, success } = useAuth()
 
-    const [showPassword, setShowPassword]   = useState(false)
-    const [showConfirm, setShowConfirm]     = useState(false)
-    const [tokenValido, setTokenValido]     = useState<boolean | null>(null)
-    const [tokenMensaje, setTokenMensaje]   = useState('')
-    const [validandoToken, setValidandoToken] = useState(true)
+    const [showPassword, setShowPassword]         = useState(false)
+    const [showConfirm, setShowConfirm]           = useState(false)
+    const [tokenValido, setTokenValido]           = useState<boolean | null>(null)
+    const [tokenMensaje, setTokenMensaje]         = useState('')
+    const [correoObfuscado, setCorreoObfuscado]   = useState('')
+    const [validandoToken, setValidandoToken]     = useState(true)
 
     const { register, handleSubmit, control, formState: { errors } } = useForm<ResetPasswordFormValues>({
         resolver: zodResolver(resetPasswordSchema),
@@ -42,6 +43,7 @@ export function ResetPasswordForm() {
             const result = await validateToken(token)
             setTokenValido(result.valid)
             setTokenMensaje(result.message ?? '')
+            if (result.correo) setCorreoObfuscado(result.correo)
             setValidandoToken(false)
         }
         verificar()
@@ -83,6 +85,13 @@ export function ResetPasswordForm() {
 
             {!validandoToken && tokenValido && (
                 <>
+                    {correoObfuscado && (
+                        <p className="text-sm text-gray-500 text-center -mt-1">
+                            Restableciendo contraseña para{' '}
+                            <span className="font-semibold text-gray-700">{correoObfuscado}</span>
+                        </p>
+                    )}
+
                     {error && <AuthAlertBanner variant="error" message={error} />}
 
                     {success ? (

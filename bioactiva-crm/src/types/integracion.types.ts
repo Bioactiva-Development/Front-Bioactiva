@@ -13,5 +13,9 @@ export interface IntegracionesResponse {
 }
 
 export interface IntegracionAuthUrlResponse {
-    authUrl: string
+    url: string   // backend devuelve { url: "https://login.microsoftonline.com/..." }
+}
+
+export interface MicrosoftStatusResponse {
+    connected: boolean
 }
