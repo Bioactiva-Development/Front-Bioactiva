@@ -1,6 +1,7 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, X } from 'lucide-react'
 import {
@@ -24,6 +25,23 @@ const RESPONSABLES = [
   { id: 4, nombre: 'Carlos Mamani' },
 ]
 
+const toDateTimeLocalValue = (date: Date) => {
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return [
+    date.getFullYear(),
+    pad(date.getMonth() + 1),
+    pad(date.getDate()),
+  ].join('-') + `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+const addDefaultDuration = (value?: string) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  date.setHours(date.getHours() + 1)
+  return toDateTimeLocalValue(date)
+}
+
 export function ActividadForm({
   leadId,
   onSubmit,
@@ -34,6 +52,8 @@ export function ActividadForm({
   const {
     register,
     handleSubmit,
+    setValue,
+    control,
     formState: { errors },
   } = useForm<ActividadFormValues>({
     resolver: zodResolver(actividadSchema),
@@ -44,6 +64,13 @@ export function ActividadForm({
       id_responsable: 1,
     },
   })
+  const fecha = useWatch({ control, name: 'fecha_inicio' })
+
+  useEffect(() => {
+    setValue('fecha_fin', addDefaultDuration(fecha), {
+      shouldValidate: Boolean(fecha),
+    })
+  }, [fecha, setValue])
 
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
@@ -72,6 +99,7 @@ export function ActividadForm({
         className="space-y-3"
       >
         <input type="hidden" {...register('id_lead', { valueAsNumber: true })} />
+        <input type="hidden" {...register('fecha_fin')} />
 
         <div className="space-y-1">
           <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -136,34 +164,20 @@ export function ActividadForm({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Fecha inicio <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="datetime-local"
-              {...register('fecha_inicio')}
-              className={inputClass(!!errors.fecha_inicio)}
-            />
-            {errors.fecha_inicio && (
-              <p className="text-red-500 text-xs">{errors.fecha_inicio.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Fecha fin <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="datetime-local"
-              {...register('fecha_fin')}
-              className={inputClass(!!errors.fecha_fin)}
-            />
-            {errors.fecha_fin && (
-              <p className="text-red-500 text-xs">{errors.fecha_fin.message}</p>
-            )}
-          </div>
+        <div className="space-y-1">
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Fecha <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="datetime-local"
+            {...register('fecha_inicio')}
+            className={inputClass(!!errors.fecha_inicio || !!errors.fecha_fin)}
+          />
+          {(errors.fecha_inicio || errors.fecha_fin) && (
+            <p className="text-red-500 text-xs">
+              {errors.fecha_inicio?.message ?? errors.fecha_fin?.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1">

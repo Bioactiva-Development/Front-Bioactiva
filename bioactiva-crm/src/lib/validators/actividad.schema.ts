@@ -24,11 +24,11 @@ export const actividadSchema = z.object({
 
   fecha_inicio: z
     .string()
-    .min(1, 'La fecha de inicio es obligatoria'),
+    .min(1, 'La fecha es obligatoria'),
 
   fecha_fin: z
     .string()
-    .min(1, 'La fecha de fin es obligatoria'),
+    .min(1, 'La fecha es obligatoria'),
 
   notas: z
     .string()
@@ -43,7 +43,7 @@ export const actividadSchema = z.object({
     return new Date(data.fecha_fin) >= new Date(data.fecha_inicio)
   },
   {
-    message: 'La fecha de fin debe ser posterior a la fecha de inicio',
+    message: 'La fecha es obligatoria',
     path:    ['fecha_fin'],
   }
 )

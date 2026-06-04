@@ -74,12 +74,13 @@ export const ENDPOINTS = {
     },
 
     actividades: {
-        byLead: (leadId: number) => `/api/leads/${leadId}/actividades`,
-        detail: (id: number) => `/api/actividades/${id}`,
-        create: (leadId: number) => `/api/leads/${leadId}/actividades`,
-        update: (id: number) => `/api/actividades/${id}`,
-        complete: (id: number) => `/api/actividades/${id}/complete`,
-        delete: (id: number) => `/api/actividades/${id}`,
+        list: '/activities',
+        detail: (id: number) => `/activities/${id}`,
+        create: '/activities',
+        update: (id: number) => `/activities/${id}`,
+        complete: (id: number) => `/activities/${id}/complete`,
+        cancel: (id: number) => `/activities/${id}/cancel`,
+        delete: (id: number) => `/activities/${id}`,
     },
 
     cotizaciones: {
