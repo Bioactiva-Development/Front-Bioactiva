@@ -8,7 +8,6 @@ export function useCotizaciones(filtros?: CotizacionFiltros) {
   return useQuery({
     queryKey: QUERY_KEYS.cotizaciones.list(filtros),
     queryFn:  () => cotizacionesService.getAll(filtros),
-    staleTime: 1000 * 60 * 5,
   })
 }
 
@@ -24,7 +23,6 @@ export function useCotizacionKpis() {
   return useQuery({
     queryKey: ['cotizaciones', 'kpis'],
     queryFn:  () => cotizacionesService.getKpis(),
-    staleTime: 1000 * 60 * 5,
   })
 }
 

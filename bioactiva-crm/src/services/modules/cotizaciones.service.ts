@@ -29,6 +29,7 @@ import {
 } from './cotizaciones.mapper'
 
 type RawCotizacionesResponse = CotizacionDtoOut[] | CotizacionesDtoResponse
+const SYNC_FETCH_LIMIT = 500
 
 const normalizeCotizacionesResponse = (
   raw: RawCotizacionesResponse,
@@ -51,6 +52,67 @@ const normalizeCotizacionesResponse = (
     page: raw.meta?.page ?? filtros?.page ?? 1,
     limit: raw.meta?.limit ?? filtros?.limit ?? data.length,
   }
+}
+
+const paginateCotizaciones = (
+  data: Cotizacion[],
+  filtros?: CotizacionFiltros
+): CotizacionesResponse => {
+  const page = filtros?.page ?? 1
+  const limit = filtros?.limit ?? data.length
+  const start = (page - 1) * limit
+
+  return {
+    data: data.slice(start, start + limit),
+    total: data.length,
+    page,
+    limit,
+  }
+}
+
+const filterCotizaciones = (
+  data: Cotizacion[],
+  filtros?: CotizacionFiltros
+) => {
+  const search = filtros?.search?.trim().toLowerCase()
+
+  return data.filter((cotizacion) => {
+    if (filtros?.estado && cotizacion.estado !== filtros.estado) return false
+
+    if (!search) return true
+
+    return [
+      cotizacion.codigo,
+      cotizacion.dirigido,
+      cotizacion.cliente,
+      cotizacion.nombre_servicio,
+      cotizacion.contacto_nombre,
+      cotizacion.organizacion_nombre,
+      cotizacion.producto,
+    ].some((value) => value?.toLowerCase().includes(search))
+  })
+}
+
+const getSyncedCotizaciones = async (): Promise<Cotizacion[]> => {
+  const [pipeline, response] = await Promise.all([
+    leadsService.getPipeline(),
+    apiClient.get<RawCotizacionesResponse>(
+      ENDPOINTS.cotizaciones.list,
+      { params: toCotizacionQueryParams({ limit: SYNC_FETCH_LIMIT }) }
+    ),
+  ])
+
+  const activeLeadIds = new Set([
+    ...pipeline.prospecto,
+    ...pipeline.ofertado,
+    ...pipeline.cierreVenta,
+    ...pipeline.cierreSinVenta,
+  ].map((lead) => lead.id))
+
+  return normalizeCotizacionesResponse(
+    response.data,
+    { limit: SYNC_FETCH_LIMIT }
+  ).data.filter((cotizacion) => activeLeadIds.has(cotizacion.id_lead))
 }
 
 async function syncLeadEstadoFromCotizacion(cotizacion: Cotizacion) {
@@ -82,11 +144,11 @@ export const cotizacionesService = {
 
   getAll: async (filtros?: CotizacionFiltros): Promise<CotizacionesResponse> => {
     if (USE_MOCK) return mockGetCotizaciones(filtros)
-    const response = await apiClient.get<RawCotizacionesResponse>(
-      ENDPOINTS.cotizaciones.list,
-      { params: toCotizacionQueryParams(filtros) }
+    const syncedCotizaciones = await getSyncedCotizaciones()
+    return paginateCotizaciones(
+      filterCotizaciones(syncedCotizaciones, filtros),
+      filtros
     )
-    return normalizeCotizacionesResponse(response.data, filtros)
   },
 
   getById: async (id: number): Promise<Cotizacion> => {
@@ -140,10 +202,12 @@ export const cotizacionesService = {
 
   getKpis: async (): Promise<CotizacionKpis> => {
     if (USE_MOCK) return mockGetKpis()
-    const { data } = await cotizacionesService.getAll({ limit: 100 })
+    const data = await getSyncedCotizaciones()
     const aceptadas = data.filter((c) => c.estado === EstadoCot.Aceptada).length
     const enviadas = data.filter((c) => c.estado === EstadoCot.Enviada).length
-    const totalActivo = data.filter((c) => c.estado !== EstadoCot.Rechazada).length
+    const totalActivo = data
+      .filter((c) => c.estado !== EstadoCot.Rechazada)
+      .reduce((sum, c) => sum + c.monto, 0)
     const procesadas = data.filter(
       (c) => c.estado === EstadoCot.Enviada || c.estado === EstadoCot.Aceptada
     ).length
@@ -152,7 +216,7 @@ export const cotizacionesService = {
       totalActivo,
       aceptadas,
       enviadas,
-      conversion: procesadas > 0 ? aceptadas / procesadas : 0,
+      conversion: procesadas > 0 ? Math.round((aceptadas / procesadas) * 100) : 0,
     }
   },
 
