@@ -310,6 +310,16 @@ export const mockUpdateOrganizacion = async (
 }
 
 
+export const mockDeleteOrganizacion = async (id: string): Promise<void> => {
+  await delay()
+
+  const index = MOCK_ORGANIZACIONES.findIndex((o) => o.id === id)
+  if (index === -1) {
+    throw { status: 404, message: 'Organización no encontrada.' }
+  }
+  MOCK_ORGANIZACIONES.splice(index, 1)
+}
+
 export const mockSunatPorRuc = async (
   ruc: string
 ): Promise<SunatRucResult> => {

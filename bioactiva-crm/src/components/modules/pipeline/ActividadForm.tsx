@@ -7,7 +7,7 @@ import {
   actividadSchema,
   ActividadFormValues,
 } from '@/lib/validators/actividad.schema'
-import { TipoActividad, EstadoActividad } from '@/types/enums'
+import { TipoActividad } from '@/types/enums'
 
 interface ActividadFormProps {
   leadId:    number
@@ -38,9 +38,8 @@ export function ActividadForm({
   } = useForm<ActividadFormValues>({
     resolver: zodResolver(actividadSchema),
     defaultValues: {
-      id_lead:    leadId,
-      estado:     EstadoActividad.Pendiente,
-      tipo:       TipoActividad.Llamada,
+      id_lead:        leadId,
+      tipo:           TipoActividad.Llamada,
       id_responsable: 1,
     },
   })
@@ -88,34 +87,18 @@ export function ActividadForm({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Tipo <span className="text-red-500">*</span>
-            </label>
-            <select
-              {...register('tipo')}
-              className={`${inputClass(!!errors.tipo)} cursor-pointer`}
-            >
-              {Object.values(TipoActividad).map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Estado <span className="text-red-500">*</span>
-            </label>
-            <select
-              {...register('estado')}
-              className={`${inputClass(!!errors.estado)} cursor-pointer`}
-            >
-              {Object.values(EstadoActividad).map((e) => (
-                <option key={e} value={e}>{e}</option>
-              ))}
-            </select>
-          </div>
+        <div className="space-y-1">
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Tipo <span className="text-red-500">*</span>
+          </label>
+          <select
+            {...register('tipo')}
+            className={`${inputClass(!!errors.tipo)} cursor-pointer`}
+          >
+            {Object.values(TipoActividad).map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-1">

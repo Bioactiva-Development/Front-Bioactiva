@@ -25,10 +25,12 @@ pipeline {
             }
 
             steps {
-                sh '''
-                    npm install
-                    npm run test:cov
-                '''
+                dir('bioactiva-crm') {
+                    sh '''
+                        npm install
+                        npm run test:cov
+                    '''
+                }
             }
         }
 
@@ -75,7 +77,7 @@ pipeline {
             }
             steps {
                 withCredentials([
-                    file(credentialsId: 'BIOACTIVA_SECRETS_FRONTED_TEST', variable: 'ENV_FILE')
+                    file(credentialsId: 'BIOACTIVA_SECRETS_FRONTEND_TEST', variable: 'ENV_FILE')
                 ]) {
                     sh '''
                         BIOACTIVA_ENV_FILE="$ENV_FILE" docker compose \

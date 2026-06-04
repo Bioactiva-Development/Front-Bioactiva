@@ -3,14 +3,15 @@
 import { useState } from 'react'
 import {
   Mail, Phone, Users, HelpCircle,
-  CheckCircle2, Clock, Trash2,
+  CheckCircle2, Clock, Trash2, XCircle,
   ChevronDown, ChevronUp, Send,
-  AlertTriangle,
+  AlertTriangle, Ban,
 } from 'lucide-react'
 import { Actividad } from '@/types/actividad.types'
 import { TipoActividad, EstadoActividad } from '@/types/enums'
 import {
   useCompletarActividad,
+  useCancelarActividad,
   useEliminarActividad,
   useComentarios,
   useCrearComentario,
@@ -35,6 +36,35 @@ const TIPO_COLORS: Record<TipoActividad, string> = {
   [TipoActividad.Otro]:    'bg-gray-100 text-gray-600',
 }
 
+function estadoBadge(estado: EstadoActividad) {
+  switch (estado) {
+    case EstadoActividad.Completada:
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg
+          text-xs font-semibold bg-emerald-50 text-emerald-700">
+          <CheckCircle2 size={12} />
+          Completada
+        </span>
+      )
+    case EstadoActividad.Cancelada:
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg
+          text-xs font-semibold bg-red-50 text-red-600">
+          <XCircle size={12} />
+          Cancelada
+        </span>
+      )
+    default:
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg
+          text-xs font-semibold bg-amber-50 text-amber-700">
+          <Clock size={12} />
+          Pendiente
+        </span>
+      )
+  }
+}
+
 function ActividadItem({
   actividad,
   leadId,
@@ -42,11 +72,13 @@ function ActividadItem({
   actividad: Actividad
   leadId:    number
 }) {
-  const [expandido,   setExpandido]   = useState(false)
+  const [expandido,    setExpandido]    = useState(false)
   const [nuevoComment, setNuevoComment] = useState('')
 
   const { mutateAsync: completar, isPending: completando } =
     useCompletarActividad(leadId)
+  const { mutateAsync: cancelar, isPending: cancelando } =
+    useCancelarActividad(leadId)
   const { mutateAsync: eliminar, isPending: eliminando } =
     useEliminarActividad(leadId)
   const { data: comentarios = [] } = useComentarios(
@@ -55,8 +87,9 @@ function ActividadItem({
   const { mutateAsync: crearComentario, isPending: enviando } =
     useCrearComentario(actividad.id)
 
-  const esPendiente  = actividad.estado === EstadoActividad.Pendiente
-  const esCompletada = actividad.estado === EstadoActividad.Completada
+  const esPendiente = actividad.estado === EstadoActividad.Pendiente
+  const esTerminal  = actividad.estado === EstadoActividad.Completada ||
+                      actividad.estado === EstadoActividad.Cancelada
 
   const formatFecha = (fecha: string) =>
     new Date(fecha).toLocaleDateString('es-PE', {
@@ -75,7 +108,12 @@ function ActividadItem({
 
   return (
     <div className={`border rounded-xl overflow-hidden transition-colors
-      ${esPendiente ? 'border-amber-200 bg-amber-50/30' : 'border-gray-100 bg-white'}`}>
+      ${esPendiente
+        ? 'border-amber-200 bg-amber-50/30'
+        : esTerminal
+          ? 'border-gray-100 bg-white opacity-80'
+          : 'border-gray-100 bg-white'
+      }`}>
 
       <div className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-3">
@@ -85,35 +123,37 @@ function ActividadItem({
               {TIPO_ICONOS[actividad.tipo]}
               {actividad.tipo}
             </span>
-
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1
-              rounded-lg text-xs font-semibold
-              ${esCompletada
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'bg-amber-50 text-amber-700'
-              }`}>
-              {esCompletada
-                ? <CheckCircle2 size={12} />
-                : <Clock size={12} />
-              }
-              {actividad.estado}
-            </span>
+            {estadoBadge(actividad.estado)}
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
             {esPendiente && (
-              <button
-                onClick={() => completar(actividad.id)}
-                disabled={completando}
-                title="Marcar como completada"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                  text-xs font-semibold text-emerald-600 hover:bg-emerald-50
-                  border border-emerald-200 transition-colors
-                  disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <CheckCircle2 size={13} />
-                Completar
-              </button>
+              <>
+                <button
+                  onClick={() => completar(actividad.id)}
+                  disabled={completando || cancelando}
+                  title="Marcar como completada"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                    text-xs font-semibold text-emerald-600 hover:bg-emerald-50
+                    border border-emerald-200 transition-colors
+                    disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <CheckCircle2 size={13} />
+                  Completar
+                </button>
+                <button
+                  onClick={() => cancelar(actividad.id)}
+                  disabled={completando || cancelando}
+                  title="Cancelar actividad"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                    text-xs font-semibold text-red-500 hover:bg-red-50
+                    border border-red-200 transition-colors
+                    disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Ban size={13} />
+                  Cancelar
+                </button>
+              </>
             )}
             <button
               onClick={() => eliminar(actividad.id)}
@@ -130,10 +170,7 @@ function ActividadItem({
               className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600
                 hover:bg-gray-50 transition-colors"
             >
-              {expandido
-                ? <ChevronUp size={14} />
-                : <ChevronDown size={14} />
-              }
+              {expandido ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
           </div>
         </div>
@@ -143,12 +180,8 @@ function ActividadItem({
         </p>
 
         <div className="flex items-center gap-4 flex-wrap text-xs text-gray-400">
-          <span>
-            Inicio: {formatFecha(actividad.fecha_inicio)}
-          </span>
-          <span>
-            Fin: {formatFecha(actividad.fecha_fin)}
-          </span>
+          <span>Inicio: {formatFecha(actividad.fecha_inicio)}</span>
+          <span>Fin: {formatFecha(actividad.fecha_fin)}</span>
           {actividad.responsable_nombre && (
             <span className="text-emerald-600 font-medium">
               {actividad.responsable_nombre}
@@ -179,9 +212,7 @@ function ActividadItem({
                   className="bg-white rounded-lg border border-gray-100 px-3 py-2"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs font-semibold text-emerald-600">
-                      {c.autor}
-                    </p>
+                    <p className="text-xs font-semibold text-emerald-600">{c.autor}</p>
                     <p className="text-xs text-gray-400">
                       {new Date(c.created_at).toLocaleDateString('es-PE')}
                     </p>
@@ -223,12 +254,9 @@ export function ActividadHistorial({
   leadId,
   actividades,
 }: ActividadHistorialProps) {
-  const pendientes  = actividades.filter(
-    (a) => a.estado === EstadoActividad.Pendiente
-  )
-  const completadas = actividades.filter(
-    (a) => a.estado === EstadoActividad.Completada
-  )
+  const pendientes  = actividades.filter((a) => a.estado === EstadoActividad.Pendiente)
+  const completadas = actividades.filter((a) => a.estado === EstadoActividad.Completada)
+  const canceladas  = actividades.filter((a) => a.estado === EstadoActividad.Cancelada)
 
   if (actividades.length === 0) {
     return (
@@ -260,6 +288,17 @@ export function ActividadHistorial({
             Completadas ({completadas.length})
           </p>
           {completadas.map((a) => (
+            <ActividadItem key={a.id} actividad={a} leadId={leadId} />
+          ))}
+        </div>
+      )}
+
+      {canceladas.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-red-500 uppercase tracking-wide">
+            Canceladas ({canceladas.length})
+          </p>
+          {canceladas.map((a) => (
             <ActividadItem key={a.id} actividad={a} leadId={leadId} />
           ))}
         </div>

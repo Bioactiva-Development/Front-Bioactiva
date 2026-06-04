@@ -6,6 +6,7 @@ import {
   mockGetOrganizacion,
   mockCreateOrganizacion,
   mockUpdateOrganizacion,
+  mockDeleteOrganizacion,
   mockSunatPorRuc,
   mockSunatPorNombre,
   mockGetOrganizacionConRelaciones,
@@ -173,6 +174,12 @@ export const organizacionesService = {
     )
     // El doc indica que se muestran hasta los 10 primeros más coincidentes (CU003).
     return data.slice(0, 10).map(fromSunatNombreDto)
+  },
+
+  /** DELETE /organizations/:id */
+  delete: async (id: string): Promise<void> => {
+    if (USE_MOCK) return mockDeleteOrganizacion(id)
+    await apiClient.delete(ENDPOINTS.organizaciones.delete(id))
   },
 
   /**

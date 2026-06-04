@@ -71,6 +71,23 @@ export function useCompletarActividad(leadId: number) {
   })
 }
 
+export function useCancelarActividad(leadId: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => actividadesService.cancel(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.actividades.byLead(leadId),
+      })
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
 export function useEliminarActividad(leadId: number) {
   const queryClient = useQueryClient()
 
@@ -80,6 +97,7 @@ export function useEliminarActividad(leadId: number) {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.actividades.byLead(leadId),
       })
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))

@@ -17,42 +17,57 @@ import {
   PipelineData,
 } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
+import {
+  BackendLead,
+  BackendLeadsResponse,
+  mapBackendLead,
+  mapBackendLeadsResponse,
+  mapLeadFormToBackend,
+  mapEstadoToBackend,
+} from '@/services/modules/leads.adapter'
 
 export const leadsService = {
 
-  getPipeline: async (filtros?: LeadFiltros): Promise<PipelineData> => {
-    if (USE_MOCK) return mockGetPipeline(filtros)
-    const response = await apiClient.get<PipelineData>(
-      ENDPOINTS.leads.pipeline,
-      { params: filtros }
+  getPipeline: async (): Promise<PipelineData> => {
+    if (USE_MOCK) return mockGetPipeline()
+    const response = await apiClient.get<BackendLeadsResponse>(
+      ENDPOINTS.leads.list,
+      { params: { limit: 500 } }
     )
-    return response.data
+    const leads = response.data.data.map(mapBackendLead)
+    return {
+      prospecto:      leads.filter((l) => l.estado === LeadState.Prospecto),
+      ofertado:       leads.filter((l) => l.estado === LeadState.Ofertado),
+      cierreVenta:    leads.filter((l) => l.estado === LeadState.CierreVenta),
+      cierreSinVenta: leads.filter((l) => l.estado === LeadState.CierreSinVenta),
+      total:          leads.length,
+    }
   },
 
   getAll: async (filtros?: LeadFiltros): Promise<LeadsResponse> => {
     if (USE_MOCK) return mockGetLeads(filtros)
-    const response = await apiClient.get<LeadsResponse>(
+    const response = await apiClient.get<BackendLeadsResponse>(
       ENDPOINTS.leads.list,
       { params: filtros }
     )
-    return response.data
+    return mapBackendLeadsResponse(response.data)
   },
 
   getById: async (id: number): Promise<Lead> => {
     if (USE_MOCK) return mockGetLead(id)
-    const response = await apiClient.get<Lead>(
+    const response = await apiClient.get<BackendLead>(
       ENDPOINTS.leads.detail(id)
     )
-    return response.data
+    return mapBackendLead(response.data)
   },
 
   create: async (data: LeadFormData): Promise<Lead> => {
     if (USE_MOCK) return mockCreateLead(data)
-    const response = await apiClient.post<Lead>(
+    const response = await apiClient.post<BackendLead>(
       ENDPOINTS.leads.create,
-      data
+      mapLeadFormToBackend(data)
     )
-    return response.data
+    return mapBackendLead(response.data)
   },
 
   update: async (
@@ -60,11 +75,11 @@ export const leadsService = {
     data: Partial<LeadFormData>
   ): Promise<Lead> => {
     if (USE_MOCK) return mockUpdateLead(id, data)
-    const response = await apiClient.patch<Lead>(
+    const response = await apiClient.patch<BackendLead>(
       ENDPOINTS.leads.update(id),
-      data
+      mapLeadFormToBackend(data)
     )
-    return response.data
+    return mapBackendLead(response.data)
   },
 
   updateEstado: async (
@@ -72,10 +87,10 @@ export const leadsService = {
     estado: LeadState
   ): Promise<Lead> => {
     if (USE_MOCK) return mockUpdateEstadoLead(id, estado)
-    const response = await apiClient.patch<Lead>(
+    const response = await apiClient.patch<BackendLead>(
       ENDPOINTS.leads.updateEstado(id),
-      { estado }
+      { estado: mapEstadoToBackend(estado) }
     )
-    return response.data
+    return mapBackendLead(response.data)
   },
 }

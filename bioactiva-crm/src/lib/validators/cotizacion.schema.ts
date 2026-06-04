@@ -1,6 +1,8 @@
 import { z } from 'zod'
-import { EstadoCot, TipoMoneda } from '@/types/enums'
+import { TipoMoneda } from '@/types/enums'
 
+// `estado` no se incluye: el backend siempre crea en PENDIENTE.
+// `nombre_remitente` no se incluye: el backend lo captura de idRemitente.
 export const cotizacionSchema = z.object({
   id_lead: z
     .number({ error: 'El lead es obligatorio' })
@@ -21,19 +23,15 @@ export const cotizacionSchema = z.object({
 
   cliente: z
     .string()
-    .min(1, 'El cliente es obligatorio')
-    .max(120, 'Máximo 120 caracteres'),
+    .max(120, 'Máximo 120 caracteres')
+    .optional()
+    .or(z.literal('')),
 
   producto: z
     .string()
     .max(120, 'Máximo 120 caracteres')
     .optional()
     .or(z.literal('')),
-
-  nombre_remitente: z
-    .string()
-    .min(1, 'El nombre del remitente es obligatorio')
-    .max(120, 'Máximo 120 caracteres'),
 
   nombre_servicio: z
     .string()
@@ -46,10 +44,6 @@ export const cotizacionSchema = z.object({
 
   tipo: z.nativeEnum(TipoMoneda, {
     error: 'La moneda es obligatoria',
-  }),
-
-  estado: z.nativeEnum(EstadoCot, {
-    error: 'El estado es obligatorio',
   }),
 
   observacion: z

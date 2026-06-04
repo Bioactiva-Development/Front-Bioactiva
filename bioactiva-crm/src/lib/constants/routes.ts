@@ -29,5 +29,6 @@ export const ROUTES = {
 
     controlAcceso: '/control-acceso',
 
-    perfil: '/perfil',
+    perfil:   '/perfil',
+    ajustes:  '/ajustes',
 } as const

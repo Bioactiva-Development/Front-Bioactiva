@@ -1,23 +1,21 @@
 'use client'
 
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
-import { Search, X, Loader2 } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { ContactoFiltros as FiltrosType } from '@/types/contacto.types'
 import { useDebounce } from '@/hooks/shared/useDebounce'
 import { useOrganizaciones } from '@/hooks/organizaciones/useOrganizaciones'
 
 interface ContactoFiltrosProps {
-  filtros:    FiltrosType
-  onChange:   (filtros: FiltrosType) => void
-  onLimpiar:  () => void
-  isLoading?: boolean
+  filtros:   FiltrosType
+  onChange:  (filtros: FiltrosType) => void
+  onLimpiar: () => void
 }
 
 export function ContactoFiltros({
   filtros,
   onChange,
   onLimpiar,
-  isLoading,
 }: ContactoFiltrosProps) {
   const [searchLocal, setSearchLocal] = useState(filtros.search ?? '')
   const debouncedSearch               = useDebounce(searchLocal, 400)
@@ -54,17 +52,10 @@ export function ContactoFiltros({
     <div className="space-y-3">
       {/* Buscador */}
       <div className="relative">
-        {isLoading && searchLocal ? (
-          <Loader2
-            size={16}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 animate-spin"
-          />
-        ) : (
-          <Search
-            size={16}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-        )}
+        <Search
+          size={16}
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+        />
         <input
           type="text"
           value={searchLocal}

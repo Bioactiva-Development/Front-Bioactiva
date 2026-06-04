@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation'
 import { Organizacion } from '@/types/organizacion.types'
 import { TamanoEmpresa } from '@/types/enums'
 import { ROUTES } from '@/lib/constants/routes'
+import { formatSector } from '@/lib/utils/organizacion.utils'
 
 interface OrganizacionCardProps {
   organizacion: Organizacion
@@ -55,7 +56,7 @@ export function OrganizacionCard({ organizacion }: OrganizacionCardProps) {
 
       <td className="px-4 py-4">
         <span className="text-sm text-gray-600">
-          {organizacion.sector}
+          {formatSector(organizacion.sector)}
           {organizacion.actividad_economica && (
             <span className="text-gray-400"> / {organizacion.actividad_economica}</span>
           )}
