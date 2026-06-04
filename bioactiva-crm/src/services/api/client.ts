@@ -23,7 +23,10 @@ function forceLogout(): void {
     window.location.href = ROUTES.auth.login
 }
 
-const JWT_EXPIRED_PATTERN = /jwt expired|token.*expired|invalid.*token/i
+// Solo mensajes que indican expiración/invalidez del JWT de sesión del usuario.
+// Patrones genéricos como "token.*expired" quedan excluidos a propósito para
+// no confundir errores de tokens de invitación o recuperación con la sesión.
+const JWT_EXPIRED_PATTERN = /jwt expired|jwt malformed|invalid signature/i
 
 const processQueue = (error: unknown, token: string | null) => {
     failedQueue.forEach(prom => {
@@ -118,7 +121,8 @@ apiClient.interceptors.response.use(
 
         if (
             JWT_EXPIRED_PATTERN.test(rawMessage) &&
-            !originalRequest.url?.includes('/auth/login')
+            !originalRequest.url?.includes('/auth/login') &&
+            !originalRequest.url?.includes('/invitations')
         ) {
             forceLogout()
             return Promise.reject({ status: error.response?.status, message: rawMessage })
