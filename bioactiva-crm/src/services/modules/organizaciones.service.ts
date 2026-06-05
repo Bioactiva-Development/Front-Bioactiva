@@ -24,6 +24,7 @@ import {
 
 import {
   OrganizacionDtoOut,
+  OrganizacionConRelacionesDto,
   SunatRucDto,
   fromOrganizacionDto,
   fromSunatNombreDto,
@@ -183,19 +184,35 @@ export const organizacionesService = {
   },
 
   /**
-   * Detalle con relaciones (contactos, leads, cotizaciones).
+   * GET /organizations/:id
    *
-   * TODO(backend): el endpoint `/organizations/:id/relaciones` aún no existe.
-   * En modo API real degradamos al detalle plano sin relaciones; cuando los
-   * módulos `contacts`, `leads` y `quotations` expongan sus endpoints, este
-   * método debe combinar las llamadas (Promise.all) o consumir un endpoint
-   * compuesto si el backend lo agrega.
+   * El backend embebe los primeros 6 contactos (`contactos`) y el total
+   * (`totalContactos`) directamente en el detalle de la organización.
+   * Leads y cotizaciones se cargarán mediante sus propios endpoints cuando
+   * el backend los exponga.
    */
   getByIdConRelaciones: async (
     id: string
   ): Promise<OrganizacionConRelaciones> => {
     if (USE_MOCK) return mockGetOrganizacionConRelaciones(id)
-    const organizacion = await organizacionesService.getById(id)
-    return { ...organizacion, contactos: [], leads: [], cotizaciones: [] }
+    const { data } = await apiClient.get<OrganizacionConRelacionesDto>(
+      ENDPOINTS.organizaciones.detail(id)
+    )
+    const organizacion = fromOrganizacionDto(data)
+    return {
+      ...organizacion,
+      contactos: (data.contactos ?? []).map((c) => ({
+        id:        c.id,
+        nombres:   c.nombres,
+        apellidos: c.apellidos,
+        vocativo:  c.vocativo,
+        cargo:     c.cargo ?? undefined,
+        correo:    c.correo,
+        telefono:  c.telefono ?? undefined,
+      })),
+      totalContactos: data.totalContactos ?? 0,
+      leads:        [],
+      cotizaciones: [],
+    }
   },
 }

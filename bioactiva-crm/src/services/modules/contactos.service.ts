@@ -45,31 +45,23 @@ export const contactosService = {
     getAll: async (filtros?: ContactoFiltros): Promise<ContactosResponse> => {
         if (USE_MOCK) return mockGetContactos(filtros)
 
-        // Cuando se filtra por organización usar el endpoint dedicado en vez de
-        // traer todos los contactos y filtrar en cliente
-        const url = filtros?.idOrganizacion
-            ? ENDPOINTS.contactos.byOrganizacion(filtros.idOrganizacion)
-            : ENDPOINTS.contactos.list
+        const params: Record<string, unknown> = {}
+        if (filtros?.idOrganizacion) params.idOrganization = filtros.idOrganizacion
+        if (filtros?.search)         params.search         = filtros.search
+        if (filtros?.page)           params.page           = filtros.page
+        if (filtros?.limit)          params.limit          = filtros.limit
 
-        const response = await apiClient.get<Record<string, unknown>[]>(url)
-        let data = response.data.map(normalizeContacto)
-
-        if (filtros?.search) {
-            const q = filtros.search.toLowerCase()
-            data = data.filter(
-                (c) =>
-                    `${c.nombres} ${c.apellidos}`.toLowerCase().includes(q) ||
-                    c.correo.toLowerCase().includes(q) ||
-                    (c.cargo?.toLowerCase().includes(q) ?? false) ||
-                    (c.organizacion_nombre?.toLowerCase().includes(q) ?? false),
-            )
-        }
+        const response = await apiClient.get<{
+            data: Record<string, unknown>[]
+            meta: { page: number; limit: number; total: number; totalPages: number }
+        }>(ENDPOINTS.contactos.list, { params })
 
         return {
-            data,
-            total: data.length,
-            page: 1,
-            limit: data.length,
+            data:       response.data.data.map(normalizeContacto),
+            total:      response.data.meta.total,
+            page:       response.data.meta.page,
+            limit:      response.data.meta.limit,
+            totalPages: response.data.meta.totalPages,
         }
     },
 

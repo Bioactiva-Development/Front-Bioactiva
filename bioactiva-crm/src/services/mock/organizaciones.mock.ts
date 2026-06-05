@@ -410,10 +410,12 @@ export const mockGetOrganizacionConRelaciones = async (
     throw Object.assign(new Error('Organización no encontrada.'), { status: 404 })
   }
 
+  const todosContactos = MOCK_CONTACTOS[id] ?? []
   return {
     ...org,
-    contactos:    MOCK_CONTACTOS[id]         ?? [],
-    leads:        MOCK_LEADS_POR_ORG[id]     ?? [],
-    cotizaciones: MOCK_COTIZACIONES_POR_ORG[id] ?? [],
+    contactos:      todosContactos.slice(0, 6),
+    totalContactos: todosContactos.length,
+    leads:          MOCK_LEADS_POR_ORG[id]        ?? [],
+    cotizaciones:   MOCK_COTIZACIONES_POR_ORG[id] ?? [],
   }
 }

@@ -103,7 +103,8 @@ export interface CotizacionResumida {
 }
 
 export interface OrganizacionConRelaciones extends Organizacion {
-  contactos:    ContactoResumido[]
-  leads:        LeadResumido[]
-  cotizaciones: CotizacionResumida[]
+  contactos:      ContactoResumido[]
+  totalContactos: number
+  leads:          LeadResumido[]
+  cotizaciones:   CotizacionResumida[]
 }

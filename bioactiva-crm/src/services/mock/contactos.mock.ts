@@ -236,9 +236,10 @@ export const mockGetContactos = async (
 
     return {
         data,
-        total: resultado.length,
+        total:      resultado.length,
         page,
         limit,
+        totalPages: Math.ceil(resultado.length / limit) || 1,
     }
 }
 
