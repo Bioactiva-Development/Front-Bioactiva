@@ -161,7 +161,7 @@ describe('organizaciones/useOrganizaciones', () => {
           tamano: TamanoEmpresa.Micro,
           sector: Sector.OTROS,
         })
-      }).rejects.toMatchObject({ status: 401 })
+      }).rejects.toThrow('Sesión expirada. Vuelve a iniciar sesión para registrar una organización.')
     })
   })
 
