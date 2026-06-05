@@ -29,6 +29,16 @@ export function useNotificaciones() {
   })
 }
 
+export function useNotificacionesPorLead(leadId: number) {
+  return useQuery({
+    queryKey: ['notificaciones', 'lead', leadId],
+    queryFn:  () => notificacionesService.getByLead(leadId),
+    enabled:  !!leadId,
+    staleTime: 1000 * 60 * 1,
+    retry: false,
+  })
+}
+
 // --- HOOK MARCAR LEÍDA ---
 export function useMarcarLeida() {
   const queryClient = useQueryClient()

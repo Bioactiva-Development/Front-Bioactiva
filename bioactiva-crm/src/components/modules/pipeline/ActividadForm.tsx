@@ -1,13 +1,17 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { useEffect, useMemo, useState } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, X } from 'lucide-react'
 import {
   actividadSchema,
   ActividadFormValues,
 } from '@/lib/validators/actividad.schema'
-import { TipoActividad } from '@/types/enums'
+import { EstadoActividad, EstadoUsuario, TipoActividad } from '@/types/enums'
+import { useAuthStore } from '@/store'
+import { usuariosService } from '@/services/modules/usuarios.service'
+import { UsuarioListItem } from '@/types/usuario.types'
 
 interface ActividadFormProps {
   leadId:    number
@@ -17,12 +21,32 @@ interface ActividadFormProps {
   error?:    string | null
 }
 
-const RESPONSABLES = [
-  { id: 1, nombre: 'Karien Diaz' },
-  { id: 2, nombre: 'Luis Torres' },
-  { id: 3, nombre: 'Administración' },
-  { id: 4, nombre: 'Carlos Mamani' },
-]
+interface ResponsableOption {
+  id: number
+  nombre: string
+}
+
+const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
+  id: usuario.id,
+  nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
+})
+
+const toDateTimeLocalValue = (date: Date) => {
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return [
+    date.getFullYear(),
+    pad(date.getMonth() + 1),
+    pad(date.getDate()),
+  ].join('-') + `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+const addDefaultDuration = (value?: string) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  date.setHours(date.getHours() + 1)
+  return toDateTimeLocalValue(date)
+}
 
 export function ActividadForm({
   leadId,
@@ -30,19 +54,105 @@ export function ActividadForm({
   onCancelar,
   isLoading,
   error,
-}: Readonly<ActividadFormProps>) {
+}: ActividadFormProps) {
+  const { usuario } = useAuthStore()
+  const [responsables, setResponsables] = useState<ResponsableOption[]>([])
+
   const {
     register,
     handleSubmit,
+    setValue,
+    control,
     formState: { errors },
   } = useForm<ActividadFormValues>({
     resolver: zodResolver(actividadSchema),
     defaultValues: {
-      id_lead:        leadId,
-      tipo:           TipoActividad.Llamada,
-      id_responsable: 1,
+      id_lead:    leadId,
+      estado:     EstadoActividad.Pendiente,
+      tipo:       TipoActividad.Llamada,
+      id_responsable: usuario?.id ?? 0,
     },
   })
+  const fecha = useWatch({ control, name: 'fecha_inicio' })
+  const responsableSelected = useWatch({ control, name: 'id_responsable' })
+
+  const usuarioActualOption = useMemo<ResponsableOption | null>(() => {
+    if (!usuario) return null
+    return {
+      id: usuario.id,
+      nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
+    }
+  }, [usuario])
+
+  const responsablesDisponibles = useMemo(() => {
+    const options = [...responsables]
+
+    if (
+      usuarioActualOption &&
+      !options.some((responsable) => responsable.id === usuarioActualOption.id)
+    ) {
+      options.unshift(usuarioActualOption)
+    }
+
+    return options
+  }, [responsables, usuarioActualOption])
+
+  useEffect(() => {
+    setValue('fecha_fin', addDefaultDuration(fecha), {
+      shouldValidate: Boolean(fecha),
+    })
+  }, [fecha, setValue])
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function cargarResponsables() {
+      try {
+        const response = await usuariosService.getUsuarios({
+          estado: EstadoUsuario.Activo,
+          limit: 100,
+        })
+
+        if (!isMounted) return
+        setResponsables(response.usuarios.map(toResponsableOption))
+      } catch {
+        if (!isMounted) return
+        setResponsables(usuarioActualOption ? [usuarioActualOption] : [])
+      }
+    }
+
+    cargarResponsables()
+
+    return () => {
+      isMounted = false
+    }
+  }, [usuarioActualOption])
+
+  useEffect(() => {
+    if (responsablesDisponibles.length === 0) return
+
+    const selected = Number(responsableSelected)
+    const selectedExists = responsablesDisponibles.some(
+      (responsable) => responsable.id === selected
+    )
+
+    if (selected && selectedExists) return
+
+    const fallback =
+      usuarioActualOption &&
+      responsablesDisponibles.some(
+        (responsable) => responsable.id === usuarioActualOption.id
+      )
+        ? usuarioActualOption
+        : responsablesDisponibles[0]
+
+    setValue('id_responsable', fallback.id, { shouldValidate: true })
+  }, [
+    responsableSelected,
+    responsablesDisponibles,
+    setValue,
+    usuarioActualOption,
+  ])
 
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
@@ -71,6 +181,7 @@ export function ActividadForm({
         className="space-y-3"
       >
         <input type="hidden" {...register('id_lead', { valueAsNumber: true })} />
+        <input type="hidden" {...register('fecha_fin')} />
 
         <div className="space-y-1">
           <label htmlFor="af-nombre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -113,7 +224,7 @@ export function ActividadForm({
             className={`${inputClass(!!errors.id_responsable)} cursor-pointer`}
           >
             <option value="">Seleccionar...</option>
-            {RESPONSABLES.map((r) => (
+            {responsablesDisponibles.map((r) => (
               <option key={r.id} value={r.id}>{r.nombre}</option>
             ))}
           </select>
@@ -122,36 +233,20 @@ export function ActividadForm({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label htmlFor="af-fecha-inicio" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Fecha inicio <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="af-fecha-inicio"
-              type="datetime-local"
-              {...register('fecha_inicio')}
-              className={inputClass(!!errors.fecha_inicio)}
-            />
-            {errors.fecha_inicio && (
-              <p className="text-red-500 text-xs">{errors.fecha_inicio.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <label htmlFor="af-fecha-fin" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Fecha fin <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="af-fecha-fin"
-              type="datetime-local"
-              {...register('fecha_fin')}
-              className={inputClass(!!errors.fecha_fin)}
-            />
-            {errors.fecha_fin && (
-              <p className="text-red-500 text-xs">{errors.fecha_fin.message}</p>
-            )}
-          </div>
+        <div className="space-y-1">
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Fecha <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="datetime-local"
+            {...register('fecha_inicio')}
+            className={inputClass(!!errors.fecha_inicio || !!errors.fecha_fin)}
+          />
+          {(errors.fecha_inicio || errors.fecha_fin) && (
+            <p className="text-red-500 text-xs">
+              {errors.fecha_inicio?.message ?? errors.fecha_fin?.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1">

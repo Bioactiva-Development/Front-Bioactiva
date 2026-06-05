@@ -12,9 +12,10 @@ export interface Lead {
   notas_contacto?: string
   id_encargado: number
   canal_captacion?: string
+  sector?: string
+  tipo_org?: string
+  tamano?: string
   fecha_cierre?: string
-  proxima_actividad?: string
-  fecha_proxima_actividad?: string
   id_author: number
   created_at: string
   updated_at: string
@@ -23,6 +24,7 @@ export interface Lead {
   encargado_nombre?: string
   encargado_correo?: string
   tiene_alerta?:boolean 
+  alerta_motivo?: string
 }
 
 export interface LeadFiltros {
@@ -30,11 +32,6 @@ export interface LeadFiltros {
   estado?: LeadState
   id_encargado?: number
   canal_captacion?: string
-  sector?: string
-  tipo_org?: string
-  tamano?: string
-  fecha_desde?: string
-  fecha_hasta?: string
   solo_alerta?: boolean
   page?: number
   limit?: number
@@ -68,6 +65,4 @@ export interface LeadFormData {
   encargado_correo?: string
   canal_captacion?: string
   fecha_cierre?: string
-  proxima_actividad?: string
-  fecha_proxima_actividad?: string
 }

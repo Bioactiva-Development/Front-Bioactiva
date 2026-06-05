@@ -1,31 +1,71 @@
 'use client'
 
+import type React from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { AlertTriangle, Building2, User, Briefcase, GripVertical } from 'lucide-react'
+import {
+  AlertTriangle,
+  Building2,
+  User,
+  Briefcase,
+  ExternalLink,
+  Pencil,
+  MessageSquarePlus,
+  FileText,
+  Send,
+} from 'lucide-react'
 import { Lead } from '@/types/lead.types'
 
 interface LeadCardProps {
-  lead:        Lead
-  onClick:     (lead: Lead) => void
-  isOverlay?:  boolean
+  lead:     Lead
+  onClick:  (lead: Lead) => void
+  onQuickAction?: (
+    lead: Lead,
+    action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
+  ) => void
 }
 
-export function LeadCard({ lead, onClick, isOverlay = false }: Readonly<LeadCardProps>) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: lead.id,
+export function LeadCard({
+  lead,
+  onClick,
+  onQuickAction,
+}: LeadCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: `lead-${lead.id}`,
+    data: { lead },
   })
 
-  const style = transform
-    ? { transform: CSS.Translate.toString(transform) }
-    : undefined
+  const handleAction = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
+  ) => {
+    event.stopPropagation()
+    onQuickAction?.(lead, action)
+  }
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      {...attributes}
+      {...listeners}
+      data-lead-id={lead.id}
+      aria-label={`Lead ${lead.codigo} - ${lead.organizacion_nombre}`}
+      style={{
+        transform: CSS.Translate.toString(transform),
+        zIndex: isDragging ? 20 : undefined,
+        touchAction: 'none',
+      }}
+      onClick={() => onClick(lead)}
       className={`
-        bg-white rounded-xl border shadow-sm p-4 space-y-3
+        bg-white rounded-xl border shadow-sm p-4 cursor-pointer
+        hover:shadow-md transition-all space-y-3
+        ${isDragging ? 'opacity-60 ring-2 ring-emerald-300' : ''}
         ${lead.tiene_alerta
           ? 'border-l-4 border-l-red-400 border-t-gray-100 border-r-gray-100 border-b-gray-100'
           : 'border-gray-100 hover:border-emerald-200'
@@ -34,44 +74,23 @@ export function LeadCard({ lead, onClick, isOverlay = false }: Readonly<LeadCard
         ${isOverlay ? 'shadow-xl rotate-2 cursor-grabbing' : 'cursor-pointer hover:shadow-md transition-all'}
       `}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          {lead.tiene_alerta && (
-            <div className="flex items-center gap-1.5 text-red-500 mb-1">
-              <AlertTriangle size={13} />
-              <span className="text-xs font-bold uppercase tracking-wide">
-                Actividad vencida
-              </span>
-            </div>
-          )}
-          <p className="text-xs text-gray-400 font-mono">{lead.codigo}</p>
+      {lead.tiene_alerta && (
+        <div className="flex items-center gap-1.5 text-red-500">
+          <AlertTriangle size={13} />
+          <span className="text-xs font-bold uppercase tracking-wide">
+            {lead.alerta_motivo ?? 'Alerta activa'}
+          </span>
         </div>
+      )}
 
-        <button
-          {...listeners}
-          {...attributes}
-          onClick={(e) => e.stopPropagation()}
-          className="p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-100
-            transition-colors cursor-grab active:cursor-grabbing shrink-0"
-          aria-label="Arrastrar lead"
-        >
-          <GripVertical size={14} />
-        </button>
+      <p className="text-xs text-gray-400 font-mono">{lead.codigo}</p>
+
+      <div className="flex items-center gap-2">
+        <Building2 size={14} className="text-emerald-600 shrink-0" />
+        <p className="text-sm font-bold text-gray-900 truncate">
+          {lead.organizacion_nombre}
+        </p>
       </div>
-
-      <div
-        role="button"
-        tabIndex={0}
-        className="space-y-2"
-        onClick={() => !isDragging && onClick(lead)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') !isDragging && onClick(lead) }}
-      >
-        <div className="flex items-center gap-2">
-          <Building2 size={14} className="text-emerald-600 shrink-0" />
-          <p className="text-sm font-bold text-gray-900 truncate">
-            {lead.organizacion_nombre}
-          </p>
-        </div>
 
         {lead.contacto_nombre && (
           <div className="flex items-center gap-2">
@@ -89,14 +108,61 @@ export function LeadCard({ lead, onClick, isOverlay = false }: Readonly<LeadCard
           </p>
         </div>
 
-        {lead.encargado_nombre && (
-          <div className="pt-2 border-t border-gray-50">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg
-              bg-gray-100 text-xs text-gray-600 font-medium">
-              {lead.encargado_nombre}
-            </span>
-          </div>
-        )}
+      {lead.encargado_nombre && (
+        <div className="pt-2 border-t border-gray-50">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-lg
+            bg-gray-100 text-xs text-gray-600 font-medium">
+            {lead.encargado_nombre}
+          </span>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-1 pt-2 border-t border-gray-50">
+        <button
+          type="button"
+          title="Ver detalle"
+          onClick={(event) => handleAction(event, 'detalle')}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+            hover:bg-emerald-50 transition-colors"
+        >
+          <ExternalLink size={14} />
+        </button>
+        <button
+          type="button"
+          title="Editar lead"
+          onClick={(event) => handleAction(event, 'editar')}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+            hover:bg-emerald-50 transition-colors"
+        >
+          <Pencil size={14} />
+        </button>
+        <button
+          type="button"
+          title="Registrar actividad"
+          onClick={(event) => handleAction(event, 'actividad')}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+            hover:bg-emerald-50 transition-colors"
+        >
+          <MessageSquarePlus size={14} />
+        </button>
+        <button
+          type="button"
+          title="Crear cotización"
+          onClick={(event) => handleAction(event, 'cotizacion')}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+            hover:bg-emerald-50 transition-colors"
+        >
+          <FileText size={14} />
+        </button>
+        <button
+          type="button"
+          title="Programar seguimiento"
+          onClick={(event) => handleAction(event, 'seguimiento')}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+            hover:bg-emerald-50 transition-colors"
+        >
+          <Send size={14} />
+        </button>
       </div>
     </div>
   )

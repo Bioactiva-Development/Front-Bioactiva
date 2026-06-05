@@ -1,114 +1,211 @@
-# BioActiva CRM — Frontend
+# BioActiva CRM Frontend
 
-Aplicación Next.js 16 (App Router) del CRM comercial de BioActiva.
+Frontend web para el CRM comercial de BioActiva. La aplicacion gestiona pipeline de leads, actividades de seguimiento, cotizaciones, organizaciones y contactos, conectandose al backend documentado en Mintlify.
 
-Para el contexto general del proyecto, casos de uso, arquitectura y estado de los módulos, ver el [README raíz](../README.md). Para convenciones técnicas detalladas, ENUMs, diccionario de datos y reglas críticas, ver [`AGENTS.md`](./AGENTS.md).
+## Documentacion vigente
 
----
+Usa estas fuentes antes de analizar o modificar integraciones:
 
-## Requisitos
+- Backend actual: https://bioactiva.mintlify.app/introduction
+- Indice para agentes: https://bioactiva.mintlify.app/llms.txt
+- Leads: https://bioactiva.mintlify.app/api/leads/overview
+- Cotizaciones: https://bioactiva.mintlify.app/api/quotations/overview
+- Actividades: https://bioactiva.mintlify.app/api/activities/overview
+- Usuarios: https://bioactiva.mintlify.app/api/users/list
 
-- Node.js v24 o superior
-- npm (o pnpm / yarn / bun)
+Si hay conflicto entre mocks, comentarios antiguos, documentos locales o supuestos previos y Mintlify, prioriza Mintlify. El backend es estricto: si se envia una propiedad no documentada, puede responder errores como `property <campo> should not exist`.
 
----
+## Stack
 
-## Instalación y desarrollo
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- TanStack Query
+- Axios
+- Zustand
+- Zod
+
+## Inicio rapido
 
 ```bash
 npm install
 npm run dev
 ```
 
-Abrir <http://localhost:3000>.
-
----
-
-## Scripts
-
-| Comando | Descripción |
-|---|---|
-| `npm run dev` | Servidor de desarrollo con HMR |
-| `npm run build` | Build de producción |
-| `npm run start` | Sirve el build de producción |
-| `npm run lint` | Ejecuta ESLint |
-
----
-
-## Variables de entorno
-
-Crear un archivo `.env.local` en esta carpeta:
+Variables recomendadas:
 
 ```bash
-NEXT_PUBLIC_USE_MOCK=true                       # true: data mock | false: backend NestJS
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3001  # URL del backend NestJS
+NEXT_PUBLIC_USE_MOCK=false
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
 NEXT_PUBLIC_APP_NAME=BioActiva CRM
 ```
 
-El switch mock ↔ API se controla **únicamente** en `src/services/modules/*.service.ts`. Cambiar `NEXT_PUBLIC_USE_MOCK=false` conecta toda la app al backend real sin tocar componentes, hooks ni páginas.
+Usa `NEXT_PUBLIC_USE_MOCK=true` solo para escenarios mock. Para integracion real, los servicios deben funcionar con `NEXT_PUBLIC_USE_MOCK=false`.
 
----
+## Arquitectura
 
-## Estructura
+El frontend debe mantener esta direccion de dependencias:
 
-```
-src/
-├── app/
-│   ├── (auth)/             # login, forgot-password, reset-password, activate
-│   ├── (dashboard)/        # todas las rutas protegidas del CRM
-│   ├── layout.tsx
-│   ├── providers.tsx       # React Query Provider, etc.
-│   └── globals.css
-├── components/
-│   ├── ui/                 # átomos: Button, Modal, SearchBar, EmptyState, Spinner
-│   ├── layout/             # Sidebar, Navbar, PageHeader
-│   └── modules/            # componentes específicos por módulo de dominio
-├── hooks/                  # custom hooks por dominio (useDashboard, useLeads, etc.)
-├── services/
-│   ├── api/                # cliente Axios y endpoints centralizados
-│   ├── mock/               # data falsa por módulo
-│   └── modules/            # servicios que conmutan mock ↔ API real
-├── store/                  # auth.store, ui.store (Zustand)
-├── types/                  # interfaces de dominio + enums.ts
-├── lib/
-│   ├── constants/          # routes.ts, queryKeys.ts, config.ts
-│   ├── utils/              # date, format, validation, csv
-│   └── validators/         # schemas Zod por módulo
-├── styles/                 # globals.css, themes
-└── middleware.ts           # guards de sesión y rol
+```text
+pages/components -> hooks -> services -> api client/endpoints
+                         -> mappers -> types
 ```
 
----
+Reglas practicas:
 
-## Convenciones críticas
+- Los componentes no deben hacer `fetch` ni `axios` directo.
+- Las URLs viven en `src/services/api/endpoints.ts`.
+- Los servicios por dominio viven en `src/services/modules/*.service.ts`.
+- Los mappers por dominio viven en `src/services/modules/*.mapper.ts`.
+- Los tipos compartidos viven en `src/types`.
+- Los validadores viven en `src/lib/validators`.
 
-> Detalle completo en [`AGENTS.md §14`](./AGENTS.md). Resumen:
+## Contrato backend actual
 
-- ❌ Nada de `fetch` o `axios` directo en componentes o páginas — siempre vía `services/`.
-- ❌ Sin URLs hardcodeadas fuera de `services/api/endpoints.ts`.
-- ❌ Sin rutas hardcodeadas fuera de `lib/constants/routes.ts`.
-- ❌ Sin ENUMs redefinidos fuera de `types/enums.ts`.
-- ❌ Sin `any` sin justificación.
-- ❌ Sin imports relativos largos (`../../../`); usar alias `@/`.
-- ❌ Sin lógica de negocio en `components/ui/`.
-- ❌ Sin borrado físico de organizaciones, contactos, leads ni cotizaciones (RN-003).
+Los modulos principales usan rutas REST en ingles, sin prefijo `/api`:
 
----
+| Dominio | Endpoints principales |
+| --- | --- |
+| Auth | `POST /auth/login`, `GET /auth/me`, `POST /auth/refresh` |
+| Users | `GET /users`, `PATCH /users/:id/enable`, `PATCH /users/:id/disable` |
+| Organizations | `GET/POST /organizations`, `GET/PATCH /organizations/:id`, `GET /organizations/sunat/:query` |
+| Contacts | `GET/POST /contacts`, `GET/PATCH /contacts/:id`, `GET /contacts/organization/:orgId` |
+| Leads | `GET/POST /leads`, `GET/PATCH/DELETE /leads/:id`, `PATCH /leads/:id/status` |
+| Activities | `GET/POST /activities`, `GET/PATCH/DELETE /activities/:id`, `PATCH /activities/:id/complete`, `PATCH /activities/:id/cancel` |
+| Quotations | `GET/POST /quotations`, `GET/PATCH/DELETE /quotations/:id`, `PATCH /quotations/:id/send`, `PATCH /quotations/:id/accept`, `PATCH /quotations/:id/reject` |
 
-## Stack
+No uses rutas antiguas como `/api/leads`, `/api/leads/:id/actividades`, `/api/actividades` o `/api/cotizaciones`.
 
-- **Next.js 16** (App Router) + **React 19**
-- **TypeScript 5** + **Tailwind CSS 4**
-- **Zustand** (estado global) + **TanStack React Query 5** (server state)
-- **Axios** (HTTP) + **React Hook Form 7** + **Zod 4** (formularios y validación)
-- **Recharts** (gráficas del dashboard)
-- **@dnd-kit** (Kanban del pipeline)
-- **Lucide React** (iconos)
+## Formato de datos
 
----
+El backend usa camelCase y enums uppercase:
 
-## Deploy
+- `idLead`, `idOrg`, `fechaInicio`, `fechaFin`, `nombreActividad`.
+- `EN_PROSPECTO`, `OFERTADO`, `CIERRE_CON_VENTA`, `CIERRE_SIN_VENTA`.
+- `PENDIENTE`, `ENVIADA`, `ACEPTADA`, `RECHAZADA`.
 
-El frontend está contenerizado con el `Dockerfile` incluido. La estrategia de despliegue contempla 4 contenedores (frontend Next.js, backend NestJS, PostgreSQL, Redis) conectados por red interna. Detalles en el §11.3 del documento oficial de Análisis y Diseño.
+El frontend usa snake_case y labels en espanol:
 
-El prototipo de referencia está desplegado en Vercel: <https://a-frontend-bioactiva-73nc.vercel.app/>.
+- `id_lead`, `id_org`, `fecha_inicio`, `fecha_fin`, `nombre_actividad`.
+- `En prospecto`, `Ofertado`, `Cierre con venta`, `Cierre sin venta`.
+
+La conversion debe ocurrir en mappers, nunca dentro de componentes.
+
+## Logica de negocio clave
+
+### Pipeline y cotizaciones
+
+La cotizacion visible de un lead debe ser coherente con la columna del pipeline:
+
+| Estado del lead | Estado backend | Cotizacion coherente |
+| --- | --- | --- |
+| En prospecto | `EN_PROSPECTO` | `PENDIENTE` |
+| Ofertado | `OFERTADO` | `ENVIADA` |
+| Cierre con venta | `CIERRE_CON_VENTA` | `ACEPTADA` |
+| Cierre sin venta | `CIERRE_SIN_VENTA` | `RECHAZADA` |
+
+Al crear un lead se crea automaticamente una cotizacion inicial coherente. Al mover una tarjeta por drag and drop o cambiar el estado desde edicion/detalle, tambien debe sincronizarse la cotizacion principal.
+
+Ten en cuenta que `ACEPTADA` y `RECHAZADA` son estados terminales en backend. Para enviar, aceptar o rechazar cotizaciones se usan los endpoints de lifecycle. Si el flujo requiere volver desde una cotizacion terminal hacia otro estado, el frontend debe conservar una sola cotizacion visible y coherente con el lead, respetando las restricciones reales del backend.
+
+### Leads
+
+`POST /leads` y `PATCH /leads/:id` aceptan campos como:
+
+- `idOrg`
+- `idContacto`
+- `servicioInteres`
+- `idEncargado`
+- `comentarios`
+- `desafioOportunidad`
+- `notasContacto`
+- `canalCaptacion`
+
+El backend actual no acepta `fechaCierre`. El frontend mantiene la fecha de cierre estimada como dato local de UI (`fecha_cierre`) mediante `leads.service.ts`, porque el backend no la persiste todavia. No envies `fechaCierre` al backend.
+
+El estado inicial del backend es `EN_PROSPECTO`. Si el usuario crea un lead desde otra columna o desde `+ Nuevo Lead` con otro estado elegido, primero se crea el lead y luego se usa `PATCH /leads/:id/status`.
+
+### Actividades
+
+Las actividades se crean con `POST /activities`, no con rutas anidadas bajo leads.
+
+El formulario muestra un solo campo `Fecha`, pero el backend exige:
+
+- `fechaInicio`
+- `fechaFin`
+- `fechaInicio` estrictamente anterior a `fechaFin`
+
+La implementacion actual genera `fechaFin` una hora despues de la fecha seleccionada. Solo puede existir una actividad `PENDIENTE` por lead. Los responsables deben cargarse desde `GET /users`; no hardcodear IDs.
+
+### Cotizaciones
+
+Las cotizaciones se crean con `POST /quotations`. El monto se envia como string decimal en `monto`. El estado no se cambia con `PATCH /quotations/:id`; se cambia con:
+
+- `PATCH /quotations/:id/send`
+- `PATCH /quotations/:id/accept`
+- `PATCH /quotations/:id/reject`
+
+`DELETE /quotations/:id` es soft delete.
+
+### Filtros del pipeline
+
+El filtro basico del pipeline debe limitarse a:
+
+- Busqueda comercial
+- Estado
+- Encargado
+- Canal
+- Solo con alerta activa
+
+No reintroducir filtros de sector, tipo de organizacion, tamano o fecha de creacion en el pipeline si el backend de leads no los soporta directamente.
+
+## Errores comunes de integracion
+
+| Mensaje | Causa probable | Correccion |
+| --- | --- | --- |
+| `Cannot POST /api/leads/:id/actividades` | Ruta antigua | Usar `POST /activities` |
+| `Cannot GET /api/cotizaciones...` | Ruta antigua | Usar `GET /quotations` |
+| `property fechaCierre should not exist` | Campo no soportado | No enviar `fechaCierre` |
+| `Responsable con id X no encontrado` | ID hardcodeado o usuario inexistente | Cargar usuarios reales con `GET /users` |
+| Cotizaciones duplicadas o historicas visibles | Listado no sincronizado con leads activos | Filtrar contra pipeline activo y soft deletes |
+
+## Archivos importantes
+
+- `src/services/api/client.ts`
+- `src/services/api/endpoints.ts`
+- `src/services/modules/leads.service.ts`
+- `src/services/modules/leads.mapper.ts`
+- `src/services/modules/cotizaciones.service.ts`
+- `src/services/modules/cotizaciones.mapper.ts`
+- `src/services/modules/actividades.service.ts`
+- `src/services/modules/actividades.mapper.ts`
+- `src/hooks/pipeline/useLeads.ts`
+- `src/components/modules/pipeline/LeadFiltros.tsx`
+- `src/components/modules/pipeline/LeadForm.tsx`
+- `src/components/modules/pipeline/ActividadForm.tsx`
+
+## Verificacion
+
+Para cambios de codigo, ejecuta verificaciones focalizadas:
+
+```bash
+npx tsc --noEmit
+npx eslint <archivos-modificados>
+npm test -- --runInBand <test-relevante>
+```
+
+Pruebas unitarias utiles:
+
+- `test/unit/modules/leads/leads.mapper.spec.ts`
+- `test/unit/modules/cotizaciones/cotizaciones.mapper.spec.ts`
+- `test/unit/modules/actividades/actividades.mapper.spec.ts`
+
+## Guias para agentes
+
+Los agentes deben leer:
+
+- `AGENTS.md`: guia operativa completa.
+- `CLAUDE.md`: recordatorio especifico para Claude.
+
+Estos archivos resumen la logica de negocio, el contrato backend actual y los errores recurrentes del proyecto.

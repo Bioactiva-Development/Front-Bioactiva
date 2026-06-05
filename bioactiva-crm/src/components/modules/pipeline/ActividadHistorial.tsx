@@ -5,7 +5,8 @@ import {
   Mail, Phone, Users, HelpCircle,
   CheckCircle2, Clock, Trash2, XCircle,
   ChevronDown, ChevronUp, Send,
-  AlertTriangle, Ban,
+  AlertTriangle,
+  Bell,
 } from 'lucide-react'
 import { Actividad } from '@/types/actividad.types'
 import { TipoActividad, EstadoActividad } from '@/types/enums'
@@ -20,6 +21,8 @@ import {
 interface ActividadHistorialProps {
   leadId:      number
   actividades: Actividad[]
+  onProgramarRecordatorio?: (actividad: Actividad) => void
+  onProgramarSeguimiento?: (actividad: Actividad) => void
 }
 
 const TIPO_ICONOS: Record<TipoActividad, React.ReactNode> = {
@@ -68,12 +71,18 @@ function estadoBadge(estado: EstadoActividad) {
 function ActividadItem({
   actividad,
   leadId,
+  onProgramarRecordatorio,
+  onProgramarSeguimiento,
 }: {
   actividad: Actividad
   leadId:    number
+  onProgramarRecordatorio?: (actividad: Actividad) => void
+  onProgramarSeguimiento?: (actividad: Actividad) => void
 }) {
   const [expandido,    setExpandido]    = useState(false)
   const [nuevoComment, setNuevoComment] = useState('')
+  const [mostrandoCierre, setMostrandoCierre] = useState(false)
+  const [notaCierre, setNotaCierre] = useState('')
 
   const { mutateAsync: completar, isPending: completando } =
     useCompletarActividad(leadId)
@@ -106,6 +115,12 @@ function ActividadItem({
     setNuevoComment('')
   }
 
+  const handleCompletar = async () => {
+    await completar({ id: actividad.id, notas: notaCierre.trim() || undefined })
+    setMostrandoCierre(false)
+    setNotaCierre('')
+  }
+
   return (
     <div className={`border rounded-xl overflow-hidden transition-colors
       ${esPendiente
@@ -129,31 +144,39 @@ function ActividadItem({
           <div className="flex items-center gap-1 shrink-0">
             {esPendiente && (
               <>
-                <button
-                  onClick={() => completar(actividad.id)}
-                  disabled={completando || cancelando}
-                  title="Marcar como completada"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                    text-xs font-semibold text-emerald-600 hover:bg-emerald-50
-                    border border-emerald-200 transition-colors
-                    disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <CheckCircle2 size={13} />
-                  Completar
-                </button>
-                <button
-                  onClick={() => cancelar(actividad.id)}
-                  disabled={completando || cancelando}
-                  title="Cancelar actividad"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                    text-xs font-semibold text-red-500 hover:bg-red-50
-                    border border-red-200 transition-colors
-                    disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <Ban size={13} />
-                  Cancelar
-                </button>
+              <button
+                type="button"
+                onClick={() => onProgramarRecordatorio?.(actividad)}
+                title="Programar recordatorio"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+                  hover:bg-emerald-50 transition-colors"
+              >
+                <Bell size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onProgramarSeguimiento?.(actividad)}
+                title="Programar seguimiento"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
+                  hover:bg-emerald-50 transition-colors"
+              >
+                <Send size={14} />
+              </button>
               </>
+            )}
+            {esPendiente && (
+              <button
+                onClick={() => setMostrandoCierre((prev) => !prev)}
+                disabled={completando}
+                title="Marcar como completada"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                  text-xs font-semibold text-emerald-600 hover:bg-emerald-50
+                  border border-emerald-200 transition-colors
+                  disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <CheckCircle2 size={13} />
+                Completar
+              </button>
             )}
             <button
               onClick={() => eliminar(actividad.id)}
@@ -193,6 +216,50 @@ function ActividadItem({
           <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
             {actividad.notas}
           </p>
+        )}
+
+        {mostrandoCierre && (
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60
+            p-3 space-y-2">
+            <label className="block text-xs font-semibold text-emerald-700
+              uppercase tracking-wide">
+              Nota de cierre
+            </label>
+            <textarea
+              rows={2}
+              value={notaCierre}
+              onChange={(event) => setNotaCierre(event.target.value)}
+              placeholder="Qué se hizo, resultado o siguiente acuerdo..."
+              className="w-full px-3 py-2 rounded-xl border border-emerald-100
+                bg-white text-sm text-gray-900 outline-none
+                focus:border-emerald-400 placeholder:text-gray-400 resize-none"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMostrandoCierre(false)
+                  setNotaCierre('')
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold
+                  text-gray-500 hover:bg-white transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleCompletar}
+                disabled={completando}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5
+                  rounded-lg text-xs font-semibold bg-emerald-600
+                  hover:bg-emerald-700 disabled:bg-emerald-300 text-white
+                  transition-colors"
+              >
+                <CheckCircle2 size={13} />
+                Completar actividad
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
@@ -253,10 +320,15 @@ function ActividadItem({
 export function ActividadHistorial({
   leadId,
   actividades,
-}: Readonly<ActividadHistorialProps>) {
-  const pendientes  = actividades.filter((a) => a.estado === EstadoActividad.Pendiente)
-  const completadas = actividades.filter((a) => a.estado === EstadoActividad.Completada)
-  const canceladas  = actividades.filter((a) => a.estado === EstadoActividad.Cancelada)
+  onProgramarRecordatorio,
+  onProgramarSeguimiento,
+}: ActividadHistorialProps) {
+  const pendientes  = actividades.filter(
+    (a) => a.estado === EstadoActividad.Pendiente
+  )
+  const completadas = actividades.filter(
+    (a) => a.estado === EstadoActividad.Completada
+  )
 
   if (actividades.length === 0) {
     return (
@@ -277,7 +349,13 @@ export function ActividadHistorial({
             Pendientes ({pendientes.length})
           </p>
           {pendientes.map((a) => (
-            <ActividadItem key={a.id} actividad={a} leadId={leadId} />
+            <ActividadItem
+              key={a.id}
+              actividad={a}
+              leadId={leadId}
+              onProgramarRecordatorio={onProgramarRecordatorio}
+              onProgramarSeguimiento={onProgramarSeguimiento}
+            />
           ))}
         </div>
       )}
@@ -288,18 +366,13 @@ export function ActividadHistorial({
             Completadas ({completadas.length})
           </p>
           {completadas.map((a) => (
-            <ActividadItem key={a.id} actividad={a} leadId={leadId} />
-          ))}
-        </div>
-      )}
-
-      {canceladas.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-bold text-red-500 uppercase tracking-wide">
-            Canceladas ({canceladas.length})
-          </p>
-          {canceladas.map((a) => (
-            <ActividadItem key={a.id} actividad={a} leadId={leadId} />
+            <ActividadItem
+              key={a.id}
+              actividad={a}
+              leadId={leadId}
+              onProgramarRecordatorio={onProgramarRecordatorio}
+              onProgramarSeguimiento={onProgramarSeguimiento}
+            />
           ))}
         </div>
       )}

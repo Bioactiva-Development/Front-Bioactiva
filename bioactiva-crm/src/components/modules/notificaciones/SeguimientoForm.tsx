@@ -18,6 +18,8 @@ interface SeguimientoFormProps {
   isLoading: boolean
   error?: string | null
   onCancel?: () => void
+  leadIdInicial?: number
+  actividadIdInicial?: number
 }
 
 export function SeguimientoForm({
@@ -25,7 +27,9 @@ export function SeguimientoForm({
   isLoading,
   error,
   onCancel,
-}: Readonly<SeguimientoFormProps>) {
+  leadIdInicial,
+  actividadIdInicial,
+}: SeguimientoFormProps) {
   const { data: leadsResponse } = useLeads({ limit: 100 })
   const leads = leadsResponse?.data ?? []
   const plantillasActivas = usePlantillasActivas()
@@ -40,8 +44,8 @@ export function SeguimientoForm({
   } = useForm<SeguimientoFormValues>({
     resolver: zodResolver(seguimientoSchema),
     defaultValues: {
-      id_lead: 0,
-      id_actividad: 0,
+      id_lead: leadIdInicial ?? 0,
+      id_actividad: actividadIdInicial ?? 0,
       id_plantilla_interno: 0,
       fecha_envio_interno: '',
       hora_envio_interno: '',
@@ -66,6 +70,11 @@ export function SeguimientoForm({
   const selectedActividad = actividades.find(
     (actividad) => actividad.id === selectedActividadId
   )
+
+  useEffect(() => {
+    if (leadIdInicial) setValue('id_lead', leadIdInicial)
+    if (actividadIdInicial) setValue('id_actividad', actividadIdInicial)
+  }, [actividadIdInicial, leadIdInicial, setValue])
 
   const plantillasSeguimiento = plantillasActivas.data?.filter(
     (plantilla) =>
@@ -121,6 +130,8 @@ export function SeguimientoForm({
 
     await onSubmit({
       ...data,
+      id_lead: selectedLead.id,
+      id_actividad: selectedActividad.id,
       fecha_envio_interno: `${data.fecha_envio_interno}T${data.hora_envio_interno}`,
       fecha_envio_externo: `${data.fecha_envio_externo}T${data.hora_envio_externo}`,
       destinatario: data.correo_cliente,
@@ -166,6 +177,7 @@ export function SeguimientoForm({
               id="seg-lead"
               {...register('id_lead', { valueAsNumber: true })}
               className={inputClass(!!errors.id_lead)}
+              disabled={Boolean(leadIdInicial)}
             >
               <option value={0}>Selecciona un lead</option>
               {leads.map((lead) => (
@@ -187,7 +199,7 @@ export function SeguimientoForm({
               id="seg-actividad"
               {...register('id_actividad', { valueAsNumber: true })}
               className={inputClass(!!errors.id_actividad)}
-              disabled={!selectedLead}
+              disabled={!selectedLead || Boolean(actividadIdInicial)}
             >
               <option value={0}>
                 {selectedLead ? 'Selecciona una actividad' : 'Selecciona primero un lead'}

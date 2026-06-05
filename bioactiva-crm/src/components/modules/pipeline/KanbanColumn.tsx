@@ -2,30 +2,46 @@
 
 import { useDroppable } from '@dnd-kit/core'
 import { Plus } from 'lucide-react'
+import { useDroppable } from '@dnd-kit/core'
 import { Lead } from '@/types/lead.types'
+import { LeadState } from '@/types/enums'
 import { LeadCard } from '@/components/modules/pipeline/LeadCard'
 
 interface KanbanColumnProps {
-  id:          string
-  titulo:      string
-  leads:       Lead[]
-  color:       string
-  onAddLead:   () => void
+  titulo:    string
+  estado:    LeadState
+  leads:     Lead[]
+  color:     string
+  onAddLead: (estado: LeadState) => void
   onClickLead: (lead: Lead) => void
+  onQuickAction?: (
+    lead: Lead,
+    action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
+  ) => void
 }
 
 export function KanbanColumn({
   id,
   titulo,
+  estado,
   leads,
   color,
   onAddLead,
   onClickLead,
-}: Readonly<KanbanColumnProps>) {
-  const { setNodeRef, isOver } = useDroppable({ id })
+  onQuickAction,
+}: KanbanColumnProps) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: `column-${estado}`,
+    data: { estado },
+  })
 
   return (
-    <div className="flex flex-col min-w-70 flex-1">
+    <div
+      ref={setNodeRef}
+      data-column-state={estado}
+      className={`flex flex-col min-w-70 flex-1 rounded-xl transition-colors
+        ${isOver ? 'bg-emerald-50/60 ring-2 ring-emerald-100' : ''}`}
+    >
 
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -39,7 +55,8 @@ export function KanbanColumn({
           </span>
         </div>
         <button
-          onClick={onAddLead}
+          onClick={() => onAddLead(estado)}
+          title={`Nuevo lead en ${titulo}`}
           className="p-1 rounded-lg text-gray-400 hover:text-emerald-600
             hover:bg-emerald-50 transition-colors"
         >
@@ -47,16 +64,7 @@ export function KanbanColumn({
         </button>
       </div>
 
-      <div
-        ref={setNodeRef}
-        className={`
-          flex flex-col gap-3 flex-1 rounded-xl p-2 min-h-32 transition-colors
-          ${isOver
-            ? 'bg-emerald-50 border-2 border-dashed border-emerald-300'
-            : 'border-2 border-transparent'
-          }
-        `}
-      >
+      <div className="flex flex-col gap-3 flex-1 min-h-40">
         {leads.length === 0 ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-sm text-gray-300 italic">Sin leads</p>
@@ -67,6 +75,7 @@ export function KanbanColumn({
               key={lead.id}
               lead={lead}
               onClick={onClickLead}
+              onQuickAction={onQuickAction}
             />
           ))
         )}

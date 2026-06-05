@@ -1,12 +1,10 @@
 'use client'
 
-import { useState } from 'react'
 import {
   DndContext,
   DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
   PointerSensor,
+  pointerWithin,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
@@ -15,71 +13,69 @@ import { LeadCard } from '@/components/modules/pipeline/LeadCard'
 import { PipelineData, Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
 
-type ColumnKey = Exclude<keyof PipelineData, 'total'>
-
-const COLUMNAS: {
-  key:    ColumnKey
-  titulo: string
-  color:  string
-  estado: LeadState
-}[] = [
-  { key: 'prospecto',      titulo: 'En prospecto',    color: 'bg-gray-400',    estado: LeadState.Prospecto      },
-  { key: 'ofertado',       titulo: 'Ofertado',        color: 'bg-amber-400',   estado: LeadState.Ofertado       },
-  { key: 'cierreVenta',    titulo: 'Cierre con venta', color: 'bg-emerald-500', estado: LeadState.CierreVenta    },
-  { key: 'cierreSinVenta', titulo: 'Cierre sin venta', color: 'bg-red-400',     estado: LeadState.CierreSinVenta },
-]
-
 interface KanbanBoardProps {
-  pipeline:        PipelineData
-  onAddLead:       () => void
-  onClickLead:     (lead: Lead) => void
-  onEstadoChange:  (leadId: number, estado: LeadState) => void
+  pipeline:    PipelineData
+  onAddLead:   (estado: LeadState) => void
+  onClickLead: (lead: Lead) => void
+  onQuickAction?: (
+    lead: Lead,
+    action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
+  ) => void
+  onMoveLead: (lead: Lead, estado: LeadState) => void
 }
+
+const COLUMNAS = [
+  {
+    key: 'prospecto' as keyof PipelineData,
+    titulo: 'En prospecto',
+    estado: LeadState.Prospecto,
+    color: 'bg-gray-400',
+  },
+  {
+    key: 'ofertado' as keyof PipelineData,
+    titulo: 'Ofertado',
+    estado: LeadState.Ofertado,
+    color: 'bg-amber-400',
+  },
+  {
+    key: 'cierreVenta' as keyof PipelineData,
+    titulo: 'Cierre con venta',
+    estado: LeadState.CierreVenta,
+    color: 'bg-emerald-500',
+  },
+  {
+    key: 'cierreSinVenta' as keyof PipelineData,
+    titulo: 'Cierre sin venta',
+    estado: LeadState.CierreSinVenta,
+    color: 'bg-red-400',
+  },
+]
 
 export function KanbanBoard({
   pipeline,
   onAddLead,
   onClickLead,
-  onEstadoChange,
-}: Readonly<KanbanBoardProps>) {
-  const [activeLead, setActiveLead] = useState<Lead | null>(null)
-
+  onQuickAction,
+  onMoveLead,
+}: KanbanBoardProps) {
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
   )
 
-  function findLead(id: number): Lead | null {
-    for (const col of COLUMNAS) {
-      const found = pipeline[col.key].find((l) => l.id === id)
-      if (found) return found
-    }
-    return null
-  }
+  const handleDragEnd = (event: DragEndEvent) => {
+    const lead = event.active.data.current?.lead as Lead | undefined
+    const estado = event.over?.data.current?.estado as LeadState | undefined
 
-  function handleDragStart(event: DragStartEvent) {
-    setActiveLead(findLead(event.active.id as number))
-  }
-
-  function handleDragEnd(event: DragEndEvent) {
-    setActiveLead(null)
-    const { active, over } = event
-    if (!over) return
-
-    const leadId    = active.id as number
-    const targetKey = over.id as ColumnKey
-    const col       = COLUMNAS.find((c) => c.key === targetKey)
-    if (!col) return
-
-    const current = findLead(leadId)
-    if (!current || current.estado === col.estado) return
-
-    onEstadoChange(leadId, col.estado)
+    if (!lead || !estado || lead.estado === estado) return
+    onMoveLead(lead, estado)
   }
 
   return (
     <DndContext
       sensors={sensors}
-      onDragStart={handleDragStart}
+      collisionDetection={pointerWithin}
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-4 overflow-x-auto pb-4">
@@ -90,22 +86,17 @@ export function KanbanBoard({
           return (
             <KanbanColumn
               key={col.key}
-              id={col.key}
               titulo={col.titulo}
+              estado={col.estado}
               leads={leads}
               color={col.color}
               onAddLead={onAddLead}
               onClickLead={onClickLead}
+              onQuickAction={onQuickAction}
             />
           )
         })}
       </div>
-
-      <DragOverlay dropAnimation={null}>
-        {activeLead ? (
-          <LeadCard lead={activeLead} onClick={() => {}} isOverlay />
-        ) : null}
-      </DragOverlay>
     </DndContext>
   )
 }

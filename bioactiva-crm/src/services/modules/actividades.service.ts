@@ -16,31 +16,49 @@ import {
   ActividadFormData,
   ComentarioActividad,
 } from '@/types/actividad.types'
+import { notificacionesService } from '@/services/modules/notificaciones.service'
 import {
-  BackendActividad,
-  mapBackendActividad,
-  mapActividadFormToBackend,
-  mapActividadUpdateToBackend,
-} from '@/services/modules/actividades.adapter'
+  ActividadesDtoResponse,
+  ActividadDtoOut,
+  fromActividadDto,
+  toActividadQueryParams,
+  toCreateActividadDto,
+  toUpdateActividadDto,
+} from './actividades.mapper'
+
+type RawActividadesResponse = ActividadDtoOut[] | ActividadesDtoResponse
+
+const normalizeActividadesResponse = (
+  raw: RawActividadesResponse
+): Actividad[] => {
+  if (Array.isArray(raw)) return raw.map(fromActividadDto)
+  return raw.data.map(fromActividadDto)
+}
 
 export const actividadesService = {
 
   getByLead: async (leadId: number): Promise<Actividad[]> => {
     if (USE_MOCK) return mockGetActividades(leadId)
-    const response = await apiClient.get<{ data: BackendActividad[] }>(
+    const response = await apiClient.get<RawActividadesResponse>(
       ENDPOINTS.actividades.list,
-      { params: { idLead: leadId, limit: 200 } }
+      {
+        params: {
+          ...toActividadQueryParams({ id_lead: leadId }),
+          page: 1,
+          limit: 100,
+        },
+      }
     )
-    return response.data.data.map(mapBackendActividad)
+    return normalizeActividadesResponse(response.data)
   },
 
   create: async (data: ActividadFormData): Promise<Actividad> => {
     if (USE_MOCK) return mockCreateActividad(data)
-    const response = await apiClient.post<BackendActividad>(
+    const response = await apiClient.post<ActividadDtoOut>(
       ENDPOINTS.actividades.create,
-      mapActividadFormToBackend(data)
+      toCreateActividadDto(data)
     )
-    return mapBackendActividad(response.data)
+    return fromActividadDto(response.data)
   },
 
   update: async (
@@ -48,27 +66,26 @@ export const actividadesService = {
     data: Partial<ActividadFormData>
   ): Promise<Actividad> => {
     if (USE_MOCK) return mockUpdateActividad(id, data)
-    const response = await apiClient.patch<BackendActividad>(
+    const response = await apiClient.patch<ActividadDtoOut>(
       ENDPOINTS.actividades.update(id),
-      mapActividadUpdateToBackend(data)
+      toUpdateActividadDto(data)
     )
-    return mapBackendActividad(response.data)
+    return fromActividadDto(response.data)
   },
 
-  complete: async (id: number): Promise<Actividad> => {
-    if (USE_MOCK) return mockCompleteActividad(id)
-    const response = await apiClient.patch<BackendActividad>(
-      ENDPOINTS.actividades.complete(id)
-    )
-    return mapBackendActividad(response.data)
-  },
+  complete: async (id: number, notas?: string): Promise<Actividad> => {
+    if (!USE_MOCK && notas?.trim()) {
+      await actividadesService.update(id, { notas })
+    }
 
-  cancel: async (id: number): Promise<Actividad> => {
-    if (USE_MOCK) return mockCancelarActividad(id)
-    const response = await apiClient.patch<BackendActividad>(
-      ENDPOINTS.actividades.cancel(id)
-    )
-    return mapBackendActividad(response.data)
+    const actividad = USE_MOCK
+      ? await mockCompleteActividad(id, notas)
+      : fromActividadDto((await apiClient.patch<ActividadDtoOut>(
+          ENDPOINTS.actividades.complete(id)
+        )).data)
+
+    await notificacionesService.cancelarPendientesPorActividad(id)
+    return actividad
   },
 
   delete: async (id: number): Promise<void> => {
@@ -81,7 +98,7 @@ export const actividadesService = {
   getComentarios: async (actividadId: number): Promise<ComentarioActividad[]> => {
     if (USE_MOCK) return mockGetComentarios(actividadId)
     const response = await apiClient.get<ComentarioActividad[]>(
-      `/activities/${actividadId}/comments`
+      `/activities/${actividadId}/comentarios`
     )
     return response.data
   },
@@ -93,7 +110,7 @@ export const actividadesService = {
   ): Promise<ComentarioActividad> => {
     if (USE_MOCK) return mockCreateComentario(actividadId, texto, autor)
     const response = await apiClient.post<ComentarioActividad>(
-      `/activities/${actividadId}/comments`,
+      `/activities/${actividadId}/comentarios`,
       { texto }
     )
     return response.data
