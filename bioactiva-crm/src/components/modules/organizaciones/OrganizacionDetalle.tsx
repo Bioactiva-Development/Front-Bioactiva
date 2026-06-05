@@ -76,9 +76,8 @@ export function OrganizacionDetalle({
   const router                              = useRouter()
   const [confirmarEliminar, setConfirmar]   = useState(false)
   const inicial                             = organizacion.nombre.charAt(0).toUpperCase()
-  const MAX_CONTACTOS = 6
-  const contactosVisibles  = organizacion.contactos.slice(0, MAX_CONTACTOS)
-  const contactosRestantes = organizacion.contactos.length - MAX_CONTACTOS
+  const contactosVisibles  = organizacion.contactos
+  const contactosRestantes = organizacion.totalContactos - organizacion.contactos.length
 
   const formatFecha = (fecha: string) => {
     return new Date(fecha).toLocaleDateString('es-PE', {
@@ -211,14 +210,14 @@ export function OrganizacionDetalle({
             <Users size={16} className="text-emerald-600" />
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
               Contactos asociados
-              {organizacion.contactos.length > 0 && (
+              {organizacion.totalContactos > 0 && (
                 <span className="ml-2 text-emerald-600">
-                  ({organizacion.contactos.length})
+                  ({organizacion.totalContactos})
                 </span>
               )}
             </h3>
           </div>
-          {organizacion.contactos.length > 0 && (
+          {organizacion.totalContactos > 0 && (
             <button
               onClick={() => router.push(
                 `${ROUTES.contactos}?organizacion=${organizacion.id}`
@@ -226,7 +225,7 @@ export function OrganizacionDetalle({
               className="text-xs text-emerald-600 hover:underline font-semibold
                 flex items-center gap-1"
             >
-              Ver todos ({organizacion.contactos.length}) en Contactos
+              Ver todos ({organizacion.totalContactos}) en Contactos
               <ExternalLink size={10} />
             </button>
           )}

@@ -1,69 +1,46 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useContactos } from '@/hooks/contactos/useContactos'
 import { ContactoFiltros } from '@/components/modules/contactos/ContactoFiltros'
 import { ContactoCard } from '@/components/modules/contactos/ContactoCard'
-import { ContactoFiltros as FiltrosType, Contacto } from '@/types/contacto.types'
+import { ContactoFiltros as FiltrosType } from '@/types/contacto.types'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { useDebounce } from '@/hooks/shared/useDebounce'
 
 const ITEMS_POR_PAGINA = 10
-const FILTROS_INICIALES: FiltrosType = {}
-
-function aplicarFiltros(todos: Contacto[], filtros: FiltrosType): Contacto[] {
-  let r = todos
-
-  if (filtros.search) {
-    const q = filtros.search.trim().toLowerCase()
-    r = r.filter(
-      (c) =>
-        c.nombres.toLowerCase().includes(q) ||
-        c.apellidos?.toLowerCase().includes(q) ||
-        c.correo.toLowerCase().includes(q) ||
-        c.cargo?.toLowerCase().includes(q) ||
-        c.organizacion_nombre?.toLowerCase().includes(q)
-    )
-  }
-
-  if (filtros.idOrganizacion) {
-    r = r.filter((c) => c.idOrganizacion === filtros.idOrganizacion)
-  }
-
-  return r
-}
 
 export default function ContactosPage() {
-  const router = useRouter()
-  const [filtros, setFiltros] = useState<FiltrosType>(FILTROS_INICIALES)
+  const router       = useRouter()
+  const searchParams = useSearchParams()
+
+  const orgParam = searchParams.get('organizacion') ?? undefined
+
+  const [filtros, setFiltros] = useState<FiltrosType>({ idOrganizacion: orgParam })
   const [pagina, setPagina]   = useState(1)
 
-  // Carga única de todos los contactos
-  const { data, isLoading, isError } = useContactos({ limit: 500 })
-  const todos = data?.data ?? []
-
-  // Filtrado instantáneo en cliente — useMemo debe ser puro, sin side effects
-  const filtrados = useMemo(
-    () => aplicarFiltros(todos, filtros),
-    [todos, filtros.search, filtros.idOrganizacion]
-  )
+  const searchDebounced = useDebounce(filtros.search ?? '', 400)
 
   // Resetear página cuando cambian los filtros
   useEffect(() => {
     setPagina(1)
-  }, [filtros.search, filtros.idOrganizacion])
+  }, [searchDebounced, filtros.idOrganizacion])
 
-  // Paginación en cliente
-  const total        = filtrados.length
-  const totalPaginas = Math.ceil(total / ITEMS_POR_PAGINA)
-  const contactos    = filtrados.slice(
-    (pagina - 1) * ITEMS_POR_PAGINA,
-    pagina * ITEMS_POR_PAGINA
-  )
+  const { data, isLoading, isError } = useContactos({
+    search:         searchDebounced || undefined,
+    idOrganizacion: filtros.idOrganizacion,
+    page:           pagina,
+    limit:          ITEMS_POR_PAGINA,
+  })
+
+  const contactos    = data?.data       ?? []
+  const total        = data?.total      ?? 0
+  const totalPaginas = data?.totalPages ?? Math.ceil(total / ITEMS_POR_PAGINA)
 
   const handleLimpiarFiltros = () => {
-    setFiltros(FILTROS_INICIALES)
+    setFiltros({})
     setPagina(1)
   }
 
