@@ -8,7 +8,15 @@ pipeline {
     stages {
 
         stage('Checkout Repo') {
+            agent {
+                docker {
+                    image 'node:22-slim'
+                    reuseNode true
+                    args '-u root'
+                }
+            }
             steps {
+                cleanWs()
                 checkout scm
             }
         }
