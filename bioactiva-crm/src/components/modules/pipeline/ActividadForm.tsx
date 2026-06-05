@@ -14,11 +14,11 @@ import { usuariosService } from '@/services/modules/usuarios.service'
 import { UsuarioListItem } from '@/types/usuario.types'
 
 interface ActividadFormProps {
-  leadId:    number
-  onSubmit:  (data: ActividadFormValues) => Promise<void>
+  leadId: number
+  onSubmit: (data: ActividadFormValues) => Promise<void>
   onCancelar: () => void
   isLoading: boolean
-  error?:    string | null
+  error?: string | null
 }
 
 interface ResponsableOption {
@@ -67,9 +67,9 @@ export function ActividadForm({
   } = useForm<ActividadFormValues>({
     resolver: zodResolver(actividadSchema),
     defaultValues: {
-      id_lead:    leadId,
-      estado:     EstadoActividad.Pendiente,
-      tipo:       TipoActividad.Llamada,
+      id_lead: leadId,
+      estado: EstadoActividad.Pendiente,
+      tipo: TipoActividad.Llamada,
       id_responsable: usuario?.id ?? 0,
     },
   })
@@ -140,9 +140,9 @@ export function ActividadForm({
 
     const fallback =
       usuarioActualOption &&
-      responsablesDisponibles.some(
-        (responsable) => responsable.id === usuarioActualOption.id
-      )
+        responsablesDisponibles.some(
+          (responsable) => responsable.id === usuarioActualOption.id
+        )
         ? usuarioActualOption
         : responsablesDisponibles[0]
 
