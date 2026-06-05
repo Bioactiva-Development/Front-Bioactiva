@@ -3,6 +3,7 @@ import {
   Cotizacion,
   CotizacionFiltros,
   CotizacionesResponse,
+  CotizacionFormData,
   CotizacionKpis,
 } from '@/types/cotizacion.types'
 
@@ -25,10 +26,9 @@ const MOCK_COTIZACIONES: Cotizacion[] = [
     id_author:        1,
     created_at:       '2025-03-15T08:00:00Z',
     updated_at:       '2025-03-15T08:00:00Z',
-    lead_codigo:      'LEAD-2025-003',
     contacto_nombre:  'Roxana Salcedo Mora',
     organizacion_nombre: 'Municipalidad de Miraflores',
-    periodo:          'Marzo 2025',
+    periodo:          'marzo 2025',
   },
   {
     id:               2,
@@ -48,10 +48,9 @@ const MOCK_COTIZACIONES: Cotizacion[] = [
     id_author:        1,
     created_at:       '2025-03-11T08:00:00Z',
     updated_at:       '2025-03-11T08:00:00Z',
-    lead_codigo:      'LEAD-2025-008',
     contacto_nombre:  'Patricia Ccopa Mamani',
     organizacion_nombre: 'Altomayo',
-    periodo:          'Marzo 2025',
+    periodo:          'marzo 2025',
   },
   {
     id:               3,
@@ -70,10 +69,9 @@ const MOCK_COTIZACIONES: Cotizacion[] = [
     id_author:        2,
     created_at:       '2025-04-05T08:00:00Z',
     updated_at:       '2025-04-05T08:00:00Z',
-    lead_codigo:      'LEAD-2025-005',
     contacto_nombre:  'Rafael Benavides Sotelo',
     organizacion_nombre: 'Inversiones Pisco S.A.',
-    periodo:          'Abril 2025',
+    periodo:          'abril 2025',
   },
 ]
 
@@ -87,20 +85,16 @@ export const mockGetCotizaciones = async (
 
   let resultado = [...MOCK_COTIZACIONES]
 
-  if (filtros?.search) {
-    const q = filtros.search.toLowerCase()
-    resultado = resultado.filter(
-      (c) =>
-        c.codigo.toLowerCase().includes(q) ||
-        c.cliente.toLowerCase().includes(q) ||
-        c.nombre_servicio.toLowerCase().includes(q) ||
-        c.lead_codigo?.toLowerCase().includes(q) ||
-        c.contacto_nombre?.toLowerCase().includes(q)
-    )
+  if (filtros?.id_lead) {
+    resultado = resultado.filter((c) => c.id_lead === filtros.id_lead)
   }
 
   if (filtros?.estado) {
     resultado = resultado.filter((c) => c.estado === filtros.estado)
+  }
+
+  if (filtros?.id_remitente) {
+    resultado = resultado.filter((c) => c.id_remitente === filtros.id_remitente)
   }
 
   const page  = filtros?.page  ?? 1
@@ -113,45 +107,36 @@ export const mockGetCotizaciones = async (
 
 export const mockGetCotizacion = async (id: number): Promise<Cotizacion> => {
   await delay(400)
-
   const cot = MOCK_COTIZACIONES.find((c) => c.id === id)
-  if (!cot) {
-    throw { status: 404, message: 'Cotización no encontrada.' }
-  }
+  if (!cot) throw Object.assign(new Error('Cotización no encontrada.'), { status: 404 })
   return cot
 }
 
 export const mockCreateCotizacion = async (
-  data: Partial<Cotizacion>
+  data: CotizacionFormData
 ): Promise<Cotizacion> => {
   await delay()
 
-  const anio   = new Date().getFullYear()
-  const codigo = `COT-${anio}-${String(MOCK_COTIZACIONES.length + 1).padStart(3, '0')}`
-
   const nueva: Cotizacion = {
     id:               Date.now(),
-    codigo,
-    id_lead:          data.id_lead!,
-    id_remitente:     data.id_remitente!,
-    fecha_cot:        data.fecha_cot!,
-    dirigido:         data.dirigido!,
-    cliente:          data.cliente!,
+    codigo:           `COT-${new Date().getFullYear()}-${String(MOCK_COTIZACIONES.length + 1).padStart(3, '0')}`,
+    id_lead:          data.id_lead,
+    id_remitente:     data.id_remitente,
+    fecha_cot:        data.fecha_cot,
+    dirigido:         data.dirigido,
+    cliente:          data.cliente,
     producto:         data.producto,
-    nombre_remitente: data.nombre_remitente!,
-    nombre_servicio:  data.nombre_servicio!,
-    monto:            data.monto!,
-    tipo:             data.tipo!,
-    estado:           data.estado!,
+    nombre_remitente: 'Administración',
+    nombre_servicio:  data.nombre_servicio,
+    monto:            data.monto,
+    tipo:             data.tipo,
+    estado:           EstadoCot.Pendiente,     // siempre PENDIENTE al crear
     observacion:      data.observacion,
     link_propuesta:   data.link_propuesta,
     id_author:        1,
     created_at:       new Date().toISOString(),
     updated_at:       new Date().toISOString(),
-    lead_codigo:      data.lead_codigo,
-    contacto_nombre:  data.contacto_nombre,
-    organizacion_nombre: data.organizacion_nombre,
-    periodo:          new Date(data.fecha_cot!).toLocaleDateString('es-PE', {
+    periodo: new Date(data.fecha_cot).toLocaleDateString('es-PE', {
       month: 'long',
       year:  'numeric',
     }),
@@ -163,50 +148,94 @@ export const mockCreateCotizacion = async (
 
 export const mockUpdateCotizacion = async (
   id: number,
-  data: Partial<Cotizacion>
+  data: Partial<CotizacionFormData>
 ): Promise<Cotizacion> => {
   await delay()
 
   const index = MOCK_COTIZACIONES.findIndex((c) => c.id === id)
-  if (index === -1) {
-    throw { status: 404, message: 'Cotización no encontrada.' }
+  if (index === -1) throw Object.assign(new Error('Cotización no encontrada.'), { status: 404 })
+
+  const actual = MOCK_COTIZACIONES[index]
+  if (actual.estado === EstadoCot.Aceptada || actual.estado === EstadoCot.Rechazada) {
+    throw Object.assign(new Error('No se puede modificar una cotización en estado terminal.'), { status: 400 })
   }
 
-  const actualizada = {
-    ...MOCK_COTIZACIONES[index],
+  MOCK_COTIZACIONES[index] = {
+    ...actual,
     ...data,
     updated_at: new Date().toISOString(),
   }
+  return MOCK_COTIZACIONES[index]
+}
 
-  MOCK_COTIZACIONES[index] = actualizada
-  return actualizada
+export const mockEnviarCotizacion = async (id: number): Promise<Cotizacion> => {
+  await delay(400)
+  const index = MOCK_COTIZACIONES.findIndex((c) => c.id === id)
+  if (index === -1) throw Object.assign(new Error('Cotización no encontrada.'), { status: 404 })
+  if (MOCK_COTIZACIONES[index].estado !== EstadoCot.Pendiente) {
+    throw Object.assign(new Error('Solo se puede enviar una cotización Pendiente.'), { status: 400 })
+  }
+  MOCK_COTIZACIONES[index] = {
+    ...MOCK_COTIZACIONES[index],
+    estado:     EstadoCot.Enviada,
+    updated_at: new Date().toISOString(),
+  }
+  return MOCK_COTIZACIONES[index]
+}
+
+export const mockAceptarCotizacion = async (id: number): Promise<Cotizacion> => {
+  await delay(400)
+  const index = MOCK_COTIZACIONES.findIndex((c) => c.id === id)
+  if (index === -1) throw Object.assign(new Error('Cotización no encontrada.'), { status: 404 })
+  const { estado } = MOCK_COTIZACIONES[index]
+  if (estado !== EstadoCot.Pendiente && estado !== EstadoCot.Enviada) {
+    throw Object.assign(new Error('Solo se puede aceptar una cotización Pendiente o Enviada.'), { status: 400 })
+  }
+  MOCK_COTIZACIONES[index] = {
+    ...MOCK_COTIZACIONES[index],
+    estado:     EstadoCot.Aceptada,
+    updated_at: new Date().toISOString(),
+  }
+  return MOCK_COTIZACIONES[index]
+}
+
+export const mockRechazarCotizacion = async (id: number): Promise<Cotizacion> => {
+  await delay(400)
+  const index = MOCK_COTIZACIONES.findIndex((c) => c.id === id)
+  if (index === -1) throw Object.assign(new Error('Cotización no encontrada.'), { status: 404 })
+  const { estado } = MOCK_COTIZACIONES[index]
+  if (estado !== EstadoCot.Pendiente && estado !== EstadoCot.Enviada) {
+    throw Object.assign(new Error('Solo se puede rechazar una cotización Pendiente o Enviada.'), { status: 400 })
+  }
+  MOCK_COTIZACIONES[index] = {
+    ...MOCK_COTIZACIONES[index],
+    estado:     EstadoCot.Rechazada,
+    updated_at: new Date().toISOString(),
+  }
+  return MOCK_COTIZACIONES[index]
+}
+
+export const mockEliminarCotizacion = async (id: number): Promise<void> => {
+  await delay(400)
+  const index = MOCK_COTIZACIONES.findIndex((c) => c.id === id)
+  if (index === -1) throw Object.assign(new Error('Cotización no encontrada.'), { status: 404 })
+  MOCK_COTIZACIONES.splice(index, 1)
 }
 
 export const mockGetKpis = async (): Promise<CotizacionKpis> => {
   await delay(300)
-
-  const aceptadas = MOCK_COTIZACIONES.filter(
-    (c) => c.estado === EstadoCot.Aceptada
-  )
-  const enviadas = MOCK_COTIZACIONES.filter(
-    (c) => c.estado === EstadoCot.Enviada
-  )
+  const aceptadas  = MOCK_COTIZACIONES.filter((c) => c.estado === EstadoCot.Aceptada)
+  const enviadas   = MOCK_COTIZACIONES.filter((c) => c.estado === EstadoCot.Enviada)
   const totalActivo = MOCK_COTIZACIONES
     .filter((c) => c.estado !== EstadoCot.Rechazada)
     .reduce((sum, c) => sum + c.monto, 0)
-
-  const propuestas = MOCK_COTIZACIONES.filter(
-    (c) => c.estado === EstadoCot.Enviada || c.estado === EstadoCot.Aceptada
-  ).length
-
-  const conversion = propuestas > 0
-    ? Math.round((aceptadas.length / propuestas) * 100)
-    : 0
-
+  const propuestas = enviadas.length + aceptadas.length
   return {
     totalActivo,
-    aceptadas: aceptadas.length,
-    enviadas:  enviadas.length,
-    conversion,
+    aceptadas:  aceptadas.length,
+    enviadas:   enviadas.length,
+    conversion: propuestas > 0
+      ? Math.round((aceptadas.length / propuestas) * 100)
+      : 0,
   }
 }

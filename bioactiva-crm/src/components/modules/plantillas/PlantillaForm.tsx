@@ -31,7 +31,7 @@ export function PlantillaForm({
   onSubmit,
   isLoading,
   error,
-}: PlantillaFormProps) {
+}: Readonly<PlantillaFormProps>) {
   const router    = useRouter()
   const esEdicion = !!plantilla
   const cuerpoRef = useRef<HTMLTextAreaElement | null>(null)
@@ -94,10 +94,11 @@ export function PlantillaForm({
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="pf-nombre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Nombre de la plantilla <span className="text-red-500">*</span>
           </label>
           <input
+            id="pf-nombre"
             type="text"
             placeholder="Ej: Confirmación de reunión"
             {...register('nombre')}
@@ -109,10 +110,11 @@ export function PlantillaForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="pf-asunto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Asunto del correo <span className="text-red-500">*</span>
           </label>
           <input
+            id="pf-asunto"
             type="text"
             placeholder="Ej: Reunión con {{nombre_organizacion}} — {{fecha_actividad}}"
             {...register('asunto')}
@@ -125,10 +127,11 @@ export function PlantillaForm({
 
         <div className="grid grid-cols-3 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="pf-categoria" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Categoría
             </label>
             <select
+              id="pf-categoria"
               {...register('categoria')}
               className={`${inputClass(!!errors.categoria)} cursor-pointer`}
             >
@@ -139,11 +142,12 @@ export function PlantillaForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
+            <label htmlFor="pf-uso" className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
               Uso
               <Info size={12} className="text-gray-400" />
             </label>
             <select
+              id="pf-uso"
               {...register('uso')}
               className={`${inputClass(!!errors.uso)} cursor-pointer`}
             >
@@ -155,10 +159,11 @@ export function PlantillaForm({
 
           {/* ✅ activo manejado manualmente con setValue, no con register */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="pf-estado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Estado
             </label>
             <select
+              id="pf-estado"
               value={String(activoValue)}
               onChange={(e) => setValue('activo', e.target.value === 'true')}
               className={`${inputClass(false)} cursor-pointer`}
@@ -174,9 +179,9 @@ export function PlantillaForm({
 
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Variables disponibles
-            </label>
+            </p>
             <span className="text-xs text-gray-400">
               Haz clic para insertar en el cuerpo
             </span>
@@ -200,10 +205,11 @@ export function PlantillaForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="pf-cuerpo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Cuerpo del mensaje <span className="text-red-500">*</span>
           </label>
           <textarea
+            id="pf-cuerpo"
             rows={10}
             placeholder="Escribe el cuerpo del correo aquí. Usa las variables de arriba para personalizar."
             {...cuerpoRegRest}

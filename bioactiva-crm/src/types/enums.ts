@@ -24,8 +24,9 @@ export enum TipoActividad {
 }
 
 export enum EstadoActividad {
-    Pendiente = 'Pendiente',
+    Pendiente  = 'Pendiente',
     Completada = 'Completada',
+    Cancelada  = 'Cancelada',
 }
 
 export enum EstadoCot {
@@ -111,4 +112,5 @@ export enum EstadoToken {
     Pendiente = 'Pendiente',
     Consumido = 'Consumido',
     Expirado = 'Expirado',
+    Revocado = 'Revocado',
 }

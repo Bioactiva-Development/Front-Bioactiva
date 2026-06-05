@@ -40,6 +40,6 @@ export function useInvitaciones(params?: ListInvitacionesParams) {
 
         revokeInvitacion: revokeMutation.mutateAsync,
         isRevoking: revokeMutation.isPending,
-        revokingId: revokeMutation.variables as number | undefined,
+        revokingId: revokeMutation.variables,
     }
 }

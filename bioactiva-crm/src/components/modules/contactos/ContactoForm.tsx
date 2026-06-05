@@ -14,10 +14,10 @@ import { ROUTES } from '@/lib/constants/routes'
 import { useOrganizaciones } from '@/hooks/organizaciones/useOrganizaciones'
 
 interface ContactoFormProps {
-  contacto?:  Contacto
-  onSubmit:   (data: ContactoFormValues) => Promise<void>
-  isLoading:  boolean
-  error?:     string | null
+  contacto?:     Contacto
+  onSubmit:      (data: ContactoFormValues) => Promise<void>
+  isLoading:     boolean
+  error?:        string | null
   orgIdInicial?: string
 }
 
@@ -27,7 +27,7 @@ export function ContactoForm({
   isLoading,
   error,
   orgIdInicial,
-}: ContactoFormProps) {
+}: Readonly<ContactoFormProps>) {
   const router    = useRouter()
   const esEdicion = !!contacto
 
@@ -70,10 +70,11 @@ export function ContactoForm({
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-4">
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="cf-org" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Organización <span className="text-red-500">*</span>
           </label>
           <select
+            id="cf-org"
             {...register('idOrganizacion')}
             disabled={esEdicion}
             className={`${inputClass(!!errors.idOrganizacion)}
@@ -98,10 +99,11 @@ export function ContactoForm({
 
         <div className="grid grid-cols-4 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="cf-vocativo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Vocativo
             </label>
             <select
+              id="cf-vocativo"
               {...register('vocativo')}
               className={`${inputClass(!!errors.vocativo)} cursor-pointer`}
             >
@@ -113,10 +115,11 @@ export function ContactoForm({
           </div>
 
           <div className="col-span-3 space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="cf-nombres" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Nombres <span className="text-red-500">*</span>
             </label>
             <input
+              id="cf-nombres"
               type="text"
               placeholder="Nombres del contacto"
               {...register('nombres')}
@@ -129,10 +132,11 @@ export function ContactoForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="cf-apellidos" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Apellidos <span className="text-red-500">*</span>
           </label>
           <input
+            id="cf-apellidos"
             type="text"
             placeholder="Apellidos del contacto"
             {...register('apellidos')}
@@ -144,11 +148,12 @@ export function ContactoForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="cf-cargo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Cargo{' '}
             <span className="text-gray-400 normal-case font-normal">Opcional</span>
           </label>
           <input
+            id="cf-cargo"
             type="text"
             placeholder="Ej: Gerente de Proyectos"
             {...register('cargo')}
@@ -157,10 +162,11 @@ export function ContactoForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="cf-correo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Correo electrónico <span className="text-red-500">*</span>
           </label>
           <input
+            id="cf-correo"
             type="email"
             placeholder="correo@empresa.com"
             {...register('correo')}
@@ -172,11 +178,12 @@ export function ContactoForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="cf-correo2" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Correo secundario{' '}
             <span className="text-gray-400 normal-case font-normal">Opcional</span>
           </label>
           <input
+            id="cf-correo2"
             type="email"
             placeholder="correo.alternativo@empresa.com"
             {...register('correo2')}
@@ -188,11 +195,12 @@ export function ContactoForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="cf-telefono" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Teléfono{' '}
             <span className="text-gray-400 normal-case font-normal">Opcional</span>
           </label>
           <input
+            id="cf-telefono"
             type="text"
             placeholder="Ej: 999 123 456"
             {...register('telefono')}
@@ -204,11 +212,12 @@ export function ContactoForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Comentarios
+          <label htmlFor="cf-comentarios" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Comentarios{' '}
             <span className="text-gray-400 normal-case font-normal ml-1">Opcional</span>
           </label>
           <textarea
+            id="cf-comentarios"
             rows={3}
             placeholder="Notas o comentarios adicionales sobre el contacto..."
             {...register('comentarios')}

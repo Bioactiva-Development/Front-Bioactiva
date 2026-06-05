@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { LeadState } from '@/types/enums'
 
 export const leadSchema = z.object({
   id_org: z
@@ -9,10 +8,6 @@ export const leadSchema = z.object({
   id_contacto: z
     .number()
     .optional(),
-
-  estado: z.nativeEnum(LeadState, {
-    error: 'El estado es obligatorio',
-  }),
 
   servicio_interes: z
     .string()

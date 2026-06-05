@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { organizacionesService } from '@/services/modules/organizaciones.service'
 import { QUERY_KEYS } from '@/lib/constants/queryKeys'
 import { getErrorMessage } from '@/lib/utils/error.utils'
@@ -14,9 +15,10 @@ import {
 
 export function useOrganizaciones(filtros?: OrganizacionFiltros) {
   return useQuery({
-    queryKey:    QUERY_KEYS.organizaciones.list(filtros),
-    queryFn:     () => organizacionesService.getAll(filtros),
-    staleTime:   1000 * 60 * 5, 
+    queryKey:        QUERY_KEYS.organizaciones.list(filtros),
+    queryFn:         () => organizacionesService.getAll(filtros),
+    staleTime:       1000 * 60 * 5,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -35,10 +37,7 @@ export function useCrearOrganizacion() {
   return useMutation({
     mutationFn: (data: OrganizacionFormData) => {
       if (!idAuthor) {
-        return Promise.reject({
-          status: 401,
-          message: 'Sesión expirada. Vuelve a iniciar sesión para registrar una organización.',
-        })
+        return Promise.reject(new Error('Sesión expirada. Vuelve a iniciar sesión para registrar una organización.'))
       }
       return organizacionesService.create(data, idAuthor)
     },
@@ -66,6 +65,19 @@ export function useActualizarOrganizacion(id: string) {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.organizaciones.detail(id),
       })
+    },
+  })
+}
+
+export function useEliminarOrganizacion() {
+  const queryClient = useQueryClient()
+  const router = useRouter()
+
+  return useMutation({
+    mutationFn: (id: string) => organizacionesService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['organizaciones'] })
+      router.push('/organizaciones')
     },
   })
 }

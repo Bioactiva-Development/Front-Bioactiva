@@ -49,7 +49,7 @@ export function useAcceptInvitacion() {
 
             const { accessToken } = await usuariosService.acceptInvitacion({ token, ...data })
 
-            if (typeof window !== 'undefined') {
+            if (typeof globalThis.window !== 'undefined') {
                 localStorage.setItem(TOKEN_KEY, accessToken)
             }
 
@@ -60,7 +60,7 @@ export function useAcceptInvitacion() {
                 usuarioData = usuarioFromAccessToken(accessToken, '')
             }
 
-            if (typeof window !== 'undefined') {
+            if (typeof globalThis.window !== 'undefined') {
                 setCookie(COOKIE_TOKEN, accessToken)
                 setCookie(COOKIE_ROL, usuarioData.rol)
             }

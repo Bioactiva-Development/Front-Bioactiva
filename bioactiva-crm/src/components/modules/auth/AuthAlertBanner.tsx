@@ -18,7 +18,7 @@ interface AuthAlertBannerProps {
     withIcon?: boolean
 }
 
-export function AuthAlertBanner({ variant, message, withIcon = false }: AuthAlertBannerProps) {
+export function AuthAlertBanner({ variant, message, withIcon = false }: Readonly<AuthAlertBannerProps>) {
     return (
         <div className={`${withIcon ? 'flex items-start gap-3 ' : ''}${variantStyles[variant]} border text-sm rounded-lg px-4 py-3`}>
             {withIcon && variantIcons[variant]}

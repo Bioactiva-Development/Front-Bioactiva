@@ -1,5 +1,5 @@
 'use client'
-
+//hola
 import { useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth.store'
@@ -18,7 +18,7 @@ export function useProactiveRefresh() {
     const doRefresh = useCallback(async () => {
         try {
             const { accessToken: newToken, accessTokenExpiresIn } = await authService.refresh()
-            if (typeof window !== 'undefined') {
+            if (typeof globalThis.window !== 'undefined') {
                 localStorage.setItem(TOKEN_KEY, newToken)
             }
             updateToken(newToken, accessTokenExpiresIn)

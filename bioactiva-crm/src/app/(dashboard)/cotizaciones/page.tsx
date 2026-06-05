@@ -7,7 +7,6 @@ import { useCotizaciones, useCotizacionKpis } from '@/hooks/cotizaciones/useCoti
 import { CotizacionFiltros } from '@/components/modules/cotizaciones/CotizacionFiltros'
 import { CotizacionCard } from '@/components/modules/cotizaciones/CotizacionCard'
 import { CotizacionFiltros as FiltrosType } from '@/types/cotizacion.types'
-import { TipoMoneda } from '@/types/enums'
 
 const FILTROS_INICIALES: FiltrosType = {
   page:  1,

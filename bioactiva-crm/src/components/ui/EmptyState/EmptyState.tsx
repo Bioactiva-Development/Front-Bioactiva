@@ -10,7 +10,7 @@ export function EmptyState({
     title = 'No hay resultados',
     description = 'No se encontraron datos para mostrar.',
     action,
-}: EmptyStateProps) {
+}: Readonly<EmptyStateProps>) {
     return (
         <div className="flex flex-col items-center justify-center py-12 px-4">
             <div className="w-16 h-16 rounded-2xl bg-[#F1FFEC] flex items-center justify-center mb-4">

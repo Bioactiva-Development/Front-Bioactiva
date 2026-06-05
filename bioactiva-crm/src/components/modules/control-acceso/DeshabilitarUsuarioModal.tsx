@@ -21,6 +21,8 @@ export function DeshabilitarUsuarioModal({ usuario, isLoading, onClose, onConfir
         if (ok) onClose()
     }
 
+    const labelConfirm = esActivo ? 'Sí, deshabilitar' : 'Sí, habilitar'
+
     return (
         <ModalShell onClose={onClose} maxWidth="sm">
             <ModalHeader
@@ -60,7 +62,7 @@ export function DeshabilitarUsuarioModal({ usuario, isLoading, onClose, onConfir
                         {isLoading ? (
                             <><Loader2 size={14} className="animate-spin" />Procesando...</>
                         ) : (
-                            esActivo ? 'Sí, deshabilitar' : 'Sí, habilitar'
+                            labelConfirm
                         )}
                     </button>
                 </div>

@@ -25,7 +25,7 @@ export function PlantillaCard({
   onVer,
   onEditar,
   onEliminar,
-}: PlantillaCardProps) {
+}: Readonly<PlantillaCardProps>) {
   const categoriaStyle = CATEGORIA_STYLES[plantilla.categoria]
 
   const formatFecha = (fecha: string) =>
@@ -49,13 +49,14 @@ export function PlantillaCard({
             {categoriaStyle.icono}
           </div>
           <div>
-            <p
+            <button
+              type="button"
               className="text-sm font-semibold text-emerald-700 cursor-pointer
-                hover:underline"
+                hover:underline text-left"
               onClick={() => onVer(plantilla)}
             >
               {plantilla.nombre}
-            </p>
+            </button>
             <p className="text-xs text-gray-400 mt-0.5">{asuntoPreview}</p>
           </div>
         </div>

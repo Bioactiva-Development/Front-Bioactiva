@@ -58,7 +58,7 @@ export function useAuth() {
 
             const { accessToken, accessTokenExpiresIn } = await authService.login(data, captchaToken)
 
-            if (typeof window !== 'undefined') {
+            if (typeof globalThis.window !== 'undefined') {
                 localStorage.setItem(TOKEN_KEY, accessToken)
             }
 
@@ -71,7 +71,7 @@ export function useAuth() {
                     usuarioFromAccessToken(accessToken, data.correo)
             }
 
-            if (typeof window !== 'undefined') {
+            if (typeof globalThis.window !== 'undefined') {
                 setCookie(COOKIE_TOKEN, accessToken)
                 setCookie(COOKIE_ROL, usuarioData.rol)
             }
@@ -79,7 +79,7 @@ export function useAuth() {
             setSession(accessToken, usuarioData, accessTokenExpiresIn)
             router.push(ROUTES.dashboard)
         } catch (err: unknown) {
-            if (typeof window !== 'undefined') {
+            if (typeof globalThis.window !== 'undefined') {
                 localStorage.removeItem(TOKEN_KEY)
             }
             setError(extractMessage(err, 'Error al iniciar sesión. Intente nuevamente.'))
@@ -93,7 +93,7 @@ export function useAuth() {
             await authService.logout()
         } catch {
         } finally {
-            if (typeof window !== 'undefined') {
+            if (typeof globalThis.window !== 'undefined') {
                 clearCookie(COOKIE_TOKEN)
                 clearCookie(COOKIE_ROL)
             }
@@ -114,6 +114,9 @@ export function useAuth() {
                 'Si el correo está registrado en el sistema, recibirás un enlace de recuperación en los próximos minutos.',
             )
         } catch (err: unknown) {
+            // El backend retorna errores diferenciados (400 dominio no permitido,
+            // 404 correo no registrado o inactivo, 409 solicitud activa en <5 min).
+            // extractMessage pasa el mensaje del servidor directamente al formulario.
             setError(extractMessage(err, 'Error al enviar el correo. Intente nuevamente.'))
         } finally {
             setIsLoading(false)

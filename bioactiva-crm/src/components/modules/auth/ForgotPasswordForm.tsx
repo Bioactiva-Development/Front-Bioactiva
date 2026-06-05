@@ -78,10 +78,11 @@ export function ForgotPasswordForm() {
                     ) : (
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                             <div className="space-y-1.5">
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                <label htmlFor="fp-correo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                     Correo electrónico
                                 </label>
                                 <input
+                                    id="fp-correo"
                                     type="email"
                                     autoComplete="email"
                                     placeholder="correo@bioactiva.pe"

@@ -236,9 +236,10 @@ export const mockGetContactos = async (
 
     return {
         data,
-        total: resultado.length,
+        total:      resultado.length,
         page,
         limit,
+        totalPages: Math.ceil(resultado.length / limit) || 1,
     }
 }
 
@@ -247,7 +248,7 @@ export const mockGetContacto = async (id: number): Promise<Contacto> => {
 
     const contacto = MOCK_CONTACTOS.find((c) => c.id === id)
     if (!contacto) {
-        throw { status: 404, message: 'Contacto no encontrado.' }
+        throw Object.assign(new Error('Contacto no encontrado.'), { status: 404 })
     }
     return contacto
 }
@@ -259,7 +260,7 @@ export const mockCreateContacto = async (
 
     const existe = MOCK_CONTACTOS.find((c) => c.correo === data.correo)
     if (existe) {
-        throw { status: 409, message: 'El correo ya se encuentra registrado.' }
+        throw Object.assign(new Error('El correo ya se encuentra registrado.'), { status: 409 })
     }
 
     if (data.correo2) {
@@ -267,7 +268,7 @@ export const mockCreateContacto = async (
             (c) => c.correo === data.correo2 || c.correo2 === data.correo2
         )
         if (existe2) {
-            throw { status: 409, message: 'El correo secundario ya se encuentra registrado.' }
+            throw Object.assign(new Error('El correo secundario ya se encuentra registrado.'), { status: 409 })
         }
     }
 
@@ -301,7 +302,7 @@ export const mockUpdateContacto = async (
 
     const index = MOCK_CONTACTOS.findIndex((c) => c.id === id)
     if (index === -1) {
-        throw { status: 404, message: 'Contacto no encontrado.' }
+        throw Object.assign(new Error('Contacto no encontrado.'), { status: 404 })
     }
 
     if (data.correo) {
@@ -309,7 +310,7 @@ export const mockUpdateContacto = async (
             (c) => c.correo === data.correo && c.id !== id
         )
         if (existe) {
-            throw { status: 409, message: 'El correo ya se encuentra registrado.' }
+            throw Object.assign(new Error('El correo ya se encuentra registrado.'), { status: 409 })
         }
     }
 

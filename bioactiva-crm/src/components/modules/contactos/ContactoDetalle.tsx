@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Pencil, Mail, Phone,
-  Building2, FileText, Star,
+  Building2, FileText,
 } from 'lucide-react'
 import { Contacto } from '@/types/contacto.types'
 import { ROUTES } from '@/lib/constants/routes'
@@ -42,7 +42,7 @@ function InfoItem({
 export function ContactoDetalle({
   contacto,
   onEditar,
-}: ContactoDetalleProps) {
+}: Readonly<ContactoDetalleProps>) {
   const router    = useRouter()
   const iniciales = `${contacto.nombres.charAt(0)}${contacto.apellidos?.charAt(0) ?? ''}`.toUpperCase()
 
@@ -81,25 +81,15 @@ export function ContactoDetalle({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onEditar}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
-                font-semibold border border-emerald-600 text-emerald-600
-                hover:bg-emerald-50 transition-colors"
-            >
-              <Pencil size={14} />
-              Editar
-            </button>
-            <button
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
-                font-semibold bg-amber-500 hover:bg-amber-600 text-white
-                transition-colors"
-            >
-              <Star size={14} />
-              Convertir en lead
-            </button>
-          </div>
+          <button
+            onClick={onEditar}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
+              font-semibold border border-emerald-600 text-emerald-600
+              hover:bg-emerald-50 transition-colors"
+          >
+            <Pencil size={14} />
+            Editar
+          </button>
         </div>
       </div>
 

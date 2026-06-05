@@ -1,35 +1,47 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useContactos } from '@/hooks/contactos/useContactos'
 import { ContactoFiltros } from '@/components/modules/contactos/ContactoFiltros'
 import { ContactoCard } from '@/components/modules/contactos/ContactoCard'
 import { ContactoFiltros as FiltrosType } from '@/types/contacto.types'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { useDebounce } from '@/hooks/shared/useDebounce'
 
-const FILTROS_INICIALES: FiltrosType = {
-  page:  1,
-  limit: 10,
-}
+const ITEMS_POR_PAGINA = 10
 
 export default function ContactosPage() {
-  const router                = useRouter()
-  const [filtros, setFiltros] = useState<FiltrosType>(FILTROS_INICIALES)
+  const router       = useRouter()
+  const searchParams = useSearchParams()
 
-  const { data, isLoading, isError } = useContactos(filtros)
+  const orgParam = searchParams.get('organizacion') ?? undefined
 
-  const contactos    = data?.data  ?? []
-  const total        = data?.total ?? 0
-  const paginaActual = data?.page  ?? 1
-  const limit        = data?.limit ?? 10
-  const totalPaginas = Math.ceil(total / limit)
+  const [filtros, setFiltros] = useState<FiltrosType>({ idOrganizacion: orgParam })
+  const [pagina, setPagina]   = useState(1)
 
-  const handleLimpiarFiltros = () => setFiltros(FILTROS_INICIALES)
+  const searchDebounced = useDebounce(filtros.search ?? '', 400)
 
-  const handlePagina = (pagina: number) => {
-    setFiltros((prev) => ({ ...prev, page: pagina }))
+  // Resetear página cuando cambian los filtros
+  useEffect(() => {
+    setPagina(1)
+  }, [searchDebounced, filtros.idOrganizacion])
+
+  const { data, isLoading, isError } = useContactos({
+    search:         searchDebounced || undefined,
+    idOrganizacion: filtros.idOrganizacion,
+    page:           pagina,
+    limit:          ITEMS_POR_PAGINA,
+  })
+
+  const contactos    = data?.data       ?? []
+  const total        = data?.total      ?? 0
+  const totalPaginas = data?.totalPages ?? Math.ceil(total / ITEMS_POR_PAGINA)
+
+  const handleLimpiarFiltros = () => {
+    setFiltros({})
+    setPagina(1)
   }
 
   return (
@@ -51,9 +63,8 @@ export default function ContactosPage() {
 
       <ContactoFiltros
         filtros={filtros}
-        onChange={setFiltros}
+        onChange={(f) => setFiltros(f)}
         onLimpiar={handleLimpiarFiltros}
-        isLoading={isLoading}
       />
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -65,7 +76,7 @@ export default function ContactosPage() {
           </div>
         )}
 
-        {isError && (
+        {isError && !isLoading && (
           <div className="flex items-center justify-center py-16">
             <p className="text-sm text-red-500">
               Error al cargar contactos. Intente nuevamente.
@@ -107,61 +118,50 @@ export default function ContactosPage() {
             </thead>
             <tbody>
               {contactos.map((contacto) => (
-                <ContactoCard
-                  key={contacto.id}
-                  contacto={contacto}
-                />
+                <ContactoCard key={contacto.id} contacto={contacto} />
               ))}
             </tbody>
           </table>
         )}
 
-        {!isLoading && totalPaginas > 1 && (
+        {!isLoading && total > 0 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-50">
             <p className="text-sm text-gray-500">
-              Mostrando {((paginaActual - 1) * limit) + 1} – {Math.min(paginaActual * limit, total)} de {total}
+              Mostrando {((pagina - 1) * ITEMS_POR_PAGINA) + 1}–{Math.min(pagina * ITEMS_POR_PAGINA, total)} de {total}
             </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handlePagina(paginaActual - 1)}
-                disabled={paginaActual === 1}
-                className="p-2 rounded-lg text-gray-400 hover:text-gray-600
-                  hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed
-                  transition-colors"
-              >
-                ‹
-              </button>
-              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((p) => (
+            {totalPaginas > 1 && (
+              <div className="flex items-center gap-2">
                 <button
-                  key={p}
-                  onClick={() => handlePagina(p)}
-                  className={`w-8 h-8 rounded-lg text-sm font-semibold transition-colors
-                    ${p === paginaActual
-                      ? 'bg-emerald-600 text-white'
-                      : 'text-gray-500 hover:bg-gray-50'
-                    }`}
+                  onClick={() => setPagina((p) => p - 1)}
+                  disabled={pagina === 1}
+                  className="p-2 rounded-lg text-gray-400 hover:text-gray-600
+                    hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {p}
+                  ‹
                 </button>
-              ))}
-              <button
-                onClick={() => handlePagina(paginaActual + 1)}
-                disabled={paginaActual === totalPaginas}
-                className="p-2 rounded-lg text-gray-400 hover:text-gray-600
-                  hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed
-                  transition-colors"
-              >
-                ›
-              </button>
-            </div>
-          </div>
-        )}
-
-        {!isLoading && totalPaginas <= 1 && contactos.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-50">
-            <p className="text-sm text-gray-500">
-              Mostrando 1 – {contactos.length} de {total}
-            </p>
+                {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPagina(p)}
+                    className={`w-8 h-8 rounded-lg text-sm font-semibold transition-colors
+                      ${p === pagina
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-gray-500 hover:bg-gray-50'
+                      }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPagina((p) => p + 1)}
+                  disabled={pagina === totalPaginas}
+                  className="p-2 rounded-lg text-gray-400 hover:text-gray-600
+                    hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  ›
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

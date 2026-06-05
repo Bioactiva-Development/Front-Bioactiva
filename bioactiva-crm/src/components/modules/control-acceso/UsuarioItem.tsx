@@ -23,6 +23,10 @@ const ESTADO_BADGE: Record<EstadoToken, { label: string; className: string }> = 
         label: 'Expirada',
         className: 'bg-gray-100 text-gray-500 border border-gray-200',
     },
+    [EstadoToken.Revocado]: {
+        label: 'Revocada',
+        className: 'bg-red-50 text-red-600 border border-red-200',
+    },
 }
 
 const ROL_BADGE: Record<RolUsuario, { label: string; className: string }> = {
@@ -44,7 +48,7 @@ function formatFecha(iso: string) {
     })
 }
 
-export function UsuarioItem({ invitacion, onRevoke, isRevoking }: UsuarioItemProps) {
+export function UsuarioItem({ invitacion, onRevoke, isRevoking }: Readonly<UsuarioItemProps>) {
     const estadoBadge = ESTADO_BADGE[invitacion.estado]
     const rolBadge = ROL_BADGE[invitacion.rol]
     const puedeRevocar = invitacion.estado === EstadoToken.Pendiente

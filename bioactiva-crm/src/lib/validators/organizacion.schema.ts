@@ -29,7 +29,7 @@ export const organizacionSchema = z.object({
 
     sub_area: z
         .string()
-        .max(20, 'Maximo de 20 caracteres')
+        .max(60, 'Máximo 60 caracteres')
         .optional(),
 
     tipo: z.nativeEnum(TipoEmpresa, {

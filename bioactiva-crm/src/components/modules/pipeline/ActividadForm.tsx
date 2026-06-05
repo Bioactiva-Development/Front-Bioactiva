@@ -7,7 +7,7 @@ import {
   actividadSchema,
   ActividadFormValues,
 } from '@/lib/validators/actividad.schema'
-import { TipoActividad, EstadoActividad } from '@/types/enums'
+import { TipoActividad } from '@/types/enums'
 
 interface ActividadFormProps {
   leadId:    number
@@ -30,7 +30,7 @@ export function ActividadForm({
   onCancelar,
   isLoading,
   error,
-}: ActividadFormProps) {
+}: Readonly<ActividadFormProps>) {
   const {
     register,
     handleSubmit,
@@ -38,9 +38,8 @@ export function ActividadForm({
   } = useForm<ActividadFormValues>({
     resolver: zodResolver(actividadSchema),
     defaultValues: {
-      id_lead:    leadId,
-      estado:     EstadoActividad.Pendiente,
-      tipo:       TipoActividad.Llamada,
+      id_lead:        leadId,
+      tipo:           TipoActividad.Llamada,
       id_responsable: 1,
     },
   })
@@ -74,10 +73,11 @@ export function ActividadForm({
         <input type="hidden" {...register('id_lead', { valueAsNumber: true })} />
 
         <div className="space-y-1">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="af-nombre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Nombre <span className="text-red-500">*</span>
           </label>
           <input
+            id="af-nombre"
             type="text"
             placeholder="Ej: Llamada de seguimiento, Envío de propuesta..."
             {...register('nombre_actividad')}
@@ -88,41 +88,27 @@ export function ActividadForm({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Tipo <span className="text-red-500">*</span>
-            </label>
-            <select
-              {...register('tipo')}
-              className={`${inputClass(!!errors.tipo)} cursor-pointer`}
-            >
-              {Object.values(TipoActividad).map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Estado <span className="text-red-500">*</span>
-            </label>
-            <select
-              {...register('estado')}
-              className={`${inputClass(!!errors.estado)} cursor-pointer`}
-            >
-              {Object.values(EstadoActividad).map((e) => (
-                <option key={e} value={e}>{e}</option>
-              ))}
-            </select>
-          </div>
+        <div className="space-y-1">
+          <label htmlFor="af-tipo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Tipo <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="af-tipo"
+            {...register('tipo')}
+            className={`${inputClass(!!errors.tipo)} cursor-pointer`}
+          >
+            {Object.values(TipoActividad).map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-1">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="af-responsable" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Responsable <span className="text-red-500">*</span>
           </label>
           <select
+            id="af-responsable"
             {...register('id_responsable', { valueAsNumber: true })}
             className={`${inputClass(!!errors.id_responsable)} cursor-pointer`}
           >
@@ -138,10 +124,11 @@ export function ActividadForm({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="af-fecha-inicio" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Fecha inicio <span className="text-red-500">*</span>
             </label>
             <input
+              id="af-fecha-inicio"
               type="datetime-local"
               {...register('fecha_inicio')}
               className={inputClass(!!errors.fecha_inicio)}
@@ -152,10 +139,11 @@ export function ActividadForm({
           </div>
 
           <div className="space-y-1">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="af-fecha-fin" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Fecha fin <span className="text-red-500">*</span>
             </label>
             <input
+              id="af-fecha-fin"
               type="datetime-local"
               {...register('fecha_fin')}
               className={inputClass(!!errors.fecha_fin)}
@@ -167,10 +155,11 @@ export function ActividadForm({
         </div>
 
         <div className="space-y-1">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="af-notas" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Notas
           </label>
           <textarea
+            id="af-notas"
             rows={2}
             placeholder="Observaciones adicionales..."
             {...register('notas')}

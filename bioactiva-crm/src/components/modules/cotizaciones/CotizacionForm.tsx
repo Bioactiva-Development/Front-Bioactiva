@@ -9,18 +9,18 @@ import {
   cotizacionSchema,
   CotizacionFormValues,
 } from '@/lib/validators/cotizacion.schema'
-import { EstadoCot, TipoMoneda } from '@/types/enums'
+import { TipoMoneda } from '@/types/enums'
 import { Cotizacion } from '@/types/cotizacion.types'
 import { ROUTES } from '@/lib/constants/routes'
 import { useLeads } from '@/hooks/pipeline/useLeads'
 import { useAuthStore } from '@/store'
 
 interface CotizacionFormProps {
-  cotizacion?: Cotizacion
-  onSubmit:    (data: CotizacionFormValues) => Promise<void>
-  isLoading:   boolean
-  error?:      string | null
-  leadIdInicial?: number
+  cotizacion?:     Cotizacion
+  onSubmit:        (data: CotizacionFormValues) => Promise<void>
+  isLoading:       boolean
+  error?:          string | null
+  leadIdInicial?:  number
 }
 
 const REMITENTES = [
@@ -36,13 +36,13 @@ export function CotizacionForm({
   isLoading,
   error,
   leadIdInicial,
-}: CotizacionFormProps) {
-  const router      = useRouter()
-  const esEdicion   = !!cotizacion
+}: Readonly<CotizacionFormProps>) {
+  const router    = useRouter()
+  const esEdicion = !!cotizacion
   const { usuario } = useAuthStore()
 
   const { data: leadsData } = useLeads({ limit: 100 })
-  const leads               = leadsData?.data ?? []
+  const leads = leadsData?.data ?? []
 
   const {
     register,
@@ -54,50 +54,40 @@ export function CotizacionForm({
     resolver: zodResolver(cotizacionSchema),
     defaultValues: cotizacion
       ? {
-          id_lead:          cotizacion.id_lead,
-          id_remitente:     cotizacion.id_remitente,
-          fecha_cot:        cotizacion.fecha_cot.split('T')[0],
-          dirigido:         cotizacion.dirigido,
-          cliente:          cotizacion.cliente,
-          producto:         cotizacion.producto ?? '',
-          nombre_remitente: cotizacion.nombre_remitente,
-          nombre_servicio:  cotizacion.nombre_servicio,
-          monto:            cotizacion.monto,
-          tipo:             cotizacion.tipo,
-          estado:           cotizacion.estado,
-          observacion:      cotizacion.observacion ?? '',
-          link_propuesta:   cotizacion.link_propuesta ?? '',
+          id_lead:         cotizacion.id_lead,
+          id_remitente:    cotizacion.id_remitente,
+          fecha_cot:       cotizacion.fecha_cot.split('T')[0],
+          dirigido:        cotizacion.dirigido,
+          cliente:         cotizacion.cliente ?? '',
+          producto:        cotizacion.producto ?? '',
+          nombre_servicio: cotizacion.nombre_servicio,
+          monto:           cotizacion.monto,
+          tipo:            cotizacion.tipo,
+          observacion:     cotizacion.observacion ?? '',
+          link_propuesta:  cotizacion.link_propuesta ?? '',
         }
       : {
-          fecha_cot:        new Date().toISOString().split('T')[0],
-          tipo:             TipoMoneda.Soles,
-          estado:           EstadoCot.Enviada,
-          monto:            0,
-          id_remitente:     usuario?.id ?? 1,
-          nombre_remitente: usuario?.nombres ?? 'Administración',
-          id_lead:          leadIdInicial ?? 0,
+          fecha_cot:    new Date().toISOString().split('T')[0],
+          tipo:         TipoMoneda.Soles,
+          monto:        0,
+          id_remitente: usuario?.id ?? 1,
+          id_lead:      leadIdInicial ?? 0,
         },
   })
 
+  // Autocompletar campos desde el lead seleccionado
   const leadSeleccionado = useWatch({ control, name: 'id_lead' })
-
   useEffect(() => {
     if (leadSeleccionado && !esEdicion) {
       const lead = leads.find((l) => l.id === Number(leadSeleccionado))
       if (lead) {
-        if (lead.contacto_nombre) setValue('dirigido',  lead.contacto_nombre)
-        if (lead.organizacion_nombre) setValue('cliente', lead.organizacion_nombre)
-        if (lead.servicio_interes) setValue('nombre_servicio', lead.servicio_interes)
+        if (lead.contacto_nombre)     setValue('dirigido',         lead.contacto_nombre)
+        if (lead.organizacion_nombre) setValue('cliente',          lead.organizacion_nombre)
+        if (lead.servicio_interes)    setValue('nombre_servicio',  lead.servicio_interes)
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leadSeleccionado])
-
-  const remitenteId = useWatch({ control, name: 'id_remitente' })
-  useEffect(() => {
-    const remitente = REMITENTES.find((r) => r.id === Number(remitenteId))
-    if (remitente) setValue('nombre_remitente', remitente.nombre)
-  }, [remitenteId, setValue])
 
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
@@ -111,11 +101,13 @@ export function CotizacionForm({
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
 
+        {/* Lead */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="cot-lead" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Autocompletar desde lead
           </label>
           <select
+            id="cot-lead"
             {...register('id_lead', { valueAsNumber: true })}
             disabled={esEdicion}
             className={`${inputClass(!!errors.id_lead)} cursor-pointer
@@ -136,11 +128,13 @@ export function CotizacionForm({
           )}
         </div>
 
+        {/* Fecha */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Fecha cotización
+          <label htmlFor="cot-fecha" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Fecha cotización <span className="text-red-500">*</span>
           </label>
           <input
+            id="cot-fecha"
             type="date"
             {...register('fecha_cot')}
             className={inputClass(!!errors.fecha_cot)}
@@ -150,14 +144,16 @@ export function CotizacionForm({
           )}
         </div>
 
+        {/* Dirigido / Cliente */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Contacto
+            <label htmlFor="cot-dirigido" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Dirigido a <span className="text-red-500">*</span>
             </label>
             <input
+              id="cot-dirigido"
               type="text"
-              placeholder="Nombre del contacto (opcional)"
+              placeholder="Nombre del destinatario"
               {...register('dirigido')}
               className={inputClass(!!errors.dirigido)}
             />
@@ -167,39 +163,40 @@ export function CotizacionForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Cliente <span className="text-red-500">*</span>
+            <label htmlFor="cot-cliente" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Cliente
             </label>
             <input
+              id="cot-cliente"
               type="text"
               placeholder="Razón social o empresa"
               {...register('cliente')}
               className={inputClass(!!errors.cliente)}
             />
-            {errors.cliente && (
-              <p className="text-red-500 text-xs">{errors.cliente.message}</p>
-            )}
           </div>
         </div>
 
+        {/* Producto / Remitente */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="cot-producto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Producto
             </label>
             <input
+              id="cot-producto"
               type="text"
-              placeholder="Ej: Innovasuyu, Consultoría"
+              placeholder="Ej: Consultoría, Formulación"
               {...register('producto')}
               className={inputClass(!!errors.producto)}
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="cot-remitente" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Remitente <span className="text-red-500">*</span>
             </label>
             <select
+              id="cot-remitente"
               {...register('id_remitente', { valueAsNumber: true })}
               className={`${inputClass(!!errors.id_remitente)} cursor-pointer`}
             >
@@ -214,11 +211,13 @@ export function CotizacionForm({
           </div>
         </div>
 
+        {/* Nombre del servicio */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="cot-servicio" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Nombre del servicio <span className="text-red-500">*</span>
           </label>
           <input
+            id="cot-servicio"
             type="text"
             placeholder="Descripción del servicio ofertado"
             {...register('nombre_servicio')}
@@ -229,12 +228,14 @@ export function CotizacionForm({
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        {/* Monto / Moneda */}
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Monto
+            <label htmlFor="cot-monto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Monto <span className="text-red-500">*</span>
             </label>
             <input
+              id="cot-monto"
               type="number"
               min={0}
               step={0.01}
@@ -247,39 +248,28 @@ export function CotizacionForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="cot-moneda" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Moneda <span className="text-red-500">*</span>
             </label>
             <select
+              id="cot-moneda"
               {...register('tipo')}
               className={`${inputClass(!!errors.tipo)} cursor-pointer`}
             >
               {Object.values(TipoMoneda).map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Estado
-            </label>
-            <select
-              {...register('estado')}
-              className={`${inputClass(!!errors.estado)} cursor-pointer`}
-            >
-              {Object.values(EstadoCot).map((e) => (
-                <option key={e} value={e}>{e}</option>
+                <option key={t} value={t}>{t === TipoMoneda.Soles ? 'Soles (PEN)' : 'Dólares (USD)'}</option>
               ))}
             </select>
           </div>
         </div>
 
+        {/* Observación */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="cot-observacion" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Observación
           </label>
           <textarea
+            id="cot-observacion"
             rows={3}
             placeholder="Notas adicionales sobre la propuesta"
             {...register('observacion')}
@@ -287,12 +277,14 @@ export function CotizacionForm({
           />
         </div>
 
+        {/* Link propuesta */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="cot-link" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Link de propuesta
           </label>
           <input
-            type="text"
+            id="cot-link"
+            type="url"
             placeholder="https://drive.google.com/..."
             {...register('link_propuesta')}
             className={inputClass(!!errors.link_propuesta)}
@@ -326,15 +318,9 @@ export function CotizacionForm({
               font-semibold py-2.5 px-6 rounded-xl text-sm transition-colors"
           >
             {isLoading ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Guardando...
-              </>
+              <><Loader2 size={16} className="animate-spin" />Guardando...</>
             ) : (
-              <>
-                <Save size={16} />
-                {esEdicion ? 'Guardar cambios' : 'Guardar cotización'}
-              </>
+              <><Save size={16} />{esEdicion ? 'Guardar cambios' : 'Guardar cotización'}</>
             )}
           </button>
         </div>

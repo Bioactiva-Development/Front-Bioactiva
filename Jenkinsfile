@@ -9,6 +9,7 @@ pipeline {
 
         stage('Checkout Repo') {
             steps {
+                cleanWs()
                 checkout scm
             }
         }
@@ -40,22 +41,14 @@ pipeline {
             }
             agent {
                 docker {
-                    image 'node:22-slim'
+                    image 'sonarsource/sonar-scanner-cli:latest'
                     reuseNode true
-                    args '-u root'
                 }
-            }
-
-            environment {
-                scannerHome = tool 'SonarScanner'
             }
 
             steps {
                 withSonarQubeEnv('SonarQube-Server') {
-                    sh '''
-                        apt-get update && apt-get install -y openjdk-17-jre-headless
-                        ${scannerHome}/bin/sonar-scanner
-                    '''
+                    sh 'sonar-scanner'
                 }
             }
         }

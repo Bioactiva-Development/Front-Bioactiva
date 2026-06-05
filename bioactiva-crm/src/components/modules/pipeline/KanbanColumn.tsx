@@ -1,24 +1,29 @@
 'use client'
 
+import { useDroppable } from '@dnd-kit/core'
 import { Plus } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
 import { LeadCard } from '@/components/modules/pipeline/LeadCard'
 
 interface KanbanColumnProps {
-  titulo:    string
-  leads:     Lead[]
-  color:     string
-  onAddLead: () => void
+  id:          string
+  titulo:      string
+  leads:       Lead[]
+  color:       string
+  onAddLead:   () => void
   onClickLead: (lead: Lead) => void
 }
 
 export function KanbanColumn({
+  id,
   titulo,
   leads,
   color,
   onAddLead,
   onClickLead,
-}: KanbanColumnProps) {
+}: Readonly<KanbanColumnProps>) {
+  const { setNodeRef, isOver } = useDroppable({ id })
+
   return (
     <div className="flex flex-col min-w-70 flex-1">
 
@@ -42,7 +47,16 @@ export function KanbanColumn({
         </button>
       </div>
 
-      <div className="flex flex-col gap-3 flex-1">
+      <div
+        ref={setNodeRef}
+        className={`
+          flex flex-col gap-3 flex-1 rounded-xl p-2 min-h-32 transition-colors
+          ${isOver
+            ? 'bg-emerald-50 border-2 border-dashed border-emerald-300'
+            : 'border-2 border-transparent'
+          }
+        `}
+      >
         {leads.length === 0 ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-sm text-gray-300 italic">Sin leads</p>

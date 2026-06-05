@@ -16,14 +16,17 @@ let isRefreshing = false
 let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = []
 
 function forceLogout(): void {
-    if (typeof window === 'undefined') return
+    if (typeof globalThis.window === 'undefined') return
     useAuthStore.getState().clearSession()
     document.cookie = `${COOKIE_TOKEN}=; path=/; max-age=0; SameSite=Strict`
     document.cookie = `${COOKIE_ROL}=; path=/; max-age=0; SameSite=Strict`
     window.location.href = ROUTES.auth.login
 }
 
-const JWT_EXPIRED_PATTERN = /jwt expired|token.*expired|invalid.*token/i
+// Solo mensajes que indican expiración/invalidez del JWT de sesión del usuario.
+// Patrones genéricos como "token.*expired" quedan excluidos a propósito para
+// no confundir errores de tokens de invitación o recuperación con la sesión.
+const JWT_EXPIRED_PATTERN = /jwt expired|jwt malformed|invalid signature/i
 
 const processQueue = (error: unknown, token: string | null) => {
     failedQueue.forEach(prom => {
@@ -38,7 +41,7 @@ const processQueue = (error: unknown, token: string | null) => {
 
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        if (typeof window != 'undefined') {
+        if (typeof globalThis.window != 'undefined') {
             const token = localStorage.getItem(TOKEN_KEY)
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`
@@ -83,7 +86,7 @@ apiClient.interceptors.response.use(
 
                 const newToken = data.accessToken
 
-                if (typeof window !== 'undefined') {
+                if (typeof globalThis.window !== 'undefined') {
                     localStorage.setItem(TOKEN_KEY, newToken)
                 }
 
@@ -95,7 +98,7 @@ apiClient.interceptors.response.use(
             } catch (refreshError) {
                 processQueue(refreshError, null)
                 forceLogout()
-                return Promise.reject(refreshError)
+                throw refreshError
             } finally {
                 isRefreshing = false
             }
@@ -103,9 +106,8 @@ apiClient.interceptors.response.use(
 
         // 403: rol insuficiente — el refresh no ayuda (doc: "401 vs 403")
         if (error.response?.status === 403) {
-            return Promise.reject({
+            throw Object.assign(new Error('No tienes permisos para realizar esta acción.'), {
                 status: 403,
-                message: 'No tienes permisos para realizar esta acción.',
                 errorCode: (error.response.data as { error?: string })?.error,
                 data: error.response.data,
             })
@@ -118,10 +120,11 @@ apiClient.interceptors.response.use(
 
         if (
             JWT_EXPIRED_PATTERN.test(rawMessage) &&
-            !originalRequest.url?.includes('/auth/login')
+            !originalRequest.url?.includes('/auth/login') &&
+            !originalRequest.url?.includes('/invitations')
         ) {
             forceLogout()
-            return Promise.reject({ status: error.response?.status, message: rawMessage })
+            throw Object.assign(new Error(rawMessage), { status: error.response?.status })
         }
 
         let mensajeFinal: string
@@ -132,18 +135,17 @@ apiClient.interceptors.response.use(
             mensajeFinal = backendMessage
         } else if (error.code === 'ECONNABORTED' || /timeout/i.test(error.message)) {
             mensajeFinal = 'La consulta tardó demasiado en responder. Inténtalo nuevamente.'
-        } else if (!error.response) {
-            mensajeFinal = 'No se pudo conectar con el servidor. Verifica tu conexión.'
-        } else {
+        } else if (error.response) {
             mensajeFinal = 'Ocurrió un error inesperado'
+        } else {
+            mensajeFinal = 'No se pudo conectar con el servidor. Verifica tu conexión.'
         }
 
         // errorCode: identificador estable del extended shape (ej: "ActivityNotFoundException")
         const errorCode = (error.response?.data as { error?: string })?.error
 
-        return Promise.reject({
+        throw Object.assign(new Error(mensajeFinal), {
             status: error.response?.status,
-            message: mensajeFinal,
             errorCode,
             data: error.response?.data,
         })

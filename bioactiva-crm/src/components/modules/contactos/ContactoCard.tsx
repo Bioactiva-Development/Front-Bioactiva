@@ -1,6 +1,6 @@
 'use client'
 
-import { Mail, Phone, ExternalLink, Star } from 'lucide-react'
+import { Mail, Phone, ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Contacto } from '@/types/contacto.types'
 import { ROUTES } from '@/lib/constants/routes'
@@ -9,7 +9,7 @@ interface ContactoCardProps {
   contacto: Contacto
 }
 
-export function ContactoCard({ contacto }: ContactoCardProps) {
+export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
   const router   = useRouter()
   const iniciales = `${contacto.nombres.charAt(0)}${contacto.apellidos?.charAt(0) ?? ''}`.toUpperCase()
 
@@ -65,22 +65,13 @@ export function ContactoCard({ contacto }: ContactoCardProps) {
       </td>
 
       <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-1">
-          <button
-            title="Contacto principal"
-            className="p-2 rounded-lg text-gray-300 hover:text-amber-500
-              hover:bg-amber-50 transition-colors"
-          >
-            <Star size={15} />
-          </button>
-          <button
-            onClick={handleVerDetalle}
-            className="p-2 rounded-lg text-gray-400 hover:text-emerald-600
-              hover:bg-emerald-50 transition-colors"
-          >
-            <ExternalLink size={15} />
-          </button>
-        </div>
+        <button
+          onClick={handleVerDetalle}
+          className="p-2 rounded-lg text-gray-400 hover:text-emerald-600
+            hover:bg-emerald-50 transition-colors"
+        >
+          <ExternalLink size={15} />
+        </button>
       </td>
     </tr>
   )

@@ -21,7 +21,7 @@ export interface JwtPayloadRaw {
 
 const base64UrlDecode = (input: string): string => {
   // base64url → base64 estándar.
-  const padded = input.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = input.replaceAll('-', '+').replaceAll('_', '/')
   const padding = padded.length % 4
   const base64 = padding ? padded + '='.repeat(4 - padding) : padded
 
@@ -31,7 +31,7 @@ const base64UrlDecode = (input: string): string => {
   try {
     return decodeURIComponent(
       Array.from(binary)
-        .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+        .map((c) => '%' + (c.codePointAt(0) ?? 0).toString(16).padStart(2, '0'))
         .join('')
     )
   } catch {
@@ -58,6 +58,6 @@ export const decodeJwt = (token: string): JwtPayloadRaw | null => {
  * número o NaN si no se puede parsear.
  */
 export const subToNumber = (sub: string | number | undefined): number => {
-  if (sub === undefined) return NaN
+  if (sub === undefined) return Number.NaN
   return typeof sub === 'number' ? sub : Number(sub)
 }

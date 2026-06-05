@@ -63,6 +63,21 @@ export interface OrganizacionCreateDto {
 
 export type OrganizacionUpdateDto = Partial<Omit<OrganizacionCreateDto, 'idAuthor'>>
 
+export interface ContactoResumidoDto {
+  id:        number
+  nombres:   string
+  apellidos: string
+  vocativo?: string
+  cargo?:    string | null
+  correo:    string
+  telefono?: string | null
+}
+
+export interface OrganizacionConRelacionesDto extends OrganizacionDtoOut {
+  contactos?:      ContactoResumidoDto[]
+  totalContactos?: number
+}
+
 export interface SunatRucDto {
   ruc: string
   razonSocial: string

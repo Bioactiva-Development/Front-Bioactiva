@@ -134,7 +134,7 @@ export const mockGetPlantilla = async (id: number): Promise<Plantilla> => {
   await delay(400)
   const plantilla = MOCK_PLANTILLAS.find((p) => p.id === id)
   if (!plantilla) {
-    throw { status: 404, message: 'Plantilla no encontrada.' }
+    throw Object.assign(new Error('Plantilla no encontrada.'), { status: 404 })
   }
   return plantilla
 }
@@ -148,7 +148,7 @@ export const mockCreatePlantilla = async (
     (p) => p.nombre.toLowerCase() === data.nombre?.toLowerCase()
   )
   if (existe) {
-    throw { status: 409, message: 'Ya existe una plantilla con este nombre.' }
+    throw Object.assign(new Error('Ya existe una plantilla con este nombre.'), { status: 409 })
   }
 
   const nueva: Plantilla = {
@@ -177,7 +177,7 @@ export const mockUpdatePlantilla = async (
 
   const index = MOCK_PLANTILLAS.findIndex((p) => p.id === id)
   if (index === -1) {
-    throw { status: 404, message: 'Plantilla no encontrada.' }
+    throw Object.assign(new Error('Plantilla no encontrada.'), { status: 404 })
   }
 
   if (data.nombre) {
@@ -185,7 +185,7 @@ export const mockUpdatePlantilla = async (
       (p) => p.nombre.toLowerCase() === data.nombre!.toLowerCase() && p.id !== id
     )
     if (existe) {
-      throw { status: 409, message: 'Ya existe una plantilla con este nombre.' }
+      throw Object.assign(new Error('Ya existe una plantilla con este nombre.'), { status: 409 })
     }
   }
 
@@ -204,14 +204,14 @@ export const mockDeletePlantilla = async (id: number): Promise<void> => {
 
   const plantilla = MOCK_PLANTILLAS.find((p) => p.id === id)
   if (!plantilla) {
-    throw { status: 404, message: 'Plantilla no encontrada.' }
+    throw Object.assign(new Error('Plantilla no encontrada.'), { status: 404 })
   }
 
   if (plantilla.en_uso) {
-    throw {
-      status: 409,
-      message: 'La plantilla está siendo utilizada y no puede eliminarse. Reintente la eliminación, cuando deje de estar en uso.',
-    }
+    throw Object.assign(
+      new Error('La plantilla está siendo utilizada y no puede eliminarse. Reintente la eliminación, cuando deje de estar en uso.'),
+      { status: 409 }
+    )
   }
 
   const index = MOCK_PLANTILLAS.findIndex((p) => p.id === id)

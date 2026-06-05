@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
     Pencil, Lock, UserX, UserCheck, UserPlus, Users,
-    Mail, Clock, Search, ChevronLeft, ChevronRight, ShieldAlert,
+    Mail, Search, ChevronLeft, ChevronRight, ShieldAlert,
 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { InvitarUsuarioModal } from '@/components/modules/control-acceso/InvitarUsuarioModal'
@@ -29,6 +29,7 @@ const ESTADO_OPTIONS = [
     { value: '0', label: 'Pendiente' },
     { value: '1', label: 'Aceptada' },
     { value: '2', label: 'Expirada' },
+    { value: '3', label: 'Revocada' },
 ]
 
 function getInitials(nombres: string, apellidos: string) {
@@ -56,7 +57,7 @@ function EstadoBadge({ estado }: { estado: EstadoUsuario }) {
     if (estado === EstadoUsuario.Activo) {
         return (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />{' '}
                 Activo
             </span>
         )
@@ -64,14 +65,14 @@ function EstadoBadge({ estado }: { estado: EstadoUsuario }) {
     if (estado === EstadoUsuario.Inactivo) {
         return (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />{' '}
                 Inactivo
             </span>
         )
     }
     return (
         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+            <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />{' '}
             Pendiente
         </span>
     )
@@ -81,7 +82,8 @@ function EstadoInvitacionBadge({ estado }: { estado: EstadoToken }) {
     const map: Record<EstadoToken, { label: string; className: string }> = {
         [EstadoToken.Pendiente]: { label: 'Pendiente', className: 'bg-amber-100 text-amber-700' },
         [EstadoToken.Consumido]: { label: 'Aceptada', className: 'bg-green-100 text-green-700' },
-        [EstadoToken.Expirado]: { label: 'Expirada', className: 'bg-gray-100 text-gray-500' },
+        [EstadoToken.Expirado]:  { label: 'Expirada', className: 'bg-gray-100 text-gray-500' },
+        [EstadoToken.Revocado]:  { label: 'Revocada', className: 'bg-red-100 text-red-500' },
     }
     const { label, className } = map[estado] ?? { label: estado, className: 'bg-gray-100 text-gray-500' }
     return (
@@ -120,7 +122,7 @@ export default function ControlAccesoPage() {
     const {
         invitaciones, total: totalInvitaciones,
         isLoading: isLoadingInvitaciones,
-        createInvitacion, isCreating, createError,
+        createInvitacion, isCreating,
         revokeInvitacion, isRevoking, revokingId,
     } = useInvitaciones(params)
 
@@ -191,11 +193,13 @@ export default function ControlAccesoPage() {
     }
 
     const handleEstado = async (): Promise<boolean> => {
-        if (!usuarioSeleccionado) return false
-        if (usuarioSeleccionado.estado === EstadoUsuario.Activo) {
-            return deshabilitar(usuarioSeleccionado.id)
+        if (usuarioSeleccionado) {
+            if (usuarioSeleccionado.estado === EstadoUsuario.Activo) {
+                return deshabilitar(usuarioSeleccionado.id)
+            }
+            return habilitar(usuarioSeleccionado.id)
         }
-        return habilitar(usuarioSeleccionado.id)
+        return false
     }
 
     const handleRevocar = async (id: number) => {
@@ -288,7 +292,6 @@ export default function ControlAccesoPage() {
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Usuario</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Rol</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Último acceso</th>
                                     <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Acciones</th>
                                 </tr>
                             </thead>
@@ -317,12 +320,6 @@ export default function ControlAccesoPage() {
                                             <EstadoBadge estado={u.estado} />
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                                                <Clock size={12} />
-                                                {u.ultimo_acceso ?? '—'}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-1">
                                                 <button
                                                     onClick={() => abrirModal('editar', u)}
@@ -338,17 +335,19 @@ export default function ControlAccesoPage() {
                                                 >
                                                     <Lock size={15} />
                                                 </button>
-                                                <button
-                                                    onClick={() => abrirModal('estado', u)}
-                                                    title={u.estado === EstadoUsuario.Activo ? 'Deshabilitar' : 'Habilitar'}
-                                                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors
-                                                        ${u.estado === EstadoUsuario.Activo
-                                                            ? 'text-gray-400 hover:bg-red-50 hover:text-red-500'
-                                                            : 'text-gray-400 hover:bg-green-50 hover:text-green-600'
-                                                        }`}
-                                                >
-                                                    {u.estado === EstadoUsuario.Activo ? <UserX size={15} /> : <UserCheck size={15} />}
-                                                </button>
+                                                {u.estado !== EstadoUsuario.Pendiente && (
+                                                    <button
+                                                        onClick={() => abrirModal('estado', u)}
+                                                        title={u.estado === EstadoUsuario.Activo ? 'Deshabilitar' : 'Habilitar'}
+                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors
+                                                            ${u.estado === EstadoUsuario.Activo
+                                                                ? 'text-gray-400 hover:bg-red-50 hover:text-red-500'
+                                                                : 'text-gray-400 hover:bg-green-50 hover:text-green-600'
+                                                            }`}
+                                                    >
+                                                        {u.estado === EstadoUsuario.Activo ? <UserX size={15} /> : <UserCheck size={15} />}
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -420,8 +419,8 @@ export default function ControlAccesoPage() {
                                             <td className="py-4 text-sm text-gray-900">{inv.correo}</td>
                                             <td className="py-4"><RolBadge rol={inv.rol} /></td>
                                             <td className="py-4"><EstadoInvitacionBadge estado={inv.estado} /></td>
-                                            <td className="py-4 text-sm text-gray-500">{inv.created_at.slice(0, 10)}</td>
-                                            <td className="py-4 text-sm text-gray-500">{inv.expires_at.slice(0, 10)}</td>
+                                            <td className="py-4 text-sm text-gray-500">{new Date(inv.created_at).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                                            <td className="py-4 text-sm text-gray-500">{new Date(inv.expires_at).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                                             <td className="py-4 text-right">
                                                 {inv.estado === EstadoToken.Pendiente && (
                                                     <button
@@ -469,7 +468,7 @@ export default function ControlAccesoPage() {
             {modalAbierto === 'invitar' && (
                 <InvitarUsuarioModal
                     isLoading={isCreating}
-                    error={inviteError ?? (createError?.message ?? null)}
+                    error={inviteError}
                     onClose={cerrarModal}
                     onSubmit={handleInvitar}
                 />

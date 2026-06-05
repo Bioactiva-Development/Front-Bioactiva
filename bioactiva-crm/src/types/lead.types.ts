@@ -55,10 +55,11 @@ export interface PipelineData {
   total: number
 }
 
+// estado no se incluye: el backend siempre crea leads con EN_PROSPECTO.
+// El estado se avanza con PATCH /leads/:id/status.
 export interface LeadFormData {
   id_org: string
   id_contacto?: number
-  estado: LeadState
   servicio_interes: string
   comentarios?: string
   desafio_oportunidad?: string

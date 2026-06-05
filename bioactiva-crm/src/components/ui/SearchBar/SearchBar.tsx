@@ -16,7 +16,7 @@ export function SearchBar({
     value,
     onChange,
     debounceDelay = 0,
-}: SearchBarProps) {
+}: Readonly<SearchBarProps>) {
     const debouncedValue = useDebounce(value, debounceDelay)
 
     useEffect(() => {

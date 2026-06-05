@@ -14,7 +14,7 @@ export const QUERY_KEYS = {
     },
 
     organizaciones: {
-        list: (filters?: Record<string, unknown> | unknown) => ['organizaciones', 'list', filters],
+        list: (filters?: unknown) => ['organizaciones', 'list', filters],
         detail: (id: string) => ['organizaciones', id],
         sunat: (query: string) => ['organizaciones', 'sunat', query],
     },
@@ -27,7 +27,7 @@ export const QUERY_KEYS = {
 
     leads: {
         list:     (filters?: unknown) => ['leads', 'list', filters],
-        pipeline: () => ['leads', 'pipeline'],
+        pipeline: (filters?: unknown) => ['leads', 'pipeline', filters],
         detail:   (id: number) => ['leads', id],
     },
 

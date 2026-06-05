@@ -15,12 +15,12 @@ import {
 // ── Usuario mocks ──────────────────────────────────────────────────────────────
 
 let mockUsuarios: UsuarioListItem[] = [
-    { id: 1, nombres: 'Administración', apellidos: '', correo: 'admin@bioactiva.pe', rol: RolUsuario.Administrador, estado: EstadoUsuario.Activo, ultimo_acceso: 'Hace 11 min', created_at: '2024-01-01T08:00:00Z', updated_at: '2024-01-01T08:00:00Z' },
-    { id: 2, nombres: 'Karien', apellidos: 'Diaz', correo: 'karien@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, ultimo_acceso: 'Hace 11 min', created_at: '2024-01-02T08:00:00Z', updated_at: '2024-01-02T08:00:00Z' },
-    { id: 3, nombres: 'Luis', apellidos: 'Torres', correo: 'ltorres@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, ultimo_acceso: 'Hace 11 min', created_at: '2024-01-03T08:00:00Z', updated_at: '2024-01-03T08:00:00Z' },
-    { id: 4, nombres: 'Ana', apellidos: 'Rojas', correo: 'arojas@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, ultimo_acceso: 'Hace 11 min', created_at: '2024-01-04T08:00:00Z', updated_at: '2024-01-04T08:00:00Z' },
-    { id: 5, nombres: 'María', apellidos: 'Quispe', correo: 'mquispe@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, ultimo_acceso: 'Hace 11 min', created_at: '2024-01-05T08:00:00Z', updated_at: '2024-01-05T08:00:00Z' },
-    { id: 6, nombres: 'Carlos', apellidos: 'Mamani', correo: 'cmamani@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, ultimo_acceso: 'Hace 11 min', created_at: '2024-01-06T08:00:00Z', updated_at: '2024-01-06T08:00:00Z' },
+    { id: 1, nombres: 'Administración', apellidos: '', correo: 'admin@bioactiva.pe', rol: RolUsuario.Administrador, estado: EstadoUsuario.Activo, created_at: '2024-01-01T08:00:00Z', updated_at: '2024-01-01T08:00:00Z' },
+    { id: 2, nombres: 'Karien', apellidos: 'Diaz', correo: 'karien@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, created_at: '2024-01-02T08:00:00Z', updated_at: '2024-01-02T08:00:00Z' },
+    { id: 3, nombres: 'Luis', apellidos: 'Torres', correo: 'ltorres@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, created_at: '2024-01-03T08:00:00Z', updated_at: '2024-01-03T08:00:00Z' },
+    { id: 4, nombres: 'Ana', apellidos: 'Rojas', correo: 'arojas@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, created_at: '2024-01-04T08:00:00Z', updated_at: '2024-01-04T08:00:00Z' },
+    { id: 5, nombres: 'María', apellidos: 'Quispe', correo: 'mquispe@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, created_at: '2024-01-05T08:00:00Z', updated_at: '2024-01-05T08:00:00Z' },
+    { id: 6, nombres: 'Carlos', apellidos: 'Mamani', correo: 'cmamani@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, created_at: '2024-01-06T08:00:00Z', updated_at: '2024-01-06T08:00:00Z' },
 ]
 
 export function mockGetUsuarios(filters?: UsuarioFilters): UsuariosResponse {
@@ -176,7 +176,7 @@ export const mockCreateInvitacion = async (correo: string, rol: number): Promise
         (i) => i.correo === correo && i.estado === EstadoToken.Pendiente,
     )
     if (existing) {
-        throw { status: 400, message: 'Ya existe una invitación pendiente para este correo.' }
+        throw Object.assign(new Error('Ya existe una invitación pendiente para este correo.'), { status: 400 })
     }
 
     const nueva: Invitacion = {
@@ -198,7 +198,7 @@ export const mockRevokeInvitacion = async (id: number): Promise<Invitacion> => {
 
     const invitacion = MOCK_INVITACIONES.find((i) => i.id === id)
     if (!invitacion) {
-        throw { status: 400, message: 'La invitación no existe.' }
+        throw Object.assign(new Error('La invitación no existe.'), { status: 400 })
     }
 
     invitacion.estado = EstadoToken.Expirado
@@ -210,7 +210,7 @@ export const mockGetInvitacionInfo = async (token: string): Promise<InvitacionIn
 
     const info = MOCK_TOKENS[token]
     if (!info) {
-        throw { status: 400, message: 'El token de invitación no es válido.' }
+        throw Object.assign(new Error('El token de invitación no es válido.'), { status: 400 })
     }
 
     return info
