@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, ArrowLeft } from 'lucide-react'
@@ -14,6 +14,9 @@ import { Cotizacion } from '@/types/cotizacion.types'
 import { ROUTES } from '@/lib/constants/routes'
 import { useLeads } from '@/hooks/pipeline/useLeads'
 import { useAuthStore } from '@/store'
+import { usuariosService } from '@/services/modules/usuarios.service'
+import { EstadoUsuario } from '@/types/enums'
+import { UsuarioListItem } from '@/types/usuario.types'
 
 interface CotizacionFormProps {
   cotizacion?:     Cotizacion
@@ -23,12 +26,15 @@ interface CotizacionFormProps {
   leadIdInicial?:  number
 }
 
-const REMITENTES = [
-  { id: 1, nombre: 'Administración' },
-  { id: 2, nombre: 'Luis Torres' },
-  { id: 3, nombre: 'Karien Diaz' },
-  { id: 4, nombre: 'Carlos Mamani' },
-]
+interface RemitenteOption {
+  id: number
+  nombre: string
+}
+
+const toRemitenteOption = (usuario: UsuarioListItem): RemitenteOption => ({
+  id: usuario.id,
+  nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
+})
 
 export function CotizacionForm({
   cotizacion,
@@ -40,9 +46,40 @@ export function CotizacionForm({
   const router    = useRouter()
   const esEdicion = !!cotizacion
   const { usuario } = useAuthStore()
+  const [remitentes, setRemitentes] = useState<RemitenteOption[]>([])
 
   const { data: leadsData } = useLeads({ limit: 100 })
   const leads = leadsData?.data ?? []
+  const usuarioActualOption = useMemo<RemitenteOption | null>(() => {
+    if (!usuario) return null
+    return {
+      id: usuario.id,
+      nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
+    }
+  }, [usuario])
+  const remitentesDisponibles = useMemo(() => {
+    const options = [...remitentes]
+
+    if (
+      usuarioActualOption &&
+      !options.some((remitente) => remitente.id === usuarioActualOption.id)
+    ) {
+      options.unshift(usuarioActualOption)
+    }
+
+    if (
+      cotizacion?.id_remitente &&
+      cotizacion.nombre_remitente &&
+      !options.some((remitente) => remitente.id === cotizacion.id_remitente)
+    ) {
+      options.unshift({
+        id: cotizacion.id_remitente,
+        nombre: cotizacion.nombre_remitente,
+      })
+    }
+
+    return options
+  }, [cotizacion, remitentes, usuarioActualOption])
 
   const {
     register,
@@ -70,13 +107,67 @@ export function CotizacionForm({
           fecha_cot:    new Date().toISOString().split('T')[0],
           tipo:         TipoMoneda.Soles,
           monto:        0,
-          id_remitente: usuario?.id ?? 1,
+          id_remitente: usuario?.id ?? 0,
           id_lead:      leadIdInicial ?? 0,
         },
   })
 
   // Autocompletar campos desde el lead seleccionado
   const leadSeleccionado = useWatch({ control, name: 'id_lead' })
+  const remitenteSeleccionado = useWatch({ control, name: 'id_remitente' })
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function cargarRemitentes() {
+      try {
+        const response = await usuariosService.getUsuarios({
+          estado: EstadoUsuario.Activo,
+          limit: 100,
+        })
+
+        if (!isMounted) return
+        setRemitentes(response.usuarios.map(toRemitenteOption))
+      } catch {
+        if (!isMounted) return
+        setRemitentes(usuarioActualOption ? [usuarioActualOption] : [])
+      }
+    }
+
+    cargarRemitentes()
+
+    return () => {
+      isMounted = false
+    }
+  }, [usuarioActualOption])
+
+  useEffect(() => {
+    if (esEdicion || remitentesDisponibles.length === 0) return
+
+    const selected = Number(remitenteSeleccionado)
+    const selectedExists = remitentesDisponibles.some(
+      (remitente) => remitente.id === selected
+    )
+
+    if (selected && selectedExists) return
+
+    const fallback =
+      usuarioActualOption &&
+        remitentesDisponibles.some(
+          (remitente) => remitente.id === usuarioActualOption.id
+        )
+        ? usuarioActualOption
+        : remitentesDisponibles[0]
+
+    setValue('id_remitente', fallback.id, { shouldValidate: true })
+  }, [
+    esEdicion,
+    remitenteSeleccionado,
+    remitentesDisponibles,
+    setValue,
+    usuarioActualOption,
+  ])
+
   useEffect(() => {
     if (leadSeleccionado && !esEdicion) {
       const lead = leads.find((l) => l.id === Number(leadSeleccionado))
@@ -198,13 +289,20 @@ export function CotizacionForm({
             <select
               id="cot-remitente"
               {...register('id_remitente', { valueAsNumber: true })}
-              className={`${inputClass(!!errors.id_remitente)} cursor-pointer`}
+              disabled={esEdicion}
+              className={`${inputClass(!!errors.id_remitente)} cursor-pointer
+                ${esEdicion ? 'opacity-60 cursor-not-allowed' : ''}`}
             >
               <option value={0}>Seleccionar...</option>
-              {REMITENTES.map((r) => (
+              {remitentesDisponibles.map((r) => (
                 <option key={r.id} value={r.id}>{r.nombre}</option>
               ))}
             </select>
+            {esEdicion && (
+              <p className="text-xs text-gray-400">
+                El remitente queda fijado al crear la cotización.
+              </p>
+            )}
             {errors.id_remitente && (
               <p className="text-red-500 text-xs">{errors.id_remitente.message}</p>
             )}
