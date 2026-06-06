@@ -252,8 +252,12 @@ export function OrganizacionDetalle({
                 return (
                   <div
                     key={contacto.id}
+                    role="button"
+                    tabIndex={0}
                     className="border border-gray-100 rounded-xl p-4 hover:border-emerald-200
-                      hover:bg-emerald-50/30 transition-colors"
+                      hover:bg-emerald-50/30 transition-colors cursor-pointer"
+                    onClick={() => router.push(ROUTES.contacto(contacto.id))}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') router.push(ROUTES.contacto(contacto.id)) }}
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center

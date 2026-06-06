@@ -7,6 +7,7 @@ import {
   useContacto,
   useActualizarContacto,
 } from '@/hooks/contactos/useContactos'
+import { useLeadsByContacto } from '@/hooks/pipeline/useLeads'
 import { ContactoDetalle } from '@/components/modules/contactos/ContactoDetalle'
 import { ContactoForm } from '@/components/modules/contactos/ContactoForm'
 import { ContactoFormValues } from '@/lib/validators/contacto.schema'
@@ -19,6 +20,7 @@ export default function ContactoDetallePage() {
   const [errorGuardar, setErrorGuardar] = useState<string | null>(null)
 
   const { data: contacto, isLoading, isError } = useContacto(id)
+  const { data: leads = [] } = useLeadsByContacto(id)
 
   const { mutateAsync: actualizar, isPending } = useActualizarContacto(id)
 
@@ -80,6 +82,7 @@ export default function ContactoDetallePage() {
   return (
     <ContactoDetalle
       contacto={contacto}
+      leads={leads}
       onEditar={() => setEditando(true)}
     />
   )

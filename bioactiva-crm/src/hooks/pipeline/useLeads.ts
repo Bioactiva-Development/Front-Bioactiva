@@ -28,6 +28,15 @@ export function useLeads(filtros?: LeadFiltros) {
   })
 }
 
+export function useLeadsByContacto(idContacto: number) {
+  return useQuery({
+    queryKey: QUERY_KEYS.leads.byContacto(idContacto),
+    queryFn:  () => leadsService.getByContacto(idContacto),
+    enabled:  !!idContacto,
+    staleTime: 1000 * 60 * 2,
+  })
+}
+
 export function useLead(id: number) {
   return useQuery({
     queryKey: QUERY_KEYS.leads.detail(id),

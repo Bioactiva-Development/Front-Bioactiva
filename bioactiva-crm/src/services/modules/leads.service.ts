@@ -179,6 +179,23 @@ export const leadsService = {
     return buildPipeline(applyClientFilters(leads, filtros))
   },
 
+  getByContacto: async (idContacto: number): Promise<Lead[]> => {
+    const firstPage = await fetchLeadsPage({ page: 1, limit: PAGE_SIZE_PIPELINE })
+    const totalPages = firstPage.limit > 0
+      ? Math.ceil(firstPage.total / firstPage.limit)
+      : 1
+
+    const remaining = await Promise.all(
+      Array.from({ length: Math.max(totalPages - 1, 0) }, (_, i) =>
+        fetchLeadsPage({ page: i + 2, limit: PAGE_SIZE_PIPELINE })
+      )
+    )
+
+    return [firstPage, ...remaining]
+      .flatMap((page) => page.data)
+      .filter((lead) => lead.id_contacto === idContacto)
+  },
+
   getAll: async (filtros?: LeadFiltros): Promise<LeadsResponse> => {
     if (USE_MOCK) return mockGetLeads(filtros)
     const response = await fetchLeadsPage(filtros)

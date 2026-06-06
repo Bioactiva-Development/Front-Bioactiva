@@ -95,7 +95,7 @@ function EstadoInvitacionBadge({ estado }: { estado: EstadoToken }) {
 
 export default function ControlAccesoPage() {
     const router = useRouter()
-    const { isAdministrador } = useAuthStore()
+    const { isAdministrador, usuario: currentUser } = useAuthStore()
 
     const {
         usuarios, total: totalUsuarios, activos,
@@ -332,7 +332,7 @@ export default function ControlAccesoPage() {
                                                 >
                                                     <Lock size={15} />
                                                 </button>*/}
-                                                {u.estado !== EstadoUsuario.Pendiente && (
+                                                {u.estado !== EstadoUsuario.Pendiente && u.id !== currentUser?.id && (
                                                     <button
                                                         onClick={() => abrirModal('estado', u)}
                                                         title={u.estado === EstadoUsuario.Activo ? 'Deshabilitar' : 'Habilitar'}
