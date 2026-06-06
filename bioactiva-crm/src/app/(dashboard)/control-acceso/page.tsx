@@ -321,7 +321,7 @@ export default function ControlAccesoPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-1">
-                                                <button
+                                                {/*<button
                                                     onClick={() => abrirModal('editar', u)}
                                                     title="Editar usuario"
                                                     className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
@@ -334,7 +334,7 @@ export default function ControlAccesoPage() {
                                                     className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
                                                 >
                                                     <Lock size={15} />
-                                                </button>
+                                                </button>*/}
                                                 {u.estado !== EstadoUsuario.Pendiente && (
                                                     <button
                                                         onClick={() => abrirModal('estado', u)}
