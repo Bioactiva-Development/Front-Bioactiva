@@ -12,7 +12,7 @@ import { useOrganizaciones } from '@/hooks/organizaciones/useOrganizaciones'
 import { useContactosPorOrganizacion } from '@/hooks/contactos/useContactos'
 import { useAuthStore } from '@/store'
 import { usuariosService } from '@/services/modules/usuarios.service'
-import { EstadoUsuario } from '@/types/enums'
+import { EstadoUsuario, LeadState } from '@/types/enums'
 import { UsuarioListItem } from '@/types/usuario.types'
 
 interface LeadFormProps {

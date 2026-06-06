@@ -2,7 +2,6 @@
 
 import { useDroppable } from '@dnd-kit/core'
 import { Plus } from 'lucide-react'
-import { useDroppable } from '@dnd-kit/core'
 import { Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
 import { LeadCard } from '@/components/modules/pipeline/LeadCard'
@@ -21,7 +20,6 @@ interface KanbanColumnProps {
 }
 
 export function KanbanColumn({
-  id,
   titulo,
   estado,
   leads,

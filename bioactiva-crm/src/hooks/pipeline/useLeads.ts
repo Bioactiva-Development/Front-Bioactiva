@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import { leadsService } from '@/services/modules/leads.service'
 import { cotizacionesService } from '@/services/modules/cotizaciones.service'
 import { QUERY_KEYS } from '@/lib/constants/queryKeys'
-import { Lead, LeadFiltros, LeadFormData } from '@/types/lead.types'
+import { Lead, LeadFiltros, LeadFormData, PipelineData } from '@/types/lead.types'
 import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 import {
@@ -12,7 +12,7 @@ import {
 } from '@/lib/utils/lead-flow.utils'
 import { Cotizacion, CotizacionFormData } from '@/types/cotizacion.types'
 
-export function usePipeline() {
+export function usePipeline(filtros?: LeadFiltros) {
   return useQuery({
     queryKey: QUERY_KEYS.leads.pipeline(filtros),
     queryFn:  () => leadsService.getPipeline(filtros),

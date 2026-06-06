@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertCircle, Plus } from 'lucide-react'
 import { useMoverLeadPipeline, usePipeline } from '@/hooks/pipeline/useLeads'
@@ -12,80 +12,6 @@ import { LeadState } from '@/types/enums'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 
 const FILTROS_INICIALES: FiltrosType = {}
-
-function aplicarFiltros(pipeline: PipelineData, filtros: FiltrosType): PipelineData {
-  const cols: Array<keyof Omit<PipelineData, 'total'>> = [
-    'prospecto', 'ofertado', 'cierreVenta', 'cierreSinVenta',
-  ]
-
-  const search = filtros.search?.trim().toLowerCase()
-
-  const filtrar = (leads: Lead[]): Lead[] => {
-    let r = leads
-
-    if (search) {
-      r = r.filter(
-        (l) =>
-          l.organizacion_nombre?.toLowerCase().includes(search) ||
-          l.servicio_interes.toLowerCase().includes(search) ||
-          l.encargado_nombre?.toLowerCase().includes(search) ||
-          l.codigo.toLowerCase().includes(search)
-      )
-    }
-
-    if (filtros.id_encargado) {
-      r = r.filter((l) => l.id_encargado === filtros.id_encargado)
-    }
-
-    if (filtros.canal_captacion) {
-      r = r.filter((l) => l.canal_captacion === filtros.canal_captacion)
-    }
-
-    if (filtros.solo_alerta) {
-      r = r.filter((l) => l.tiene_alerta)
-    }
-
-    if (filtros.fecha_desde) {
-      r = r.filter(
-        (l) => new Date(l.created_at) >= new Date(filtros.fecha_desde!)
-      )
-    }
-
-    if (filtros.fecha_hasta) {
-      r = r.filter(
-        (l) => new Date(l.created_at) <= new Date(filtros.fecha_hasta!)
-      )
-    }
-
-    return r
-  }
-
-  // Si hay filtro de estado, sólo mostrar esa columna con leads
-  if (filtros.estado) {
-    const result: PipelineData = {
-      prospecto: [], ofertado: [], cierreVenta: [], cierreSinVenta: [], total: 0,
-    }
-    const colPorEstado: Record<LeadState, keyof Omit<PipelineData, 'total'>> = {
-      [LeadState.Prospecto]:      'prospecto',
-      [LeadState.Ofertado]:       'ofertado',
-      [LeadState.CierreVenta]:    'cierreVenta',
-      [LeadState.CierreSinVenta]: 'cierreSinVenta',
-    }
-    const col = colPorEstado[filtros.estado]
-    result[col] = filtrar(pipeline[col])
-    result.total = result[col].length
-    return result
-  }
-
-  const filtered: Partial<PipelineData> = {}
-  let total = 0
-  for (const col of cols) {
-    filtered[col] = filtrar(pipeline[col])
-    total += filtered[col]!.length
-  }
-
-  return { ...(filtered as Omit<PipelineData, 'total'>), total }
-}
 
 export default function PipelinePage() {
   const router  = useRouter()
