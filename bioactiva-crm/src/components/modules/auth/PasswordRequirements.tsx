@@ -2,20 +2,29 @@
 
 import { CheckCircle, XCircle, Circle } from 'lucide-react'
 
-const REQUIREMENTS = [
+const REQUIREMENTS_SIMPLE = [
     { label: 'Mínimo 6 caracteres', test: (p: string) => p.length >= 6 },
+]
+
+const REQUIREMENTS_FULL = [
+    { label: 'Mínimo 8 caracteres',          test: (p: string) => p.length >= 8 },
+    { label: 'Al menos una letra mayúscula',  test: (p: string) => /[A-Z]/.test(p) },
+    { label: 'Al menos un número',            test: (p: string) => /\d/.test(p) },
+    { label: 'Al menos un carácter especial', test: (p: string) => /[^A-Za-z0-9]/.test(p) },
 ]
 
 interface PasswordRequirementsProps {
     password: string
+    mode?: 'simple' | 'full'
 }
 
-export function PasswordRequirements({ password }: Readonly<PasswordRequirementsProps>) {
+export function PasswordRequirements({ password, mode = 'simple' }: Readonly<PasswordRequirementsProps>) {
+    const requirements = mode === 'full' ? REQUIREMENTS_FULL : REQUIREMENTS_SIMPLE
     const hasStarted = password.length > 0
 
     return (
         <ul className="space-y-1.5">
-            {REQUIREMENTS.map(({ label, test }) => {
+            {requirements.map(({ label, test }) => {
                 const met = test(password)
                 const icon = hasStarted
                     ? met

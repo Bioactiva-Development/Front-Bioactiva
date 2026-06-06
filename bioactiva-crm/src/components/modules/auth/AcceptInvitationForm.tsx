@@ -87,7 +87,7 @@ export function AcceptInvitationForm() {
                     {success ? (
                         <div className="space-y-3">
                             <AuthAlertBanner variant="success" message={success} withIcon />
-                            <p className="text-sm text-gray-500 text-center">Redirigiendo al sistema...</p>
+                            <p className="text-sm text-gray-500 text-center">Redirigiendo al dashboard...</p>
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -113,7 +113,7 @@ export function AcceptInvitationForm() {
                                 error={errors.password?.message}
                             />
 
-                            <PasswordRequirements password={passwordValue} />
+                            <PasswordRequirements password={passwordValue} mode="full" />
 
                             <PasswordField
                                 label="Confirmar contraseña"

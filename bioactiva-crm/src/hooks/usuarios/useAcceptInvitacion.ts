@@ -67,7 +67,7 @@ export function useAcceptInvitacion() {
 
             useAuthStore.getState().setSession(accessToken, usuarioData)
 
-            setSuccess('Cuenta activada correctamente. Redirigiendo al sistema...')
+            setSuccess('Cuenta activada correctamente. Redirigiendo al dashboard...')
             setTimeout(() => router.push(ROUTES.dashboard), 1500)
         } catch (err: unknown) {
             const e = err as { message?: string }
