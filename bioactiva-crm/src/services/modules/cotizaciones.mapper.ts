@@ -112,6 +112,7 @@ export const fromCotizacionDto = (dto: CotizacionDtoOut): Cotizacion => ({
   updated_at: dto.updatedAt,
   contacto_nombre: dto.contactName || undefined,
   organizacion_nombre: dto.cliente ?? undefined,
+  periodo: new Date(dto.fechaCot).toLocaleDateString('es-PE', { month: 'short', year: 'numeric' }),
 })
 
 export const toBackendCotizacionState = (estado: EstadoCot) =>

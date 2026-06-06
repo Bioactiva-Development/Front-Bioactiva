@@ -96,16 +96,6 @@ export function Navbar() {
                             </div>
 
                             <div className="py-1">
-                                <Link
-                                    href={ROUTES.perfil}
-                                    onClick={() => setMenuOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600
-                    hover:bg-gray-50 transition-colors"
-                                >
-                                    <User size={16} className="text-gray-400" />
-                                    Mi perfil
-                                </Link>
-
                                 <button
                                     onClick={() => {
                                         setMenuOpen(false)

@@ -26,9 +26,10 @@ export const QUERY_KEYS = {
     },
 
     leads: {
-        list:     (filters?: unknown) => ['leads', 'list', filters],
-        pipeline: (filters?: unknown) => ['leads', 'pipeline', filters],
-        detail:   (id: number) => ['leads', id],
+        list:        (filters?: unknown) => ['leads', 'list', filters],
+        pipeline:    (filters?: unknown) => ['leads', 'pipeline', filters],
+        detail:      (id: number) => ['leads', id],
+        byContacto:  (id: number) => ['leads', 'contacto', id],
     },
 
     actividades: {
