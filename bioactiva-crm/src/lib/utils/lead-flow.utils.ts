@@ -18,7 +18,6 @@ export function getLeadStateFromCotizacion(
 export function getCotizacionStateFromLeadState(
   targetState: LeadState
 ): EstadoCot | null {
-  if (targetState === LeadState.Prospecto) return EstadoCot.Pendiente
   if (targetState === LeadState.Ofertado) return EstadoCot.Enviada
   if (targetState === LeadState.CierreVenta) return EstadoCot.Aceptada
   if (targetState === LeadState.CierreSinVenta) return EstadoCot.Rechazada

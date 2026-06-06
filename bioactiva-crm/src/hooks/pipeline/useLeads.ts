@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { leadsService } from '@/services/modules/leads.service'
 import { cotizacionesService } from '@/services/modules/cotizaciones.service'
 import { QUERY_KEYS } from '@/lib/constants/queryKeys'
-import { Lead, LeadFiltros, LeadFormData, PipelineData } from '@/types/lead.types'
+import { Lead, LeadFiltros, LeadFormData } from '@/types/lead.types'
 import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 import {
@@ -51,7 +51,7 @@ function buildDefaultCotizacion(lead: Lead): CotizacionFormData {
     monto:            0,
     tipo:             TipoMoneda.Soles,
     estado:           EstadoCot.Pendiente,
-    observacion:      'Cotización inicial generada automáticamente al crear el lead.',
+    observacion:      'Cotización generada automáticamente al avanzar el lead en el pipeline.',
   }
 }
 
@@ -108,8 +108,9 @@ async function ensurePrimaryCotizacionInState(
 }
 
 async function syncPrimaryCotizacionWithLead(lead: Lead) {
-  const cotizacionState = getCotizacionStateFromLeadState(lead.estado) ??
-    EstadoCot.Pendiente
+  const cotizacionState = getCotizacionStateFromLeadState(lead.estado)
+  if (!cotizacionState) return
+
   const cotizaciones = await cotizacionesService.getByLead(lead.id)
 
   await ensurePrimaryCotizacionInState(lead, cotizaciones, cotizacionState)
@@ -124,10 +125,6 @@ async function syncLeadAndCotizacionState(lead: Lead, estado: LeadState) {
   }
 
   const updatedLead = await leadsService.updateEstado(lead.id, estado)
-
-  if (!targetCotState) {
-    await syncPrimaryCotizacionWithLead(updatedLead)
-  }
 
   return updatedLead
 }
@@ -167,41 +164,6 @@ export function useActualizarLead(id: number) {
       console.error(getErrorMessage(err))
     },
   })
-}
-
-const ESTADO_A_COLUMNA: Record<LeadState, keyof Omit<PipelineData, 'total'>> = {
-  [LeadState.Prospecto]:      'prospecto',
-  [LeadState.Ofertado]:       'ofertado',
-  [LeadState.CierreVenta]:    'cierreVenta',
-  [LeadState.CierreSinVenta]: 'cierreSinVenta',
-}
-
-// Clave base para pipeline — permite invalidar/cancelar TODAS las variantes de filtro.
-const PIPELINE_BASE_KEY = ['leads', 'pipeline']
-
-function applyEstadoMove(
-  old: PipelineData,
-  id: number,
-  estado: LeadState
-): PipelineData {
-  const cols: Array<keyof Omit<PipelineData, 'total'>> = [
-    'prospecto', 'ofertado', 'cierreVenta', 'cierreSinVenta',
-  ]
-  let movedLead: Lead | undefined
-  const newCols = cols.reduce<Partial<PipelineData>>((acc, col) => {
-    acc[col] = old[col].filter((l) => {
-      if (l.id === id) { movedLead = l; return false }
-      return true
-    })
-    return acc
-  }, {})
-
-  if (movedLead) {
-    const destCol = ESTADO_A_COLUMNA[estado]
-    newCols[destCol] = [...(newCols[destCol] ?? []), { ...movedLead, estado }]
-  }
-
-  return { ...old, ...newCols } as PipelineData
 }
 
 export function useActualizarEstadoLead() {
