@@ -81,7 +81,6 @@ export default function LeadDetallePage() {
       <div>
         <LeadForm
           lead={lead}
-          estadoEditable
           onSubmit={handleGuardar}
           isLoading={isPending}
           error={errorGuardar}

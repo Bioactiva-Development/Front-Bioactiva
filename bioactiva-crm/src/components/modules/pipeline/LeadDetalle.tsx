@@ -185,7 +185,7 @@ export function LeadDetalle({
   }
 
   const handleCambiarEstado = async (estado: LeadState) => {
-    const guard = validateLeadStateTransition(estado, cotizaciones)
+    const guard = validateLeadStateTransition(lead.estado, estado, cotizaciones)
     if (!guard.allowed) {
       setEstadoError(guard.reason ?? 'No se puede realizar el cambio de estado.')
       return

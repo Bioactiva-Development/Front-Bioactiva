@@ -3,14 +3,14 @@ import { leadsService } from '@/services/modules/leads.service'
 import { cotizacionesService } from '@/services/modules/cotizaciones.service'
 import { QUERY_KEYS } from '@/lib/constants/queryKeys'
 import { Lead, LeadFiltros, LeadFormData } from '@/types/lead.types'
-import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
+import { EstadoCot, LeadState } from '@/types/enums'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 import {
+  getCotizacionToOfferLead,
+  getCotizacionToResolveLeadClosure,
   getCotizacionStateFromLeadState,
-  getPrimaryCotizacion,
   validateLeadStateTransition,
 } from '@/lib/utils/lead-flow.utils'
-import { Cotizacion, CotizacionFormData } from '@/types/cotizacion.types'
 
 export function usePipeline(filtros?: LeadFiltros) {
   return useQuery({
@@ -36,97 +36,46 @@ export function useLead(id: number) {
   })
 }
 
-function buildDefaultCotizacion(lead: Lead): CotizacionFormData {
-  const now = new Date().toISOString()
-
-  return {
-    id_lead:          lead.id,
-    id_remitente:     lead.id_encargado,
-    fecha_cot:        now,
-    dirigido:         lead.contacto_nombre ?? 'Contacto por definir',
-    cliente:          lead.organizacion_nombre ?? 'Organización por definir',
-    producto:         lead.servicio_interes,
-    nombre_remitente: lead.encargado_nombre ?? 'Responsable asignado',
-    nombre_servicio:  lead.servicio_interes,
-    monto:            0,
-    tipo:             TipoMoneda.Soles,
-    estado:           EstadoCot.Pendiente,
-    observacion:      'Cotización generada automáticamente al avanzar el lead en el pipeline.',
-  }
-}
-
-function canMoveCotizacionToState(
-  cotizacion: Cotizacion,
-  targetState: EstadoCot
-) {
-  if (cotizacion.estado === targetState) return true
-  if (targetState === EstadoCot.Pendiente) return false
-
-  if (cotizacion.estado === EstadoCot.Pendiente) return true
-  if (
-    cotizacion.estado === EstadoCot.Enviada &&
-    (targetState === EstadoCot.Aceptada || targetState === EstadoCot.Rechazada)
-  ) {
-    return true
-  }
-
-  return false
-}
-
-async function ensurePrimaryCotizacionInState(
-  lead: Lead,
-  cotizaciones: Cotizacion[],
-  targetState: EstadoCot
-) {
-  const primaryCotizacion = getPrimaryCotizacion(cotizaciones)
-
-  if (!primaryCotizacion) {
-    return cotizacionesService.create({
-      ...buildDefaultCotizacion(lead),
-      estado: targetState,
-    })
-  }
-
-  if (primaryCotizacion.estado === targetState) {
-    return primaryCotizacion
-  }
-
-  if (canMoveCotizacionToState(primaryCotizacion, targetState)) {
-    return cotizacionesService.update(primaryCotizacion.id, {
-      estado: targetState,
-    })
-  }
-
-  await cotizacionesService.delete(primaryCotizacion.id)
-
-  return cotizacionesService.create({
-    ...buildDefaultCotizacion(lead),
-    estado: targetState,
-    observacion:
-      'Nueva cotización generada automáticamente para mantener coherencia con el pipeline.',
-  })
-}
-
-async function syncPrimaryCotizacionWithLead(lead: Lead) {
-  const cotizacionState = getCotizacionStateFromLeadState(lead.estado)
-  if (!cotizacionState) return
-
-  const cotizaciones = await cotizacionesService.getByLead(lead.id)
-
-  await ensurePrimaryCotizacionInState(lead, cotizaciones, cotizacionState)
-}
-
 async function syncLeadAndCotizacionState(lead: Lead, estado: LeadState) {
-  const targetCotState = getCotizacionStateFromLeadState(estado)
+  const cotizaciones = await cotizacionesService.getByLead(lead.id)
+  const guard = validateLeadStateTransition(lead.estado, estado, cotizaciones)
 
-  if (targetCotState) {
-    const cotizaciones = await cotizacionesService.getByLead(lead.id)
-    await ensurePrimaryCotizacionInState(lead, cotizaciones, targetCotState)
+  if (!guard.allowed) {
+    throw new Error(guard.reason ?? 'No se puede actualizar el estado del lead.')
   }
 
-  const updatedLead = await leadsService.updateEstado(lead.id, estado)
+  if (estado === LeadState.Ofertado) {
+    const cotizacion = getCotizacionToOfferLead(cotizaciones)
+    if (!cotizacion) throw new Error('No hay una cotización asociada para ofertar el lead.')
 
-  return updatedLead
+    if (cotizacion.estado === EstadoCot.Pendiente) {
+      await cotizacionesService.enviar(cotizacion.id)
+      return leadsService.getById(lead.id)
+    }
+
+    return leadsService.updateEstado(lead.id, estado)
+  }
+
+  if (estado === LeadState.CierreVenta || estado === LeadState.CierreSinVenta) {
+    const cotizacion = getCotizacionToResolveLeadClosure(estado, cotizaciones)
+    if (!cotizacion) throw new Error('No hay una cotización asociada para cerrar el lead.')
+
+    const targetCotState = getCotizacionStateFromLeadState(estado)
+
+    if (cotizacion.estado === targetCotState) {
+      return leadsService.updateEstado(lead.id, estado)
+    }
+
+    if (estado === LeadState.CierreVenta) {
+      await cotizacionesService.aceptar(cotizacion.id)
+    } else {
+      await cotizacionesService.rechazar(cotizacion.id)
+    }
+
+    return leadsService.getById(lead.id)
+  }
+
+  return leadsService.updateEstado(lead.id, estado)
 }
 
 export function useCrearLead() {
@@ -134,9 +83,7 @@ export function useCrearLead() {
 
   return useMutation({
     mutationFn: async (data: LeadFormData) => {
-      const lead = await leadsService.create(data)
-      await syncPrimaryCotizacionWithLead(lead)
-      return lead
+      return leadsService.create(data)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
@@ -151,9 +98,7 @@ export function useActualizarLead(id: number) {
 
   return useMutation({
     mutationFn: async (data: Partial<LeadFormData>) => {
-      const lead = await leadsService.update(id, data)
-      await syncPrimaryCotizacionWithLead(lead)
-      return lead
+      return leadsService.update(id, data)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
@@ -206,20 +151,7 @@ export function useMoverLeadPipeline() {
 
   return useMutation({
     mutationFn: async ({ lead, estado }: { lead: Lead; estado: LeadState }) => {
-      const cotizaciones = await cotizacionesService.getByLead(lead.id)
-      const guard = validateLeadStateTransition(estado, cotizaciones)
-
-      if (!guard.allowed) {
-        throw new Error(guard.reason ?? 'No se puede mover el lead a ese estado.')
-      }
-
-      const targetCotState = getCotizacionStateFromLeadState(estado)
-
-      if (targetCotState) {
-        await ensurePrimaryCotizacionInState(lead, cotizaciones, targetCotState)
-      }
-
-      await leadsService.updateEstado(lead.id, estado)
+      return syncLeadAndCotizacionState(lead, estado)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })

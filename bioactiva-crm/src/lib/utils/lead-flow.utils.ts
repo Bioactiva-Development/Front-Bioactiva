@@ -65,13 +65,74 @@ export function getCotizacionToResolveLeadClosure(
   return viableCotizacion ?? getPrimaryCotizacion(cotizaciones)
 }
 
+export function getCotizacionToOfferLead(
+  cotizaciones: Cotizacion[]
+): Cotizacion | null {
+  const viableStates = [EstadoCot.Enviada, EstadoCot.Pendiente]
+  return cotizaciones
+    .filter((cotizacion) => viableStates.includes(cotizacion.estado))
+    .sort(
+      (a, b) =>
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    )[0] ?? null
+}
+
 export function validateLeadStateTransition(
+  currentState: LeadState,
   targetState: LeadState,
   cotizaciones: Cotizacion[]
 ): LeadTransitionGuard {
-  void cotizaciones
+  if (!Object.values(LeadState).includes(targetState)) {
+    return { allowed: false, reason: 'Estado de pipeline no válido.' }
+  }
 
-  return Object.values(LeadState).includes(targetState)
-    ? { allowed: true }
-    : { allowed: false, reason: 'Estado de pipeline no válido.' }
+  if (currentState === targetState) return { allowed: true }
+
+  if (
+    currentState === LeadState.CierreVenta ||
+    currentState === LeadState.CierreSinVenta
+  ) {
+    return {
+      allowed: false,
+      reason: 'Los estados de cierre son finales. No se puede mover el lead desde un cierre.',
+    }
+  }
+
+  if (targetState === LeadState.Prospecto) {
+    return {
+      allowed: false,
+      reason: 'Un lead nuevo inicia en prospecto. No se puede regresar un lead avanzado a prospecto.',
+    }
+  }
+
+  if (
+    currentState === LeadState.Prospecto &&
+    (targetState === LeadState.CierreVenta ||
+      targetState === LeadState.CierreSinVenta)
+  ) {
+    return {
+      allowed: false,
+      reason: 'Antes de cerrar un lead debe existir una propuesta formal en estado Ofertado.',
+    }
+  }
+
+  if (targetState === LeadState.Ofertado && !getCotizacionToOfferLead(cotizaciones)) {
+    return {
+      allowed: false,
+      reason: 'Para mover a Ofertado primero registra una cotización asociada al lead.',
+    }
+  }
+
+  if (
+    (targetState === LeadState.CierreVenta ||
+      targetState === LeadState.CierreSinVenta) &&
+    !getCotizacionToResolveLeadClosure(targetState, cotizaciones)
+  ) {
+    return {
+      allowed: false,
+      reason: 'Para cerrar el lead debe existir una cotización asociada que pueda aceptarse o rechazarse.',
+    }
+  }
+
+  return { allowed: true }
 }

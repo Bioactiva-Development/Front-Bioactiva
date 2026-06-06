@@ -375,7 +375,9 @@ export function LeadForm({
             <p className="text-xs text-gray-400">
               {estadoEditable
                 ? 'El cambio de estado valida las cotizaciones asociadas al lead.'
-                : 'Todo lead nuevo inicia en prospecto. El cambio de estado se gestiona desde el pipeline.'
+                : esEdicion
+                  ? 'El cambio de estado se gestiona desde el pipeline.'
+                  : 'Todo lead nuevo inicia en prospecto. El cambio de estado se gestiona desde el pipeline.'
               }
             </p>
             {errors.estado && (
