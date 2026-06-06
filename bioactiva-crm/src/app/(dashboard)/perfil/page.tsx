@@ -164,6 +164,7 @@ export default function PerfilPage() {
                             <input
                                 id="prf-nombre"
                                 type="text"
+                                readOnly
                                 {...perfilForm.register('nombre_completo')}
                                 className={`w-full px-4 py-2.5 text-sm text-gray-900 rounded-xl border-2 outline-none transition-colors bg-gray-50
                                     ${perfilForm.formState.errors.nombre_completo
@@ -189,7 +190,7 @@ export default function PerfilPage() {
                             <p className="text-xs text-gray-400">El correo institucional no se puede modificar.</p>
                         </div>
 
-                        <div className="flex justify-end">
+                        {/* <div className="flex justify-end">
                             <button
                                 type="submit"
                                 disabled={isLoadingPerfil}
@@ -201,13 +202,13 @@ export default function PerfilPage() {
                                     <><Save size={14} />Guardar cambios</>
                                 )}
                             </button>
-                        </div>
+                        </div>*/}
                     </form>
                 </div>
             </div>
 
             {/* Seguridad */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-5">
+            {/*<div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-5">
                 <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
                     <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center">
                         <Lock size={16} className="text-amber-600" />
@@ -291,7 +292,7 @@ export default function PerfilPage() {
                         </div>
                     </form>
                 </div>
-            </div>
+            </div>*/}
 
             {/* Integraciones */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
