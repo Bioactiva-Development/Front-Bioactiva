@@ -55,22 +55,13 @@ export default function NuevaOrganizacionPage() {
       />
 
       {sunatData && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3
-          flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-emerald-700">
-              Datos obtenidos de SUNAT
-            </p>
-            <p className="text-xs text-emerald-600 mt-0.5">
-              {sunatData.nombre} — RUC: {sunatData.ruc}
-            </p>
-          </div>
-          <button
-            onClick={() => setSunatData(null)}
-            className="text-xs text-emerald-600 hover:underline"
-          >
-            Limpiar
-          </button>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+          <p className="text-sm font-semibold text-emerald-700">
+            Datos obtenidos de SUNAT
+          </p>
+          <p className="text-xs text-emerald-600 mt-0.5">
+            {sunatData.nombre} — RUC: {sunatData.ruc}
+          </p>
         </div>
       )}
 

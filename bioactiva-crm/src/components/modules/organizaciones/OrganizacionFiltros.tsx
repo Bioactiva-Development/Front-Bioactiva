@@ -5,7 +5,7 @@ import { Search, X } from 'lucide-react'
 import { TipoEmpresa, TamanoEmpresa, Sector } from '@/types/enums'
 import { OrganizacionFiltros as FiltrosType } from '@/types/organizacion.types'
 import { useDebounce } from '@/hooks/shared/useDebounce'
-import { formatSector } from '@/lib/utils/organizacion.utils'
+import { formatSector, formatTamano } from '@/lib/utils/organizacion.utils'
 
 interface OrganizacionFiltrosProps {
   filtros:   FiltrosType
@@ -110,7 +110,7 @@ export function OrganizacionFiltros({
         >
           <option value="">Todos los tamaños</option>
           {Object.values(TamanoEmpresa).map((t) => (
-            <option key={t} value={t}>{t}</option>
+            <option key={t} value={t}>{formatTamano(t)}</option>
           ))}
         </select>
 

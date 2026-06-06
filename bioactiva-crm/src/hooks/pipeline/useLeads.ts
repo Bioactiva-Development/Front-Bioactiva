@@ -89,6 +89,7 @@ export function useCrearLead() {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
       queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['organizaciones'] })
     },
   })
 }
@@ -104,6 +105,7 @@ export function useActualizarLead(id: number) {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
       queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['organizaciones'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
@@ -123,6 +125,7 @@ export function useActualizarEstadoLead() {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
       queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['organizaciones'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
@@ -139,6 +142,7 @@ export function useEliminarLead() {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
       queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['organizaciones'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
