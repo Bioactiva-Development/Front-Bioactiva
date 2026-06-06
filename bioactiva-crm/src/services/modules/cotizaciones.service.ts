@@ -7,6 +7,9 @@ import {
   mockCreateCotizacion,
   mockUpdateCotizacion,
   mockDeleteCotizacion,
+  mockEnviarCotizacion,
+  mockAceptarCotizacion,
+  mockRechazarCotizacion,
   mockGetKpis,
 } from '@/services/mock/cotizaciones.mock'
 import { leadsService } from '@/services/modules/leads.service'
@@ -140,6 +143,35 @@ async function applyCotizacionEstado(
   return fromCotizacionDto(response.data)
 }
 
+async function transitionCotizacionEstado(
+  id: number,
+  targetEstado: EstadoCot
+): Promise<Cotizacion> {
+  let cotizacion: Cotizacion
+
+  if (USE_MOCK) {
+    cotizacion =
+      targetEstado === EstadoCot.Enviada
+        ? await mockEnviarCotizacion(id)
+        : targetEstado === EstadoCot.Aceptada
+          ? await mockAceptarCotizacion(id)
+          : await mockRechazarCotizacion(id)
+  } else {
+    const endpoint =
+      targetEstado === EstadoCot.Enviada
+        ? ENDPOINTS.cotizaciones.send(id)
+        : targetEstado === EstadoCot.Aceptada
+          ? ENDPOINTS.cotizaciones.accept(id)
+          : ENDPOINTS.cotizaciones.reject(id)
+
+    const response = await apiClient.patch<CotizacionDtoOut>(endpoint)
+    cotizacion = fromCotizacionDto(response.data)
+  }
+
+  await syncLeadEstadoFromCotizacion(cotizacion)
+  return cotizacion
+}
+
 export const cotizacionesService = {
 
   getAll: async (filtros?: CotizacionFiltros): Promise<CotizacionesResponse> => {
@@ -231,6 +263,15 @@ export const cotizacionesService = {
     )
     return normalizeCotizacionesResponse(response.data, { limit: 100 }).data
   },
+
+  enviar: (id: number): Promise<Cotizacion> =>
+    transitionCotizacionEstado(id, EstadoCot.Enviada),
+
+  aceptar: (id: number): Promise<Cotizacion> =>
+    transitionCotizacionEstado(id, EstadoCot.Aceptada),
+
+  rechazar: (id: number): Promise<Cotizacion> =>
+    transitionCotizacionEstado(id, EstadoCot.Rechazada),
 
   delete: async (id: number): Promise<void> => {
     if (USE_MOCK) return mockDeleteCotizacion(id)

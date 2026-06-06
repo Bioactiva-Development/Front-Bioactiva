@@ -88,6 +88,17 @@ export const actividadesService = {
     return actividad
   },
 
+  cancel: async (id: number): Promise<Actividad> => {
+    const actividad = USE_MOCK
+      ? await mockCancelarActividad(id)
+      : fromActividadDto((await apiClient.patch<ActividadDtoOut>(
+          ENDPOINTS.actividades.cancel(id)
+        )).data)
+
+    await notificacionesService.cancelarPendientesPorActividad(id)
+    return actividad
+  },
+
   delete: async (id: number): Promise<void> => {
     if (USE_MOCK) return mockDeleteActividad(id)
     await apiClient.delete(ENDPOINTS.actividades.delete(id))

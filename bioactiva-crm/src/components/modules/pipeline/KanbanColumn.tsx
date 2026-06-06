@@ -1,7 +1,6 @@
 'use client'
 
 import { useDroppable } from '@dnd-kit/core'
-import { Plus } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
 import { LeadCard } from '@/components/modules/pipeline/LeadCard'
@@ -11,7 +10,6 @@ interface KanbanColumnProps {
   estado:    LeadState
   leads:     Lead[]
   color:     string
-  onAddLead: (estado: LeadState) => void
   onClickLead: (lead: Lead) => void
   onQuickAction?: (
     lead: Lead,
@@ -24,7 +22,6 @@ export function KanbanColumn({
   estado,
   leads,
   color,
-  onAddLead,
   onClickLead,
   onQuickAction,
 }: KanbanColumnProps) {
@@ -41,25 +38,15 @@ export function KanbanColumn({
         ${isOver ? 'bg-emerald-50/60 ring-2 ring-emerald-100' : ''}`}
     >
 
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className={`w-2.5 h-2.5 rounded-full ${color}`} />
-          <span className="text-sm font-bold text-gray-700 uppercase tracking-wide">
-            {titulo}
-          </span>
-          <span className="text-xs font-bold text-gray-400 bg-gray-100
-            px-2 py-0.5 rounded-full">
-            {leads.length}
-          </span>
-        </div>
-        <button
-          onClick={() => onAddLead(estado)}
-          title={`Nuevo lead en ${titulo}`}
-          className="p-1 rounded-lg text-gray-400 hover:text-emerald-600
-            hover:bg-emerald-50 transition-colors"
-        >
-          <Plus size={16} />
-        </button>
+      <div className="flex items-center gap-2 mb-3">
+        <span className={`w-2.5 h-2.5 rounded-full ${color}`} />
+        <span className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+          {titulo}
+        </span>
+        <span className="text-xs font-bold text-gray-400 bg-gray-100
+          px-2 py-0.5 rounded-full">
+          {leads.length}
+        </span>
       </div>
 
       <div className="flex flex-col gap-3 flex-1 min-h-40">

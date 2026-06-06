@@ -25,10 +25,6 @@ export default function PipelinePage() {
 
   const handleLimpiarFiltros = () => setFiltros(FILTROS_INICIALES)
 
-  const handleAddLead = (estado: LeadState = LeadState.Prospecto) => {
-    router.push(`/pipeline/nuevo?estado=${encodeURIComponent(estado)}`)
-  }
-
   const handleQuickAction = (
     lead: Lead,
     action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
@@ -124,7 +120,6 @@ export default function PipelinePage() {
       {!isLoading && !isError && pipeline && (
         <KanbanBoard
           pipeline={pipeline}
-          onAddLead={handleAddLead}
           onClickLead={setLeadSeleccionado}
           onQuickAction={handleQuickAction}
           onMoveLead={handleMoveLead}

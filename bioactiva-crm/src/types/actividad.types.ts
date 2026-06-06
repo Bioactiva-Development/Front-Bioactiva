@@ -30,7 +30,6 @@ export interface ComentarioActividad {
   created_at:   string
 }
 
-// Estado no se incluye: el backend siempre crea actividades con PENDIENTE.
 export interface ActividadFormData {
   id_lead:          number
   id_responsable:   number
@@ -38,6 +37,7 @@ export interface ActividadFormData {
   fecha_inicio:     string
   fecha_fin:        string
   tipo:             TipoActividad
+  estado?:          EstadoActividad
   notas?:           string
 }
 

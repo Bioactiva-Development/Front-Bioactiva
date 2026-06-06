@@ -9,13 +9,11 @@ import {
   useSensors,
 } from '@dnd-kit/core'
 import { KanbanColumn } from '@/components/modules/pipeline/KanbanColumn'
-import { LeadCard } from '@/components/modules/pipeline/LeadCard'
 import { PipelineData, Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
 
 interface KanbanBoardProps {
   pipeline:    PipelineData
-  onAddLead:   (estado: LeadState) => void
   onClickLead: (lead: Lead) => void
   onQuickAction?: (
     lead: Lead,
@@ -53,7 +51,6 @@ const COLUMNAS = [
 
 export function KanbanBoard({
   pipeline,
-  onAddLead,
   onClickLead,
   onQuickAction,
   onMoveLead,
@@ -90,7 +87,6 @@ export function KanbanBoard({
               estado={col.estado}
               leads={leads}
               color={col.color}
-              onAddLead={onAddLead}
               onClickLead={onClickLead}
               onQuickAction={onQuickAction}
             />

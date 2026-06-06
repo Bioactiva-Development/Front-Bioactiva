@@ -19,6 +19,7 @@ import { Lead } from '@/types/lead.types'
 interface LeadCardProps {
   lead:     Lead
   onClick:  (lead: Lead) => void
+  isOverlay?: boolean
   onQuickAction?: (
     lead: Lead,
     action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
@@ -28,6 +29,7 @@ interface LeadCardProps {
 export function LeadCard({
   lead,
   onClick,
+  isOverlay = false,
   onQuickAction,
 }: LeadCardProps) {
   const {

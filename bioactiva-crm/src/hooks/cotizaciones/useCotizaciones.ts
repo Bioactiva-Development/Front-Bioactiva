@@ -65,3 +65,33 @@ export function useActualizarCotizacion(id: number) {
     },
   })
 }
+
+function useCotizacionEstadoMutation(
+  mutationFn: (id: number) => Promise<unknown>
+) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
+export function useEnviarCotizacion() {
+  return useCotizacionEstadoMutation((id) => cotizacionesService.enviar(id))
+}
+
+export function useAceptarCotizacion() {
+  return useCotizacionEstadoMutation((id) => cotizacionesService.aceptar(id))
+}
+
+export function useRechazarCotizacion() {
+  return useCotizacionEstadoMutation((id) => cotizacionesService.rechazar(id))
+}

@@ -249,11 +249,11 @@ export const mockGetPipeline = async (
   }
 
   return {
-    prospecto:      leads.filter((l) => l.estado === LeadState.Prospecto),
-    ofertado:       leads.filter((l) => l.estado === LeadState.Ofertado),
-    cierreVenta:    leads.filter((l) => l.estado === LeadState.CierreVenta),
-    cierreSinVenta: leads.filter((l) => l.estado === LeadState.CierreSinVenta),
-    total:          leads.length,
+    prospecto:      resultado.filter((l) => l.estado === LeadState.Prospecto),
+    ofertado:       resultado.filter((l) => l.estado === LeadState.Ofertado),
+    cierreVenta:    resultado.filter((l) => l.estado === LeadState.CierreVenta),
+    cierreSinVenta: resultado.filter((l) => l.estado === LeadState.CierreSinVenta),
+    total:          resultado.length,
   }
 }
 
@@ -487,6 +487,10 @@ export const mockCompleteActividad = async (
   })
 }
 
+export const mockCancelarActividad = async (id: number): Promise<Actividad> =>
+  mockUpdateActividad(id, {
+    estado: EstadoActividad.Cancelada,
+  })
 
 export const mockGetComentarios = async (
   actividadId: number

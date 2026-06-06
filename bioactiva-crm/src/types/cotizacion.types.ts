@@ -29,9 +29,6 @@ export interface Cotizacion {
   periodo?:               string   // calculado en frontend
 }
 
-// estado y nombre_remitente no se incluyen:
-//  - estado: el backend siempre crea en PENDIENTE y usa /send /accept /reject
-//  - nombre_remitente: el backend lo captura automáticamente de idRemitente
 export interface CotizacionFormData {
   id_lead:         number
   id_remitente:    number
@@ -39,9 +36,11 @@ export interface CotizacionFormData {
   dirigido:        string
   cliente?:        string
   producto?:       string
+  nombre_remitente?: string
   nombre_servicio: string
   monto:           number
   tipo:            TipoMoneda
+  estado?:          EstadoCot
   observacion?:    string
   link_propuesta?: string
 }
