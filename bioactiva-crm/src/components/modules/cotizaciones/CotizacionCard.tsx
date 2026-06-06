@@ -17,6 +17,20 @@ const ESTADO_COLORS: Record<EstadoCot, string> = {
   [EstadoCot.Rechazada]:  'bg-red-50 text-red-600',
 }
 
+const ESTADO_HOVER_COLORS: Record<EstadoCot, string> = {
+  [EstadoCot.Pendiente]:  'hover:bg-gray-50',
+  [EstadoCot.Enviada]:    'hover:bg-blue-50/40',
+  [EstadoCot.Aceptada]:   'hover:bg-emerald-50/30',
+  [EstadoCot.Rechazada]:  'hover:bg-red-50/40',
+}
+
+const ESTADO_CODE_COLORS: Record<EstadoCot, string> = {
+  [EstadoCot.Pendiente]:  'text-gray-600',
+  [EstadoCot.Enviada]:    'text-blue-600',
+  [EstadoCot.Aceptada]:   'text-emerald-600',
+  [EstadoCot.Rechazada]:  'text-red-600',
+}
+
 export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
   const router = useRouter()
 
@@ -33,12 +47,12 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
 
   return (
     <tr
-      className="border-b border-gray-50 hover:bg-emerald-50/30
-        transition-colors cursor-pointer"
+      className={`border-b border-gray-50 transition-colors cursor-pointer
+        ${ESTADO_HOVER_COLORS[cotizacion.estado]}`}
       onClick={handleVerDetalle}
     >
       <td className="px-4 py-4">
-        <p className="text-sm font-bold text-emerald-600">
+        <p className={`text-sm font-bold ${ESTADO_CODE_COLORS[cotizacion.estado]}`}>
           {cotizacion.codigo}
         </p>
       </td>

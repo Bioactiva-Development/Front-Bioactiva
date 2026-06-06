@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, TrendingUp, CheckCircle, Clock, Percent } from 'lucide-react'
+import { Plus, TrendingUp, CheckCircle, Clock, XCircle } from 'lucide-react'
 import { useCotizaciones, useCotizacionKpis } from '@/hooks/cotizaciones/useCotizaciones'
 import { CotizacionFiltros } from '@/components/modules/cotizaciones/CotizacionFiltros'
 import { CotizacionCard } from '@/components/modules/cotizaciones/CotizacionCard'
@@ -94,12 +94,12 @@ export default function CotizacionesPage() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                Conversión
+                Rechazadas
               </p>
-              <Percent size={18} className="text-emerald-500" />
+              <XCircle size={18} className="text-red-500" />
             </div>
-            <p className="text-2xl font-bold text-emerald-600">
-              {kpis.conversion}%
+            <p className="text-2xl font-bold text-red-600">
+              {kpis.rechazadas}
             </p>
           </div>
         </div>

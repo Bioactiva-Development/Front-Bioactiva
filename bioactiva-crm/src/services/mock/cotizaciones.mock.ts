@@ -259,16 +259,14 @@ export const mockGetKpis = async (): Promise<CotizacionKpis> => {
   await delay(300)
   const aceptadas  = MOCK_COTIZACIONES.filter((c) => c.estado === EstadoCot.Aceptada)
   const enviadas   = MOCK_COTIZACIONES.filter((c) => c.estado === EstadoCot.Enviada)
+  const rechazadas = MOCK_COTIZACIONES.filter((c) => c.estado === EstadoCot.Rechazada)
   const totalActivo = MOCK_COTIZACIONES
     .filter((c) => c.estado !== EstadoCot.Rechazada)
     .reduce((sum, c) => sum + c.monto, 0)
-  const propuestas = enviadas.length + aceptadas.length
   return {
     totalActivo,
     aceptadas:  aceptadas.length,
     enviadas:   enviadas.length,
-    conversion: propuestas > 0
-      ? Math.round((aceptadas.length / propuestas) * 100)
-      : 0,
+    rechazadas: rechazadas.length,
   }
 }

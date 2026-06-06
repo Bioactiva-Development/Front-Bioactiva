@@ -67,5 +67,5 @@ export interface CotizacionKpis {
   totalActivo: number
   aceptadas:   number
   enviadas:    number
-  conversion:  number
+  rechazadas:  number
 }

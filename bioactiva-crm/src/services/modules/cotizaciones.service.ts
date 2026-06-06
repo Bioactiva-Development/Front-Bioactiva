@@ -237,18 +237,16 @@ export const cotizacionesService = {
     const data = await getSyncedCotizaciones()
     const aceptadas = data.filter((c) => c.estado === EstadoCot.Aceptada).length
     const enviadas = data.filter((c) => c.estado === EstadoCot.Enviada).length
+    const rechazadas = data.filter((c) => c.estado === EstadoCot.Rechazada).length
     const totalActivo = data
       .filter((c) => c.estado !== EstadoCot.Rechazada)
       .reduce((sum, c) => sum + c.monto, 0)
-    const procesadas = data.filter(
-      (c) => c.estado === EstadoCot.Enviada || c.estado === EstadoCot.Aceptada
-    ).length
 
     return {
       totalActivo,
       aceptadas,
       enviadas,
-      conversion: procesadas > 0 ? Math.round((aceptadas / procesadas) * 100) : 0,
+      rechazadas,
     }
   },
 
