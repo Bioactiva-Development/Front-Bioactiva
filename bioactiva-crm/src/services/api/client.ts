@@ -141,6 +141,15 @@ apiClient.interceptors.response.use(
             mensajeFinal = 'No se pudo conectar con el servidor. Verifica tu conexión.'
         }
 
+        // Nunca exponer detalles internos de Prisma o la base de datos al usuario.
+        if (/unique constraint.*correo|correo.*unique constraint/i.test(mensajeFinal)) {
+            mensajeFinal = 'Ya existe una invitación o cuenta registrada con ese correo electrónico.'
+        } else if (/unique constraint|constraint failed on the fields/i.test(mensajeFinal)) {
+            mensajeFinal = 'Ya existe un registro con esos datos. Verifica e inténtalo nuevamente.'
+        } else if (/prisma\.|invalid.*invocation|p\d{4}/i.test(mensajeFinal)) {
+            mensajeFinal = 'Ocurrió un error al procesar la solicitud. Inténtalo nuevamente.'
+        }
+
         // errorCode: identificador estable del extended shape (ej: "ActivityNotFoundException")
         const errorCode = (error.response?.data as { error?: string })?.error
 
