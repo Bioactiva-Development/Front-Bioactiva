@@ -44,7 +44,7 @@ La API usa rutas REST en ingles, sin prefijo `/api` para los modulos principales
 | Auth | `POST /auth/login`, `GET /auth/me`, `POST /auth/refresh`, reset password |
 | Users | `GET /users`, `PATCH /users/:id/enable`, `PATCH /users/:id/disable` |
 | Organizations | `GET/POST /organizations`, `GET/PATCH /organizations/:id`, `GET /organizations/sunat/:query` |
-| Contacts | `GET/POST /contacts`, `GET/PATCH /contacts/:id`, `GET /contacts/organization/:orgId` |
+| Contacts | `GET/POST /contacts`, `GET/PATCH /contacts/:id`; filtrar por organizacion con `GET /contacts?idOrganization=<id>` |
 | Leads | `GET/POST /leads`, `GET/PATCH/DELETE /leads/:id`, `PATCH /leads/:id/status` |
 | Activities | `GET/POST /activities`, `GET/PATCH/DELETE /activities/:id`, `PATCH /activities/:id/complete`, `PATCH /activities/:id/cancel` |
 | Quotations | `GET/POST /quotations`, `GET/PATCH/DELETE /quotations/:id`, `PATCH /quotations/:id/send`, `PATCH /quotations/:id/accept`, `PATCH /quotations/:id/reject` |
@@ -74,22 +74,28 @@ Si agregas un campo backend, actualiza mapper, tipo, servicio y prueba unitaria.
 
 ### Pipeline y cotizaciones
 
-El pipeline tiene cuatro estados:
+El pipeline tiene cuatro estados definidos por el documento de analisis y diseno. Todo lead nuevo inicia en `En prospecto`; el estado no se edita desde los formularios de creacion/edicion.
 
-| LeadState frontend | Backend | Estado de cotizacion coherente |
+| LeadState frontend | Backend | Cotizacion requerida |
 | --- | --- | --- |
-| `En prospecto` | `EN_PROSPECTO` | `PENDIENTE` |
+| `En prospecto` | `EN_PROSPECTO` | No requerida |
 | `Ofertado` | `OFERTADO` | `ENVIADA` |
 | `Cierre con venta` | `CIERRE_CON_VENTA` | `ACEPTADA` |
 | `Cierre sin venta` | `CIERRE_SIN_VENTA` | `RECHAZADA` |
 
 Reglas:
 
-- Al crear un lead, debe existir una cotizacion inicial coherente con el estado del lead.
-- Al mover un lead por drag and drop, la cotizacion principal debe sincronizarse con la columna destino.
+- Al crear un lead, no crear cotizaciones automaticamente.
+- La creacion de leads se hace solo desde `+ Nuevo Lead`; no reintroducir botones `+` por columna.
+- `Prospecto -> Ofertado` requiere una cotizacion asociada `PENDIENTE` o `ENVIADA`; si esta `PENDIENTE`, enviar con `PATCH /quotations/:id/send`.
+- `Prospecto -> Cierre con venta` y `Prospecto -> Cierre sin venta` estan bloqueados. Primero debe existir propuesta formal en `Ofertado`.
+- `Ofertado -> Cierre con venta` acepta la cotizacion con `PATCH /quotations/:id/accept`.
+- `Ofertado -> Cierre sin venta` rechaza la cotizacion con `PATCH /quotations/:id/reject`.
+- `Cierre con venta` y `Cierre sin venta` son estados finales; no se puede mover desde un cierre.
+- No se permite regresar un lead avanzado a `En prospecto`.
+- Al mover un lead por drag and drop, no crear cotizaciones fantasma. Usar solo cotizaciones reales asociadas al lead.
 - `ACEPTADA` y `RECHAZADA` son terminales en backend. No se pueden modificar por `PATCH /quotations/:id`.
 - Para avanzar estados se usan endpoints de lifecycle: `/send`, `/accept`, `/reject`.
-- Para volver desde un estado terminal o cambiar a una ruta no permitida por backend, la estrategia actual del frontend es soft-delete de la cotizacion anterior y creacion de una nueva coherente, para mantener una sola cotizacion visible por lead.
 - La lista general de cotizaciones debe sincronizarse con leads activos del pipeline; no debe mostrar cotizaciones historicas de leads soft-deleted o no visibles.
 
 ### Leads
@@ -99,7 +105,7 @@ Contrato de `POST /leads` y `PATCH /leads/:id`:
 - Acepta `idOrg`, `servicioInteres`, `idEncargado`, `idContacto`, `comentarios`, `desafioOportunidad`, `notasContacto`, `canalCaptacion`.
 - El backend no acepta `fechaCierre`. Si se envia, responde `property fechaCierre should not exist`.
 - El frontend conserva `fecha_cierre` como dato local de UI en `localStorage` mediante `leads.service.ts`, porque el backend actual no lo persiste.
-- El estado inicial backend siempre es `EN_PROSPECTO`; para otro estado se crea el lead y luego se llama `PATCH /leads/:id/status`.
+- El estado inicial backend siempre es `EN_PROSPECTO`; la UI crea leads siempre en `En prospecto`.
 - No hardcodear responsables: siempre cargar usuarios activos desde `GET /users`.
 
 Filtro basico del pipeline:
@@ -135,12 +141,18 @@ Contrato de `POST /quotations`:
 - `PATCH /quotations/:id` no permite cambiar `estado`, `idLead` ni `idRemitente`.
 - Backend no permite modificar cotizaciones terminales `ACEPTADA` o `RECHAZADA`.
 - `DELETE /quotations/:id` es soft delete.
+- `idRemitente` debe pertenecer a un usuario real del backend. Cargar remitentes desde `GET /users`; no hardcodear `Luis Torres`, `Administracion` u otros IDs.
+- No enviar `nombreRemitente`; el backend lo captura automaticamente como snapshot desde `idRemitente`.
+- En edicion, mantener fijo `idRemitente`.
+- La pagina de cotizaciones ordena filtros como `Todas`, `Pendiente`, `Enviada`, `Aceptada`, `Rechazada`.
+- El KPI de la cuarta tarjeta es `Rechazadas`, no conversion, y las cotizaciones rechazadas usan color rojo.
 
 ### Contactos y organizaciones
 
 - Lead requiere organizacion existente.
 - Si se envia `idContacto`, debe pertenecer a la organizacion del lead y tener email vigente.
-- Organizaciones usan UUID como ID.
+- `GET /contacts` devuelve `{ data, meta }`; filtrar por organizacion con `idOrganization`.
+- Organizaciones usan `codigoCliente` requerido, maximo 20 caracteres y unico. No es autogenerado por backend.
 - SUNAT se consulta desde backend con `/organizations/sunat/:query`; el frontend no debe hacer scraping.
 
 ## Errores recurrentes y causa probable
@@ -151,7 +163,8 @@ Contrato de `POST /quotations`:
 | `Cannot GET /api/cotizaciones...` | Ruta antigua | Usar `GET /quotations` |
 | `property fechaCierre should not exist` | Campo no soportado por backend | No enviar `fechaCierre` |
 | `Responsable con id X no encontrado` | Responsable hardcodeado o ID inexistente | Cargar usuarios reales con `GET /users` |
-| `Solo se puede aceptar una cotizacion...` | Se intento lifecycle incompatible | Respetar lifecycle o recrear cotizacion coherente |
+| `Remitente con id X no encontrado` | Remitente hardcodeado o ID inexistente | Cargar remitentes reales con `GET /users` |
+| `Solo se puede aceptar una cotizacion...` | Se intento lifecycle incompatible | Respetar lifecycle y bloquear transiciones no permitidas |
 | Cotizaciones de mas en listado | Listado no cruzado con leads activos | Filtrar contra pipeline activo |
 
 ## Convenciones de desarrollo
@@ -161,9 +174,9 @@ Contrato de `POST /quotations`:
 - No mandar campos que el backend no documenta.
 - Mantener pruebas de mappers cuando cambie un contrato.
 - Al tocar drag and drop, verificar coherencia lead-cotizacion.
-- Al tocar creacion/edicion de leads, verificar cotizacion automatica.
+- Al tocar creacion/edicion de leads, verificar que el lead nuevo siempre inicie en prospecto y que el estado no sea editable en formularios.
 - Al tocar actividades, verificar regla de una pendiente por lead y usuarios reales.
-- Al tocar cotizaciones, verificar lifecycle y terminales.
+- Al tocar cotizaciones, verificar lifecycle, terminales, remitentes reales y patron rojo para rechazadas.
 - Usar `rg` para busquedas.
 - Usar `apply_patch` para editar archivos.
 
