@@ -47,7 +47,7 @@ export const ENDPOINTS = {
         create: '/organizations',
         update: (id: string) => `/organizations/${id}`,
         delete: (id: string) => `/organizations/${id}`,
-        sunat: (query: string) => `/organizations/sunat/${encodeURIComponent(query)}`,
+        sunat: '/organizations/sunat',
     },
 
     contactos: {

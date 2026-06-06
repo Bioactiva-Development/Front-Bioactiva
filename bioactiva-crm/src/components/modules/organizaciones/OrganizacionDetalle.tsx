@@ -11,7 +11,7 @@ import {
 import { OrganizacionConRelaciones } from '@/types/organizacion.types'
 import { ROUTES } from '@/lib/constants/routes'
 import { TamanoEmpresa } from '@/types/enums'
-import { formatSector } from '@/lib/utils/organizacion.utils'
+import { formatSector, formatTamano } from '@/lib/utils/organizacion.utils'
 
 interface OrganizacionDetalleProps {
   organizacion: OrganizacionConRelaciones
@@ -127,7 +127,7 @@ export function OrganizacionDetalle({
                 </span>
                 <span className={`text-xs px-2.5 py-1 rounded-lg font-bold uppercase
                   tracking-wide ${TAMANO_COLORS[organizacion.tamano]}`}>
-                  {organizacion.tamano}
+                  {formatTamano(organizacion.tamano)}
                 </span>
                 <span className="text-xs bg-emerald-50 text-emerald-600 px-2.5 py-1
                   rounded-lg font-medium">

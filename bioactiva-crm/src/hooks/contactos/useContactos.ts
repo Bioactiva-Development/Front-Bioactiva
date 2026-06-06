@@ -35,9 +35,8 @@ export function useCrearContacto() {
     mutationFn: (data: ContactoFormData) =>
       contactosService.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['contactos'],
-      })
+      queryClient.invalidateQueries({ queryKey: ['contactos'] })
+      queryClient.invalidateQueries({ queryKey: ['organizaciones'] })
     },
   })
 }
@@ -49,12 +48,9 @@ export function useActualizarContacto(id: number) {
     mutationFn: (data: Partial<ContactoFormData>) =>
       contactosService.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['contactos'],
-      })
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.contactos.detail(id),
-      })
+      queryClient.invalidateQueries({ queryKey: ['contactos'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.contactos.detail(id) })
+      queryClient.invalidateQueries({ queryKey: ['organizaciones'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))

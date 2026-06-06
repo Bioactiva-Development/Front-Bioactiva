@@ -32,6 +32,8 @@ import {
   toCreateOrganizacionDto,
   toUpdateOrganizacionDto,
 } from './organizaciones.mapper'
+import { fromLeadDto, LeadDtoOut, LeadsDtoResponse } from './leads.mapper'
+import { fromCotizacionDto, CotizacionDtoOut, CotizacionesDtoResponse } from './cotizaciones.mapper'
 
 /**
  * Servicio de organizaciones.
@@ -156,8 +158,8 @@ export const organizacionesService = {
   sunatPorRuc: async (ruc: string): Promise<SunatRucResult> => {
     if (USE_MOCK) return mockSunatPorRuc(ruc)
     const { data } = await apiClient.get<SunatRucDto>(
-      ENDPOINTS.organizaciones.sunat(ruc),
-      { timeout: 30000 }
+      ENDPOINTS.organizaciones.sunat,
+      { params: { query: ruc }, timeout: 30000 }
     )
     return fromSunatRucDto(data)
   },
@@ -170,8 +172,8 @@ export const organizacionesService = {
       return [{ ruc: ruc.ruc, nombre: ruc.nombre, ubicacion: ruc.ubicacion }]
     }
     const { data } = await apiClient.get<SunatRucDto[]>(
-      ENDPOINTS.organizaciones.sunat(nombre),
-      { timeout: 30000 }
+      ENDPOINTS.organizaciones.sunat,
+      { params: { query: nombre }, timeout: 30000 }
     )
     // El doc indica que se muestran hasta los 10 primeros más coincidentes (CU003).
     return data.slice(0, 10).map(fromSunatNombreDto)
@@ -184,35 +186,90 @@ export const organizacionesService = {
   },
 
   /**
-   * GET /organizations/:id
-   *
-   * El backend embebe los primeros 6 contactos (`contactos`) y el total
-   * (`totalContactos`) directamente en el detalle de la organización.
-   * Leads y cotizaciones se cargarán mediante sus propios endpoints cuando
-   * el backend los exponga.
+   * Carga la organización junto con sus contactos, leads y cotizaciones
+   * asociadas usando 4 llamadas en paralelo. Si los endpoints de leads o
+   * cotizaciones no soportan aún el filtro `idOrg`, degradan a [] sin romper
+   * la vista (Promise.allSettled).
    */
   getByIdConRelaciones: async (
     id: string
   ): Promise<OrganizacionConRelaciones> => {
     if (USE_MOCK) return mockGetOrganizacionConRelaciones(id)
-    const { data } = await apiClient.get<OrganizacionConRelacionesDto>(
-      ENDPOINTS.organizaciones.detail(id)
-    )
-    const organizacion = fromOrganizacionDto(data)
+
+    const [orgResult, contactosResult, leadsResult, cotizacionesResult] =
+      await Promise.allSettled([
+        apiClient.get<OrganizacionConRelacionesDto>(ENDPOINTS.organizaciones.detail(id)),
+        apiClient.get<Record<string, unknown>[]>(ENDPOINTS.contactos.byOrganizacion(id)),
+        apiClient.get<LeadDtoOut[] | LeadsDtoResponse>(ENDPOINTS.leads.list, {
+          params: { idOrg: id, limit: 100 },
+        }),
+        apiClient.get<CotizacionDtoOut[] | CotizacionesDtoResponse>(
+          ENDPOINTS.cotizaciones.list,
+          { params: { idOrg: id, limit: 100 } }
+        ),
+      ])
+
+    if (orgResult.status === 'rejected') throw orgResult.reason
+
+    const organizacion = fromOrganizacionDto(orgResult.value.data)
+
+    const contactosRaw =
+      contactosResult.status === 'fulfilled' ? contactosResult.value.data : []
+
+    const leadsRaw: LeadDtoOut[] =
+      leadsResult.status === 'fulfilled'
+        ? Array.isArray(leadsResult.value.data)
+          ? leadsResult.value.data
+          : (leadsResult.value.data as LeadsDtoResponse).data ?? []
+        : []
+
+    const cotizacionesRaw: CotizacionDtoOut[] =
+      cotizacionesResult.status === 'fulfilled'
+        ? Array.isArray(cotizacionesResult.value.data)
+          ? cotizacionesResult.value.data
+          : (cotizacionesResult.value.data as CotizacionesDtoResponse).data ?? []
+        : []
+
+    const todosContactos = contactosRaw.map((c) => ({
+      id:        Number(c.id),
+      nombres:   String(c.nombres ?? ''),
+      apellidos: String(c.apellidos ?? ''),
+      vocativo:  c.vocativo as string | undefined,
+      cargo:     (c.cargo as string | null) ?? undefined,
+      correo:    String(c.correo ?? ''),
+      telefono:  (c.telefono as string | null) ?? undefined,
+    }))
+
     return {
       ...organizacion,
-      contactos: (data.contactos ?? []).map((c) => ({
-        id:        c.id,
-        nombres:   c.nombres,
-        apellidos: c.apellidos,
-        vocativo:  c.vocativo,
-        cargo:     c.cargo ?? undefined,
-        correo:    c.correo,
-        telefono:  c.telefono ?? undefined,
-      })),
-      totalContactos: data.totalContactos ?? 0,
-      leads:        [],
-      cotizaciones: [],
+      contactos:      todosContactos.slice(0, 6),
+      totalContactos: todosContactos.length,
+      leads: leadsRaw.map((l) => {
+        const lead = fromLeadDto(l)
+        return {
+          id:               lead.id,
+          servicio_interes: lead.servicio_interes,
+          estado:           lead.estado as string,
+          created_at:       lead.created_at,
+          encargado:        lead.encargado_nombre,
+        }
+      }),
+      cotizaciones: cotizacionesRaw.map((c) => {
+        const cot = fromCotizacionDto(c)
+        return {
+          id:               cot.id,
+          nombre_servicio:  cot.nombre_servicio,
+          monto:            cot.monto,
+          tipo:             cot.tipo as string,
+          estado:           cot.estado as string,
+          fecha_cot:        cot.fecha_cot,
+          dirigido:         cot.dirigido || undefined,
+          nombre_remitente: cot.nombre_remitente || undefined,
+          observacion:      cot.observacion ?? undefined,
+          id_lead:          cot.id_lead,
+          codigo_lead:      cot.codigo,
+        }
+      }),
     }
   },
 }

@@ -14,9 +14,10 @@ interface SunatBuscadorProps {
 type TabType = 'ruc' | 'nombre'
 
 export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: Readonly<SunatBuscadorProps>) {
-  const [tab,         setTab]         = useState<TabType>('ruc')
-  const [inputRuc,    setInputRuc]    = useState('')
-  const [inputNombre, setInputNombre] = useState('')
+  const [tab,            setTab]            = useState<TabType>('ruc')
+  const [inputRuc,       setInputRuc]       = useState('')
+  const [inputNombre,    setInputNombre]    = useState('')
+  const [cargandoRuc,    setCargandoRuc]    = useState<string | null>(null)
 
   const {
     loadingRuc,
@@ -40,8 +41,19 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
   }
 
   const handleSeleccionarNombre = async (item: SunatNombreResult) => {
-    const detalle = await consultarPorRuc(item.ruc)
-    if (detalle) onSeleccionar(detalle)
+    if (modoConsulta) {
+      setCargandoRuc(item.ruc)
+      await consultarPorRuc(item.ruc)
+      setCargandoRuc(null)
+      setTab('ruc')
+    } else {
+      onSeleccionar({
+        ruc:            item.ruc,
+        nombre:         item.nombre,
+        nombreCompleto: item.nombre,
+        ubicacion:      item.ubicacion,
+      })
+    }
   }
 
   const handleCambiarTab = (nuevaTab: TabType) => {
@@ -63,6 +75,7 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
       <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shrink-0">
           <h2 className="text-lg font-bold text-gray-900">Validador SUNAT</h2>
@@ -265,33 +278,45 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
 
               {resultadosNombre.length > 0 && (
                 <div className="border border-gray-100 rounded-xl overflow-hidden">
-                  {resultadosNombre.map((item, index) => (
-                    <button
-                      key={item.ruc}
-                      onClick={() => handleSeleccionarNombre(item)}
-                      className={`w-full flex items-center justify-between px-4 py-3
-                        hover:bg-emerald-50 transition-colors text-left
-                        ${index !== 0 ? 'border-t border-gray-50' : ''}`}
-                    >
-                      <div>
-                        <p className="text-sm font-semibold text-gray-800">
-                          {item.nombre}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          RUC: {item.ruc}
-                          {item.ubicacion && ` · ${item.ubicacion}`}
-                        </p>
-                      </div>
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full
-                        shrink-0 ml-2
-                        ${item.estado === 'ACTIVO'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-red-100 text-red-600'
-                        }`}>
-                        {item.estado}
-                      </span>
-                    </button>
-                  ))}
+                  {resultadosNombre.map((item, index) => {
+                    const esteItem  = cargandoRuc === item.ruc
+                    const otroItem  = cargandoRuc !== null && !esteItem
+                    return (
+                      <button
+                        key={item.ruc}
+                        onClick={() => !cargandoRuc && handleSeleccionarNombre(item)}
+                        disabled={!!cargandoRuc}
+                        className={`w-full flex items-center justify-between px-4 py-3
+                          transition-colors text-left
+                          ${index !== 0 ? 'border-t border-gray-50' : ''}
+                          ${esteItem ? 'bg-emerald-50' : ''}
+                          ${otroItem ? 'opacity-40' : 'hover:bg-emerald-50'}
+                          ${cargandoRuc ? 'cursor-default' : 'cursor-pointer'}`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 truncate">
+                            {item.nombre}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            RUC: {item.ruc}
+                            {item.ubicacion && ` · ${item.ubicacion}`}
+                          </p>
+                        </div>
+                        {esteItem ? (
+                          <Loader2 size={16} className="animate-spin text-emerald-600 shrink-0 ml-2" />
+                        ) : (
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full
+                            shrink-0 ml-2
+                            ${item.estado === 'ACTIVO'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-red-100 text-red-600'
+                            }`}>
+                            {item.estado}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </>
