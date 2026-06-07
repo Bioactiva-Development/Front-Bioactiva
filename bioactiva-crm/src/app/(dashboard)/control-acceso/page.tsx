@@ -175,7 +175,10 @@ export default function ControlAccesoPage() {
             await createInvitacion({ correo: data.correo, rol: rolNumerico })
             return true
         } catch (err: unknown) {
-            const msg = (err as { message?: string })?.message ?? 'Error al enviar la invitación. Intente nuevamente.'
+            let msg = (err as { message?: string })?.message ?? 'Error al enviar la invitación. Intente nuevamente.'
+            if (/prisma|unique constraint|constraint failed|invocation/i.test(msg)) {
+                msg = 'Ya existe un usuario registrado con ese correo. Si el acceso fue revocado, puedes reactivarlo desde la lista de usuarios.'
+            }
             setInviteError(msg)
             return false
         }

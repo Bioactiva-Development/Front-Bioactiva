@@ -113,8 +113,11 @@ apiClient.interceptors.response.use(
             })
         }
 
-        const backendMessage =
-            (error.response?.data as { message?: string | string[] })?.message
+        const backendMessage = (() => {
+            const data = error.response?.data
+            if (typeof data === 'string' && data.length > 0) return data
+            return (data as { message?: string | string[] } | undefined)?.message
+        })()
 
         const rawMessage = Array.isArray(backendMessage) ? backendMessage[0] : backendMessage ?? ''
 
@@ -142,11 +145,16 @@ apiClient.interceptors.response.use(
         }
 
         // Nunca exponer detalles internos de Prisma o la base de datos al usuario.
-        if (/unique constraint.*correo|correo.*unique constraint/i.test(mensajeFinal)) {
-            mensajeFinal = 'Ya existe una invitación o cuenta registrada con ese correo electrónico.'
-        } else if (/unique constraint|constraint failed on the fields/i.test(mensajeFinal)) {
+        // Se usan tests separados para tolerar saltos de línea en el mensaje del backend.
+        const hasUniqueConstraint = /unique constraint|constraint failed on the fields/i.test(mensajeFinal)
+        const hasCorreo           = /correo/i.test(mensajeFinal)
+        const hasPrismaTrace      = /prisma|invalid [^\n]*invocation|p\d{4}/i.test(mensajeFinal)
+
+        if (hasUniqueConstraint && hasCorreo) {
+            mensajeFinal = 'Ya existe un usuario o invitación registrado con ese correo electrónico.'
+        } else if (hasUniqueConstraint) {
             mensajeFinal = 'Ya existe un registro con esos datos. Verifica e inténtalo nuevamente.'
-        } else if (/prisma\.|invalid.*invocation|p\d{4}/i.test(mensajeFinal)) {
+        } else if (hasPrismaTrace) {
             mensajeFinal = 'Ocurrió un error al procesar la solicitud. Inténtalo nuevamente.'
         }
 
