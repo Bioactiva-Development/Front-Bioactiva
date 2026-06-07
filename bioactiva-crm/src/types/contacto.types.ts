@@ -30,6 +30,7 @@ export interface ContactoFormData {
     telefono?: string
     comentarios?: string
     idOrganizacion: string
+    estado_correo?: EstadoCorreo
 }
 
 export interface ContactoFiltros {

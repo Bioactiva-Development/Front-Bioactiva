@@ -112,6 +112,9 @@ export default function ContactosPage() {
                   Comunicación
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                  Estado
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
                   Acciones
                 </th>
               </tr>

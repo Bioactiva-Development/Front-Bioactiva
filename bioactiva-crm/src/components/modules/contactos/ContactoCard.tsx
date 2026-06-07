@@ -64,6 +64,16 @@ export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
         </div>
       </td>
 
+      <td className="px-4 py-4">
+        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide
+          ${contacto.estado_correo === 'VENCIDO'
+            ? 'bg-red-50 text-red-600'
+            : 'bg-emerald-50 text-emerald-700'
+          }`}>
+          {contacto.estado_correo ?? 'VIGENTE'}
+        </span>
+      </td>
+
       <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={handleVerDetalle}
