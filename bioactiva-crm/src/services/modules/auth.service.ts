@@ -98,12 +98,14 @@ export const authService = {
             )
             return { valid: true, correo: response.data.correo }
         } catch (err) {
-            const status = isAppError(err) ? err.status : undefined
-            const message = isAppError(err)
-                ? err.message ?? 'El enlace de recuperación no es válido.'
-                : 'El enlace de recuperación no es válido.'
-            if (status === 400) return { valid: false, message }
-            throw err
+            const raw = isAppError(err) ? (err.message ?? '') : ''
+            const isTechnical = !raw || /cannot read|undefined|null|prisma|invocation|property of/i.test(raw)
+            return {
+                valid: false,
+                message: isTechnical
+                    ? 'El enlace de recuperación no es válido o ha expirado.'
+                    : raw,
+            }
         }
     },
 
