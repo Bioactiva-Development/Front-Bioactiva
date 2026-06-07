@@ -2,6 +2,10 @@ import { z } from 'zod'
 import { Vocativo } from '@/types/enums'
 
 export const contactoSchema = z.object({
+    estado_correo: z
+        .enum(['VIGENTE', 'VENCIDO'])
+        .optional(),
+
     nombres: z
         .string()
         .min(1, 'El nombre es obligatorio')

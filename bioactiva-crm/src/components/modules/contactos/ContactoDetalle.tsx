@@ -84,10 +84,19 @@ export function ContactoDetalle({
             </div>
 
             <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                {contacto.vocativo && `${contacto.vocativo}. `}
-                {contacto.nombres} {contacto.apellidos}
-              </h1>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-xl font-bold text-gray-900">
+                  {contacto.vocativo && `${contacto.vocativo}. `}
+                  {contacto.nombres} {contacto.apellidos}
+                </h1>
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide
+                  ${contacto.estado_correo === 'VENCIDO'
+                    ? 'bg-red-50 text-red-600 border border-red-200'
+                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  }`}>
+                  {contacto.estado_correo ?? 'VIGENTE'}
+                </span>
+              </div>
               {contacto.cargo && (
                 <p className="text-sm font-semibold text-emerald-600 uppercase tracking-wide mt-0.5">
                   {contacto.cargo}

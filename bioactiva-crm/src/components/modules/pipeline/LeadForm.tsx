@@ -256,12 +256,15 @@ export function LeadForm({
     setErrorLocal(null)
 
     if (data.id_contacto && contactos.length > 0) {
-      const contactoPertenece = contactos.some(
-        (contacto) => contacto.id === data.id_contacto
-      )
+      const contactoSeleccionado = contactos.find((c) => c.id === data.id_contacto)
 
-      if (!contactoPertenece) {
+      if (!contactoSeleccionado) {
         setErrorLocal('El contacto seleccionado no pertenece a la organización elegida.')
+        return
+      }
+
+      if (contactoSeleccionado.estado_correo === 'VENCIDO') {
+        setErrorLocal('El contacto seleccionado está vencido y no puede asociarse a nuevos leads.')
         return
       }
     }
@@ -337,7 +340,7 @@ export function LeadForm({
                 {lead!.contacto_nombre}
               </option>
             )}
-            {contactos.map((c) => (
+            {contactos.filter((c) => c.estado_correo !== 'VENCIDO').map((c) => (
               <option key={c.id} value={c.id}>
                 {c.vocativo ? `${c.vocativo}. ` : ''}
                 {c.nombres} {c.apellidos}
