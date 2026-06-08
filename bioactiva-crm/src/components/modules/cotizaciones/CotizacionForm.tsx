@@ -128,7 +128,13 @@ export function CotizacionForm({
   const bloquearCamposDesdeLead = Boolean(leadAutocompletado) && !esEdicion
   const bloquearCamposFijos = esEdicion || bloquearCamposDesdeLead
   const bloquearDirigido = bloquearCamposFijos && Boolean(leadAutocompletado?.contacto_nombre)
-  const disabledClass = 'bg-gray-50 text-gray-500 cursor-not-allowed focus:border-gray-200'
+  const readOnlyClass = 'bg-gray-50 text-gray-500 cursor-default focus:border-gray-200'
+  const remitenteAutocompletadoNombre =
+    leadAutocompletado?.encargado_nombre ??
+    remitentesDisponibles.find(
+      (remitente) => remitente.id === Number(remitenteSeleccionado)
+    )?.nombre ??
+    ''
 
   useEffect(() => {
     let isMounted = true
@@ -236,7 +242,7 @@ export function CotizacionForm({
             type="date"
             readOnly
             {...register('fecha_cot')}
-            className={`${inputClass(!!errors.fecha_cot)} ${disabledClass} pointer-events-none`}
+            className={`${inputClass(!!errors.fecha_cot)} ${readOnlyClass}`}
           />
           {errors.fecha_cot && (
             <p className="text-red-500 text-xs">{errors.fecha_cot.message}</p>
@@ -255,7 +261,7 @@ export function CotizacionForm({
               placeholder="Nombre del destinatario"
               readOnly={bloquearDirigido}
               {...register('dirigido')}
-              className={`${inputClass(!!errors.dirigido)} ${bloquearDirigido ? disabledClass : ''}`}
+              className={`${inputClass(!!errors.dirigido)} ${bloquearDirigido ? readOnlyClass : ''}`}
             />
             {errors.dirigido && (
               <p className="text-red-500 text-xs">{errors.dirigido.message}</p>
@@ -272,7 +278,7 @@ export function CotizacionForm({
               placeholder="Razón social o empresa"
               readOnly={bloquearCamposFijos}
               {...register('cliente')}
-              className={`${inputClass(!!errors.cliente)} ${bloquearCamposFijos ? disabledClass : ''}`}
+              className={`${inputClass(!!errors.cliente)} ${bloquearCamposFijos ? readOnlyClass : ''}`}
             />
           </div>
         </div>
@@ -296,28 +302,29 @@ export function CotizacionForm({
             <label htmlFor="cot-remitente" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Remitente <span className="text-red-500">*</span>
             </label>
-            <select
-              id="cot-remitente"
-              {...register('id_remitente', { valueAsNumber: true })}
-              aria-disabled={bloquearCamposFijos}
-              tabIndex={bloquearCamposFijos ? -1 : undefined}
-              className={`${inputClass(!!errors.id_remitente)} cursor-pointer
-                ${bloquearCamposFijos ? `${disabledClass} pointer-events-none` : ''}`}
-            >
-              <option value={0}>Seleccionar...</option>
-              {leadAutocompletado?.id_encargado &&
-                leadAutocompletado.encargado_nombre &&
-                !remitentesDisponibles.some(
-                  (remitente) => remitente.id === leadAutocompletado.id_encargado
-                ) && (
-                  <option value={leadAutocompletado.id_encargado}>
-                    {leadAutocompletado.encargado_nombre}
-                  </option>
-                )}
-              {remitentesDisponibles.map((r) => (
-                <option key={r.id} value={r.id}>{r.nombre}</option>
-              ))}
-            </select>
+            {bloquearCamposFijos ? (
+              <>
+                <input type="hidden" {...register('id_remitente', { valueAsNumber: true })} />
+                <input
+                  id="cot-remitente"
+                  type="text"
+                  value={remitenteAutocompletadoNombre}
+                  readOnly
+                  className={`${inputClass(!!errors.id_remitente)} ${readOnlyClass}`}
+                />
+              </>
+            ) : (
+              <select
+                id="cot-remitente"
+                {...register('id_remitente', { valueAsNumber: true })}
+                className={`${inputClass(!!errors.id_remitente)} cursor-pointer`}
+              >
+                <option value={0}>Seleccionar...</option>
+                {remitentesDisponibles.map((r) => (
+                  <option key={r.id} value={r.id}>{r.nombre}</option>
+                ))}
+              </select>
+            )}
             {esEdicion && (
               <p className="text-xs text-gray-400">
                 El remitente queda fijado al crear la cotización.
@@ -340,7 +347,7 @@ export function CotizacionForm({
             placeholder="Descripción del servicio ofertado"
             readOnly={bloquearCamposFijos}
             {...register('nombre_servicio')}
-            className={`${inputClass(!!errors.nombre_servicio)} ${bloquearCamposFijos ? disabledClass : ''}`}
+            className={`${inputClass(!!errors.nombre_servicio)} ${bloquearCamposFijos ? readOnlyClass : ''}`}
           />
           {errors.nombre_servicio && (
             <p className="text-red-500 text-xs">{errors.nombre_servicio.message}</p>
