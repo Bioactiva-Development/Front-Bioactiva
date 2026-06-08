@@ -244,7 +244,7 @@ export function LeadDetalle({
         id: `lead-${lead.id}-created`,
         fecha: lead.created_at,
         tipo: 'Lead creado',
-        titulo: lead.codigo,
+        titulo: lead.organizacion_nombre ?? 'Lead creado',
         detalle: `${lead.organizacion_nombre ?? 'Organización'} - ${lead.servicio_interes}`,
       },
       ...actividades.map((actividad) => ({
@@ -309,7 +309,6 @@ export function LeadDetalle({
 
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-xs text-gray-400 font-mono">{lead.codigo}</p>
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-lg
                   uppercase tracking-wide ${ESTADO_COLORS[lead.estado]}`}>
                   {lead.estado}

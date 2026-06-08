@@ -57,7 +57,7 @@ export function LeadCard({
       {...attributes}
       {...listeners}
       data-lead-id={lead.id}
-      aria-label={`Lead ${lead.codigo} - ${lead.organizacion_nombre}`}
+      aria-label={`Lead - ${lead.organizacion_nombre}`}
       style={{
         transform: CSS.Translate.toString(transform),
         zIndex: isDragging ? 20 : undefined,
@@ -84,8 +84,6 @@ export function LeadCard({
           </span>
         </div>
       )}
-
-      <p className="text-xs text-gray-400 font-mono">{lead.codigo}</p>
 
       <div className="flex items-center gap-2">
         <Building2 size={14} className="text-emerald-600 shrink-0" />

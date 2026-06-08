@@ -298,20 +298,6 @@ export function LeadForm({
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
 
         <div className="space-y-1.5">
-          <label htmlFor="ldf-codigo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            ID Lead (se genera al guardar)
-          </label>
-          <input
-            id="ldf-codigo"
-            type="text"
-            value={lead?.codigo ?? `LEAD-${new Date().getFullYear()}-XXX`}
-            disabled
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200
-              bg-gray-50 text-sm text-gray-400 cursor-not-allowed"
-          />
-        </div>
-
-        <div className="space-y-1.5">
           <label htmlFor="ldf-org" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Organización <span className="text-red-500">*</span>
           </label>

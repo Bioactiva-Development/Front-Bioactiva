@@ -94,7 +94,6 @@ export function LeadDrawer({ lead, onCerrar }: LeadDrawerProps) {
           <div className="bg-gray-50 rounded-xl p-4 space-y-1">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-400 font-mono">{lead.codigo}</p>
                 {lead.contacto_nombre && (
                   <p className="text-sm text-emerald-600 font-medium mt-0.5">
                     {lead.contacto_nombre}
