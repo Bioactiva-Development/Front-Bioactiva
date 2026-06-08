@@ -7,6 +7,7 @@ import { useCotizaciones, useCotizacionKpis } from '@/hooks/cotizaciones/useCoti
 import { CotizacionFiltros } from '@/components/modules/cotizaciones/CotizacionFiltros'
 import { CotizacionCard } from '@/components/modules/cotizaciones/CotizacionCard'
 import { CotizacionFiltros as FiltrosType } from '@/types/cotizacion.types'
+import { ROUTES } from '@/lib/constants/routes'
 
 const FILTROS_INICIALES: FiltrosType = {
   page:  1,
@@ -47,7 +48,7 @@ export default function CotizacionesPage() {
           </button>
         </div>
         <button
-          onClick={() => router.push('/cotizaciones/nueva')}
+          onClick={() => router.push(ROUTES.pipeline)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl
             bg-emerald-600 hover:bg-emerald-700 text-white
             text-sm font-semibold transition-colors"

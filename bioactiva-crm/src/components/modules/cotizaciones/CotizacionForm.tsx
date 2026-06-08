@@ -12,7 +12,7 @@ import {
 import { TipoMoneda } from '@/types/enums'
 import { Cotizacion } from '@/types/cotizacion.types'
 import { ROUTES } from '@/lib/constants/routes'
-import { useLeads } from '@/hooks/pipeline/useLeads'
+import { useLead } from '@/hooks/pipeline/useLeads'
 import { useAuthStore } from '@/store'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { EstadoUsuario } from '@/types/enums'
@@ -56,9 +56,6 @@ export function CotizacionForm({
   const esEdicion = !!cotizacion
   const { usuario } = useAuthStore()
   const [remitentes, setRemitentes] = useState<RemitenteOption[]>([])
-
-  const { data: leadsData } = useLeads({ limit: 100 })
-  const leads = useMemo(() => leadsData?.data ?? [], [leadsData?.data])
   const usuarioActualOption = useMemo<RemitenteOption | null>(() => {
     if (!usuario) return null
     return {
@@ -124,11 +121,10 @@ export function CotizacionForm({
   // Autocompletar campos desde el lead seleccionado
   const leadSeleccionado = useWatch({ control, name: 'id_lead' })
   const remitenteSeleccionado = useWatch({ control, name: 'id_remitente' })
-  const leadAutocompletado = useMemo(
-    () => leads.find((lead) => lead.id === Number(leadSeleccionado)),
-    [leadSeleccionado, leads]
-  )
-  const bloquearLead = esEdicion || Boolean(leadIdInicial)
+  const leadIdParaAutocompletar = !esEdicion
+    ? Number(leadSeleccionado || leadIdInicial || 0)
+    : 0
+  const { data: leadAutocompletado } = useLead(leadIdParaAutocompletar)
   const bloquearCamposDesdeLead = Boolean(leadAutocompletado) && !esEdicion
   const bloquearCamposFijos = esEdicion || bloquearCamposDesdeLead
   const bloquearDirigido = bloquearCamposFijos && Boolean(leadAutocompletado?.contacto_nombre)
@@ -162,14 +158,13 @@ export function CotizacionForm({
   useEffect(() => {
     if (esEdicion || remitentesDisponibles.length === 0) return
 
-    const lead = leads.find((l) => l.id === Number(leadSeleccionado))
-    if (lead?.id_encargado) {
+    if (leadAutocompletado?.id_encargado) {
       const leadRemitenteExists = remitentesDisponibles.some(
-        (remitente) => remitente.id === lead.id_encargado
+        (remitente) => remitente.id === leadAutocompletado.id_encargado
       )
 
       if (leadRemitenteExists) {
-        setValue('id_remitente', lead.id_encargado, { shouldValidate: true })
+        setValue('id_remitente', leadAutocompletado.id_encargado, { shouldValidate: true })
         return
       }
     }
@@ -192,8 +187,7 @@ export function CotizacionForm({
     setValue('id_remitente', fallback.id, { shouldValidate: true })
   }, [
     esEdicion,
-    leadSeleccionado,
-    leads,
+    leadAutocompletado,
     remitenteSeleccionado,
     remitentesDisponibles,
     setValue,
@@ -203,6 +197,7 @@ export function CotizacionForm({
   useEffect(() => {
     if (!leadAutocompletado || esEdicion) return
 
+    setValue('id_lead', leadAutocompletado.id, { shouldValidate: true })
     setValue('fecha_cot', getTodayLocalDate(), { shouldValidate: true })
     setValue('dirigido', leadAutocompletado.contacto_nombre ?? '', {
       shouldValidate: true,
@@ -229,34 +224,7 @@ export function CotizacionForm({
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
-
-        {/* Lead */}
-        <div className="space-y-1.5">
-          <label htmlFor="cot-lead" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Autocompletar desde lead
-          </label>
-          <select
-            id="cot-lead"
-            {...register('id_lead', { valueAsNumber: true })}
-            aria-disabled={bloquearLead}
-            tabIndex={bloquearLead ? -1 : undefined}
-            className={`${inputClass(!!errors.id_lead)} cursor-pointer
-              ${bloquearLead ? `${disabledClass} pointer-events-none` : ''}`}
-          >
-            <option value={0}>Seleccionar lead...</option>
-            {leads.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.organizacion_nombre}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-gray-400">
-            Seleccionar un lead completa automáticamente cliente, contacto y servicio.
-          </p>
-          {errors.id_lead && (
-            <p className="text-red-500 text-xs">{errors.id_lead.message}</p>
-          )}
-        </div>
+        <input type="hidden" {...register('id_lead', { valueAsNumber: true })} />
 
         {/* Fecha */}
         <div className="space-y-1.5">
