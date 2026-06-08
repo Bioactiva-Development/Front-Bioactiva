@@ -30,6 +30,16 @@ interface ResponsableOption {
   correo: string
 }
 
+const CANALES_CAPTACION = [
+  'Referido',
+  'LinkedIn',
+  'Evento presencial',
+  'Web / Redes sociales',
+  'Prospección directa',
+] as const
+
+const CANAL_CAPTACION_OTRO = '__otro__'
+
 const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
   id: usuario.id,
   nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
@@ -77,6 +87,7 @@ export function LeadForm({
   const { usuario } = useAuthStore()
   const [errorLocal, setErrorLocal] = useState<string | null>(null)
   const [responsables, setResponsables] = useState<ResponsableOption[]>([])
+  const [canalOtroActivo, setCanalOtroActivo] = useState(false)
 
   const {
     register,
@@ -92,7 +103,17 @@ export function LeadForm({
 
   const orgSeleccionada   = useWatch({ control, name: 'id_org' })
   const encargadoSelected = useWatch({ control, name: 'id_encargado' })
+  const canalCaptacion    = useWatch({ control, name: 'canal_captacion' }) ?? ''
   const estadoActual      = useWatch({ control, name: 'estado' }) ?? LeadState.Prospecto
+  const canalCaptacionEsOpcion = CANALES_CAPTACION.some(
+    (canal) => canal === canalCaptacion
+  )
+  const mostrarCanalOtro = canalOtroActivo || Boolean(
+    canalCaptacion && !canalCaptacionEsOpcion
+  )
+  const valorSelectorCanal = mostrarCanalOtro
+    ? CANAL_CAPTACION_OTRO
+    : canalCaptacion
 
   const { data: orgsData }      = useOrganizaciones({ limit: 100 })
   const organizaciones          = useMemo(
@@ -445,11 +466,11 @@ export function LeadForm({
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="ldf-historial" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Historial de contacto
+          <label htmlFor="ldf-notas-contacto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Notas de contacto
           </label>
           <textarea
-            id="ldf-historial"
+            id="ldf-notas-contacto"
             rows={3}
             placeholder="Resumen de reuniones, correos o contexto previo..."
             {...register('notas_contacto')}
@@ -496,13 +517,51 @@ export function LeadForm({
             <label htmlFor="ldf-canal" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Canal de captación
             </label>
-            <input
+            <select
               id="ldf-canal"
-              type="text"
-              placeholder="Ej: Referido, LinkedIn, Evento presencial"
-              {...register('canal_captacion')}
-              className={inputClass(!!errors.canal_captacion)}
-            />
+              value={valorSelectorCanal}
+              onChange={(event) => {
+                const value = event.target.value
+
+                if (value === CANAL_CAPTACION_OTRO) {
+                  setCanalOtroActivo(true)
+                  if (!canalCaptacion || canalCaptacionEsOpcion) {
+                    setValue('canal_captacion', '', {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                  return
+                }
+
+                setCanalOtroActivo(false)
+                setValue('canal_captacion', value, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }}
+              className={`${inputClass(!!errors.canal_captacion)} cursor-pointer`}
+            >
+              <option value="">Seleccionar canal...</option>
+              {CANALES_CAPTACION.map((canal) => (
+                <option key={canal} value={canal}>
+                  {canal}
+                </option>
+              ))}
+              <option value={CANAL_CAPTACION_OTRO}>Otro</option>
+            </select>
+            {mostrarCanalOtro && (
+              <input
+                id="ldf-canal-otro"
+                type="text"
+                placeholder="Especifica el canal de captación..."
+                {...register('canal_captacion')}
+                className={inputClass(!!errors.canal_captacion)}
+              />
+            )}
+            {errors.canal_captacion && (
+              <p className="text-red-500 text-xs">{errors.canal_captacion.message}</p>
+            )}
           </div>
         </div>
 
