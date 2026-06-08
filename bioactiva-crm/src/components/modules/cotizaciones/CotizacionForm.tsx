@@ -31,6 +31,15 @@ interface RemitenteOption {
   nombre: string
 }
 
+const getTodayLocalDate = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 const toRemitenteOption = (usuario: UsuarioListItem): RemitenteOption => ({
   id: usuario.id,
   nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
@@ -49,7 +58,7 @@ export function CotizacionForm({
   const [remitentes, setRemitentes] = useState<RemitenteOption[]>([])
 
   const { data: leadsData } = useLeads({ limit: 100 })
-  const leads = leadsData?.data ?? []
+  const leads = useMemo(() => leadsData?.data ?? [], [leadsData?.data])
   const usuarioActualOption = useMemo<RemitenteOption | null>(() => {
     if (!usuario) return null
     return {
@@ -104,7 +113,7 @@ export function CotizacionForm({
           link_propuesta:  cotizacion.link_propuesta ?? '',
         }
       : {
-          fecha_cot:    new Date().toISOString().split('T')[0],
+          fecha_cot:    getTodayLocalDate(),
           tipo:         TipoMoneda.Soles,
           monto:        0,
           id_remitente: usuario?.id ?? 0,
@@ -115,6 +124,15 @@ export function CotizacionForm({
   // Autocompletar campos desde el lead seleccionado
   const leadSeleccionado = useWatch({ control, name: 'id_lead' })
   const remitenteSeleccionado = useWatch({ control, name: 'id_remitente' })
+  const leadAutocompletado = useMemo(
+    () => leads.find((lead) => lead.id === Number(leadSeleccionado)),
+    [leadSeleccionado, leads]
+  )
+  const bloquearLead = esEdicion || Boolean(leadIdInicial)
+  const bloquearCamposDesdeLead = Boolean(leadAutocompletado) && !esEdicion
+  const bloquearCamposFijos = esEdicion || bloquearCamposDesdeLead
+  const bloquearDirigido = bloquearCamposFijos && Boolean(leadAutocompletado?.contacto_nombre)
+  const disabledClass = 'bg-gray-50 text-gray-500 cursor-not-allowed focus:border-gray-200'
 
   useEffect(() => {
     let isMounted = true
@@ -144,6 +162,18 @@ export function CotizacionForm({
   useEffect(() => {
     if (esEdicion || remitentesDisponibles.length === 0) return
 
+    const lead = leads.find((l) => l.id === Number(leadSeleccionado))
+    if (lead?.id_encargado) {
+      const leadRemitenteExists = remitentesDisponibles.some(
+        (remitente) => remitente.id === lead.id_encargado
+      )
+
+      if (leadRemitenteExists) {
+        setValue('id_remitente', lead.id_encargado, { shouldValidate: true })
+        return
+      }
+    }
+
     const selected = Number(remitenteSeleccionado)
     const selectedExists = remitentesDisponibles.some(
       (remitente) => remitente.id === selected
@@ -162,6 +192,8 @@ export function CotizacionForm({
     setValue('id_remitente', fallback.id, { shouldValidate: true })
   }, [
     esEdicion,
+    leadSeleccionado,
+    leads,
     remitenteSeleccionado,
     remitentesDisponibles,
     setValue,
@@ -169,16 +201,22 @@ export function CotizacionForm({
   ])
 
   useEffect(() => {
-    if (leadSeleccionado && !esEdicion) {
-      const lead = leads.find((l) => l.id === Number(leadSeleccionado))
-      if (lead) {
-        if (lead.contacto_nombre)     setValue('dirigido',         lead.contacto_nombre)
-        if (lead.organizacion_nombre) setValue('cliente',          lead.organizacion_nombre)
-        if (lead.servicio_interes)    setValue('nombre_servicio',  lead.servicio_interes)
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leadSeleccionado])
+    if (!leadAutocompletado || esEdicion) return
+
+    setValue('fecha_cot', getTodayLocalDate(), { shouldValidate: true })
+    setValue('dirigido', leadAutocompletado.contacto_nombre ?? '', {
+      shouldValidate: true,
+    })
+    setValue('cliente', leadAutocompletado.organizacion_nombre ?? '', {
+      shouldValidate: true,
+    })
+    setValue('id_remitente', leadAutocompletado.id_encargado, {
+      shouldValidate: true,
+    })
+    setValue('nombre_servicio', leadAutocompletado.servicio_interes ?? '', {
+      shouldValidate: true,
+    })
+  }, [esEdicion, leadAutocompletado, setValue])
 
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
@@ -200,14 +238,15 @@ export function CotizacionForm({
           <select
             id="cot-lead"
             {...register('id_lead', { valueAsNumber: true })}
-            disabled={esEdicion}
+            aria-disabled={bloquearLead}
+            tabIndex={bloquearLead ? -1 : undefined}
             className={`${inputClass(!!errors.id_lead)} cursor-pointer
-              ${esEdicion ? 'opacity-60 cursor-not-allowed' : ''}`}
+              ${bloquearLead ? `${disabledClass} pointer-events-none` : ''}`}
           >
             <option value={0}>Seleccionar lead...</option>
             {leads.map((l) => (
               <option key={l.id} value={l.id}>
-                {l.codigo} — {l.organizacion_nombre}
+                {l.organizacion_nombre}
               </option>
             ))}
           </select>
@@ -227,8 +266,9 @@ export function CotizacionForm({
           <input
             id="cot-fecha"
             type="date"
+            readOnly
             {...register('fecha_cot')}
-            className={inputClass(!!errors.fecha_cot)}
+            className={`${inputClass(!!errors.fecha_cot)} ${disabledClass} pointer-events-none`}
           />
           {errors.fecha_cot && (
             <p className="text-red-500 text-xs">{errors.fecha_cot.message}</p>
@@ -245,8 +285,9 @@ export function CotizacionForm({
               id="cot-dirigido"
               type="text"
               placeholder="Nombre del destinatario"
+              readOnly={bloquearDirigido}
               {...register('dirigido')}
-              className={inputClass(!!errors.dirigido)}
+              className={`${inputClass(!!errors.dirigido)} ${bloquearDirigido ? disabledClass : ''}`}
             />
             {errors.dirigido && (
               <p className="text-red-500 text-xs">{errors.dirigido.message}</p>
@@ -261,8 +302,9 @@ export function CotizacionForm({
               id="cot-cliente"
               type="text"
               placeholder="Razón social o empresa"
+              readOnly={bloquearCamposFijos}
               {...register('cliente')}
-              className={inputClass(!!errors.cliente)}
+              className={`${inputClass(!!errors.cliente)} ${bloquearCamposFijos ? disabledClass : ''}`}
             />
           </div>
         </div>
@@ -289,11 +331,21 @@ export function CotizacionForm({
             <select
               id="cot-remitente"
               {...register('id_remitente', { valueAsNumber: true })}
-              disabled={esEdicion}
+              aria-disabled={bloquearCamposFijos}
+              tabIndex={bloquearCamposFijos ? -1 : undefined}
               className={`${inputClass(!!errors.id_remitente)} cursor-pointer
-                ${esEdicion ? 'opacity-60 cursor-not-allowed' : ''}`}
+                ${bloquearCamposFijos ? `${disabledClass} pointer-events-none` : ''}`}
             >
               <option value={0}>Seleccionar...</option>
+              {leadAutocompletado?.id_encargado &&
+                leadAutocompletado.encargado_nombre &&
+                !remitentesDisponibles.some(
+                  (remitente) => remitente.id === leadAutocompletado.id_encargado
+                ) && (
+                  <option value={leadAutocompletado.id_encargado}>
+                    {leadAutocompletado.encargado_nombre}
+                  </option>
+                )}
               {remitentesDisponibles.map((r) => (
                 <option key={r.id} value={r.id}>{r.nombre}</option>
               ))}
@@ -318,8 +370,9 @@ export function CotizacionForm({
             id="cot-servicio"
             type="text"
             placeholder="Descripción del servicio ofertado"
+            readOnly={bloquearCamposFijos}
             {...register('nombre_servicio')}
-            className={inputClass(!!errors.nombre_servicio)}
+            className={`${inputClass(!!errors.nombre_servicio)} ${bloquearCamposFijos ? disabledClass : ''}`}
           />
           {errors.nombre_servicio && (
             <p className="text-red-500 text-xs">{errors.nombre_servicio.message}</p>
