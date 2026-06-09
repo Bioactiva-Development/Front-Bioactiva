@@ -55,7 +55,7 @@ export const QUERY_KEYS = {
     },
 
     dashboard: {
-        metricas: (filters?: Record<string, unknown>) => ['dashboard', 'metricas', filters],
+        metrics: (filters?: unknown) => ['dashboard', 'metrics', filters],
     },
 
     datos: {

@@ -115,7 +115,7 @@ export const ENDPOINTS = {
     },
 
     dashboard: {
-        metricas: '/api/dashboard/metricas',
+        metrics: '/dashboard/metrics',
     },
 
     datos: {

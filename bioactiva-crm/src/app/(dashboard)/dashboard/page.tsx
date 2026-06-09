@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend
@@ -8,8 +9,14 @@ import {
 import {
   Target, Percent, Clock, Timer,
   Activity, DollarSign, TrendingUp, Calendar,
-  RefreshCw, Eye
+  RefreshCw
 } from 'lucide-react'
+import { useLeads } from '@/hooks/pipeline/useLeads'
+import { useCotizaciones } from '@/hooks/cotizaciones/useCotizaciones'
+import { useDashboardMetrics } from '@/hooks/dashboard/useDashboardMetrics'
+import { QUERY_KEYS } from '@/lib/constants/queryKeys'
+import { usuariosService } from '@/services/modules/usuarios.service'
+import { EstadoCot, EstadoUsuario, LeadState } from '@/types/enums'
 
 
 interface KpiCardProps {
@@ -27,38 +34,33 @@ interface PeriodoTab {
   sub:    string
 }
 
-const MOCK_PIPELINE_DATA = [
-  { estado: 'En prospecto',    cantidad: 2, color: '#6b7280' },
-  { estado: 'Ofertado',        cantidad: 2, color: '#f59e0b' },
-  { estado: 'Cierre con venta', cantidad: 0, color: '#10b981' },
-  { estado: 'Cierre sin venta', cantidad: 0, color: '#ef4444' },
-]
-
-const MOCK_COTIZACIONES_DATA: { name: string; value: number; color: string }[] = []
-
-const MOCK_KPIS = {
-  leadsGenerados:     1,
-  propuestaVenta:     0,
-  tiempoCierre:       0,
-  tiempoEtapa:        7,
-  seguimientosPorLead: 0,
-  montoEnPipeline:    0,
-  ingresosCerrados:   0,
-  leadsSinAvance:     75,
-  leadsSinAvanceDetalle: '3 de 4 leads abiertos',
-  montoCotizaciones:  '0 cotizaciones enviadas',
-  ingresosDetalle:    '0 cotizaciones aceptadas',
-}
-
-const PERIODOS: PeriodoTab[] = [
-  { key: 'anio',  label: 'AÑO COMPLETO',   sub: '2026' },
-  { key: 'q1',    label: '1ER TRIMESTRE',  sub: 'Enero – Marzo' },
-  { key: 'q2',    label: '2DO TRIMESTRE',  sub: 'Abril – Junio' },
-  { key: 'q3',    label: '3ER TRIMESTRE',  sub: 'Julio – Setiembre' },
-  { key: 'q4',    label: '4TO TRIMESTRE',  sub: 'Octubre – Diciembre' },
-]
-
 const ANIOS = ['2024', '2025', '2026']
+const DASHBOARD_FETCH_LIMIT = 500
+
+const PIPELINE_ESTADOS = [
+  { estado: LeadState.Prospecto,      color: '#6b7280' },
+  { estado: LeadState.Ofertado,       color: '#f59e0b' },
+  { estado: LeadState.CierreVenta,    color: '#10b981' },
+  { estado: LeadState.CierreSinVenta, color: '#ef4444' },
+]
+
+const COTIZACION_ESTADOS = [
+  { name: EstadoCot.Pendiente,  color: '#9ca3af' },
+  { name: EstadoCot.Enviada,    color: '#3b82f6' },
+  { name: EstadoCot.Aceptada,   color: '#10b981' },
+  { name: EstadoCot.Rechazada,  color: '#ef4444' },
+]
+
+const parseDateBoundary = (date: string) => new Date(`${date}T00:00:00`)
+
+const toIsoDateBoundary = (date: string) =>
+  new Date(`${date}T00:00:00.000Z`).toISOString()
+
+const isWithinPeriod = (isoDate: string | undefined, start: Date, end: Date) => {
+  if (!isoDate) return false
+  const time = new Date(isoDate).getTime()
+  return time >= start.getTime() && time < end.getTime()
+}
 
 function KpiCard({ label, valor, descripcion, icono, iconoBg, extra }: Readonly<KpiCardProps>) {
   return (
@@ -78,11 +80,86 @@ function KpiCard({ label, valor, descripcion, icono, iconoBg, extra }: Readonly<
   )
 }
 
+const getPeriodos = (anio: string): PeriodoTab[] => [
+  { key: 'anio', label: 'AÑO COMPLETO', sub: anio },
+  { key: 'q1',   label: '1ER TRIMESTRE', sub: 'Enero - Marzo' },
+  { key: 'q2',   label: '2DO TRIMESTRE', sub: 'Abril - Junio' },
+  { key: 'q3',   label: '3ER TRIMESTRE', sub: 'Julio - Setiembre' },
+  { key: 'q4',   label: '4TO TRIMESTRE', sub: 'Octubre - Diciembre' },
+]
+
+const getPeriodDates = (periodo: string, anio: string) => {
+  const year = Number.parseInt(anio)
+
+  switch (periodo) {
+    case 'q1':
+      return { inicio: `${year}-01-01`, fin: `${year}-04-01` }
+    case 'q2':
+      return { inicio: `${year}-04-01`, fin: `${year}-07-01` }
+    case 'q3':
+      return { inicio: `${year}-07-01`, fin: `${year}-10-01` }
+    case 'q4':
+      return { inicio: `${year}-10-01`, fin: `${year + 1}-01-01` }
+    default:
+      return { inicio: `${year}-01-01`, fin: `${year + 1}-01-01` }
+  }
+}
+
+const formatCurrency = (value?: number) =>
+  `S/ ${(value ?? 0).toLocaleString('es-PE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`
+
+const formatPercent = (value?: number) =>
+  `${(value ?? 0).toLocaleString('es-PE', {
+    maximumFractionDigits: 2,
+  })}%`
+
+const formatDays = (value?: number) =>
+  `${(value ?? 0).toLocaleString('es-PE', {
+    maximumFractionDigits: 1,
+  })} días`
+
+const formatAverage = (value?: number) =>
+  (value ?? 0).toLocaleString('es-PE', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })
+
 export default function DashboardPage() {
   const [periodoActivo, setPeriodoActivo] = useState('anio')
   const [anioActivo, setAnioActivo]       = useState('2026')
   const [fechaInicio, setFechaInicio]     = useState('2026-01-01')
   const [fechaFin, setFechaFin]           = useState('2027-01-01')
+  const [idEncargado, setIdEncargado]     = useState<number | undefined>()
+  const { data: leadsResponse, isLoading: cargandoLeads, isError: errorLeads } =
+    useLeads({ page: 1, limit: DASHBOARD_FETCH_LIMIT })
+  const {
+    data: cotizacionesResponse,
+    isLoading: cargandoCotizaciones,
+    isError: errorCotizaciones,
+  } = useCotizaciones({ page: 1, limit: DASHBOARD_FETCH_LIMIT })
+  const dashboardParams = useMemo(() => ({
+    startDate: toIsoDateBoundary(fechaInicio),
+    endDate: toIsoDateBoundary(fechaFin),
+    idEncargado,
+  }), [fechaFin, fechaInicio, idEncargado])
+  const {
+    data: metrics,
+    isLoading: cargandoMetricas,
+    isError: errorMetricas,
+  } = useDashboardMetrics(dashboardParams)
+  const { data: responsablesData } = useQuery({
+    queryKey: QUERY_KEYS.usuarios.list(),
+    queryFn:  () => usuariosService.getUsuarios({
+      estado: EstadoUsuario.Activo,
+      limit: 100,
+    }),
+    staleTime: 1000 * 60 * 5,
+  })
+  const responsables = responsablesData?.usuarios ?? []
+  const kpiValor = (value: string) => cargandoMetricas ? '...' : value
 
   const hoy = useMemo(() => {
     return new Date().toLocaleDateString('es-PE', {
@@ -94,29 +171,16 @@ export default function DashboardPage() {
 
   const handlePeriodo = (key: string) => {
     setPeriodoActivo(key)
-    const anio = Number.parseInt(anioActivo)
-    switch (key) {
-      case 'anio':
-        setFechaInicio(`${anio}-01-01`)
-        setFechaFin(`${anio + 1}-01-01`)
-        break
-      case 'q1':
-        setFechaInicio(`${anio}-01-01`)
-        setFechaFin(`${anio}-04-01`)
-        break
-      case 'q2':
-        setFechaInicio(`${anio}-04-01`)
-        setFechaFin(`${anio}-07-01`)
-        break
-      case 'q3':
-        setFechaInicio(`${anio}-07-01`)
-        setFechaFin(`${anio}-10-01`)
-        break
-      case 'q4':
-        setFechaInicio(`${anio}-10-01`)
-        setFechaFin(`${anio + 1}-01-01`)
-        break
-    }
+    const { inicio, fin } = getPeriodDates(key, anioActivo)
+    setFechaInicio(inicio)
+    setFechaFin(fin)
+  }
+
+  const handleAnio = (anio: string) => {
+    setAnioActivo(anio)
+    const { inicio, fin } = getPeriodDates(periodoActivo, anio)
+    setFechaInicio(inicio)
+    setFechaFin(fin)
   }
 
   const handleReiniciar = () => {
@@ -124,7 +188,40 @@ export default function DashboardPage() {
     setAnioActivo('2026')
     setFechaInicio('2026-01-01')
     setFechaFin('2027-01-01')
+    setIdEncargado(undefined)
   }
+
+  const rangoFechas = useMemo(() => ({
+    inicio: parseDateBoundary(fechaInicio),
+    fin:    parseDateBoundary(fechaFin),
+  }), [fechaFin, fechaInicio])
+  const periodos = useMemo(() => getPeriodos(anioActivo), [anioActivo])
+
+  const pipelineData = useMemo(() => {
+    const leadsPeriodo = (leadsResponse?.data ?? []).filter((lead) =>
+      isWithinPeriod(lead.created_at, rangoFechas.inicio, rangoFechas.fin)
+    )
+
+    return PIPELINE_ESTADOS.map(({ estado, color }) => ({
+      estado,
+      cantidad: leadsPeriodo.filter((lead) => lead.estado === estado).length,
+      color,
+    }))
+  }, [leadsResponse?.data, rangoFechas])
+
+  const cotizacionesData = useMemo(() => {
+    const cotizacionesPeriodo = (cotizacionesResponse?.data ?? []).filter((cotizacion) =>
+      isWithinPeriod(cotizacion.fecha_cot, rangoFechas.inicio, rangoFechas.fin)
+    )
+
+    return COTIZACION_ESTADOS
+      .map(({ name, color }) => ({
+        name,
+        value: cotizacionesPeriodo.filter((cotizacion) => cotizacion.estado === name).length,
+        color,
+      }))
+      .filter((item) => item.value > 0)
+  }, [cotizacionesResponse?.data, rangoFechas])
 
   return (
     <div className="space-y-6">
@@ -162,7 +259,7 @@ export default function DashboardPage() {
               <span className="text-xs text-gray-400">Año</span>
               <select
                 value={anioActivo}
-                onChange={(e) => setAnioActivo(e.target.value)}
+                onChange={(e) => handleAnio(e.target.value)}
                 className="text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none
                   focus:border-emerald-400 text-gray-700"
               >
@@ -174,7 +271,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-5 gap-2">
-            {PERIODOS.map((p) => (
+            {periodos.map((p) => (
               <button
                 key={p.key}
                 onClick={() => handlePeriodo(p.key)}
@@ -198,7 +295,7 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 items-end">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_260px_auto] gap-4 items-end">
             <div className="space-y-1">
               <label htmlFor="dash-fecha-inicio" className="text-xs text-gray-500">Fecha inicio</label>
               <input
@@ -222,94 +319,121 @@ export default function DashboardPage() {
                     outline-none focus:border-emerald-400 text-gray-700"
                 />
               </div>
-              <button
-                onClick={handleReiniciar}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-200
-                  text-emerald-600 hover:bg-emerald-50 text-sm font-medium transition-colors shrink-0"
-              >
-                <RefreshCw size={14} />
-                Reiniciar
-              </button>
             </div>
+            <div className="space-y-1">
+              <label htmlFor="dash-responsable" className="text-xs text-gray-500">Responsable</label>
+              <select
+                id="dash-responsable"
+                value={idEncargado ?? ''}
+                onChange={(e) => {
+                  const value = Number(e.target.value)
+                  setIdEncargado(value > 0 ? value : undefined)
+                }}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm
+                  outline-none focus:border-emerald-400 text-gray-700 bg-white"
+              >
+                <option value="">Todos los responsables</option>
+                {responsables.map((responsable) => (
+                  <option key={responsable.id} value={responsable.id}>
+                    {`${responsable.nombres} ${responsable.apellidos}`.trim() || responsable.correo}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={handleReiniciar}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-200
+                text-emerald-600 hover:bg-emerald-50 text-sm font-medium transition-colors shrink-0"
+            >
+              <RefreshCw size={14} />
+              Reiniciar
+            </button>
           </div>
         </div>
       </div>
 
+      {errorMetricas && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
+          No se pudieron cargar las métricas del dashboard.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label="Leads generados"
-          valor={MOCK_KPIS.leadsGenerados}
+          valor={kpiValor(String(metrics?.totalLeads ?? 0))}
           descripcion="Registrados en el periodo"
           iconoBg="bg-gray-100"
           icono={<Target size={20} className="text-gray-500" />}
         />
         <KpiCard
-          label="Propuesta → Venta"
-          valor={`${MOCK_KPIS.propuestaVenta}%`}
-          descripcion="0 aceptadas de 0 propuestas"
+          label="Tasa de conversión"
+          valor={kpiValor(formatPercent(metrics?.conversionRate))}
+          descripcion="Leads convertidos en venta"
           iconoBg="bg-blue-50"
           icono={<Percent size={20} className="text-blue-500" />}
         />
         <KpiCard
-          label="Tiempo promedio de cierre"
-          valor={`${MOCK_KPIS.tiempoCierre} días`}
-          descripcion="Desde registro hasta cierre"
-          iconoBg="bg-orange-50"
-          icono={<Clock size={20} className="text-orange-500" />}
+          label="Propuesta → Venta"
+          valor={kpiValor(formatPercent(metrics?.proposalToCloseRate))}
+          descripcion="Propuestas que cierran con venta"
+          iconoBg="bg-cyan-50"
+          icono={<Percent size={20} className="text-cyan-600" />}
         />
         <KpiCard
-          label="Tiempo en etapa propuesta"
-          valor={`${MOCK_KPIS.tiempoEtapa} días`}
-          descripcion="Desde lead hasta pasar a ofertado"
-          iconoBg="bg-purple-50"
-          icono={<Timer size={20} className="text-purple-500" />}
+          label="Ticket promedio"
+          valor={kpiValor(formatCurrency(metrics?.averageTicketAmount))}
+          descripcion="Promedio de cierres con venta"
+          iconoBg="bg-emerald-50"
+          icono={<DollarSign size={20} className="text-emerald-500" />}
         />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
+          label="Tiempo promedio de cierre"
+          valor={kpiValor(formatDays(metrics?.avgClosingTimeDays))}
+          descripcion="Desde registro hasta cierre con venta"
+          iconoBg="bg-orange-50"
+          icono={<Clock size={20} className="text-orange-500" />}
+        />
+        <KpiCard
+          label="Tiempo en etapa propuesta"
+          valor={kpiValor(formatDays(metrics?.avgProposalStageDays))}
+          descripcion="Promedio en etapa ofertado"
+          iconoBg="bg-purple-50"
+          icono={<Timer size={20} className="text-purple-500" />}
+        />
+        <KpiCard
           label="Seguimientos por lead"
-          valor={MOCK_KPIS.seguimientosPorLead.toFixed(1)}
+          valor={kpiValor(formatAverage(metrics?.avgActivitiesPerLead))}
           descripcion="Promedio de actividades registradas"
           iconoBg="bg-gray-100"
           icono={<Activity size={20} className="text-gray-500" />}
         />
         <KpiCard
+          label="Leads sin avance"
+          valor={kpiValor(formatPercent(metrics?.stalledLeadPercentage))}
+          descripcion="Leads estancados más de 30 días"
+          iconoBg="bg-red-50"
+          icono={<Calendar size={20} className="text-red-500" />}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <KpiCard
           label="Monto en pipeline"
-          valor={`S/ ${MOCK_KPIS.montoEnPipeline.toFixed(2)}`}
-          descripcion={MOCK_KPIS.montoCotizaciones}
+          valor={kpiValor(formatCurrency(metrics?.pipelineTotalAmount))}
+          descripcion="Monto de leads abiertos"
           iconoBg="bg-emerald-50"
           icono={<DollarSign size={20} className="text-emerald-500" />}
-          extra={
-            <button className="flex items-center gap-1.5 text-xs text-emerald-600
-              hover:text-emerald-700 font-semibold border border-emerald-200
-              rounded-lg px-3 py-1.5 hover:bg-emerald-50 transition-colors w-fit">
-              <Eye size={12} />
-              VER DETALLE
-            </button>
-          }
         />
         <KpiCard
           label="Ingresos cerrados"
-          valor={`S/ ${MOCK_KPIS.ingresosCerrados.toFixed(2)}`}
-          descripcion={MOCK_KPIS.ingresosDetalle}
+          valor={kpiValor(formatCurrency(metrics?.closedRevenue))}
+          descripcion="Cotizaciones cerradas con venta"
           iconoBg="bg-blue-50"
           icono={<TrendingUp size={20} className="text-blue-500" />}
-        />
-        <KpiCard
-          label="Leads sin avance"
-          valor={`${MOCK_KPIS.leadsSinAvance}%`}
-          descripcion={MOCK_KPIS.leadsSinAvanceDetalle}
-          iconoBg="bg-red-50"
-          icono={<Calendar size={20} className="text-red-500" />}
-          extra={
-            <button className="flex items-center gap-1.5 text-xs text-emerald-600
-              hover:text-emerald-700 font-semibold border border-emerald-200
-              rounded-lg px-3 py-1.5 hover:bg-emerald-50 transition-colors w-fit">
-              <Eye size={12} />
-              VER DETALLE
-            </button>
-          }
         />
       </div>
 
@@ -322,37 +446,47 @@ export default function DashboardPage() {
           <p className="text-xs text-gray-400 mt-0.5 mb-6">
             Cantidad de leads por estado comercial.
           </p>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart
-              data={MOCK_PIPELINE_DATA}
-              margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
-            >
-              <XAxis
-                dataKey="estado"
-                tick={{ fontSize: 11, fill: '#9ca3af' }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: '#9ca3af' }}
-                axisLine={false}
-                tickLine={false}
-                allowDecimals={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: '12px',
-                  border: '1px solid #e5e7eb',
-                  fontSize: '12px',
-                }}
-              />
-              <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
-                {MOCK_PIPELINE_DATA.map((entry) => (
-                  <Cell key={entry.estado} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          {cargandoLeads ? (
+            <div className="h-60 flex items-center justify-center">
+              <p className="text-sm text-gray-400">Cargando pipeline...</p>
+            </div>
+          ) : errorLeads ? (
+            <div className="h-60 flex items-center justify-center">
+              <p className="text-sm text-red-500">No se pudo cargar el pipeline.</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart
+                data={pipelineData}
+                margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+              >
+                <XAxis
+                  dataKey="estado"
+                  tick={{ fontSize: 11, fill: '#9ca3af' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: '#9ca3af' }}
+                  axisLine={false}
+                  tickLine={false}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: '12px',
+                    border: '1px solid #e5e7eb',
+                    fontSize: '12px',
+                  }}
+                />
+                <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
+                  {pipelineData.map((entry) => (
+                    <Cell key={entry.estado} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -363,7 +497,15 @@ export default function DashboardPage() {
             Distribución de propuestas del periodo.
           </p>
 
-          {MOCK_COTIZACIONES_DATA.length === 0 ? (
+          {cargandoCotizaciones ? (
+            <div className="h-48 flex items-center justify-center">
+              <p className="text-sm text-gray-400">Cargando cotizaciones...</p>
+            </div>
+          ) : errorCotizaciones ? (
+            <div className="h-48 flex items-center justify-center">
+              <p className="text-sm text-red-500">No se pudieron cargar las cotizaciones.</p>
+            </div>
+          ) : cotizacionesData.length === 0 ? (
             <div className="h-48 flex items-center justify-center">
               <p className="text-sm text-emerald-600 font-medium">
                 Sin cotizaciones en el periodo seleccionado.
@@ -373,7 +515,7 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie
-                  data={MOCK_COTIZACIONES_DATA}
+                  data={cotizacionesData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -381,7 +523,7 @@ export default function DashboardPage() {
                   paddingAngle={3}
                   dataKey="value"
                 >
-                  {MOCK_COTIZACIONES_DATA.map((entry) => (
+                  {cotizacionesData.map((entry) => (
                     <Cell key={entry.name} fill={entry.color} />
                   ))}
                 </Pie>
