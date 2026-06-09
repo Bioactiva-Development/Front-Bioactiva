@@ -56,10 +56,13 @@ export interface SunatRucResult {
     ruc: string
     nombre: string
     nombreCompleto?: string
+    tipo?: TipoEmpresa
     ubicacion?: string
     estado?: string
     condicion?: string
     actividades?: string
+    tamano?: TamanoEmpresa
+    sector?: Sector
     _raw?: Record<string, string>
 }
 

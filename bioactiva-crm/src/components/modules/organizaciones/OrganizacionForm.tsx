@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, X } from 'lucide-react'
@@ -10,30 +10,33 @@ import {
   OrganizacionFormValues,
 } from '@/lib/validators/organizacion.schema'
 import { TipoEmpresa, TamanoEmpresa, Sector } from '@/types/enums'
-import { Organizacion, SunatRucResult } from '@/types/organizacion.types'
+import { Organizacion } from '@/types/organizacion.types'
 import { generarCodigoCliente, formatSector } from '@/lib/utils/organizacion.utils'
-import { ROUTES } from '@/lib/constants/routes'
+import { organizacionesService } from '@/services/modules/organizaciones.service'
 
 interface OrganizacionFormProps {
   organizacion?: Organizacion
   onSubmit:      (data: OrganizacionFormValues) => Promise<void>
   isLoading:     boolean
   error?:        string | null
-  sunatData?:    SunatRucResult | null
 }
 
 type BusquedaTab = 'ruc' | 'razon'
+
+const MAX_ACTIVIDAD_ECONOMICA = 200
 
 export function OrganizacionForm({
   organizacion,
   onSubmit,
   isLoading,
   error,
-  sunatData,
 }: Readonly<OrganizacionFormProps>) {
   const router                        = useRouter()
   const esEdicion                     = !!organizacion
   const [busquedaTab, setBusquedaTab] = useState<BusquedaTab>('ruc')
+  const [validandoRuc, setValidandoRuc] = useState(false)
+  const [rucValidado, setRucValidado] = useState(false)
+  const [errorRuc, setErrorRuc] = useState<string | null>(null)
 
   const {
     register,
@@ -63,26 +66,10 @@ export function OrganizacionForm({
 
   const rucValue = useWatch({ control, name: 'ruc' })
 
-  useEffect(() => {
-    if (!sunatData) return
-
-    setBusquedaTab('ruc')
-    setValue('ruc',    sunatData.ruc)
-    setValue('nombre', sunatData.nombre)
-    if (sunatData.nombreCompleto) setValue('nombre_comercial',    sunatData.nombreCompleto)
-    if (sunatData.ubicacion)      setValue('ubicacion',           sunatData.ubicacion)
-    if (sunatData.actividades)    setValue('actividad_economica', sunatData.actividades)
-
-    // Hay data de SUNAT: el código de cliente se autogenera con el patrón
-    // [iniciales del nombre comercial]-[últimos 3 dígitos del RUC].
-    const nombreComercial = sunatData.nombreCompleto || sunatData.nombre
-    setValue('codigo_cliente', generarCodigoCliente(nombreComercial, sunatData.ruc))
-  }, [sunatData, setValue])
-
   // El código de cliente solo es editable en registro manual o cuando la
   // búsqueda SUNAT no arrojó datos. Si proviene de SUNAT (o es edición), queda
   // bloqueado y se gestiona automáticamente.
-  const codigoBloqueado = esEdicion || !!sunatData
+  const codigoBloqueado = esEdicion || rucValidado
 
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
@@ -97,6 +84,65 @@ export function OrganizacionForm({
     : errors.codigo_cliente
       ? <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
       : null
+
+  const completarDatosSunat = async () => {
+    const ruc = (rucValue ?? '').trim()
+
+    if (ruc.length !== 11) {
+      setRucValidado(false)
+      setErrorRuc('Número de RUC no válido. Intenta otro.')
+      return
+    }
+
+    try {
+      setValidandoRuc(true)
+      setErrorRuc(null)
+      const data = await organizacionesService.sunatPorRuc(ruc)
+
+      setValue('ruc', data.ruc, { shouldValidate: true })
+      setValue('nombre', data.nombre, { shouldValidate: true })
+      setValue('nombre_comercial', data.nombreCompleto || data.nombre, {
+        shouldValidate: true,
+      })
+
+      if (data.tipo) {
+        setValue('tipo', data.tipo, { shouldValidate: true })
+      }
+
+      if (data.tamano) {
+        setValue('tamano', data.tamano, { shouldValidate: true })
+      }
+
+      if (data.sector) {
+        setValue('sector', data.sector, { shouldValidate: true })
+      }
+
+      if (data.ubicacion) {
+        setValue('ubicacion', data.ubicacion, { shouldValidate: true })
+      }
+
+      if (data.actividades) {
+        setValue(
+          'actividad_economica',
+          data.actividades.slice(0, MAX_ACTIVIDAD_ECONOMICA),
+          { shouldValidate: true }
+        )
+      }
+
+      const nombreComercial = data.nombreCompleto || data.nombre
+      setValue(
+        'codigo_cliente',
+        generarCodigoCliente(nombreComercial, data.ruc),
+        { shouldValidate: true }
+      )
+      setRucValidado(true)
+    } catch {
+      setRucValidado(false)
+      setErrorRuc('Número de RUC no válido. Intenta otro.')
+    } finally {
+      setValidandoRuc(false)
+    }
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -132,6 +178,8 @@ export function OrganizacionForm({
                 onClick={() => {
                   setBusquedaTab('ruc')
                   setValue('ruc', '')
+                  setRucValidado(false)
+                  setErrorRuc(null)
                 }}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors
                   ${busquedaTab === 'ruc'
@@ -146,6 +194,8 @@ export function OrganizacionForm({
                 onClick={() => {
                   setBusquedaTab('razon')
                   setValue('ruc', '')
+                  setRucValidado(false)
+                  setErrorRuc(null)
                 }}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors
                   ${busquedaTab === 'razon'
@@ -168,21 +218,43 @@ export function OrganizacionForm({
                     {rucValue?.length ?? 0}/11
                   </span>
                 </div>
-                <input
-                  id="of-ruc"
-                  type="text"
-                  placeholder="Ingresa RUC (11 dígitos)..."
-                  maxLength={11}
-                  {...register('ruc')}
-                  onChange={(e) => {
-                    const val = e.target.value.replaceAll(/\D/g, '').slice(0, 11)
-                    setValue('ruc', val)
-                  }}
-                  className={inputClass(!!errors.ruc)}
-                />
+                <div className="flex gap-2">
+                  <input
+                    id="of-ruc"
+                    type="text"
+                    placeholder="Ingresa RUC (11 dígitos)..."
+                    maxLength={11}
+                    {...register('ruc')}
+                    onChange={(e) => {
+                      const val = e.target.value.replaceAll(/\D/g, '').slice(0, 11)
+                      setValue('ruc', val, { shouldValidate: true })
+                      setRucValidado(false)
+                      setErrorRuc(null)
+                    }}
+                    className={inputClass(!!errors.ruc || !!errorRuc)}
+                  />
+                  <button
+                    type="button"
+                    onClick={completarDatosSunat}
+                    disabled={validandoRuc || (rucValue?.length ?? 0) !== 11}
+                    className="inline-flex min-w-24 items-center justify-center rounded-xl
+                      bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white
+                      transition-colors hover:bg-emerald-700 disabled:bg-emerald-300
+                      disabled:cursor-default"
+                  >
+                    {validandoRuc ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      'Validar'
+                    )}
+                  </button>
+                </div>
                 <p className="text-xs text-gray-400">
-                  11 dígitos → datos se completan automáticamente desde SUNAT.
+                  11 dígitos - presiona Validar para completar datos desde SUNAT.
                 </p>
+                {errorRuc && (
+                  <p className="text-red-500 text-xs">{errorRuc}</p>
+                )}
                 {errors.ruc && (
                   <p className="text-red-500 text-xs">{errors.ruc.message}</p>
                 )}
@@ -307,6 +379,9 @@ export function OrganizacionForm({
             {...register('ubicacion')}
             className={inputClass(!!errors.ubicacion)}
           />
+          {errors.ubicacion && (
+            <p className="text-red-500 text-xs">{errors.ubicacion.message}</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
@@ -323,6 +398,9 @@ export function OrganizacionForm({
             {...register('actividad_economica')}
             className={inputClass(!!errors.actividad_economica)}
           />
+          {errors.actividad_economica && (
+            <p className="text-red-500 text-xs">{errors.actividad_economica.message}</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
@@ -336,6 +414,9 @@ export function OrganizacionForm({
             {...register('linkedin')}
             className={inputClass(!!errors.linkedin)}
           />
+          {errors.linkedin && (
+            <p className="text-red-500 text-xs">{errors.linkedin.message}</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
@@ -349,6 +430,9 @@ export function OrganizacionForm({
             {...register('alianzas_estrategicas')}
             className={inputClass(!!errors.alianzas_estrategicas)}
           />
+          {errors.alianzas_estrategicas && (
+            <p className="text-red-500 text-xs">{errors.alianzas_estrategicas.message}</p>
+          )}
         </div>
 
 
