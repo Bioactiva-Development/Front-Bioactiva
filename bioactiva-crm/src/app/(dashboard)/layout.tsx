@@ -67,7 +67,7 @@ export default function DashboardLayout({
 
     let sidebarMargin = 'ml-0'
     if (sidebarOpen) {
-        sidebarMargin = sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60'
+        sidebarMargin = sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-52'
     }
 
     return (
