@@ -7,7 +7,6 @@ import {
   Briefcase, Calendar, Mail, Phone,
   Plus, MessageSquare, FileText, History,
   ExternalLink, AlertCircle, DollarSign, Bell,
-  Trash2, Loader2,
 } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
 import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
@@ -125,8 +124,6 @@ function formatFecha(fecha?: string) {
 export function LeadDetalle({
   lead,
   onEditar,
-  onEliminar,
-  eliminando = false,
   initialAction,
 }: LeadDetalleProps) {
   const router                          = useRouter()
@@ -326,24 +323,6 @@ export function LeadDetalle({
           </div>
 
           <div className="flex items-center gap-2">
-            {onEliminar && (
-              <button
-                onClick={onEliminar}
-                disabled={eliminando}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl
-                  text-sm font-semibold border border-red-200 text-red-600
-                  hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed
-                  transition-colors"
-              >
-                {eliminando ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Trash2 size={14} />
-                )}
-                Eliminar Lead
-              </button>
-            )}
-
             <button
               onClick={onEditar}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
