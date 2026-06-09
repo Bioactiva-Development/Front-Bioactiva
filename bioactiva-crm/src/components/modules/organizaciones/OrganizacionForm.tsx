@@ -78,6 +78,8 @@ export function OrganizacionForm({
       ? 'border-red-400 bg-red-50'
       : 'border-gray-200 focus:border-emerald-400 bg-white'
     }`
+  const readOnlyClass = 'bg-gray-50 text-gray-500 cursor-default focus:border-gray-200'
+  const autocompletadoBloqueado = rucValidado && !esEdicion
 
   const codigoClienteHint = codigoBloqueado
     ? <p className="text-xs text-gray-400">Generado a partir del nombre comercial y el RUC de SUNAT.</p>
@@ -271,8 +273,9 @@ export function OrganizacionForm({
             id="of-nombre"
             type="text"
             placeholder="Nombre de la organización..."
+            readOnly={autocompletadoBloqueado}
             {...register('nombre')}
-            className={inputClass(!!errors.nombre)}
+            className={`${inputClass(!!errors.nombre)} ${autocompletadoBloqueado ? readOnlyClass : ''}`}
           />
           {errors.nombre && (
             <p className="text-red-500 text-xs">{errors.nombre.message}</p>
@@ -287,8 +290,9 @@ export function OrganizacionForm({
             id="of-nombre-comercial"
             type="text"
             placeholder="Nombre comercial o marca..."
+            readOnly={autocompletadoBloqueado}
             {...register('nombre_comercial')}
-            className={inputClass(!!errors.nombre_comercial)}
+            className={`${inputClass(!!errors.nombre_comercial)} ${autocompletadoBloqueado ? readOnlyClass : ''}`}
           />
           {errors.nombre_comercial && (
             <p className="text-red-500 text-xs">{errors.nombre_comercial.message}</p>
@@ -317,7 +321,10 @@ export function OrganizacionForm({
             <select
               id="of-tipo"
               {...register('tipo')}
-              className={inputClass(!!errors.tipo)}
+              aria-disabled={autocompletadoBloqueado}
+              tabIndex={autocompletadoBloqueado ? -1 : undefined}
+              className={`${inputClass(!!errors.tipo)}
+                ${autocompletadoBloqueado ? `${readOnlyClass} pointer-events-none appearance-none` : ''}`}
             >
               <option value="">Seleccionar...</option>
               {Object.values(TipoEmpresa).map((t) => (
@@ -336,7 +343,10 @@ export function OrganizacionForm({
             <select
               id="of-tamano"
               {...register('tamano')}
-              className={inputClass(!!errors.tamano)}
+              aria-disabled={autocompletadoBloqueado}
+              tabIndex={autocompletadoBloqueado ? -1 : undefined}
+              className={`${inputClass(!!errors.tamano)}
+                ${autocompletadoBloqueado ? `${readOnlyClass} pointer-events-none appearance-none` : ''}`}
             >
               <option value="">Seleccionar...</option>
               {Object.values(TamanoEmpresa).map((t) => (
@@ -356,7 +366,10 @@ export function OrganizacionForm({
           <select
             id="of-sector"
             {...register('sector')}
-            className={inputClass(!!errors.sector)}
+            aria-disabled={autocompletadoBloqueado}
+            tabIndex={autocompletadoBloqueado ? -1 : undefined}
+            className={`${inputClass(!!errors.sector)}
+              ${autocompletadoBloqueado ? `${readOnlyClass} pointer-events-none appearance-none` : ''}`}
           >
             <option value="">Seleccionar...</option>
             {Object.values(Sector).map((s) => (
