@@ -14,6 +14,7 @@ import { useAuthStore } from '@/store'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { EstadoUsuario, LeadState } from '@/types/enums'
 import { UsuarioListItem } from '@/types/usuario.types'
+import { toLeadDateInputValue } from '@/lib/utils/lead-date.utils'
 
 interface LeadFormProps {
   lead?:      Lead
@@ -63,7 +64,7 @@ function getLeadFormDefaults(
       id_encargado:            lead.id_encargado,
       encargado_correo:        lead.encargado_correo ?? '',
       canal_captacion:         lead.canal_captacion ?? '',
-      fecha_cierre:            lead.fecha_cierre ?? '',
+      fecha_cierre:            toLeadDateInputValue(lead.fecha_cierre),
     }
   }
 

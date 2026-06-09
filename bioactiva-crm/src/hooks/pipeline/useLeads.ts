@@ -11,6 +11,7 @@ import {
   getCotizacionStateFromLeadState,
   validateLeadStateTransition,
 } from '@/lib/utils/lead-flow.utils'
+import { PipelineData } from '@/types/lead.types'
 
 export function usePipeline(filtros?: LeadFiltros) {
   return useQuery({
@@ -85,6 +86,43 @@ async function syncLeadAndCotizacionState(lead: Lead, estado: LeadState) {
   }
 
   return leadsService.updateEstado(lead.id, estado)
+}
+
+const PIPELINE_KEY_BY_STATE: Record<
+  LeadState,
+  'prospecto' | 'ofertado' | 'cierreVenta' | 'cierreSinVenta'
+> = {
+  [LeadState.Prospecto]:      'prospecto',
+  [LeadState.Ofertado]:       'ofertado',
+  [LeadState.CierreVenta]:    'cierreVenta',
+  [LeadState.CierreSinVenta]: 'cierreSinVenta',
+}
+
+function moveLeadInPipeline(
+  pipeline: PipelineData | undefined,
+  lead: Lead,
+  estado: LeadState
+): PipelineData | undefined {
+  if (!pipeline) return pipeline
+
+  const targetKey = PIPELINE_KEY_BY_STATE[estado]
+  const updatedLead = {
+    ...lead,
+    estado,
+    updated_at: new Date().toISOString(),
+  }
+
+  return {
+    prospecto: pipeline.prospecto.filter((item) => item.id !== lead.id),
+    ofertado: pipeline.ofertado.filter((item) => item.id !== lead.id),
+    cierreVenta: pipeline.cierreVenta.filter((item) => item.id !== lead.id),
+    cierreSinVenta: pipeline.cierreSinVenta.filter((item) => item.id !== lead.id),
+    total: pipeline.total,
+    [targetKey]: [
+      ...pipeline[targetKey].filter((item) => item.id !== lead.id),
+      updatedLead,
+    ],
+  }
 }
 
 export function useCrearLead() {
@@ -166,12 +204,50 @@ export function useMoverLeadPipeline() {
     mutationFn: async ({ lead, estado }: { lead: Lead; estado: LeadState }) => {
       return syncLeadAndCotizacionState(lead, estado)
     },
+    onMutate: async ({ lead, estado }) => {
+      await queryClient.cancelQueries({ queryKey: ['leads'] })
+
+      const previousPipelineQueries =
+        queryClient.getQueriesData<PipelineData>({
+          queryKey: ['leads', 'pipeline'],
+        })
+      const previousLead = queryClient.getQueryData<Lead>(
+        QUERY_KEYS.leads.detail(lead.id)
+      )
+
+      previousPipelineQueries.forEach(([queryKey, pipeline]) => {
+        queryClient.setQueryData(
+          queryKey,
+          moveLeadInPipeline(pipeline, lead, estado)
+        )
+      })
+
+      queryClient.setQueryData<Lead>(
+        QUERY_KEYS.leads.detail(lead.id),
+        (current) => current
+          ? { ...current, estado, updated_at: new Date().toISOString() }
+          : current
+      )
+
+      return { previousPipelineQueries, previousLead, leadId: lead.id }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
       queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, _variables, context) => {
+      context?.previousPipelineQueries.forEach(([queryKey, pipeline]) => {
+        queryClient.setQueryData(queryKey, pipeline)
+      })
+
+      if (context?.previousLead) {
+        queryClient.setQueryData(
+          QUERY_KEYS.leads.detail(context.leadId),
+          context.previousLead
+        )
+      }
+
       console.error(getErrorMessage(err))
     },
   })

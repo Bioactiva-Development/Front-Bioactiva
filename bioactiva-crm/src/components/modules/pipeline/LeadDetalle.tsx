@@ -32,6 +32,10 @@ import {
 import { getErrorMessage } from '@/lib/utils/error.utils'
 import { validateLeadStateTransition } from '@/lib/utils/lead-flow.utils'
 import {
+  formatLeadDateOnly,
+  getLeadCloseDateStatus,
+} from '@/lib/utils/lead-date.utils'
+import {
   getBlockingPendingActivity,
   isLeadStaleWithoutProgress,
 } from '@/lib/utils/activity-flow.utils'
@@ -74,7 +78,7 @@ function InfoItem({
 }: {
   icono:  React.ReactNode
   label:  string
-  valor?: string
+  valor?: React.ReactNode
 }) {
   if (!valor) return null
   return (
@@ -87,7 +91,7 @@ function InfoItem({
         <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
           {label}
         </p>
-        <p className="text-sm text-gray-800 font-medium mt-0.5">{valor}</p>
+        <div className="text-sm text-gray-800 font-medium mt-0.5">{valor}</div>
       </div>
     </div>
   )
@@ -157,6 +161,7 @@ export function LeadDetalle({
     useCrearRecordatorio()
   const { mutateAsync: crearSeguimiento, isPending: creandoSeguimiento } =
     useCrearSeguimiento()
+  const closeDateStatus = getLeadCloseDateStatus(lead.fecha_cierre)
 
   const pendingActivity = useMemo(
     () => getBlockingPendingActivity(actividades),
@@ -458,7 +463,17 @@ export function LeadDetalle({
               <InfoItem
                 icono={<Calendar size={14} />}
                 label="Fecha de cierre estimada"
-                valor={formatFecha(lead.fecha_cierre)}
+                valor={lead.fecha_cierre && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span>{formatLeadDateOnly(lead.fecha_cierre)}</span>
+                    {closeDateStatus && (
+                      <span className={`rounded-full border px-2 py-0.5 text-xs
+                        font-semibold ${closeDateStatus.className}`}>
+                        {closeDateStatus.label}
+                      </span>
+                    )}
+                  </div>
+                )}
               />
             </div>
           </div>
