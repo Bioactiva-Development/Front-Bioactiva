@@ -239,14 +239,14 @@ export function ContactoForm({
               {...register('estado_correo')}
               className={`${inputClass(!!errors.estado_correo)} cursor-pointer`}
             >
-              <option value="VIGENTE">Vigente</option>
-              <option value="VENCIDO">Vencido</option>
+              <option value="VIGENTE">Activo</option>
+              <option value="VENCIDO">Inactivo</option>
             </select>
             {errors.estado_correo && (
               <p className="text-red-500 text-xs">{errors.estado_correo.message}</p>
             )}
             <p className="text-xs text-amber-600">
-              Un contacto vencido no puede asociarse a nuevos leads.
+              Un contacto inactivo no puede asociarse a nuevos leads.
             </p>
           </div>
         )}

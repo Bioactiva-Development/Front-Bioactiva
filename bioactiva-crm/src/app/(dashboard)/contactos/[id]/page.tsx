@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react'
 import {
   useContacto,
   useActualizarContacto,
+  useCambiarEstadoContacto,
 } from '@/hooks/contactos/useContactos'
 import { useLeadsByContacto } from '@/hooks/pipeline/useLeads'
 import { ContactoDetalle } from '@/components/modules/contactos/ContactoDetalle'
@@ -22,7 +23,8 @@ export default function ContactoDetallePage() {
   const { data: contacto, isLoading, isError } = useContacto(id)
   const { data: leads = [] } = useLeadsByContacto(id)
 
-  const { mutateAsync: actualizar, isPending } = useActualizarContacto(id)
+  const { mutateAsync: actualizar, isPending }                       = useActualizarContacto(id)
+  const { mutateAsync: cambiarEstado, isPending: isPendingEstado }   = useCambiarEstadoContacto(id)
 
   const handleGuardar = async (data: ContactoFormValues) => {
     try {
@@ -31,6 +33,17 @@ export default function ContactoDetallePage() {
       setEditando(false)
     } catch (err: unknown) {
       setErrorGuardar(getErrorMessage(err, 'No se pudo guardar el contacto.'))
+    }
+  }
+
+  const handleCambiarEstado = async () => {
+    if (!contacto) return
+    const nuevoEstado = contacto.estado_correo === 'VENCIDO' ? 'VIGENTE' : 'VENCIDO'
+    try {
+      setErrorGuardar(null)
+      await cambiarEstado(nuevoEstado)
+    } catch (err: unknown) {
+      setErrorGuardar(getErrorMessage(err, 'No se pudo cambiar el estado del contacto.'))
     }
   }
 
@@ -84,6 +97,8 @@ export default function ContactoDetallePage() {
       contacto={contacto}
       leads={leads}
       onEditar={() => setEditando(true)}
+      onCambiarEstado={handleCambiarEstado}
+      isCambiandoEstado={isPendingEstado}
     />
   )
 }

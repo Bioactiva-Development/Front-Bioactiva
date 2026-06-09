@@ -77,9 +77,7 @@ export function SeguimientoForm({
   }, [actividadIdInicial, leadIdInicial, setValue])
 
   const plantillasSeguimiento = plantillasActivas.data?.filter(
-    (plantilla) =>
-      plantilla.activo &&
-      (plantilla.uso === 'Ambos' || plantilla.uso === 'Solo Seguimiento')
+    (plantilla) => plantilla.activo
   ) ?? []
 
   const selectedPlantillaInterna = plantillasSeguimiento.find(

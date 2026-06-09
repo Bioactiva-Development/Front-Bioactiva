@@ -29,7 +29,6 @@ const ESTADO_OPTIONS = [
     { value: '0', label: 'Pendiente' },
     { value: '1', label: 'Aceptada' },
     { value: '2', label: 'Expirada' },
-    { value: '3', label: 'Revocada' },
 ]
 
 function getInitials(nombres: string, apellidos: string) {
@@ -321,20 +320,15 @@ export default function ControlAccesoPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-1">
-                                                {/*<button
-                                                    onClick={() => abrirModal('editar', u)}
-                                                    title="Editar usuario"
-                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                                                >
-                                                    <Pencil size={15} />
-                                                </button>
-                                                <button
-                                                    onClick={() => abrirModal('password', u)}
-                                                    title="Cambiar contraseña"
-                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
-                                                >
-                                                    <Lock size={15} />
-                                                </button>*/}
+                                                {u.id !== currentUser?.id && (
+                                                    <button
+                                                        onClick={() => abrirModal('editar', u)}
+                                                        title="Editar rol"
+                                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                                                    >
+                                                        <Pencil size={15} />
+                                                    </button>
+                                                )}
                                                 {u.estado !== EstadoUsuario.Pendiente && u.id !== currentUser?.id && (
                                                     <button
                                                         onClick={() => abrirModal('estado', u)}

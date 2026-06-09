@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Bell, ChevronDown, LogOut, User, Menu } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useAuthStore, useUIStore } from '@/store'
 import { useAuth } from '@/hooks/auth/useAuth'
 import { useCentroNotificaciones } from '@/hooks/notificaciones/useNotificaciones'
@@ -10,6 +11,7 @@ import { RolUsuario } from '@/types/enums'
 import { ROUTES } from '@/lib/constants/routes'
 
 export function Navbar() {
+    const router = useRouter()
     const { usuario } = useAuthStore()
     const { toggleSidebar, notificacionesPendientes } = useUIStore()
     const { logout } = useAuth()
@@ -96,6 +98,17 @@ export function Navbar() {
                             </div>
 
                             <div className="py-1">
+                                <button
+                                    onClick={() => {
+                                        setMenuOpen(false)
+                                        router.push('/perfil')
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700
+                    hover:bg-gray-50 transition-colors"
+                                >
+                                    <User size={16} />
+                                    Mi perfil
+                                </button>
                                 <button
                                     onClick={() => {
                                         setMenuOpen(false)

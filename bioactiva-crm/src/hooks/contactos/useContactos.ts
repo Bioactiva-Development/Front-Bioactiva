@@ -57,3 +57,19 @@ export function useActualizarContacto(id: number) {
     },
   })
 }
+
+export function useCambiarEstadoContacto(id: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (estado_correo: 'VIGENTE' | 'VENCIDO') =>
+      contactosService.cambiarEstado(id, estado_correo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contactos'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.contactos.detail(id) })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}

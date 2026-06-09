@@ -3,16 +3,18 @@
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Pencil, Mail, Phone,
-  Building2, FileText,
+  Building2, FileText, Loader2,
 } from 'lucide-react'
 import { Contacto } from '@/types/contacto.types'
 import { Lead } from '@/types/lead.types'
 import { ROUTES } from '@/lib/constants/routes'
 
 interface ContactoDetalleProps {
-  contacto: Contacto
-  leads:    Lead[]
-  onEditar: () => void
+  contacto:          Contacto
+  leads:             Lead[]
+  onEditar:          () => void
+  onCambiarEstado:   () => void
+  isCambiandoEstado: boolean
 }
 
 const ESTADO_LEAD_COLORS: Record<string, string> = {
@@ -57,6 +59,8 @@ export function ContactoDetalle({
   contacto,
   leads,
   onEditar,
+  onCambiarEstado,
+  isCambiandoEstado,
 }: Readonly<ContactoDetalleProps>) {
   const router    = useRouter()
   const iniciales = `${contacto.nombres.charAt(0)}${contacto.apellidos?.charAt(0) ?? ''}`.toUpperCase()
@@ -94,7 +98,7 @@ export function ContactoDetalle({
                     ? 'bg-red-50 text-red-600 border border-red-200'
                     : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   }`}>
-                  {contacto.estado_correo ?? 'VIGENTE'}
+                  {contacto.estado_correo === 'VENCIDO' ? 'Inactivo' : 'Activo'}
                 </span>
               </div>
               {contacto.cargo && (
@@ -105,15 +109,35 @@ export function ContactoDetalle({
             </div>
           </div>
 
-          <button
-            onClick={onEditar}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
-              font-semibold border border-emerald-600 text-emerald-600
-              hover:bg-emerald-50 transition-colors"
-          >
-            <Pencil size={14} />
-            Editar
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onCambiarEstado}
+              disabled={isCambiandoEstado}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm
+                font-semibold border transition-colors disabled:opacity-50
+                disabled:cursor-not-allowed
+                ${contacto.estado_correo === 'VENCIDO'
+                  ? 'border-emerald-500 text-emerald-600 hover:bg-emerald-50'
+                  : 'border-red-300 text-red-500 hover:bg-red-50'
+                }`}
+            >
+              {isCambiandoEstado
+                ? <Loader2 size={14} className="animate-spin" />
+                : null
+              }
+              {contacto.estado_correo === 'VENCIDO' ? 'Marcar activo' : 'Marcar inactivo'}
+            </button>
+
+            <button
+              onClick={onEditar}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
+                font-semibold border border-emerald-600 text-emerald-600
+                hover:bg-emerald-50 transition-colors"
+            >
+              <Pencil size={14} />
+              Editar
+            </button>
+          </div>
         </div>
       </div>
 

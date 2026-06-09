@@ -1,48 +1,44 @@
 'use client'
 
-import { useState } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, X } from 'lucide-react'
+
 import { useRouter } from 'next/navigation'
 import {
   organizacionSchema,
   OrganizacionFormValues,
 } from '@/lib/validators/organizacion.schema'
 import { TipoEmpresa, TamanoEmpresa, Sector } from '@/types/enums'
-import { Organizacion } from '@/types/organizacion.types'
+import { Organizacion, SunatRucResult } from '@/types/organizacion.types'
 import { generarCodigoCliente, formatSector } from '@/lib/utils/organizacion.utils'
-import { organizacionesService } from '@/services/modules/organizaciones.service'
 
 interface OrganizacionFormProps {
   organizacion?: Organizacion
+  datosSunat?:   SunatRucResult | null
   onSubmit:      (data: OrganizacionFormValues) => Promise<void>
   isLoading:     boolean
   error?:        string | null
 }
 
-type BusquedaTab = 'ruc' | 'razon'
-
 const MAX_ACTIVIDAD_ECONOMICA = 200
 
 export function OrganizacionForm({
   organizacion,
+  datosSunat,
   onSubmit,
   isLoading,
   error,
 }: Readonly<OrganizacionFormProps>) {
-  const router                        = useRouter()
-  const esEdicion                     = !!organizacion
-  const [busquedaTab, setBusquedaTab] = useState<BusquedaTab>('ruc')
-  const [validandoRuc, setValidandoRuc] = useState(false)
-  const [rucValidado, setRucValidado] = useState(false)
-  const [errorRuc, setErrorRuc] = useState<string | null>(null)
+  const router                          = useRouter()
+  const esEdicion                       = !!organizacion
+  const [sunatAplicado, setSunatAplicado] = useState(false)
 
   const {
     register,
     handleSubmit,
     setValue,
-    control,
     formState: { errors },
   } = useForm<OrganizacionFormValues>({
     resolver: zodResolver(organizacionSchema),
@@ -64,12 +60,22 @@ export function OrganizacionForm({
       : undefined,
   })
 
-  const rucValue = useWatch({ control, name: 'ruc' })
+  useEffect(() => {
+    if (!datosSunat) return
+    setValue('ruc', datosSunat.ruc, { shouldValidate: true })
+    setValue('nombre', datosSunat.nombre, { shouldValidate: true })
+    const nombreComercial = datosSunat.nombreCompleto || datosSunat.nombre
+    setValue('nombre_comercial', nombreComercial, { shouldValidate: true })
+    if (datosSunat.tipo)        setValue('tipo', datosSunat.tipo, { shouldValidate: true })
+    if (datosSunat.tamano)      setValue('tamano', datosSunat.tamano, { shouldValidate: true })
+    if (datosSunat.sector)      setValue('sector', datosSunat.sector, { shouldValidate: true })
+    if (datosSunat.ubicacion)   setValue('ubicacion', datosSunat.ubicacion, { shouldValidate: true })
+    if (datosSunat.actividades) setValue('actividad_economica', datosSunat.actividades.slice(0, MAX_ACTIVIDAD_ECONOMICA), { shouldValidate: true })
+    setValue('codigo_cliente', generarCodigoCliente(nombreComercial, datosSunat.ruc), { shouldValidate: true })
+    setSunatAplicado(true)
+  }, [datosSunat, setValue])
 
-  // El código de cliente solo es editable en registro manual o cuando la
-  // búsqueda SUNAT no arrojó datos. Si proviene de SUNAT (o es edición), queda
-  // bloqueado y se gestiona automáticamente.
-  const codigoBloqueado = esEdicion || rucValidado
+  const codigoBloqueado = esEdicion || sunatAplicado
 
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
@@ -79,72 +85,13 @@ export function OrganizacionForm({
       : 'border-gray-200 focus:border-emerald-400 bg-white'
     }`
   const readOnlyClass = 'bg-gray-50 text-gray-500 cursor-default focus:border-gray-200'
-  const autocompletadoBloqueado = rucValidado && !esEdicion
+  const autocompletadoBloqueado = sunatAplicado && !esEdicion
 
   const codigoClienteHint = codigoBloqueado
     ? <p className="text-xs text-gray-400">Generado a partir del nombre comercial y el RUC de SUNAT.</p>
     : errors.codigo_cliente
       ? <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
       : null
-
-  const completarDatosSunat = async () => {
-    const ruc = (rucValue ?? '').trim()
-
-    if (ruc.length !== 11) {
-      setRucValidado(false)
-      setErrorRuc('Número de RUC no válido. Intenta otro.')
-      return
-    }
-
-    try {
-      setValidandoRuc(true)
-      setErrorRuc(null)
-      const data = await organizacionesService.sunatPorRuc(ruc)
-
-      setValue('ruc', data.ruc, { shouldValidate: true })
-      setValue('nombre', data.nombre, { shouldValidate: true })
-      setValue('nombre_comercial', data.nombreCompleto || data.nombre, {
-        shouldValidate: true,
-      })
-
-      if (data.tipo) {
-        setValue('tipo', data.tipo, { shouldValidate: true })
-      }
-
-      if (data.tamano) {
-        setValue('tamano', data.tamano, { shouldValidate: true })
-      }
-
-      if (data.sector) {
-        setValue('sector', data.sector, { shouldValidate: true })
-      }
-
-      if (data.ubicacion) {
-        setValue('ubicacion', data.ubicacion, { shouldValidate: true })
-      }
-
-      if (data.actividades) {
-        setValue(
-          'actividad_economica',
-          data.actividades.slice(0, MAX_ACTIVIDAD_ECONOMICA),
-          { shouldValidate: true }
-        )
-      }
-
-      const nombreComercial = data.nombreCompleto || data.nombre
-      setValue(
-        'codigo_cliente',
-        generarCodigoCliente(nombreComercial, data.ruc),
-        { shouldValidate: true }
-      )
-      setRucValidado(true)
-    } catch {
-      setRucValidado(false)
-      setErrorRuc('Número de RUC no válido. Intenta otro.')
-    } finally {
-      setValidandoRuc(false)
-    }
-  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -172,98 +119,25 @@ export function OrganizacionForm({
           {codigoClienteHint}
         </div>
 
-        {!esEdicion && (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setBusquedaTab('ruc')
-                  setValue('ruc', '')
-                  setRucValidado(false)
-                  setErrorRuc(null)
-                }}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors
-                  ${busquedaTab === 'ruc'
-                    ? 'bg-emerald-700 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-              >
-                Por RUC
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setBusquedaTab('razon')
-                  setValue('ruc', '')
-                  setRucValidado(false)
-                  setErrorRuc(null)
-                }}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors
-                  ${busquedaTab === 'razon'
-                    ? 'bg-emerald-700 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-              >
-                Por Razón Social
-              </button>
-            </div>
-
-            {busquedaTab === 'ruc' && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="of-ruc" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    RUC
-                  </label>
-                  <span className={`text-xs font-medium
-                    ${(rucValue?.length ?? 0) === 11 ? 'text-emerald-600' : 'text-gray-400'}`}>
-                    {rucValue?.length ?? 0}/11
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    id="of-ruc"
-                    type="text"
-                    placeholder="Ingresa RUC (11 dígitos)..."
-                    maxLength={11}
-                    {...register('ruc')}
-                    onChange={(e) => {
-                      const val = e.target.value.replaceAll(/\D/g, '').slice(0, 11)
-                      setValue('ruc', val, { shouldValidate: true })
-                      setRucValidado(false)
-                      setErrorRuc(null)
-                    }}
-                    className={inputClass(!!errors.ruc || !!errorRuc)}
-                  />
-                  <button
-                    type="button"
-                    onClick={completarDatosSunat}
-                    disabled={validandoRuc || (rucValue?.length ?? 0) !== 11}
-                    className="inline-flex min-w-24 items-center justify-center rounded-xl
-                      bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white
-                      transition-colors hover:bg-emerald-700 disabled:bg-emerald-300
-                      disabled:cursor-default"
-                  >
-                    {validandoRuc ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      'Validar'
-                    )}
-                  </button>
-                </div>
-                <p className="text-xs text-gray-400">
-                  11 dígitos - presiona Validar para completar datos desde SUNAT.
-                </p>
-                {errorRuc && (
-                  <p className="text-red-500 text-xs">{errorRuc}</p>
-                )}
-                {errors.ruc && (
-                  <p className="text-red-500 text-xs">{errors.ruc.message}</p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        <div className="space-y-1.5">
+          <label htmlFor="of-ruc" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            RUC{' '}
+            {sunatAplicado
+              ? <span className="text-gray-400 normal-case font-normal">— completado desde SUNAT</span>
+              : <span className="text-gray-400 normal-case font-normal">Opcional</span>}
+          </label>
+          <input
+            id="of-ruc"
+            type="text"
+            placeholder="Ej: 20123456789"
+            readOnly={sunatAplicado}
+            {...register('ruc')}
+            className={sunatAplicado
+              ? `w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-500 cursor-not-allowed`
+              : inputClass(!!errors.ruc)}
+          />
+          {errors.ruc && <p className="text-red-500 text-xs">{errors.ruc.message}</p>}
+        </div>
 
         <div className="space-y-1.5">
           <label htmlFor="of-nombre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">

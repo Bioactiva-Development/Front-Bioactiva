@@ -286,7 +286,7 @@ export function LeadForm({
       }
 
       if (contactoSeleccionado.estado_correo === 'VENCIDO') {
-        setErrorLocal('El contacto seleccionado está vencido y no puede asociarse a nuevos leads.')
+        setErrorLocal('El contacto seleccionado está inactivo y no puede asociarse a nuevos leads.')
         return
       }
     }

@@ -70,9 +70,7 @@ export function RecordatorioForm({
   }, [actividadIdInicial, leadIdInicial, setValue])
 
   const plantillasDisponibles = plantillasActivas.data?.filter(
-    (plantilla) =>
-      plantilla.activo &&
-      (plantilla.uso === 'Ambos' || plantilla.uso === 'Solo Recordatorio')
+    (plantilla) => plantilla.activo
   ) ?? []
 
   const selectedPlantilla = plantillasDisponibles.find(

@@ -49,7 +49,7 @@ export const QUERY_KEYS = {
     },
 
     plantillas: {
-        list: () => ['plantillas', 'list'],
+        list: (includeInactive = false) => ['plantillas', 'list', includeInactive],
         activas: () => ['plantillas', 'activas'],
         detail: (id: number) => ['plantillas', id],
     },

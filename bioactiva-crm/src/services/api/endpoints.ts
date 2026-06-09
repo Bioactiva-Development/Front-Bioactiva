@@ -55,6 +55,7 @@ export const ENDPOINTS = {
         detail: (id: number) => `/contacts/${id}`,
         create: '/contacts',
         update: (id: number) => `/contacts/${id}`,
+        estadoCorreo: (id: number) => `/contacts/${id}/status`,
         byOrganizacion: (orgId: string) => `/contacts/organization/${orgId}`,
     },
 
@@ -106,12 +107,13 @@ export const ENDPOINTS = {
     },
 
     plantillas: {
-        list: '/api/plantillas',
-        detail: (id: number) => `/api/plantillas/${id}`,
-        create: '/api/plantillas',
-        update: (id: number) => `/api/plantillas/${id}`,
-        delete: (id: number) => `/api/plantillas/${id}`,
-        activas: '/api/plantillas/activas',
+        list:   '/templates',
+        detail: (id: number) => `/templates/${id}`,
+        create: '/templates',
+        update: (id: number) => `/templates/${id}`,
+        delete: (id: number) => `/templates/${id}`,
+        // Selector de plantillas activas al programar notificaciones (endpoint separado)
+        activas: '/notifications/templates',
     },
 
     dashboard: {

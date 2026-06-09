@@ -136,6 +136,18 @@ export const contactosService = {
         return normalizeContacto(response.data)
     },
 
+    cambiarEstado: async (
+        id: number,
+        estado_correo: 'VIGENTE' | 'VENCIDO'
+    ): Promise<Contacto> => {
+        if (USE_MOCK) return mockUpdateContacto(id, { estado_correo })
+        const response = await apiClient.patch<Record<string, unknown>>(
+            ENDPOINTS.contactos.estadoCorreo(id),
+            { estado_correo }
+        )
+        return normalizeContacto(response.data)
+    },
+
     getByOrganizacion: async (orgId: string): Promise<Contacto[]> => {
         if (USE_MOCK) {
             const response = await mockGetContactos({ idOrganizacion: orgId })

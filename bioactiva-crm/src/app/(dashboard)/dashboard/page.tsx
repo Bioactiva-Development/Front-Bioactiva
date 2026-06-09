@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend
@@ -14,9 +13,7 @@ import {
 import { useLeads } from '@/hooks/pipeline/useLeads'
 import { useCotizaciones } from '@/hooks/cotizaciones/useCotizaciones'
 import { useDashboardMetrics } from '@/hooks/dashboard/useDashboardMetrics'
-import { QUERY_KEYS } from '@/lib/constants/queryKeys'
-import { usuariosService } from '@/services/modules/usuarios.service'
-import { EstadoCot, EstadoUsuario, LeadState } from '@/types/enums'
+import { EstadoCot, LeadState } from '@/types/enums'
 
 
 interface KpiCardProps {
@@ -132,7 +129,6 @@ export default function DashboardPage() {
   const [anioActivo, setAnioActivo]       = useState('2026')
   const [fechaInicio, setFechaInicio]     = useState('2026-01-01')
   const [fechaFin, setFechaFin]           = useState('2027-01-01')
-  const [idEncargado, setIdEncargado]     = useState<number | undefined>()
   const { data: leadsResponse, isLoading: cargandoLeads, isError: errorLeads } =
     useLeads({ page: 1, limit: DASHBOARD_FETCH_LIMIT })
   const {
@@ -143,22 +139,12 @@ export default function DashboardPage() {
   const dashboardParams = useMemo(() => ({
     startDate: toIsoDateBoundary(fechaInicio),
     endDate: toIsoDateBoundary(fechaFin),
-    idEncargado,
-  }), [fechaFin, fechaInicio, idEncargado])
+  }), [fechaFin, fechaInicio])
   const {
     data: metrics,
     isLoading: cargandoMetricas,
     isError: errorMetricas,
   } = useDashboardMetrics(dashboardParams)
-  const { data: responsablesData } = useQuery({
-    queryKey: QUERY_KEYS.usuarios.list(),
-    queryFn:  () => usuariosService.getUsuarios({
-      estado: EstadoUsuario.Activo,
-      limit: 100,
-    }),
-    staleTime: 1000 * 60 * 5,
-  })
-  const responsables = responsablesData?.usuarios ?? []
   const kpiValor = (value: string) => cargandoMetricas ? '...' : value
 
   const hoy = useMemo(() => {
@@ -188,7 +174,6 @@ export default function DashboardPage() {
     setAnioActivo('2026')
     setFechaInicio('2026-01-01')
     setFechaFin('2027-01-01')
-    setIdEncargado(undefined)
   }
 
   const rangoFechas = useMemo(() => ({
@@ -319,26 +304,6 @@ export default function DashboardPage() {
                     outline-none focus:border-emerald-400 text-gray-700"
                 />
               </div>
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="dash-responsable" className="text-xs text-gray-500">Responsable</label>
-              <select
-                id="dash-responsable"
-                value={idEncargado ?? ''}
-                onChange={(e) => {
-                  const value = Number(e.target.value)
-                  setIdEncargado(value > 0 ? value : undefined)
-                }}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm
-                  outline-none focus:border-emerald-400 text-gray-700 bg-white"
-              >
-                <option value="">Todos los responsables</option>
-                {responsables.map((responsable) => (
-                  <option key={responsable.id} value={responsable.id}>
-                    {`${responsable.nombres} ${responsable.apellidos}`.trim() || responsable.correo}
-                  </option>
-                ))}
-              </select>
             </div>
             <button
               onClick={handleReiniciar}
