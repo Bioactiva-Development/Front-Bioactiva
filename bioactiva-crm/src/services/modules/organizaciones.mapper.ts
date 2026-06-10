@@ -13,9 +13,6 @@ import {
  * Documentación del contrato: `Documentación de endpoints por módulo > Módulo
  * organizations`. Si el backend ajusta valores de enum (ej. EnterpriseType,
  * Sector, Size), modificar únicamente este archivo.
- *
- * TODO(coord-backend): confirmar los valores exactos de los enums `EnterpriseType`,
- * `Sector` y `Size` cuando el equipo backend publique la lista cerrada.
  */
 
 // ---------------------------------------------------------------------------

@@ -33,11 +33,11 @@ function InfoItem({
   icono,
   label,
   valor,
-}: {
+}: Readonly<{
   icono:  React.ReactNode
   label:  string
   valor?: string | null
-}) {
+}>) {
   if (!valor) return null
   return (
     <div className="flex items-start gap-3">
@@ -209,17 +209,13 @@ export function ContactoDetalle({
           ) : (
             <div className="space-y-2">
               {leads.map((lead) => (
-                <div
+                <button
                   key={lead.id}
-                  role="button"
-                  tabIndex={0}
-                  className="flex items-center justify-between p-4 border border-gray-100
-                    rounded-xl hover:border-emerald-200 hover:bg-emerald-50/30
-                    transition-colors cursor-pointer"
+                  type="button"
+                  className="w-full text-left flex items-center justify-between p-4
+                    border border-gray-100 rounded-xl hover:border-emerald-200
+                    hover:bg-emerald-50/30 transition-colors"
                   onClick={() => router.push(ROUTES.lead(lead.id))}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') router.push(ROUTES.lead(lead.id))
-                  }}
                 >
                   <div>
                     <p className="text-sm font-semibold text-gray-800">
@@ -238,7 +234,7 @@ export function ContactoDetalle({
                       {formatFecha(lead.created_at)}
                     </span>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}

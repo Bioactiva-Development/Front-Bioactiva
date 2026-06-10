@@ -1,5 +1,6 @@
 'use client'
 
+import { type JSX } from 'react'
 import { CheckCircle, XCircle, Circle } from 'lucide-react'
 
 const REQUIREMENTS_SIMPLE = [
@@ -26,12 +27,16 @@ export function PasswordRequirements({ password, mode = 'simple' }: Readonly<Pas
         <ul className="space-y-1.5">
             {requirements.map(({ label, test }) => {
                 const met = test(password)
-                const icon = hasStarted
-                    ? met
+                let icon: JSX.Element = <Circle size={13} className="text-gray-300 shrink-0" />
+                if (hasStarted) {
+                    icon = met
                         ? <CheckCircle size={13} className="text-emerald-500 shrink-0" />
                         : <XCircle size={13} className="text-red-400 shrink-0" />
-                    : <Circle size={13} className="text-gray-300 shrink-0" />
-                const textClass = !hasStarted ? 'text-gray-400' : met ? 'text-emerald-600' : 'text-red-500'
+                }
+                let textClass = 'text-gray-400'
+                if (hasStarted) {
+                    textClass = met ? 'text-emerald-600' : 'text-red-500'
+                }
                 return (
                     <li key={label} className="flex items-center gap-2 text-xs">
                         {icon}

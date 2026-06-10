@@ -16,11 +16,11 @@ let isRefreshing = false
 let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = []
 
 function forceLogout(): void {
-    if (typeof globalThis.window === 'undefined') return
+    if (globalThis.window === undefined) return
     useAuthStore.getState().clearSession()
     document.cookie = `${COOKIE_TOKEN}=; path=/; max-age=0; SameSite=Strict`
     document.cookie = `${COOKIE_ROL}=; path=/; max-age=0; SameSite=Strict`
-    window.location.href = ROUTES.auth.login
+    globalThis.location.href = ROUTES.auth.login
 }
 
 // Solo mensajes que indican expiración/invalidez del JWT de sesión del usuario.
@@ -41,7 +41,7 @@ const processQueue = (error: unknown, token: string | null) => {
 
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        if (typeof globalThis.window != 'undefined') {
+        if (globalThis.window !== undefined) {
             const token = localStorage.getItem(TOKEN_KEY)
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`
@@ -86,7 +86,7 @@ apiClient.interceptors.response.use(
 
                 const newToken = data.accessToken
 
-                if (typeof globalThis.window !== 'undefined') {
+                if (globalThis.window !== undefined) {
                     localStorage.setItem(TOKEN_KEY, newToken)
                 }
 

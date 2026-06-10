@@ -58,7 +58,7 @@ export function useAuth() {
 
             const { accessToken, accessTokenExpiresIn } = await authService.login(data, captchaToken)
 
-            if (typeof globalThis.window !== 'undefined') {
+            if (globalThis.window !== undefined) {
                 localStorage.setItem(TOKEN_KEY, accessToken)
             }
 
@@ -71,7 +71,7 @@ export function useAuth() {
                     usuarioFromAccessToken(accessToken, data.correo)
             }
 
-            if (typeof globalThis.window !== 'undefined') {
+            if (globalThis.window !== undefined) {
                 setCookie(COOKIE_TOKEN, accessToken)
                 setCookie(COOKIE_ROL, usuarioData.rol)
             }
@@ -79,7 +79,7 @@ export function useAuth() {
             setSession(accessToken, usuarioData, accessTokenExpiresIn)
             router.push(ROUTES.dashboard)
         } catch (err: unknown) {
-            if (typeof globalThis.window !== 'undefined') {
+            if (globalThis.window !== undefined) {
                 localStorage.removeItem(TOKEN_KEY)
             }
             setError(extractMessage(err, 'Error al iniciar sesión. Intente nuevamente.'))
@@ -93,7 +93,7 @@ export function useAuth() {
             await authService.logout()
         } catch {
         } finally {
-            if (typeof globalThis.window !== 'undefined') {
+            if (globalThis.window !== undefined) {
                 clearCookie(COOKIE_TOKEN)
                 clearCookie(COOKIE_ROL)
             }

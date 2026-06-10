@@ -40,20 +40,20 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
     await consultarPorNombre(inputNombre.trim())
   }
 
-  const handleSeleccionarNombre = async (item: SunatNombreResult) => {
-    if (modoConsulta) {
-      setCargandoRuc(item.ruc)
-      await consultarPorRuc(item.ruc)
-      setCargandoRuc(null)
-      setTab('ruc')
-    } else {
-      onSeleccionar({
-        ruc:            item.ruc,
-        nombre:         item.nombre,
-        nombreCompleto: item.nombre,
-        ubicacion:      item.ubicacion,
-      })
-    }
+  const handleSeleccionarNombreEnConsulta = async (item: SunatNombreResult) => {
+    setCargandoRuc(item.ruc)
+    await consultarPorRuc(item.ruc)
+    setCargandoRuc(null)
+    setTab('ruc')
+  }
+
+  const handleSeleccionarNombreParaUsar = (item: SunatNombreResult) => {
+    onSeleccionar({
+      ruc:            item.ruc,
+      nombre:         item.nombre,
+      nombreCompleto: item.nombre,
+      ubicacion:      item.ubicacion,
+    })
   }
 
   const handleCambiarTab = (nuevaTab: TabType) => {
@@ -64,19 +64,14 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
   }
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label="Cerrar modal"
-      className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
-      onClick={onCerrar}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onCerrar() }}
-    >
-      <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button
+        type="button"
+        aria-label="Cerrar modal"
+        className="absolute inset-0 bg-black/40 cursor-default"
+        onClick={onCerrar}
+      />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shrink-0">
           <h2 className="text-lg font-bold text-gray-900">Validador SUNAT</h2>
           <button
@@ -284,11 +279,13 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
                     return (
                       <button
                         key={item.ruc}
-                        onClick={() => !cargandoRuc && handleSeleccionarNombre(item)}
+                        onClick={() => !cargandoRuc && (modoConsulta
+                          ? handleSeleccionarNombreEnConsulta(item)
+                          : handleSeleccionarNombreParaUsar(item))}
                         disabled={!!cargandoRuc}
                         className={`w-full flex items-center justify-between px-4 py-3
                           transition-colors text-left
-                          ${index !== 0 ? 'border-t border-gray-50' : ''}
+                          ${index === 0 ? '' : 'border-t border-gray-50'}
                           ${esteItem ? 'bg-emerald-50' : ''}
                           ${otroItem ? 'opacity-40' : 'hover:bg-emerald-50'}
                           ${cargandoRuc ? 'cursor-default' : 'cursor-pointer'}`}

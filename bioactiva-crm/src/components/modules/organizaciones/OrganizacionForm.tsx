@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import React, { useState, useEffect } from 'react'
+import { useForm, UseFormSetValue } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, X } from 'lucide-react'
 
@@ -23,6 +23,24 @@ interface OrganizacionFormProps {
 }
 
 const MAX_ACTIVIDAD_ECONOMICA = 200
+
+function applyDatosSunat(
+  datos: SunatRucResult,
+  setValue: UseFormSetValue<OrganizacionFormValues>,
+  setSunatAplicado: (v: boolean) => void,
+): void {
+  setValue('ruc', datos.ruc, { shouldValidate: true })
+  setValue('nombre', datos.nombre, { shouldValidate: true })
+  const nombreComercial = datos.nombreCompleto || datos.nombre
+  setValue('nombre_comercial', nombreComercial, { shouldValidate: true })
+  if (datos.tipo)        setValue('tipo', datos.tipo, { shouldValidate: true })
+  if (datos.tamano)      setValue('tamano', datos.tamano, { shouldValidate: true })
+  if (datos.sector)      setValue('sector', datos.sector, { shouldValidate: true })
+  if (datos.ubicacion)   setValue('ubicacion', datos.ubicacion, { shouldValidate: true })
+  if (datos.actividades) setValue('actividad_economica', datos.actividades.slice(0, MAX_ACTIVIDAD_ECONOMICA), { shouldValidate: true })
+  setValue('codigo_cliente', generarCodigoCliente(nombreComercial, datos.ruc), { shouldValidate: true })
+  setSunatAplicado(true)
+}
 
 export function OrganizacionForm({
   organizacion,
@@ -62,17 +80,7 @@ export function OrganizacionForm({
 
   useEffect(() => {
     if (!datosSunat) return
-    setValue('ruc', datosSunat.ruc, { shouldValidate: true })
-    setValue('nombre', datosSunat.nombre, { shouldValidate: true })
-    const nombreComercial = datosSunat.nombreCompleto || datosSunat.nombre
-    setValue('nombre_comercial', nombreComercial, { shouldValidate: true })
-    if (datosSunat.tipo)        setValue('tipo', datosSunat.tipo, { shouldValidate: true })
-    if (datosSunat.tamano)      setValue('tamano', datosSunat.tamano, { shouldValidate: true })
-    if (datosSunat.sector)      setValue('sector', datosSunat.sector, { shouldValidate: true })
-    if (datosSunat.ubicacion)   setValue('ubicacion', datosSunat.ubicacion, { shouldValidate: true })
-    if (datosSunat.actividades) setValue('actividad_economica', datosSunat.actividades.slice(0, MAX_ACTIVIDAD_ECONOMICA), { shouldValidate: true })
-    setValue('codigo_cliente', generarCodigoCliente(nombreComercial, datosSunat.ruc), { shouldValidate: true })
-    setSunatAplicado(true)
+    applyDatosSunat(datosSunat, setValue, setSunatAplicado)
   }, [datosSunat, setValue])
 
   const codigoBloqueado = esEdicion || sunatAplicado
@@ -86,12 +94,16 @@ export function OrganizacionForm({
     }`
   const readOnlyClass = 'bg-gray-50 text-gray-500 cursor-default focus:border-gray-200'
   const autocompletadoBloqueado = sunatAplicado && !esEdicion
+  const selectOverrideClass = autocompletadoBloqueado
+    ? `${readOnlyClass} pointer-events-none appearance-none`
+    : ''
 
-  const codigoClienteHint = codigoBloqueado
-    ? <p className="text-xs text-gray-400">Generado a partir del nombre comercial y el RUC de SUNAT.</p>
-    : errors.codigo_cliente
-      ? <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
-      : null
+  let codigoClienteHint: React.ReactElement | null = null
+  if (codigoBloqueado) {
+    codigoClienteHint = <p className="text-xs text-gray-400">Generado a partir del nombre comercial y el RUC de SUNAT.</p>
+  } else if (errors.codigo_cliente) {
+    codigoClienteHint = <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -197,8 +209,7 @@ export function OrganizacionForm({
               {...register('tipo')}
               aria-disabled={autocompletadoBloqueado}
               tabIndex={autocompletadoBloqueado ? -1 : undefined}
-              className={`${inputClass(!!errors.tipo)}
-                ${autocompletadoBloqueado ? `${readOnlyClass} pointer-events-none appearance-none` : ''}`}
+              className={`${inputClass(!!errors.tipo)} ${selectOverrideClass}`}
             >
               <option value="">Seleccionar...</option>
               {Object.values(TipoEmpresa).map((t) => (
@@ -219,8 +230,7 @@ export function OrganizacionForm({
               {...register('tamano')}
               aria-disabled={autocompletadoBloqueado}
               tabIndex={autocompletadoBloqueado ? -1 : undefined}
-              className={`${inputClass(!!errors.tamano)}
-                ${autocompletadoBloqueado ? `${readOnlyClass} pointer-events-none appearance-none` : ''}`}
+              className={`${inputClass(!!errors.tamano)} ${selectOverrideClass}`}
             >
               <option value="">Seleccionar...</option>
               {Object.values(TamanoEmpresa).map((t) => (
@@ -242,8 +252,7 @@ export function OrganizacionForm({
             {...register('sector')}
             aria-disabled={autocompletadoBloqueado}
             tabIndex={autocompletadoBloqueado ? -1 : undefined}
-            className={`${inputClass(!!errors.sector)}
-              ${autocompletadoBloqueado ? `${readOnlyClass} pointer-events-none appearance-none` : ''}`}
+            className={`${inputClass(!!errors.sector)} ${selectOverrideClass}`}
           >
             <option value="">Seleccionar...</option>
             {Object.values(Sector).map((s) => (

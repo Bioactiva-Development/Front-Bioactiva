@@ -18,7 +18,7 @@ export const contactoSchema = z.object({
         .or(z.literal('')),
 
     vocativo: z
-        .nativeEnum(Vocativo)
+        .enum(Object.values(Vocativo) as [Vocativo, ...Vocativo[]])
         .optional(),
 
     cargo: z
@@ -28,14 +28,12 @@ export const contactoSchema = z.object({
         .or(z.literal('')),
 
     correo: z
-        .string()
+        .email({ message: 'Ingrese un correo válido' })
         .min(1, 'El correo es obligatorio')
-        .email('Ingrese un correo válido')
         .max(254, 'Máximo 254 caracteres'),
 
     correo2: z
-        .string()
-        .email('Ingrese un correo válido')
+        .email({ message: 'Ingrese un correo válido' })
         .max(254, 'Máximo 254 caracteres')
         .optional()
         .or(z.literal('')),

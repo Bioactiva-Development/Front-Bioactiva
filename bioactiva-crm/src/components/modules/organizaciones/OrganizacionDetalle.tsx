@@ -45,11 +45,11 @@ function InfoItem({
   icono,
   label,
   valor,
-}: {
+}: Readonly<{
   icono:  React.ReactNode
   label:  string
   valor?: string
-}) {
+}>) {
   if (!valor) return null
   return (
     <div className="flex items-start gap-3">
@@ -74,7 +74,7 @@ export function OrganizacionDetalle({
   eliminando = false,
 }: Readonly<OrganizacionDetalleProps>) {
   const router                              = useRouter()
-  const [confirmarEliminar, setConfirmar]   = useState(false)
+  const [confirmarEliminar, setConfirmarEliminar]   = useState(false)
   const inicial                             = organizacion.nombre.charAt(0).toUpperCase()
   const contactosVisibles  = organizacion.contactos
   const contactosRestantes = organizacion.totalContactos - organizacion.contactos.length
@@ -157,7 +157,7 @@ export function OrganizacionDetalle({
 
             {onEliminar && !confirmarEliminar && (
               <button
-                onClick={() => setConfirmar(true)}
+                onClick={() => setConfirmarEliminar(true)}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
                   text-red-500 hover:text-red-700 hover:bg-red-50
                   border border-red-200 transition-colors"
@@ -181,7 +181,7 @@ export function OrganizacionDetalle({
                   {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
                 </button>
                 <button
-                  onClick={() => setConfirmar(false)}
+                  onClick={() => setConfirmarEliminar(false)}
                   disabled={eliminando}
                   className="px-3 py-2 rounded-xl text-xs font-semibold text-gray-600
                     hover:bg-gray-100 border border-gray-200 transition-colors"
@@ -250,14 +250,12 @@ export function OrganizacionDetalle({
               {contactosVisibles.map((contacto) => {
                 const inicialesContacto = `${contacto.nombres.charAt(0)}${contacto.apellidos.charAt(0)}`.toUpperCase()
                 return (
-                  <div
+                  <button
                     key={contacto.id}
-                    role="button"
-                    tabIndex={0}
-                    className="border border-gray-100 rounded-xl p-4 hover:border-emerald-200
-                      hover:bg-emerald-50/30 transition-colors cursor-pointer"
+                    type="button"
+                    className="w-full text-left border border-gray-100 rounded-xl p-4
+                      hover:border-emerald-200 hover:bg-emerald-50/30 transition-colors"
                     onClick={() => router.push(ROUTES.contacto(contacto.id))}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') router.push(ROUTES.contacto(contacto.id)) }}
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center
@@ -288,7 +286,7 @@ export function OrganizacionDetalle({
                         </p>
                       )}
                     </div>
-                  </div>
+                  </button>
                 )
               })}
             </div>
@@ -339,15 +337,13 @@ export function OrganizacionDetalle({
         ) : (
           <div className="space-y-2">
             {organizacion.leads.map((lead) => (
-              <div
+              <button
                 key={lead.id}
-                role="button"
-                tabIndex={0}
-                className="flex items-center justify-between p-4 border border-gray-100
-                  rounded-xl hover:border-emerald-200 hover:bg-emerald-50/30
-                  transition-colors cursor-pointer"
+                type="button"
+                className="w-full text-left flex items-center justify-between p-4
+                  border border-gray-100 rounded-xl hover:border-emerald-200
+                  hover:bg-emerald-50/30 transition-colors"
                 onClick={() => router.push(ROUTES.lead(lead.id))}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') router.push(ROUTES.lead(lead.id)) }}
               >
                 <div>
                   <p className="text-sm font-semibold text-gray-800">
@@ -366,7 +362,7 @@ export function OrganizacionDetalle({
                     {formatFecha(lead.created_at)}
                   </span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -411,7 +407,7 @@ export function OrganizacionDetalle({
                 </div>
 
                 <div className="flex items-center gap-2 mb-4">
-                  {cot.id && (
+                  {!!cot.id && (
                     <span className="text-xs text-gray-400 font-mono">
                       COT-{String(cot.id).padStart(3, '0')}
                     </span>

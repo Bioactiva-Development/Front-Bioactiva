@@ -2,16 +2,19 @@ import { z } from 'zod'
 import { RolUsuario } from '@/types/enums'
 import { DOMINIO_INSTITUCIONAL } from '@/lib/constants/config'
 
+const correoInstitucional = z
+    .email({ message: 'Formato de correo inválido' })
+    .min(1, 'El correo es obligatorio')
+    .refine(
+        (val) => val.endsWith(`@${DOMINIO_INSTITUCIONAL}`) || val.endsWith('@utec.edu.pe'),
+        `Debe ser un correo institucional (@${DOMINIO_INSTITUCIONAL})`,
+    )
+
+const rolSchema = z.enum([RolUsuario.Administrador, RolUsuario.Trabajador])
+
 export const invitarUsuarioSchema = z.object({
-    correo: z
-        .string()
-        .min(1, 'El correo es obligatorio')
-        .email('Formato de correo inválido')
-        .refine(
-            (val) => val.endsWith(`@${DOMINIO_INSTITUCIONAL}`) || val.endsWith('@utec.edu.pe'),
-            `Debe ser un correo institucional (@${DOMINIO_INSTITUCIONAL})`,
-        ),
-    rol: z.nativeEnum(RolUsuario),
+    correo: correoInstitucional,
+    rol: rolSchema,
 })
 
 export const editarUsuarioSchema = z.object({
@@ -19,15 +22,8 @@ export const editarUsuarioSchema = z.object({
         .string()
         .min(2, 'El nombre debe tener al menos 2 caracteres')
         .max(100, 'El nombre es demasiado largo'),
-    correo: z
-        .string()
-        .min(1, 'El correo es obligatorio')
-        .email('Formato de correo inválido')
-        .refine(
-            (val) => val.endsWith(`@${DOMINIO_INSTITUCIONAL}`) || val.endsWith('@utec.edu.pe'),
-            `Debe ser un correo institucional (@${DOMINIO_INSTITUCIONAL})`,
-        ),
-    rol: z.nativeEnum(RolUsuario),
+    correo: correoInstitucional,
+    rol: rolSchema,
 })
 
 export const cambiarPasswordSchema = z

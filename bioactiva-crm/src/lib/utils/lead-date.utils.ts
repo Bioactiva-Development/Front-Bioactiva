@@ -26,13 +26,15 @@ export function toLeadDateInputValue(fecha?: string | null) {
   return match?.[0] ?? ''
 }
 
+const DEFAULT_DATE_FORMAT: Intl.DateTimeFormatOptions = {
+  day:   '2-digit',
+  month: 'short',
+  year:  'numeric',
+}
+
 export function formatLeadDateOnly(
   fecha?: string,
-  options: Intl.DateTimeFormatOptions = {
-    day:   '2-digit',
-    month: 'short',
-    year:  'numeric',
-  }
+  options: Intl.DateTimeFormatOptions = DEFAULT_DATE_FORMAT
 ) {
   if (!fecha) return '—'
 

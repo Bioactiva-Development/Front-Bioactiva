@@ -14,7 +14,7 @@ interface Props {
     onSubmit: (data: InvitarUsuarioFormValues) => Promise<boolean>
 }
 
-export function InvitarUsuarioModal({ isLoading, error, onClose, onSubmit }: Props) {
+export function InvitarUsuarioModal({ isLoading, error, onClose, onSubmit }: Readonly<Props>) {
     const {
         register,
         handleSubmit,

@@ -12,7 +12,7 @@ interface Props {
     onConfirm: () => Promise<boolean>
 }
 
-export function DeshabilitarUsuarioModal({ usuario, isLoading, onClose, onConfirm }: Props) {
+export function DeshabilitarUsuarioModal({ usuario, isLoading, onClose, onConfirm }: Readonly<Props>) {
     const nombreCompleto = [usuario.nombres, usuario.apellidos].filter(Boolean).join(' ')
     const esActivo = usuario.estado === EstadoUsuario.Activo
 

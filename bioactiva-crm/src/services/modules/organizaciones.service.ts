@@ -216,27 +216,27 @@ export const organizacionesService = {
     const contactosRaw =
       contactosResult.status === 'fulfilled' ? contactosResult.value.data : []
 
-    const leadsRaw: LeadDtoOut[] =
-      leadsResult.status === 'fulfilled'
-        ? Array.isArray(leadsResult.value.data)
-          ? leadsResult.value.data
-          : (leadsResult.value.data as LeadsDtoResponse).data ?? []
-        : []
+    const strOf = (v: unknown): string => typeof v === 'string' ? v : ''
 
-    const cotizacionesRaw: CotizacionDtoOut[] =
-      cotizacionesResult.status === 'fulfilled'
-        ? Array.isArray(cotizacionesResult.value.data)
-          ? cotizacionesResult.value.data
-          : (cotizacionesResult.value.data as CotizacionesDtoResponse).data ?? []
-        : []
+    let leadsRaw: LeadDtoOut[] = []
+    if (leadsResult.status === 'fulfilled') {
+      const d = leadsResult.value.data
+      leadsRaw = Array.isArray(d) ? d : ((d as LeadsDtoResponse).data ?? [])
+    }
+
+    let cotizacionesRaw: CotizacionDtoOut[] = []
+    if (cotizacionesResult.status === 'fulfilled') {
+      const d = cotizacionesResult.value.data
+      cotizacionesRaw = Array.isArray(d) ? d : ((d as CotizacionesDtoResponse).data ?? [])
+    }
 
     const todosContactos = contactosRaw.map((c) => ({
       id:        Number(c.id),
-      nombres:   String(c.nombres ?? ''),
-      apellidos: String(c.apellidos ?? ''),
+      nombres:   strOf(c.nombres),
+      apellidos: strOf(c.apellidos),
       vocativo:  c.vocativo as string | undefined,
       cargo:     (c.cargo as string | null) ?? undefined,
-      correo:    String(c.correo ?? ''),
+      correo:    strOf(c.correo),
       telefono:  (c.telefono as string | null) ?? undefined,
     }))
 
