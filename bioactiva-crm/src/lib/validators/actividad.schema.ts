@@ -1,7 +1,6 @@
 import { z } from 'zod'
-import { TipoActividad } from '@/types/enums'
+import { EstadoActividad, TipoActividad } from '@/types/enums'
 
-// `estado` no se incluye: el backend siempre crea actividades con PENDIENTE.
 export const actividadSchema = z
   .object({
     id_lead: z
@@ -20,13 +19,17 @@ export const actividadSchema = z
       error: 'El tipo de actividad es obligatorio',
     }),
 
+    estado: z.nativeEnum(EstadoActividad, {
+      error: 'El estado es obligatorio',
+    }),
+
     fecha_inicio: z
       .string()
-      .min(1, 'La fecha de inicio es obligatoria'),
+      .min(1, 'La fecha es obligatoria'),
 
     fecha_fin: z
       .string()
-      .min(1, 'La fecha de fin es obligatoria'),
+      .min(1, 'La fecha es obligatoria'),
 
     notas: z
       .string()
@@ -34,14 +37,14 @@ export const actividadSchema = z
       .optional()
       .or(z.literal('')),
   })
+
   .refine(
     (data) => {
       if (!data.fecha_inicio || !data.fecha_fin) return true
-      // El backend exige fechaInicio estrictamente antes de fechaFin
-      return new Date(data.fecha_fin) > new Date(data.fecha_inicio)
+      return new Date(data.fecha_fin) >= new Date(data.fecha_inicio)
     },
     {
-      message: 'La fecha de fin debe ser posterior a la fecha de inicio',
+      message: 'La fecha es obligatoria',
       path:    ['fecha_fin'],
     }
   )

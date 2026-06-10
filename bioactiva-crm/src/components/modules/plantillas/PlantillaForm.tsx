@@ -19,9 +19,7 @@ interface PlantillaFormProps {
   error?:     string | null
 }
 
-const CATEGORIAS = ['Email', 'Reunion', 'Llamada', 'Otro'] as const
-const USOS       = ['Ambos', 'Solo Recordatorio', 'Solo Seguimiento'] as const
-const ESTADOS    = [
+const ESTADOS = [
   { value: true,  label: 'Activa' },
   { value: false, label: 'Inactiva' },
 ]
@@ -47,21 +45,16 @@ export function PlantillaForm({
     resolver: zodResolver(plantillaSchema),
     defaultValues: plantilla
       ? {
-          nombre:    plantilla.nombre,
-          asunto:    plantilla.asunto,
-          cuerpo:    plantilla.cuerpo,
-          categoria: plantilla.categoria,
-          uso:       plantilla.uso,
-          activo:    plantilla.activo,
+          nombre: plantilla.nombre,
+          asunto: plantilla.asunto,
+          cuerpo: plantilla.cuerpo,
+          activo: plantilla.activo,
         }
       : {
-          categoria: 'Email',
-          uso:       'Ambos',
-          activo:    true,
+          activo: true,
         },
   })
 
-  // ✅ Observar activo para mostrar el valor correcto en el select
   const activoValue = watch('activo')
 
   const insertarVariable = (variable: string) => {
@@ -125,58 +118,6 @@ export function PlantillaForm({
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <label htmlFor="pf-categoria" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Categoría
-            </label>
-            <select
-              id="pf-categoria"
-              {...register('categoria')}
-              className={`${inputClass(!!errors.categoria)} cursor-pointer`}
-            >
-              {CATEGORIAS.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="pf-uso" className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
-              Uso
-              <Info size={12} className="text-gray-400" />
-            </label>
-            <select
-              id="pf-uso"
-              {...register('uso')}
-              className={`${inputClass(!!errors.uso)} cursor-pointer`}
-            >
-              {USOS.map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* ✅ activo manejado manualmente con setValue, no con register */}
-          <div className="space-y-1.5">
-            <label htmlFor="pf-estado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Estado
-            </label>
-            <select
-              id="pf-estado"
-              value={String(activoValue)}
-              onChange={(e) => setValue('activo', e.target.value === 'true')}
-              className={`${inputClass(false)} cursor-pointer`}
-            >
-              {ESTADOS.map((e) => (
-                <option key={String(e.value)} value={String(e.value)}>
-                  {e.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -223,6 +164,29 @@ export function PlantillaForm({
             <p className="text-red-500 text-xs">{errors.cuerpo.message}</p>
           )}
         </div>
+
+        {esEdicion && (
+          <div className="space-y-1.5 pt-2 border-t border-gray-100">
+            <label htmlFor="pf-estado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Estado de la plantilla
+            </label>
+            <select
+              id="pf-estado"
+              value={String(activoValue)}
+              onChange={(e) => setValue('activo', e.target.value === 'true')}
+              className={`${inputClass(false)} cursor-pointer`}
+            >
+              {ESTADOS.map((e) => (
+                <option key={String(e.value)} value={String(e.value)}>
+                  {e.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-amber-600">
+              Una plantilla inactiva no puede seleccionarse al programar notificaciones.
+            </p>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700

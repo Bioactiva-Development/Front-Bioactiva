@@ -47,7 +47,7 @@ export const ENDPOINTS = {
         create: '/organizations',
         update: (id: string) => `/organizations/${id}`,
         delete: (id: string) => `/organizations/${id}`,
-        sunat: (query: string) => `/organizations/sunat/${encodeURIComponent(query)}`,
+        sunat: '/organizations/sunat',
     },
 
     contactos: {
@@ -55,6 +55,7 @@ export const ENDPOINTS = {
         detail: (id: number) => `/contacts/${id}`,
         create: '/contacts',
         update: (id: number) => `/contacts/${id}`,
+        estadoCorreo: (id: number) => `/contacts/${id}/status`,
         byOrganizacion: (orgId: string) => `/contacts/organization/${orgId}`,
     },
 
@@ -64,27 +65,28 @@ export const ENDPOINTS = {
         create: '/leads',
         update: (id: number) => `/leads/${id}`,
         updateEstado: (id: number) => `/leads/${id}/status`,
+        delete: (id: number) => `/leads/${id}`,
     },
 
     actividades: {
-        list:     '/activities',
-        detail:   (id: number) => `/activities/${id}`,
-        create:   '/activities',
-        update:   (id: number) => `/activities/${id}`,
+        list: '/activities',
+        detail: (id: number) => `/activities/${id}`,
+        create: '/activities',
+        update: (id: number) => `/activities/${id}`,
         complete: (id: number) => `/activities/${id}/complete`,
-        cancel:   (id: number) => `/activities/${id}/cancel`,
-        delete:   (id: number) => `/activities/${id}`,
+        cancel: (id: number) => `/activities/${id}/cancel`,
+        delete: (id: number) => `/activities/${id}`,
     },
 
     cotizaciones: {
-        list:    '/quotations',
-        detail:  (id: number) => `/quotations/${id}`,
-        create:  '/quotations',
-        update:  (id: number) => `/quotations/${id}`,
-        delete:  (id: number) => `/quotations/${id}`,
-        send:    (id: number) => `/quotations/${id}/send`,
-        accept:  (id: number) => `/quotations/${id}/accept`,
-        reject:  (id: number) => `/quotations/${id}/reject`,
+        list: '/quotations',
+        detail: (id: number) => `/quotations/${id}`,
+        create: '/quotations',
+        update: (id: number) => `/quotations/${id}`,
+        send: (id: number) => `/quotations/${id}/send`,
+        accept: (id: number) => `/quotations/${id}/accept`,
+        reject: (id: number) => `/quotations/${id}/reject`,
+        delete: (id: number) => `/quotations/${id}`,
     },
 
     notificaciones: {
@@ -105,16 +107,17 @@ export const ENDPOINTS = {
     },
 
     plantillas: {
-        list: '/api/plantillas',
-        detail: (id: number) => `/api/plantillas/${id}`,
-        create: '/api/plantillas',
-        update: (id: number) => `/api/plantillas/${id}`,
-        delete: (id: number) => `/api/plantillas/${id}`,
-        activas: '/api/plantillas/activas',
+        list:   '/templates',
+        detail: (id: number) => `/templates/${id}`,
+        create: '/templates',
+        update: (id: number) => `/templates/${id}`,
+        delete: (id: number) => `/templates/${id}`,
+        // Selector de plantillas activas al programar notificaciones (endpoint separado)
+        activas: '/notifications/templates',
     },
 
     dashboard: {
-        metricas: '/api/dashboard/metricas',
+        metrics: '/dashboard/metrics',
     },
 
     datos: {

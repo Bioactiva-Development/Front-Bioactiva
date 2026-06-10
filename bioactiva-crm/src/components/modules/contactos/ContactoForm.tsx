@@ -51,6 +51,7 @@ export function ContactoForm({
           telefono:       contacto.telefono ?? '',
           comentarios:    contacto.comentarios ?? '',
           idOrganizacion: contacto.idOrganizacion,
+          estado_correo:  contacto.estado_correo ?? 'VIGENTE',
         }
       : {
           idOrganizacion: orgIdInicial ?? '',
@@ -228,6 +229,28 @@ export function ContactoForm({
           )}
         </div>
 
+        {esEdicion && (
+          <div className="space-y-1.5 pt-2 border-t border-gray-100">
+            <label htmlFor="cf-estado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Estado del contacto
+            </label>
+            <select
+              id="cf-estado"
+              {...register('estado_correo')}
+              className={`${inputClass(!!errors.estado_correo)} cursor-pointer`}
+            >
+              <option value="VIGENTE">Activo</option>
+              <option value="VENCIDO">Inactivo</option>
+            </select>
+            {errors.estado_correo && (
+              <p className="text-red-500 text-xs">{errors.estado_correo.message}</p>
+            )}
+            <p className="text-xs text-amber-600">
+              Un contacto inactivo no puede asociarse a nuevos leads.
+            </p>
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700
             text-sm rounded-xl px-4 py-3">
@@ -243,7 +266,7 @@ export function ContactoForm({
               text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <ArrowLeft size={16} />
-            Volver a Contactos
+            Cancelar
           </button>
 
           <button

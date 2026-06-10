@@ -29,7 +29,6 @@ const ESTADO_OPTIONS = [
     { value: '0', label: 'Pendiente' },
     { value: '1', label: 'Aceptada' },
     { value: '2', label: 'Expirada' },
-    { value: '3', label: 'Revocada' },
 ]
 
 function getInitials(nombres: string, apellidos: string) {
@@ -95,7 +94,7 @@ function EstadoInvitacionBadge({ estado }: { estado: EstadoToken }) {
 
 export default function ControlAccesoPage() {
     const router = useRouter()
-    const { isAdministrador } = useAuthStore()
+    const { isAdministrador, usuario: currentUser } = useAuthStore()
 
     const {
         usuarios, total: totalUsuarios, activos,
@@ -175,10 +174,10 @@ export default function ControlAccesoPage() {
             await createInvitacion({ correo: data.correo, rol: rolNumerico })
             return true
         } catch (err: unknown) {
-            const raw = (err as { message?: string })?.message ?? ''
-            const msg = /unique constraint|already exists|correo/i.test(raw)
-                ? 'Ya existe una invitación o cuenta registrada con ese correo. No es posible enviar una nueva invitación.'
-                : 'Error al enviar la invitación. Intente nuevamente.'
+            let msg = (err as { message?: string })?.message ?? 'Error al enviar la invitación. Intente nuevamente.'
+            if (/prisma|unique constraint|constraint failed|invocation/i.test(msg)) {
+                msg = 'Ya existe un usuario registrado con ese correo. Si el acceso fue revocado, puedes reactivarlo desde la lista de usuarios.'
+            }
             setInviteError(msg)
             return false
         }
@@ -321,21 +320,16 @@ export default function ControlAccesoPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-1">
-                                                <button
-                                                    onClick={() => abrirModal('editar', u)}
-                                                    title="Editar usuario"
-                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                                                >
-                                                    <Pencil size={15} />
-                                                </button>
-                                                <button
-                                                    onClick={() => abrirModal('password', u)}
-                                                    title="Cambiar contraseña"
-                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
-                                                >
-                                                    <Lock size={15} />
-                                                </button>
-                                                {u.estado !== EstadoUsuario.Pendiente && (
+                                                {u.id !== currentUser?.id && (
+                                                    <button
+                                                        onClick={() => abrirModal('editar', u)}
+                                                        title="Editar rol"
+                                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                                                    >
+                                                        <Pencil size={15} />
+                                                    </button>
+                                                )}
+                                                {u.estado !== EstadoUsuario.Pendiente && u.id !== currentUser?.id && (
                                                     <button
                                                         onClick={() => abrirModal('estado', u)}
                                                         title={u.estado === EstadoUsuario.Activo ? 'Deshabilitar' : 'Habilitar'}

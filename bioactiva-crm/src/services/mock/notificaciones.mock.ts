@@ -119,6 +119,22 @@ export const mockCancelarProgramada = async (id: number): Promise<void> => {
   MOCK_PROGRAMADAS.splice(index, 1)
 }
 
+export const mockCancelarPendientesPorActividad = async (
+  actividadId: number
+): Promise<void> => {
+  await delay()
+
+  for (let index = MOCK_PROGRAMADAS.length - 1; index >= 0; index -= 1) {
+    const programada = MOCK_PROGRAMADAS[index]
+    if (
+      programada.id_actividad === actividadId &&
+      programada.estado === 'Programada'
+    ) {
+      MOCK_PROGRAMADAS.splice(index, 1)
+    }
+  }
+}
+
 export const mockCreateRecordatorio = async (
   data: MockNotificacionProgramadaPayload
 ): Promise<NotificacionProgramada> => {

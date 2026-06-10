@@ -1,109 +1,56 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus } from 'lucide-react'
-import { usePipeline, useActualizarEstadoLead } from '@/hooks/pipeline/useLeads'
+import { AlertCircle, Plus } from 'lucide-react'
+import { useMoverLeadPipeline, usePipeline } from '@/hooks/pipeline/useLeads'
 import { KanbanBoard } from '@/components/modules/pipeline/KanbanBoard'
 import { LeadFiltros } from '@/components/modules/pipeline/LeadFiltros'
 import { LeadDrawer } from '@/components/modules/pipeline/LeadDrawer'
-import { LeadFiltros as FiltrosType, Lead, PipelineData } from '@/types/lead.types'
+import { LeadFiltros as FiltrosType, Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
+import { getErrorMessage } from '@/lib/utils/error.utils'
 
 const FILTROS_INICIALES: FiltrosType = {}
-
-function aplicarFiltros(pipeline: PipelineData, filtros: FiltrosType): PipelineData {
-  const cols: Array<keyof Omit<PipelineData, 'total'>> = [
-    'prospecto', 'ofertado', 'cierreVenta', 'cierreSinVenta',
-  ]
-
-  const search = filtros.search?.trim().toLowerCase()
-
-  const filtrar = (leads: Lead[]): Lead[] => {
-    let r = leads
-
-    if (search) {
-      r = r.filter(
-        (l) =>
-          l.organizacion_nombre?.toLowerCase().includes(search) ||
-          l.servicio_interes.toLowerCase().includes(search) ||
-          l.encargado_nombre?.toLowerCase().includes(search) ||
-          l.codigo.toLowerCase().includes(search)
-      )
-    }
-
-    if (filtros.id_encargado) {
-      r = r.filter((l) => l.id_encargado === filtros.id_encargado)
-    }
-
-    if (filtros.canal_captacion) {
-      r = r.filter((l) => l.canal_captacion === filtros.canal_captacion)
-    }
-
-    if (filtros.solo_alerta) {
-      r = r.filter((l) => l.tiene_alerta)
-    }
-
-    if (filtros.fecha_desde) {
-      r = r.filter(
-        (l) => new Date(l.created_at) >= new Date(filtros.fecha_desde!)
-      )
-    }
-
-    if (filtros.fecha_hasta) {
-      r = r.filter(
-        (l) => new Date(l.created_at) <= new Date(filtros.fecha_hasta!)
-      )
-    }
-
-    return r
-  }
-
-  // Si hay filtro de estado, sólo mostrar esa columna con leads
-  if (filtros.estado) {
-    const result: PipelineData = {
-      prospecto: [], ofertado: [], cierreVenta: [], cierreSinVenta: [], total: 0,
-    }
-    const colPorEstado: Record<LeadState, keyof Omit<PipelineData, 'total'>> = {
-      [LeadState.Prospecto]:      'prospecto',
-      [LeadState.Ofertado]:       'ofertado',
-      [LeadState.CierreVenta]:    'cierreVenta',
-      [LeadState.CierreSinVenta]: 'cierreSinVenta',
-    }
-    const col = colPorEstado[filtros.estado]
-    result[col] = filtrar(pipeline[col])
-    result.total = result[col].length
-    return result
-  }
-
-  const filtered: Partial<PipelineData> = {}
-  let total = 0
-  for (const col of cols) {
-    filtered[col] = filtrar(pipeline[col])
-    total += filtered[col]!.length
-  }
-
-  return { ...(filtered as Omit<PipelineData, 'total'>), total }
-}
 
 export default function PipelinePage() {
   const router  = useRouter()
   const [filtros, setFiltros]                   = useState<FiltrosType>(FILTROS_INICIALES)
   const [leadSeleccionado, setLeadSeleccionado] = useState<Lead | null>(null)
+  const [dragError, setDragError]       = useState<string | null>(null)
 
-  const { data: pipelineRaw, isLoading, isError } = usePipeline()
-  const { mutate: actualizarEstado }              = useActualizarEstadoLead()
-
-  // Filtrado instantáneo en cliente — sin llamadas adicionales a la API/mock
-  const pipeline = useMemo(
-    () => (pipelineRaw ? aplicarFiltros(pipelineRaw, filtros) : null),
-    [pipelineRaw, filtros]
-  )
+  const { data: pipeline, isLoading, isError } = usePipeline(filtros)
+  const { mutateAsync: moverLead, isPending: actualizandoEstado } =
+    useMoverLeadPipeline()
 
   const handleLimpiarFiltros = () => setFiltros(FILTROS_INICIALES)
 
-  const handleEstadoChange = (leadId: number, estado: LeadState) => {
-    actualizarEstado({ id: leadId, estado })
+  const handleQuickAction = (
+    lead: Lead,
+    action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
+  ) => {
+    if (action === 'cotizacion') {
+      router.push(`/cotizaciones/nueva?lead=${lead.id}`)
+      return
+    }
+
+    const accionMap = {
+      detalle: '',
+      editar: '?accion=editar',
+      actividad: '?accion=actividad',
+      seguimiento: '?accion=seguimiento',
+    } as const
+
+    router.push(`/pipeline/${lead.id}${accionMap[action]}`)
+  }
+
+  const handleMoveLead = async (lead: Lead, estado: LeadState) => {
+    try {
+      setDragError(null)
+      await moverLead({ lead, estado })
+    } catch (err: unknown) {
+      setDragError(getErrorMessage(err, 'No se pudo actualizar el estado del lead.'))
+    }
   }
 
   const total = pipeline
@@ -144,7 +91,15 @@ export default function PipelinePage() {
         total={total}
       />
 
-      {/* Loading (solo en la carga inicial) */}
+      {dragError && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-200
+          bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <p>{dragError}</p>
+        </div>
+      )}
+
+      {/* Loading */}
       {isLoading && (
         <div className="flex items-center justify-center py-16">
           <div className="w-8 h-8 border-2 border-emerald-600
@@ -165,10 +120,17 @@ export default function PipelinePage() {
       {!isLoading && !isError && pipeline && (
         <KanbanBoard
           pipeline={pipeline}
-          onAddLead={() => router.push('/pipeline/nuevo')}
           onClickLead={setLeadSeleccionado}
-          onEstadoChange={handleEstadoChange}
+          onQuickAction={handleQuickAction}
+          onMoveLead={handleMoveLead}
         />
+      )}
+
+      {actualizandoEstado && (
+        <div className="fixed bottom-4 right-4 rounded-xl bg-emerald-700
+          px-4 py-3 text-sm font-semibold text-white shadow-lg">
+          Actualizando estado...
+        </div>
       )}
 
       {/* Drawer */}

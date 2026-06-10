@@ -43,7 +43,7 @@ const MOCK_COTIZACIONES: Cotizacion[] = [
     nombre_servicio:  'Diagnóstico de capacidades tecnológicas y hoja de ruta de innovación para línea café specialty',
     monto:            6500,
     tipo:             TipoMoneda.Soles,
-    estado:           EstadoCot.Aceptada,
+    estado:           EstadoCot.Enviada,
     observacion:      'Incluye dos visitas técnicas a planta y entrega de informe con roadmap de innovación.',
     id_author:        1,
     created_at:       '2025-03-11T08:00:00Z',
@@ -72,6 +72,28 @@ const MOCK_COTIZACIONES: Cotizacion[] = [
     contacto_nombre:  'Rafael Benavides Sotelo',
     organizacion_nombre: 'Inversiones Pisco S.A.',
     periodo:          'abril 2025',
+  },
+  {
+    id:               4,
+    codigo:           'COT-2026-001',
+    id_lead:          2,
+    id_remitente:     4,
+    fecha_cot:        '2026-01-15T08:00:00Z',
+    dirigido:         'Contacto por definir',
+    cliente:          'AgroTech Innova',
+    producto:         'Ley 30309 - Deducción I+D+i',
+    nombre_remitente: 'Carlos Mamani',
+    nombre_servicio:  'Ley 30309 - Deducción I+D+i',
+    monto:            0,
+    tipo:             TipoMoneda.Soles,
+    estado:           EstadoCot.Pendiente,
+    observacion:      'Cotización inicial generada automáticamente para lead en prospecto.',
+    id_author:        2,
+    created_at:       '2026-01-15T08:00:00Z',
+    updated_at:       '2026-01-15T08:00:00Z',
+    lead_codigo:      'LEAD-2026-001',
+    organizacion_nombre: 'AgroTech Innova',
+    periodo:          'Enero 2026',
   },
 ]
 
@@ -222,20 +244,29 @@ export const mockEliminarCotizacion = async (id: number): Promise<void> => {
   MOCK_COTIZACIONES.splice(index, 1)
 }
 
+export const mockDeleteCotizacion = async (id: number): Promise<void> => {
+  await delay(300)
+
+  const index = MOCK_COTIZACIONES.findIndex((c) => c.id === id)
+  if (index === -1) {
+    throw { status: 404, message: 'Cotización no encontrada.' }
+  }
+
+  MOCK_COTIZACIONES.splice(index, 1)
+}
+
 export const mockGetKpis = async (): Promise<CotizacionKpis> => {
   await delay(300)
   const aceptadas  = MOCK_COTIZACIONES.filter((c) => c.estado === EstadoCot.Aceptada)
   const enviadas   = MOCK_COTIZACIONES.filter((c) => c.estado === EstadoCot.Enviada)
+  const rechazadas = MOCK_COTIZACIONES.filter((c) => c.estado === EstadoCot.Rechazada)
   const totalActivo = MOCK_COTIZACIONES
     .filter((c) => c.estado !== EstadoCot.Rechazada)
     .reduce((sum, c) => sum + c.monto, 0)
-  const propuestas = enviadas.length + aceptadas.length
   return {
     totalActivo,
     aceptadas:  aceptadas.length,
     enviadas:   enviadas.length,
-    conversion: propuestas > 0
-      ? Math.round((aceptadas.length / propuestas) * 100)
-      : 0,
+    rechazadas: rechazadas.length,
   }
 }

@@ -2,38 +2,47 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Search, X } from 'lucide-react'
+import { Plus, Search, X, Eye, EyeOff } from 'lucide-react'
 import {
   usePlantillas,
   useEliminarPlantilla,
+  useDesactivarPlantilla,
 } from '@/hooks/plantillas/usePlantillas'
 import { PlantillaCard } from '@/components/modules/plantillas/PlantillaCard'
-import { Plantilla, PlantillaFiltros } from '@/types/plantilla.types'
+import { Plantilla } from '@/types/plantilla.types'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 import { useDebounce } from '@/hooks/shared/useDebounce'
 
 export default function PlantillasPage() {
-  const router                        = useRouter()
-  const filtros: PlantillaFiltros     = {}
-  const [searchLocal, setSearchLocal] = useState('')
-  const [errorEliminar, setErrorEliminar] = useState<string | null>(null)
+  const router = useRouter()
+
+  const [searchLocal, setSearchLocal]       = useState('')
+  const [includeInactive, setIncludeInactive] = useState(false)
   const [confirmEliminar, setConfirmEliminar] = useState<Plantilla | null>(null)
+  const [errorEliminar, setErrorEliminar]   = useState<string | null>(null)
+  const [ofrecerDesactivar, setOfrecerDesactivar] = useState(false)
 
   const debouncedSearch = useDebounce(searchLocal, 400)
 
-  const { data: plantillas = [], isLoading } = usePlantillas({
-    ...filtros,
-    search: debouncedSearch,
-  })
+  const { data: todasPlantillas = [], isLoading } = usePlantillas(includeInactive)
 
-  const { mutateAsync: eliminar, isPending: eliminando } = useEliminarPlantilla()
+  const plantillas = debouncedSearch
+    ? todasPlantillas.filter((p) =>
+        p.nombre.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        p.asunto.toLowerCase().includes(debouncedSearch.toLowerCase()),
+      )
+    : todasPlantillas
 
-  const handleVer = (plantilla: Plantilla) => {
-    router.push(`/plantillas/${plantilla.id}`)
-  }
+  const { mutateAsync: eliminar, isPending: eliminando }     = useEliminarPlantilla()
+  const { mutateAsync: desactivar, isPending: desactivando } = useDesactivarPlantilla()
 
-  const handleEditar = (plantilla: Plantilla) => {
-    router.push(`/plantillas/${plantilla.id}/editar`)
+  const handleVer    = (p: Plantilla) => router.push(`/plantillas/${p.id}`)
+  const handleEditar = (p: Plantilla) => router.push(`/plantillas/${p.id}/editar`)
+
+  const abrirConfirmarEliminar = (p: Plantilla) => {
+    setConfirmEliminar(p)
+    setErrorEliminar(null)
+    setOfrecerDesactivar(false)
   }
 
   const handleConfirmarEliminar = async () => {
@@ -43,11 +52,25 @@ export default function PlantillasPage() {
       await eliminar(confirmEliminar.id)
       setConfirmEliminar(null)
     } catch (err: unknown) {
-      setErrorEliminar(getErrorMessage(err, 'No se pudo eliminar la plantilla.'))
+      const msg = getErrorMessage(err, 'No se pudo eliminar la plantilla.')
+      const esEnUso = msg.toLowerCase().includes('asociada a una notificación')
+      setErrorEliminar(msg)
+      setOfrecerDesactivar(esEnUso)
     }
   }
 
-  const activas = plantillas.filter((p) => p.activo).length
+  const handleDesactivar = async () => {
+    if (!confirmEliminar) return
+    try {
+      setErrorEliminar(null)
+      await desactivar(confirmEliminar.id)
+      setConfirmEliminar(null)
+    } catch (err: unknown) {
+      setErrorEliminar(getErrorMessage(err, 'No se pudo desactivar la plantilla.'))
+    }
+  }
+
+  const activas = todasPlantillas.filter((p) => p.activo).length
 
   return (
     <div className="space-y-6">
@@ -75,7 +98,7 @@ export default function PlantillasPage() {
         <p className="text-sm text-gray-500">
           <span className="font-semibold text-emerald-600">{activas} activas</span>
           {' · '}
-          <span>{plantillas.length} total</span>
+          <span>{todasPlantillas.length} total</span>
         </p>
       </div>
 
@@ -83,33 +106,51 @@ export default function PlantillasPage() {
         <h1 className="text-2xl font-bold text-gray-900">Plantillas de Correo</h1>
       </div>
 
+      {/* Filtros */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-        <div className="relative">
-          <Search
-            size={16}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <input
-            type="text"
-            value={searchLocal}
-            onChange={(e) => setSearchLocal(e.target.value)}
-            placeholder="Buscar por nombre, asunto, categoría..."
-            className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200
-              bg-white text-gray-900 text-sm outline-none focus:border-emerald-400
-              placeholder:text-gray-400 transition-colors"
-          />
-          {searchLocal && (
-            <button
-              onClick={() => setSearchLocal('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400
-                hover:text-gray-600 transition-colors"
-            >
-              <X size={14} />
-            </button>
-          )}
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search
+              size={16}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              type="text"
+              value={searchLocal}
+              onChange={(e) => setSearchLocal(e.target.value)}
+              placeholder="Buscar por nombre o asunto..."
+              className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200
+                bg-white text-gray-900 text-sm outline-none focus:border-emerald-400
+                placeholder:text-gray-400 transition-colors"
+            />
+            {searchLocal && (
+              <button
+                onClick={() => setSearchLocal('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400
+                  hover:text-gray-600 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <button
+            onClick={() => setIncludeInactive((v) => !v)}
+            title={includeInactive ? 'Ocultar inactivas' : 'Mostrar inactivas'}
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm
+              font-semibold transition-colors
+              ${includeInactive
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+              }`}
+          >
+            {includeInactive ? <Eye size={15} /> : <EyeOff size={15} />}
+            {includeInactive ? 'Con inactivas' : 'Solo activas'}
+          </button>
         </div>
       </div>
 
+      {/* Tabla */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
         {isLoading && (
@@ -135,9 +176,6 @@ export default function PlantillasPage() {
                   Plantilla
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
-                  Categoría
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
                   Estado
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
@@ -155,7 +193,7 @@ export default function PlantillasPage() {
                   plantilla={plantilla}
                   onVer={handleVer}
                   onEditar={handleEditar}
-                  onEliminar={setConfirmEliminar}
+                  onEliminar={abrirConfirmarEliminar}
                 />
               ))}
             </tbody>
@@ -171,6 +209,7 @@ export default function PlantillasPage() {
         )}
       </div>
 
+      {/* Modal confirmar eliminar */}
       {confirmEliminar && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -202,28 +241,50 @@ export default function PlantillasPage() {
               </div>
             )}
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setConfirmEliminar(null)
-                  setErrorEliminar(null)
-                }}
-                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold
-                  border border-gray-200 text-gray-600 hover:bg-gray-50
-                  transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleConfirmarEliminar}
-                disabled={eliminando}
-                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold
-                  bg-red-500 hover:bg-red-600 text-white transition-colors
-                  disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {eliminando ? 'Eliminando...' : 'Eliminar'}
-              </button>
-            </div>
+            {ofrecerDesactivar ? (
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={handleDesactivar}
+                  disabled={desactivando}
+                  className="w-full px-4 py-2.5 rounded-xl text-sm font-semibold
+                    bg-amber-500 hover:bg-amber-600 text-white transition-colors
+                    disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {desactivando ? 'Desactivando...' : 'Desactivar en su lugar'}
+                </button>
+                <button
+                  onClick={() => setConfirmEliminar(null)}
+                  className="w-full px-4 py-2.5 rounded-xl text-sm font-semibold
+                    border border-gray-200 text-gray-600 hover:bg-gray-50
+                    transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setConfirmEliminar(null)
+                    setErrorEliminar(null)
+                  }}
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold
+                    border border-gray-200 text-gray-600 hover:bg-gray-50
+                    transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmarEliminar}
+                  disabled={eliminando}
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold
+                    bg-red-500 hover:bg-red-600 text-white transition-colors
+                    disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {eliminando ? 'Eliminando...' : 'Eliminar'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

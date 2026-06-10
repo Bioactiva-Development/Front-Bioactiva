@@ -26,9 +26,10 @@ export const QUERY_KEYS = {
     },
 
     leads: {
-        list:     (filters?: unknown) => ['leads', 'list', filters],
-        pipeline: (filters?: unknown) => ['leads', 'pipeline', filters],
-        detail:   (id: number) => ['leads', id],
+        list:        (filters?: unknown) => ['leads', 'list', filters],
+        pipeline:    (filters?: unknown) => ['leads', 'pipeline', filters],
+        detail:      (id: number) => ['leads', id],
+        byContacto:  (id: number) => ['leads', 'contacto', id],
     },
 
     actividades: {
@@ -48,13 +49,13 @@ export const QUERY_KEYS = {
     },
 
     plantillas: {
-        list: () => ['plantillas', 'list'],
+        list: (includeInactive = false) => ['plantillas', 'list', includeInactive],
         activas: () => ['plantillas', 'activas'],
         detail: (id: number) => ['plantillas', id],
     },
 
     dashboard: {
-        metricas: (filters?: Record<string, unknown>) => ['dashboard', 'metricas', filters],
+        metrics: (filters?: unknown) => ['dashboard', 'metrics', filters],
     },
 
     datos: {

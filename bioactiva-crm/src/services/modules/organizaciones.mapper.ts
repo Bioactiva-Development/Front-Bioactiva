@@ -255,10 +255,19 @@ export const fromSunatRucDto = (dto: SunatRucDto): SunatRucResult => ({
   ruc: dto.ruc,
   nombre: dto.razonSocial,
   nombreCompleto: dto.nombreComercial ?? dto.razonSocial,
+  tipo: dto.tipo
+    ? safeMap(TIPO_BACKEND_TO_DOMAIN, dto.tipo, TipoEmpresa.Privada)
+    : undefined,
   ubicacion: dto.ubicacion,
   estado: undefined,
   condicion: undefined,
   actividades: dto.actividadEconomica,
+  tamano: dto.tamano
+    ? safeMap(TAMANO_BACKEND_TO_DOMAIN, dto.tamano, TamanoEmpresa.Micro)
+    : undefined,
+  sector: dto.sector
+    ? safeMap(SECTOR_BACKEND_TO_DOMAIN, dto.sector, Sector.OTROS)
+    : undefined,
 })
 
 export const fromSunatNombreDto = (dto: SunatRucDto): SunatNombreResult => ({

@@ -1,6 +1,9 @@
 import { LeadState, TipoActividad, EstadoActividad } from '@/types/enums'
 import { Lead, LeadFiltros, LeadsResponse, PipelineData } from '@/types/lead.types'
 import { Actividad, ComentarioActividad } from '@/types/actividad.types'
+import { getLeadAlertLabel } from '@/lib/utils/activity-flow.utils'
+import { mockGetOrganizacion } from '@/services/mock/organizaciones.mock'
+import { mockGetContacto } from '@/services/mock/contactos.mock'
 
 const MOCK_LEADS: Lead[] = [
   {
@@ -14,6 +17,9 @@ const MOCK_LEADS: Lead[] = [
     desafio_oportunidad: 'Reducir carga tributaria mediante proyectos I+D',
     id_encargado:        1,
     canal_captacion:     'Referido',
+    sector:              'ADMINISTRACION_PUBLICA',
+    tipo_org:            'Publica',
+    tamano:              'Grande',
     id_author:           1,
     created_at:          '2025-03-01T08:00:00Z',
     updated_at:          '2025-03-01T08:00:00Z',
@@ -30,8 +36,11 @@ const MOCK_LEADS: Lead[] = [
     estado:              LeadState.Prospecto,
     servicio_interes:    'Ley 30309 - Deducción I+D+i',
     comentarios:         'Startup de tecnología agrícola con potencial',
-    id_encargado:        2,
+    id_encargado:        4,
     canal_captacion:     'Web / Redes sociales',
+    sector:              'TECNOLOGIA',
+    tipo_org:            'Privada',
+    tamano:              'Pequena',
     id_author:           2,
     created_at:          '2026-01-15T08:00:00Z',
     updated_at:          '2026-01-15T08:00:00Z',
@@ -49,8 +58,11 @@ const MOCK_LEADS: Lead[] = [
     servicio_interes:    'Ley 30309 - Deducción I+D+i',
     comentarios:         'Empresa interesada en deducción tributaria',
     desafio_oportunidad: 'Optimizar procesos de producción con I+D',
-    id_encargado:        3,
+    id_encargado:        2,
     canal_captacion:     'Prospección directa',
+    sector:              'MANUFACTURA',
+    tipo_org:            'Privada',
+    tamano:              'Mediana',
     id_author:           1,
     created_at:          '2025-04-01T08:00:00Z',
     updated_at:          '2025-04-01T08:00:00Z',
@@ -69,8 +81,11 @@ const MOCK_LEADS: Lead[] = [
     servicio_interes:    'Diagnóstico de innovación y hoja de ruta tecnológica',
     comentarios:         'Cliente con alta prioridad',
     desafio_oportunidad: 'Transformación digital y gestión de innovación',
-    id_encargado:        1,
+    id_encargado:        3,
     canal_captacion:     'Referido',
+    sector:              'AGROALIMENTARIA',
+    tipo_org:            'Privada',
+    tamano:              'Grande',
     id_author:           1,
     created_at:          '2025-03-15T08:00:00Z',
     updated_at:          '2025-04-03T08:00:00Z',
@@ -173,17 +188,72 @@ const MOCK_COMENTARIOS: ComentarioActividad[] = [
 const delay = (ms: number = 600) =>
   new Promise((resolve) => setTimeout(resolve, ms))
 
+const RESPONSABLES_MOCK: Record<number, { nombre: string; correo: string }> = {
+  1: { nombre: 'Karien Diaz', correo: 'kdiaz@bioactiva.pe' },
+  2: { nombre: 'Luis Torres', correo: 'ltorres@bioactiva.pe' },
+  3: { nombre: 'Administración', correo: 'admin@bioactiva.pe' },
+  4: { nombre: 'Carlos Mamani', correo: 'cmamani@bioactiva.pe' },
+}
 
-export const mockGetPipeline = async (): Promise<PipelineData> => {
-  await delay(200)
+const withAlertState = (lead: Lead): Lead => {
+  const alertLabel = getLeadAlertLabel(
+    lead,
+    MOCK_ACTIVIDADES.filter((actividad) => actividad.id_lead === lead.id)
+  )
 
-  const leads = [...MOCK_LEADS]
   return {
-    prospecto:      leads.filter((l) => l.estado === LeadState.Prospecto),
-    ofertado:       leads.filter((l) => l.estado === LeadState.Ofertado),
-    cierreVenta:    leads.filter((l) => l.estado === LeadState.CierreVenta),
-    cierreSinVenta: leads.filter((l) => l.estado === LeadState.CierreSinVenta),
-    total:          leads.length,
+    ...lead,
+    tiene_alerta: Boolean(alertLabel),
+    alerta_motivo: alertLabel ?? undefined,
+  }
+}
+
+export const mockGetPipeline = async (
+  filtros?: LeadFiltros
+): Promise<PipelineData> => {
+  await delay()
+
+  let resultado = MOCK_LEADS.map(withAlertState)
+
+  if (filtros?.search) {
+    const q = filtros.search.toLowerCase()
+    resultado = resultado.filter(
+      (l) =>
+        l.codigo.toLowerCase().includes(q) ||
+        l.organizacion_nombre?.toLowerCase().includes(q) ||
+        l.contacto_nombre?.toLowerCase().includes(q) ||
+        l.servicio_interes.toLowerCase().includes(q) ||
+        l.encargado_nombre?.toLowerCase().includes(q) ||
+        l.encargado_correo?.toLowerCase().includes(q)
+    )
+  }
+
+  if (filtros?.id_encargado) {
+    resultado = resultado.filter(
+      (l) => l.id_encargado === filtros.id_encargado
+    )
+  }
+
+  if (filtros?.estado) {
+    resultado = resultado.filter((l) => l.estado === filtros.estado)
+  }
+
+  if (filtros?.canal_captacion) {
+    resultado = resultado.filter(
+      (l) => l.canal_captacion === filtros.canal_captacion
+    )
+  }
+
+  if (filtros?.solo_alerta) {
+    resultado = resultado.filter((l) => l.tiene_alerta)
+  }
+
+  return {
+    prospecto:      resultado.filter((l) => l.estado === LeadState.Prospecto),
+    ofertado:       resultado.filter((l) => l.estado === LeadState.Ofertado),
+    cierreVenta:    resultado.filter((l) => l.estado === LeadState.CierreVenta),
+    cierreSinVenta: resultado.filter((l) => l.estado === LeadState.CierreSinVenta),
+    total:          resultado.length,
   }
 }
 
@@ -192,10 +262,39 @@ export const mockGetLeads = async (
 ): Promise<LeadsResponse> => {
   await delay()
 
-  let resultado = [...MOCK_LEADS]
+  let resultado = MOCK_LEADS.map(withAlertState)
+
+  if (filtros?.search) {
+    const q = filtros.search.toLowerCase()
+    resultado = resultado.filter(
+      (l) =>
+        l.codigo.toLowerCase().includes(q) ||
+        l.organizacion_nombre?.toLowerCase().includes(q) ||
+        l.contacto_nombre?.toLowerCase().includes(q) ||
+        l.servicio_interes.toLowerCase().includes(q) ||
+        l.encargado_nombre?.toLowerCase().includes(q) ||
+        l.encargado_correo?.toLowerCase().includes(q)
+    )
+  }
 
   if (filtros?.estado) {
     resultado = resultado.filter((l) => l.estado === filtros.estado)
+  }
+
+  if (filtros?.id_encargado) {
+    resultado = resultado.filter(
+      (l) => l.id_encargado === filtros.id_encargado
+    )
+  }
+
+  if (filtros?.canal_captacion) {
+    resultado = resultado.filter(
+      (l) => l.canal_captacion === filtros.canal_captacion
+    )
+  }
+
+  if (filtros?.solo_alerta) {
+    resultado = resultado.filter((l) => l.tiene_alerta)
   }
 
   const page  = filtros?.page  ?? 1
@@ -213,7 +312,7 @@ export const mockGetLead = async (id: number): Promise<Lead> => {
   if (!lead) {
     throw Object.assign(new Error('Lead no encontrado.'), { status: 404 })
   }
-  return lead
+  return withAlertState(lead)
 }
 
 export const mockCreateLead = async (
@@ -223,6 +322,13 @@ export const mockCreateLead = async (
 
   const anio   = new Date().getFullYear()
   const codigo = `LEAD-${anio}-${String(MOCK_LEADS.length + 1).padStart(3, '0')}`
+  const responsable = RESPONSABLES_MOCK[data.id_encargado ?? 3]
+  const organizacion = data.id_org
+    ? await mockGetOrganizacion(data.id_org).catch(() => null)
+    : null
+  const contacto = data.id_contacto
+    ? await mockGetContacto(data.id_contacto).catch(() => null)
+    : null
 
   const nuevo: Lead = {
     id:                  Date.now(),
@@ -237,14 +343,14 @@ export const mockCreateLead = async (
     id_encargado:        data.id_encargado!,
     canal_captacion:     data.canal_captacion,
     fecha_cierre:        data.fecha_cierre,
-    proxima_actividad:   data.proxima_actividad,
-    fecha_proxima_actividad: data.fecha_proxima_actividad,
     id_author:           1,
     created_at:          new Date().toISOString(),
     updated_at:          new Date().toISOString(),
-    organizacion_nombre: data.organizacion_nombre,
-    encargado_nombre:    data.encargado_nombre ?? 'Administración',
-    encargado_correo:    data.encargado_correo,
+    organizacion_nombre: data.organizacion_nombre ?? organizacion?.nombre,
+    contacto_nombre:     data.contacto_nombre ??
+      (contacto ? `${contacto.nombres} ${contacto.apellidos ?? ''}`.trim() : undefined),
+    encargado_nombre:    data.encargado_nombre ?? responsable.nombre,
+    encargado_correo:    data.encargado_correo ?? responsable.correo,
     tiene_alerta:        false,
   }
 
@@ -270,7 +376,7 @@ export const mockUpdateLead = async (
   }
 
   MOCK_LEADS[index] = actualizado
-  return actualizado
+  return withAlertState(actualizado)
 }
 
 export const mockUpdateEstadoLead = async (
@@ -278,6 +384,17 @@ export const mockUpdateEstadoLead = async (
   estado: LeadState
 ): Promise<Lead> => {
   return mockUpdateLead(id, { estado })
+}
+
+export const mockDeleteLead = async (id: number): Promise<void> => {
+  await delay()
+
+  const index = MOCK_LEADS.findIndex((l) => l.id === id)
+  if (index === -1) {
+    throw { status: 404, message: 'Lead no encontrado.' }
+  }
+
+  MOCK_LEADS.splice(index, 1)
 }
 
 
@@ -292,6 +409,19 @@ export const mockCreateActividad = async (
   data: Partial<Actividad>
 ): Promise<Actividad> => {
   await delay()
+
+  const hasPendingActivity = MOCK_ACTIVIDADES.some(
+    (actividad) =>
+      actividad.id_lead === data.id_lead &&
+      actividad.estado === EstadoActividad.Pendiente
+  )
+
+  if (hasPendingActivity) {
+    throw {
+      status: 409,
+      message: 'No se puede registrar una nueva actividad mientras exista una actividad pendiente.',
+    }
+  }
 
   const nueva: Actividad = {
     id:                     Date.now(),
@@ -342,14 +472,25 @@ export const mockDeleteActividad = async (id: number): Promise<void> => {
   if (index !== -1) MOCK_ACTIVIDADES.splice(index, 1)
 }
 
-export const mockCompleteActividad = async (id: number): Promise<Actividad> => {
-  return mockUpdateActividad(id, { estado: EstadoActividad.Completada })
+export const mockCompleteActividad = async (
+  id: number,
+  notas?: string
+): Promise<Actividad> => {
+  const actividad = MOCK_ACTIVIDADES.find((a) => a.id === id)
+  const notasFinales = notas?.trim()
+    ? [actividad?.notas, `Cierre: ${notas.trim()}`].filter(Boolean).join('\n\n')
+    : actividad?.notas
+
+  return mockUpdateActividad(id, {
+    estado: EstadoActividad.Completada,
+    ...(notasFinales ? { notas: notasFinales } : {}),
+  })
 }
 
-export const mockCancelarActividad = async (id: number): Promise<Actividad> => {
-  return mockUpdateActividad(id, { estado: EstadoActividad.Cancelada })
-}
-
+export const mockCancelarActividad = async (id: number): Promise<Actividad> =>
+  mockUpdateActividad(id, {
+    estado: EstadoActividad.Cancelada,
+  })
 
 export const mockGetComentarios = async (
   actividadId: number

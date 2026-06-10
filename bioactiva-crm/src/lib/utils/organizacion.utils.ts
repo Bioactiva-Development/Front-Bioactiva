@@ -3,6 +3,18 @@ export function formatSector(sector: string): string {
     return sector.replaceAll('_', ' ')
 }
 
+const TAMANO_LABELS: Record<string, string> = {
+    Micro:   'Micro',
+    Pequena: 'Pequeña',
+    Mediana: 'Mediana',
+    Grande:  'Grande',
+}
+
+/** Devuelve el label legible de tamaño de empresa (ej. "Pequena" → "Pequeña"). */
+export function formatTamano(tamano: string): string {
+    return TAMANO_LABELS[tamano] ?? tamano
+}
+
 // Conectores y sufijos societarios que no aportan a la identidad del cliente
 // y se ignoran al construir las iniciales del código.
 const STOPWORDS = new Set([

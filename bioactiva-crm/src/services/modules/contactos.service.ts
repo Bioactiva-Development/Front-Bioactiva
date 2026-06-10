@@ -40,6 +40,54 @@ function normalizeContacto(raw: Record<string, unknown>): Contacto {
     }
 }
 
+type ContactosBackendResponse =
+    | Record<string, unknown>[]
+    | {
+        data?: Record<string, unknown>[]
+        meta?: {
+            page?: number
+            limit?: number
+            total?: number
+            totalPages?: number
+        }
+    }
+
+function normalizeContactosResponse(
+    raw: ContactosBackendResponse,
+    filtros?: ContactoFiltros
+): ContactosResponse {
+    if (Array.isArray(raw)) {
+        const data = raw.map(normalizeContacto)
+        const page = filtros?.page ?? 1
+        const limit = filtros?.limit ?? data.length
+
+        return {
+            data,
+            total: data.length,
+            page,
+            limit,
+            totalPages: limit > 0 ? Math.ceil(data.length / limit) : 1,
+        }
+    }
+
+    if (!Array.isArray(raw.data)) {
+        throw new Error('La respuesta de contactos no tiene el formato esperado.')
+    }
+
+    const data = raw.data.map(normalizeContacto)
+    const page = raw.meta?.page ?? filtros?.page ?? 1
+    const limit = raw.meta?.limit ?? filtros?.limit ?? data.length
+    const total = raw.meta?.total ?? data.length
+
+    return {
+        data,
+        total,
+        page,
+        limit,
+        totalPages: raw.meta?.totalPages ?? (limit > 0 ? Math.ceil(total / limit) : 1),
+    }
+}
+
 export const contactosService = {
 
     getAll: async (filtros?: ContactoFiltros): Promise<ContactosResponse> => {
@@ -51,18 +99,12 @@ export const contactosService = {
         if (filtros?.page)           params.page           = filtros.page
         if (filtros?.limit)          params.limit          = filtros.limit
 
-        const response = await apiClient.get<{
-            data: Record<string, unknown>[]
-            meta: { page: number; limit: number; total: number; totalPages: number }
-        }>(ENDPOINTS.contactos.list, { params })
+        const response = await apiClient.get<ContactosBackendResponse>(
+            ENDPOINTS.contactos.list,
+            { params }
+        )
 
-        return {
-            data:       response.data.data.map(normalizeContacto),
-            total:      response.data.meta.total,
-            page:       response.data.meta.page,
-            limit:      response.data.meta.limit,
-            totalPages: response.data.meta.totalPages,
-        }
+        return normalizeContactosResponse(response.data, filtros)
     },
 
     getById: async (id: number): Promise<Contacto> => {
@@ -90,6 +132,18 @@ export const contactosService = {
         const response = await apiClient.patch<Record<string, unknown>>(
             ENDPOINTS.contactos.update(id),
             stripEmptyStrings(data as unknown as Record<string, unknown>)
+        )
+        return normalizeContacto(response.data)
+    },
+
+    cambiarEstado: async (
+        id: number,
+        estado_correo: 'VIGENTE' | 'VENCIDO'
+    ): Promise<Contacto> => {
+        if (USE_MOCK) return mockUpdateContacto(id, { estado_correo })
+        const response = await apiClient.patch<Record<string, unknown>>(
+            ENDPOINTS.contactos.estadoCorreo(id),
+            { estado_correo }
         )
         return normalizeContacto(response.data)
     },

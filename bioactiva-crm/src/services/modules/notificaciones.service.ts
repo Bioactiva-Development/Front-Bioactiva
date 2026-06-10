@@ -7,6 +7,7 @@ import {
   mockMarcarLeida,
   mockMarcarTodasLeidas,
   mockCancelarProgramada,
+  mockCancelarPendientesPorActividad,
   mockCreateRecordatorio,
   mockCreateSeguimiento,
 } from '@/services/mock/notificaciones.mock'
@@ -73,6 +74,11 @@ export const notificacionesService = {
     }
   },
 
+  getByLead: async (leadId: number): Promise<Notificacion[]> => {
+    const notificaciones = await notificacionesService.getAll()
+    return notificaciones.filter((notificacion) => notificacion.id_lead === leadId)
+  },
+
   marcarLeida: async (id: number): Promise<Notificacion> => {
     if (USE_MOCK) return mockMarcarLeida(id)
     const response = await apiClient.patch<Notificacion>(
@@ -89,6 +95,23 @@ export const notificacionesService = {
   cancelarProgramada: async (id: number): Promise<void> => {
     if (USE_MOCK) return mockCancelarProgramada(id)
     await apiClient.delete(ENDPOINTS.notificaciones.programada(id))
+  },
+
+  cancelarPendientesPorActividad: async (actividadId: number): Promise<void> => {
+    if (USE_MOCK) return mockCancelarPendientesPorActividad(actividadId)
+
+    const centro = await notificacionesService.getCentro()
+    const pendientes = centro.programadas.filter(
+      (programada) =>
+        programada.id_actividad === actividadId &&
+        programada.estado === 'Programada'
+    )
+
+    await Promise.all(
+      pendientes.map((programada) =>
+        apiClient.delete(ENDPOINTS.notificaciones.programada(programada.id))
+      )
+    )
   },
 
   createRecordatorio: async (

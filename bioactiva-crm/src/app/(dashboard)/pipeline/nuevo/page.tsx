@@ -8,6 +8,7 @@ import { LeadFormValues } from '@/lib/validators/lead.schema'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ROUTES } from '@/lib/constants/routes'
 import { getErrorMessage } from '@/lib/utils/error.utils'
+import { LeadState } from '@/types/enums'
 
 export default function NuevoLeadPage() {
   const router            = useRouter()
@@ -18,7 +19,7 @@ export default function NuevoLeadPage() {
   const handleSubmit = async (data: LeadFormValues) => {
     try {
       setError(null)
-      await crear(data)
+      await crear({ ...data, estado: LeadState.Prospecto })
       await new Promise((resolve) => setTimeout(resolve, 100))
       router.push(ROUTES.pipeline)
     } catch (err: unknown) {
@@ -33,6 +34,8 @@ export default function NuevoLeadPage() {
         descripcion="Registra una nueva oportunidad comercial"
       />
       <LeadForm
+        estadoInicial={LeadState.Prospecto}
+        estadoEditable={false}
         onSubmit={handleSubmit}
         isLoading={isPending}
         error={error}

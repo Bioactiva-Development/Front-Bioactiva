@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, TrendingUp, CheckCircle, Clock, Percent } from 'lucide-react'
+import { Plus, TrendingUp, CheckCircle, Clock, XCircle } from 'lucide-react'
 import { useCotizaciones, useCotizacionKpis } from '@/hooks/cotizaciones/useCotizaciones'
 import { CotizacionFiltros } from '@/components/modules/cotizaciones/CotizacionFiltros'
 import { CotizacionCard } from '@/components/modules/cotizaciones/CotizacionCard'
 import { CotizacionFiltros as FiltrosType } from '@/types/cotizacion.types'
+import { ROUTES } from '@/lib/constants/routes'
 
 const FILTROS_INICIALES: FiltrosType = {
   page:  1,
@@ -47,7 +48,7 @@ export default function CotizacionesPage() {
           </button>
         </div>
         <button
-          onClick={() => router.push('/cotizaciones/nueva')}
+          onClick={() => router.push(ROUTES.pipeline)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl
             bg-emerald-600 hover:bg-emerald-700 text-white
             text-sm font-semibold transition-colors"
@@ -94,12 +95,12 @@ export default function CotizacionesPage() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                Conversión
+                Rechazadas
               </p>
-              <Percent size={18} className="text-emerald-500" />
+              <XCircle size={18} className="text-red-500" />
             </div>
-            <p className="text-2xl font-bold text-emerald-600">
-              {kpis.conversion}%
+            <p className="text-2xl font-bold text-red-600">
+              {kpis.rechazadas}
             </p>
           </div>
         </div>

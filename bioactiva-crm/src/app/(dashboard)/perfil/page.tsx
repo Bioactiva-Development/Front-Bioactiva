@@ -165,7 +165,7 @@ export default function PerfilPage() {
                                 id="prf-nombre"
                                 type="text"
                                 {...perfilForm.register('nombre_completo')}
-                                className={`w-full px-4 py-2.5 text-sm text-gray-900 rounded-xl border-2 outline-none transition-colors bg-gray-50
+                                className={`w-full px-4 py-2.5 text-sm text-gray-900 rounded-xl border-2 outline-none transition-colors
                                     ${perfilForm.formState.errors.nombre_completo
                                         ? 'border-red-400 focus:border-red-500'
                                         : 'border-gray-200 focus:border-[#1C7E3C]'}`}
@@ -240,7 +240,7 @@ export default function PerfilPage() {
                                     type={showPassword ? 'text' : 'password'}
                                     placeholder="Mínimo 6 caracteres"
                                     {...passwordForm.register('password')}
-                                    className={`w-full px-4 py-2.5 pr-11 text-sm text-gray-900 placeholder:text-gray-400 rounded-xl border-2 outline-none transition-colors bg-gray-50
+                                    className={`w-full px-4 py-2.5 pr-11 text-sm text-gray-900 placeholder:text-gray-400 rounded-xl border-2 outline-none transition-colors
                                         ${passwordForm.formState.errors.password ? 'border-red-400' : 'border-gray-200 focus:border-[#1C7E3C]'}`}
                                 />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)}
@@ -263,7 +263,7 @@ export default function PerfilPage() {
                                     type={showConfirm ? 'text' : 'password'}
                                     placeholder="Repita la contraseña"
                                     {...passwordForm.register('confirmPassword')}
-                                    className={`w-full px-4 py-2.5 pr-11 text-sm text-gray-900 placeholder:text-gray-400 rounded-xl border-2 outline-none transition-colors bg-gray-50
+                                    className={`w-full px-4 py-2.5 pr-11 text-sm text-gray-900 placeholder:text-gray-400 rounded-xl border-2 outline-none transition-colors
                                         ${passwordForm.formState.errors.confirmPassword ? 'border-red-400' : 'border-gray-200 focus:border-[#1C7E3C]'}`}
                                 />
                                 <button type="button" onClick={() => setShowConfirm(!showConfirm)}

@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation'
 import { Organizacion } from '@/types/organizacion.types'
 import { TamanoEmpresa } from '@/types/enums'
 import { ROUTES } from '@/lib/constants/routes'
-import { formatSector } from '@/lib/utils/organizacion.utils'
+import { formatSector, formatTamano } from '@/lib/utils/organizacion.utils'
 
 interface OrganizacionCardProps {
   organizacion: Organizacion
@@ -67,7 +67,7 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs
           font-bold uppercase tracking-wide
           ${TAMAÑO_COLORS[organizacion.tamano]}`}>
-          {organizacion.tamano}
+          {formatTamano(organizacion.tamano)}
         </span>
       </td>
 
