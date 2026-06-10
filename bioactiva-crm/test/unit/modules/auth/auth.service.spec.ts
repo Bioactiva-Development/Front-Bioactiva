@@ -153,11 +153,13 @@ describe('security/auth.service (API mode)', () => {
     })
   })
 
-  it('re-throws non-400 error from validateToken', async () => {
+  it('handles non-400 error from validateToken gracefully', async () => {
     postMock.mockRejectedValueOnce({ status: 500, message: 'Server error' })
 
-    await expect(authService.validateToken('bad-token')).rejects.toEqual({
-      status: 500,
+    const response = await authService.validateToken('bad-token')
+
+    expect(response).toEqual({
+      valid: false,
       message: 'Server error',
     })
   })

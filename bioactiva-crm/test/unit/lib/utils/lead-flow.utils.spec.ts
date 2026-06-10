@@ -29,9 +29,7 @@ const cotizacion = (estado: EstadoCot): Cotizacion => ({
 
 describe('lead-flow.utils', () => {
   it('maps each pipeline state to its coherent quotation state', () => {
-    expect(getCotizacionStateFromLeadState(LeadState.Prospecto)).toBe(
-      EstadoCot.Pendiente
-    )
+    expect(getCotizacionStateFromLeadState(LeadState.Prospecto)).toBeNull()
     expect(getCotizacionStateFromLeadState(LeadState.Ofertado)).toBe(
       EstadoCot.Enviada
     )
@@ -43,25 +41,29 @@ describe('lead-flow.utils', () => {
     )
   })
 
-  it('allows moving a lead to ofertado even when a quotation must be created', () => {
+  it('blocks moving to ofertado without a quotation', () => {
     expect(
-      validateLeadStateTransition(LeadState.Ofertado, []).allowed
-    ).toBe(true)
+      validateLeadStateTransition(LeadState.Prospecto, LeadState.Ofertado, []).allowed
+    ).toBe(false)
+  })
 
+  it('allows moving to ofertado when a pendiente quotation exists', () => {
     expect(
-      validateLeadStateTransition(LeadState.Ofertado, [
+      validateLeadStateTransition(LeadState.Prospecto, LeadState.Ofertado, [
         cotizacion(EstadoCot.Pendiente),
       ]).allowed
     ).toBe(true)
   })
 
-  it('allows closing with sale even when a quotation must be created', () => {
+  it('blocks closing with sale without a quotation', () => {
     expect(
-      validateLeadStateTransition(LeadState.CierreVenta, []).allowed
-    ).toBe(true)
+      validateLeadStateTransition(LeadState.Ofertado, LeadState.CierreVenta, []).allowed
+    ).toBe(false)
+  })
 
+  it('allows closing with sale when an enviada quotation exists', () => {
     expect(
-      validateLeadStateTransition(LeadState.CierreVenta, [
+      validateLeadStateTransition(LeadState.Ofertado, LeadState.CierreVenta, [
         cotizacion(EstadoCot.Enviada),
       ]).allowed
     ).toBe(true)
