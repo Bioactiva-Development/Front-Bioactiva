@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-    Pencil, Lock, UserX, UserCheck, UserPlus, Users,
+    Pencil, UserX, UserCheck, UserPlus, Users,
     Mail, Search, ChevronLeft, ChevronRight, ShieldAlert,
 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -37,7 +37,7 @@ function getInitials(nombres: string, apellidos: string) {
     return (n + a).toUpperCase() || '?'
 }
 
-function RolBadge({ rol }: { rol: RolUsuario }) {
+function RolBadge({ rol }: Readonly<{ rol: RolUsuario }>) {
     if (rol === RolUsuario.Administrador) {
         return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
@@ -52,7 +52,7 @@ function RolBadge({ rol }: { rol: RolUsuario }) {
     )
 }
 
-function EstadoBadge({ estado }: { estado: EstadoUsuario }) {
+function EstadoBadge({ estado }: Readonly<{ estado: EstadoUsuario }>) {
     if (estado === EstadoUsuario.Activo) {
         return (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
@@ -77,7 +77,7 @@ function EstadoBadge({ estado }: { estado: EstadoUsuario }) {
     )
 }
 
-function EstadoInvitacionBadge({ estado }: { estado: EstadoToken }) {
+function EstadoInvitacionBadge({ estado }: Readonly<{ estado: EstadoToken }>) {
     const map: Record<EstadoToken, { label: string; className: string }> = {
         [EstadoToken.Pendiente]: { label: 'Pendiente', className: 'bg-amber-100 text-amber-700' },
         [EstadoToken.Consumido]: { label: 'Aceptada', className: 'bg-green-100 text-green-700' },
@@ -115,7 +115,7 @@ export default function ControlAccesoPage() {
         page,
         limit: LIMIT,
         ...(termDebounced ? { term: termDebounced } : {}),
-        ...(estadoFiltro !== '' ? { estado: Number(estadoFiltro) } : {}),
+        ...(estadoFiltro === '' ? {} : { estado: Number(estadoFiltro) }),
     }
 
     const {
@@ -275,15 +275,17 @@ export default function ControlAccesoPage() {
                     <h2 className="text-sm font-semibold text-gray-900">Usuarios registrados</h2>
                 </div>
 
-                {isLoadingUsuarios && usuarios.length === 0 ? (
+                {isLoadingUsuarios && usuarios.length === 0 && (
                     <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
                         Cargando usuarios...
                     </div>
-                ) : usuarios.length === 0 ? (
+                )}
+                {!isLoadingUsuarios && usuarios.length === 0 && (
                     <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
                         No hay usuarios registrados
                     </div>
-                ) : (
+                )}
+                {usuarios.length > 0 && (
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
@@ -436,7 +438,7 @@ export default function ControlAccesoPage() {
                     {totalPages > 1 && (
                         <div className="flex items-center justify-between mt-4">
                             <p className="text-sm text-gray-400">
-                                {totalInvitaciones} invitación{totalInvitaciones !== 1 ? 'es' : ''} · Página {page} de {totalPages}
+                                {totalInvitaciones} invitación{totalInvitaciones === 1 ? '' : 'es'} · Página {page} de {totalPages}
                             </p>
                             <div className="flex gap-2">
                                 <button

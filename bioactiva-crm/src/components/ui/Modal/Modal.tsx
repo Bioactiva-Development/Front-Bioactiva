@@ -20,13 +20,11 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: Readonl
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div
-                role="button"
-                tabIndex={0}
+            <button
+                type="button"
                 aria-label="Cerrar modal"
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-default"
                 onClick={onClose}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose() }}
             />
 
             <div className={`relative w-full ${sizeClasses[size]} bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-hidden`}>

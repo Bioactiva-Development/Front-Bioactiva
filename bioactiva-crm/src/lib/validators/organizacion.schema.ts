@@ -32,15 +32,15 @@ export const organizacionSchema = z.object({
         .max(60, 'Máximo 60 caracteres')
         .optional(),
 
-    tipo: z.nativeEnum(TipoEmpresa, {
+    tipo: z.enum(Object.values(TipoEmpresa) as [TipoEmpresa, ...TipoEmpresa[]], {
         error: 'El tipo es obligatorio',
     }),
 
-    tamano: z.nativeEnum(TamanoEmpresa, {
+    tamano: z.enum(Object.values(TamanoEmpresa) as [TamanoEmpresa, ...TamanoEmpresa[]], {
         error: 'El tamaño es obligatorio',
     }),
 
-    sector: z.nativeEnum(Sector, {
+    sector: z.enum(Object.values(Sector) as [Sector, ...Sector[]], {
         error: 'El sector es obligatorio',
     }),
 

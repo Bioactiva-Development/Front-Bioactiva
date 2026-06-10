@@ -30,7 +30,7 @@ export const useAuthStore = create<AuthStore>()(
             _setHasHydrated: (value) => set({ _hasHydrated: value }),
 
             setSession: (accessToken, usuario, expiresIn) => {
-                if (typeof globalThis.window !== 'undefined') {
+                if (globalThis.window !== undefined) {
                     localStorage.setItem(TOKEN_KEY, accessToken)
                     localStorage.setItem(USER_KEY, JSON.stringify(usuario))
                 }
@@ -44,7 +44,7 @@ export const useAuthStore = create<AuthStore>()(
             },
 
             updateToken: (accessToken, expiresIn) => {
-                if (typeof globalThis.window !== 'undefined') {
+                if (globalThis.window !== undefined) {
                     localStorage.setItem(TOKEN_KEY, accessToken)
                 }
                 set({
@@ -54,7 +54,7 @@ export const useAuthStore = create<AuthStore>()(
             },
 
             clearSession: () => {
-                if (typeof globalThis.window !== 'undefined') {
+                if (globalThis.window !== undefined) {
                     localStorage.removeItem(TOKEN_KEY)
                     localStorage.removeItem(USER_KEY)
                 }

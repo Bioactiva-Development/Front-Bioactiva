@@ -2,9 +2,8 @@ import { z } from 'zod'
 
 export const createInvitacionSchema = z.object({
     correo: z
-        .string()
-        .min(1, 'El correo es obligatorio')
-        .email('Ingrese un correo válido'),
+        .email({ message: 'Ingrese un correo válido' })
+        .min(1, 'El correo es obligatorio'),
     rol: z
         .number()
         .int()

@@ -54,9 +54,9 @@ export function getCotizacionToResolveLeadClosure(
   )
   if (alreadyResolved) return alreadyResolved
 
-  const viableStates = [EstadoCot.Enviada, EstadoCot.Pendiente]
+  const viableStates = new Set([EstadoCot.Enviada, EstadoCot.Pendiente])
   const viableCotizacion = cotizaciones
-    .filter((cotizacion) => viableStates.includes(cotizacion.estado))
+    .filter((cotizacion) => viableStates.has(cotizacion.estado))
     .sort(
       (a, b) =>
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
@@ -68,9 +68,9 @@ export function getCotizacionToResolveLeadClosure(
 export function getCotizacionToOfferLead(
   cotizaciones: Cotizacion[]
 ): Cotizacion | null {
-  const viableStates = [EstadoCot.Enviada, EstadoCot.Pendiente]
+  const viableStates = new Set([EstadoCot.Enviada, EstadoCot.Pendiente])
   return cotizaciones
-    .filter((cotizacion) => viableStates.includes(cotizacion.estado))
+    .filter((cotizacion) => viableStates.has(cotizacion.estado))
     .sort(
       (a, b) =>
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()

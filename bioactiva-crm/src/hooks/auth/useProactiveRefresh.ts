@@ -18,7 +18,7 @@ export function useProactiveRefresh() {
     const doRefresh = useCallback(async () => {
         try {
             const { accessToken: newToken, accessTokenExpiresIn } = await authService.refresh()
-            if (typeof globalThis.window !== 'undefined') {
+            if (globalThis.window !== undefined) {
                 localStorage.setItem(TOKEN_KEY, newToken)
             }
             updateToken(newToken, accessTokenExpiresIn)

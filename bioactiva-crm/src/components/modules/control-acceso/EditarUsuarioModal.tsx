@@ -14,10 +14,10 @@ interface Props {
     onSubmit:  (data: EditarUsuarioRequest) => Promise<boolean>
 }
 
-export function EditarUsuarioModal({ usuario, isLoading, error, onClose, onSubmit }: Props) {
+export function EditarUsuarioModal({ usuario, isLoading, error, onClose, onSubmit }: Readonly<Props>) {
     const [rol, setRol] = useState<RolUsuario>(usuario.rol)
 
-    const handleFormSubmit = async (e: React.FormEvent) => {
+    const handleFormSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
         e.preventDefault()
         const ok = await onSubmit({
             id:              usuario.id,

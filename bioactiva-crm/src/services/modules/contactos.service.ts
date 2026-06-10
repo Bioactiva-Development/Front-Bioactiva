@@ -20,22 +20,24 @@ function stripEmptyStrings<T extends Record<string, unknown>>(data: T): Partial<
     ) as Partial<T>
 }
 
+const strOf = (v: unknown): string => typeof v === 'string' ? v : ''
+
 function normalizeContacto(raw: Record<string, unknown>): Contacto {
     return {
         id: Number(raw.id),
-        nombres: String(raw.nombres ?? ''),
+        nombres: strOf(raw.nombres),
         apellidos: (raw.apellidos ?? null) as Contacto['apellidos'],
         vocativo: raw.vocativo as Contacto['vocativo'],
         cargo: (raw.cargo ?? null) as Contacto['cargo'],
-        correo: String(raw.correo ?? ''),
+        correo: strOf(raw.correo),
         correo2: (raw.correo2 ?? null) as Contacto['correo2'],
         telefono: (raw.telefono ?? null) as Contacto['telefono'],
         comentarios: (raw.comentarios ?? null) as Contacto['comentarios'],
-        idOrganizacion: String(raw.idOrganizacion ?? ''),
+        idOrganizacion: strOf(raw.idOrganizacion),
         idAuthor: Number(raw.idAuthor ?? 0),
         estado_correo: (raw.estado_correo ?? 'VIGENTE') as Contacto['estado_correo'],
-        createdAt: String(raw.createdAt ?? ''),
-        updatedAt: String(raw.updatedAt ?? raw.createdAt ?? ''),
+        createdAt: strOf(raw.createdAt),
+        updatedAt: strOf(raw.updatedAt ?? raw.createdAt),
         organizacion_nombre: (raw.organizacionNombre ?? raw.organizacion_nombre) as string | undefined,
     }
 }
@@ -71,7 +73,7 @@ function normalizeContactosResponse(
     }
 
     if (!Array.isArray(raw.data)) {
-        throw new Error('La respuesta de contactos no tiene el formato esperado.')
+        throw new TypeError('La respuesta de contactos no tiene el formato esperado.')
     }
 
     const data = raw.data.map(normalizeContacto)

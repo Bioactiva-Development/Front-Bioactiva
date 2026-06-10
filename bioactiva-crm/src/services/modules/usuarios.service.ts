@@ -45,14 +45,16 @@ const ESTADO_STR_MAP: Record<string, EstadoUsuario> = {
     INACTIVO: EstadoUsuario.Inactivo,
 }
 
+const strOf = (v: unknown): string => typeof v === 'string' ? v : ''
+
 function mapRolUsuario(value: unknown): RolUsuario {
     if (typeof value === 'number') return mapRole(value)
-    return ROL_STR_MAP[String(value ?? '').toUpperCase()] ?? RolUsuario.Trabajador
+    return ROL_STR_MAP[strOf(value).toUpperCase()] ?? RolUsuario.Trabajador
 }
 
 function mapEstadoUsuario(value: unknown): EstadoUsuario {
     if (typeof value === 'number') return mapEstado(value)
-    return ESTADO_STR_MAP[String(value ?? '').toUpperCase()] ?? EstadoUsuario.Pendiente
+    return ESTADO_STR_MAP[strOf(value).toUpperCase()] ?? EstadoUsuario.Pendiente
 }
 
 // Sentido inverso: del enum del frontend al string que espera GET /users.
@@ -124,13 +126,13 @@ export const usuariosService = {
         const rows = Array.isArray(data) ? data : (data.data ?? data.usuarios ?? [])
         const usuarios: UsuarioListItem[] = rows.map((u: Record<string, unknown>) => ({
             id: Number(u.id),
-            nombres: String(u.nombres ?? ''),
-            apellidos: String(u.apellidos ?? ''),
-            correo: String(u.correo ?? ''),
+            nombres: strOf(u.nombres),
+            apellidos: strOf(u.apellidos),
+            correo: strOf(u.correo),
             rol: mapRolUsuario(u.rol ?? u.role),
             estado: mapEstadoUsuario(u.estado),
-            created_at: String(u.fechaRegistro ?? u.created_at ?? u.createdAt ?? ''),
-            updated_at: String(u.updated_at ?? u.updatedAt ?? u.fechaRegistro ?? ''),
+            created_at: strOf(u.fechaRegistro ?? u.created_at ?? u.createdAt),
+            updated_at: strOf(u.updated_at ?? u.updatedAt ?? u.fechaRegistro),
         }))
         const meta = (data?.meta ?? {}) as Record<string, unknown>
         const total = Number(meta.total ?? usuarios.length)
