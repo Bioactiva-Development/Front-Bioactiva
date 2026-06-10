@@ -58,7 +58,26 @@ export function useCompletarActividad(leadId: number) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: number) => actividadesService.complete(id),
+    mutationFn: ({ id, notas }: { id: number; notas?: string }) =>
+      actividadesService.complete(id, notas),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.actividades.byLead(leadId),
+      })
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+      queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
+export function useCancelarActividad(leadId: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => actividadesService.cancel(id),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.actividades.byLead(leadId),
@@ -80,6 +99,7 @@ export function useEliminarActividad(leadId: number) {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.actividades.byLead(leadId),
       })
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))

@@ -3,25 +3,41 @@
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Pencil, Mail, Phone,
-  Building2, FileText, Star,
+  Building2, FileText, Loader2,
 } from 'lucide-react'
 import { Contacto } from '@/types/contacto.types'
+import { Lead } from '@/types/lead.types'
 import { ROUTES } from '@/lib/constants/routes'
 
 interface ContactoDetalleProps {
-  contacto: Contacto
-  onEditar: () => void
+  contacto:          Contacto
+  leads:             Lead[]
+  onEditar:          () => void
+  onCambiarEstado:   () => void
+  isCambiandoEstado: boolean
 }
+
+const ESTADO_LEAD_COLORS: Record<string, string> = {
+  'En prospecto':     'bg-gray-100 text-gray-600',
+  'Ofertado':         'bg-amber-50 text-amber-700',
+  'Cierre con venta': 'bg-emerald-50 text-emerald-700',
+  'Cierre sin venta': 'bg-red-50 text-red-600',
+}
+
+const formatFecha = (fecha: string) =>
+  new Date(fecha).toLocaleDateString('es-PE', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  })
 
 function InfoItem({
   icono,
   label,
   valor,
-}: {
+}: Readonly<{
   icono:  React.ReactNode
   label:  string
   valor?: string | null
-}) {
+}>) {
   if (!valor) return null
   return (
     <div className="flex items-start gap-3">
@@ -41,8 +57,11 @@ function InfoItem({
 
 export function ContactoDetalle({
   contacto,
+  leads,
   onEditar,
-}: ContactoDetalleProps) {
+  onCambiarEstado,
+  isCambiandoEstado,
+}: Readonly<ContactoDetalleProps>) {
   const router    = useRouter()
   const iniciales = `${contacto.nombres.charAt(0)}${contacto.apellidos?.charAt(0) ?? ''}`.toUpperCase()
 
@@ -69,10 +88,19 @@ export function ContactoDetalle({
             </div>
 
             <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                {contacto.vocativo && `${contacto.vocativo}. `}
-                {contacto.nombres} {contacto.apellidos}
-              </h1>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-xl font-bold text-gray-900">
+                  {contacto.vocativo && `${contacto.vocativo}. `}
+                  {contacto.nombres} {contacto.apellidos}
+                </h1>
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide
+                  ${contacto.estado_correo === 'VENCIDO'
+                    ? 'bg-red-50 text-red-600 border border-red-200'
+                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  }`}>
+                  {contacto.estado_correo === 'VENCIDO' ? 'Inactivo' : 'Activo'}
+                </span>
+              </div>
               {contacto.cargo && (
                 <p className="text-sm font-semibold text-emerald-600 uppercase tracking-wide mt-0.5">
                   {contacto.cargo}
@@ -83,6 +111,24 @@ export function ContactoDetalle({
 
           <div className="flex items-center gap-2">
             <button
+              onClick={onCambiarEstado}
+              disabled={isCambiandoEstado}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm
+                font-semibold border transition-colors disabled:opacity-50
+                disabled:cursor-not-allowed
+                ${contacto.estado_correo === 'VENCIDO'
+                  ? 'border-emerald-500 text-emerald-600 hover:bg-emerald-50'
+                  : 'border-red-300 text-red-500 hover:bg-red-50'
+                }`}
+            >
+              {isCambiandoEstado
+                ? <Loader2 size={14} className="animate-spin" />
+                : null
+              }
+              {contacto.estado_correo === 'VENCIDO' ? 'Marcar activo' : 'Marcar inactivo'}
+            </button>
+
+            <button
               onClick={onEditar}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
                 font-semibold border border-emerald-600 text-emerald-600
@@ -90,14 +136,6 @@ export function ContactoDetalle({
             >
               <Pencil size={14} />
               Editar
-            </button>
-            <button
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
-                font-semibold bg-amber-500 hover:bg-amber-600 text-white
-                transition-colors"
-            >
-              <Star size={14} />
-              Convertir en lead
             </button>
           </div>
         </div>
@@ -147,23 +185,59 @@ export function ContactoDetalle({
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center gap-2 mb-4">
             <FileText size={16} className="text-emerald-600" />
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-              Leads asociados (0)
+            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+              Leads asociados
+              {leads.length > 0 && (
+                <span className="ml-2 text-emerald-600">({leads.length})</span>
+              )}
             </h3>
           </div>
 
-          <div className="flex flex-col items-center justify-center py-8 space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center">
-              <FileText size={18} className="text-gray-300" />
+          {leads.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center">
+                <FileText size={18} className="text-gray-300" />
+              </div>
+              <p className="text-sm text-gray-400">Sin leads asociados.</p>
+              <button
+                onClick={() => router.push(ROUTES.pipeline)}
+                className="text-xs text-emerald-600 hover:underline font-medium"
+              >
+                + Crear lead
+              </button>
             </div>
-            <p className="text-sm text-gray-400">Sin leads asociados.</p>
-            <button
-              onClick={() => router.push(ROUTES.pipeline)}
-              className="text-xs text-emerald-600 hover:underline font-medium"
-            >
-              + Crear lead
-            </button>
-          </div>
+          ) : (
+            <div className="space-y-2">
+              {leads.map((lead) => (
+                <button
+                  key={lead.id}
+                  type="button"
+                  className="w-full text-left flex items-center justify-between p-4
+                    border border-gray-100 rounded-xl hover:border-emerald-200
+                    hover:bg-emerald-50/30 transition-colors"
+                  onClick={() => router.push(ROUTES.lead(lead.id))}
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">
+                      {lead.servicio_interes}
+                    </p>
+                    {lead.encargado_nombre && (
+                      <p className="text-xs text-gray-400 mt-0.5">{lead.encargado_nombre}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0 ml-4">
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg uppercase
+                      tracking-wide ${ESTADO_LEAD_COLORS[lead.estado] ?? 'bg-gray-100 text-gray-600'}`}>
+                      {lead.estado}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {formatFecha(lead.created_at)}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

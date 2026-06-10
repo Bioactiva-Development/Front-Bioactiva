@@ -12,7 +12,7 @@ interface Props {
     onConfirm: () => Promise<boolean>
 }
 
-export function DeshabilitarUsuarioModal({ usuario, isLoading, onClose, onConfirm }: Props) {
+export function DeshabilitarUsuarioModal({ usuario, isLoading, onClose, onConfirm }: Readonly<Props>) {
     const nombreCompleto = [usuario.nombres, usuario.apellidos].filter(Boolean).join(' ')
     const esActivo = usuario.estado === EstadoUsuario.Activo
 
@@ -20,6 +20,8 @@ export function DeshabilitarUsuarioModal({ usuario, isLoading, onClose, onConfir
         const ok = await onConfirm()
         if (ok) onClose()
     }
+
+    const labelConfirm = esActivo ? 'Sí, deshabilitar' : 'Sí, habilitar'
 
     return (
         <ModalShell onClose={onClose} maxWidth="sm">
@@ -60,7 +62,7 @@ export function DeshabilitarUsuarioModal({ usuario, isLoading, onClose, onConfir
                         {isLoading ? (
                             <><Loader2 size={14} className="animate-spin" />Procesando...</>
                         ) : (
-                            esActivo ? 'Sí, deshabilitar' : 'Sí, habilitar'
+                            labelConfirm
                         )}
                     </button>
                 </div>

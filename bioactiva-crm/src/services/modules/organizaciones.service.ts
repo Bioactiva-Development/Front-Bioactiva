@@ -6,6 +6,7 @@ import {
   mockGetOrganizacion,
   mockCreateOrganizacion,
   mockUpdateOrganizacion,
+  mockDeleteOrganizacion,
   mockSunatPorRuc,
   mockSunatPorNombre,
   mockGetOrganizacionConRelaciones,
@@ -23,6 +24,7 @@ import {
 
 import {
   OrganizacionDtoOut,
+  OrganizacionConRelacionesDto,
   SunatRucDto,
   fromOrganizacionDto,
   fromSunatNombreDto,
@@ -30,6 +32,8 @@ import {
   toCreateOrganizacionDto,
   toUpdateOrganizacionDto,
 } from './organizaciones.mapper'
+import { fromLeadDto, LeadDtoOut, LeadsDtoResponse } from './leads.mapper'
+import { fromCotizacionDto, CotizacionDtoOut, CotizacionesDtoResponse } from './cotizaciones.mapper'
 
 /**
  * Servicio de organizaciones.
@@ -154,8 +158,8 @@ export const organizacionesService = {
   sunatPorRuc: async (ruc: string): Promise<SunatRucResult> => {
     if (USE_MOCK) return mockSunatPorRuc(ruc)
     const { data } = await apiClient.get<SunatRucDto>(
-      ENDPOINTS.organizaciones.sunat(ruc),
-      { timeout: 30000 }
+      ENDPOINTS.organizaciones.sunat,
+      { params: { query: ruc }, timeout: 30000 }
     )
     return fromSunatRucDto(data)
   },
@@ -168,27 +172,104 @@ export const organizacionesService = {
       return [{ ruc: ruc.ruc, nombre: ruc.nombre, ubicacion: ruc.ubicacion }]
     }
     const { data } = await apiClient.get<SunatRucDto[]>(
-      ENDPOINTS.organizaciones.sunat(nombre),
-      { timeout: 30000 }
+      ENDPOINTS.organizaciones.sunat,
+      { params: { query: nombre }, timeout: 30000 }
     )
     // El doc indica que se muestran hasta los 10 primeros más coincidentes (CU003).
     return data.slice(0, 10).map(fromSunatNombreDto)
   },
 
+  /** DELETE /organizations/:id */
+  delete: async (id: string): Promise<void> => {
+    if (USE_MOCK) return mockDeleteOrganizacion(id)
+    await apiClient.delete(ENDPOINTS.organizaciones.delete(id))
+  },
+
   /**
-   * Detalle con relaciones (contactos, leads, cotizaciones).
-   *
-   * TODO(backend): el endpoint `/organizations/:id/relaciones` aún no existe.
-   * En modo API real degradamos al detalle plano sin relaciones; cuando los
-   * módulos `contacts`, `leads` y `quotations` expongan sus endpoints, este
-   * método debe combinar las llamadas (Promise.all) o consumir un endpoint
-   * compuesto si el backend lo agrega.
+   * Carga la organización junto con sus contactos, leads y cotizaciones
+   * asociadas usando 4 llamadas en paralelo. Si los endpoints de leads o
+   * cotizaciones no soportan aún el filtro `idOrg`, degradan a [] sin romper
+   * la vista (Promise.allSettled).
    */
   getByIdConRelaciones: async (
     id: string
   ): Promise<OrganizacionConRelaciones> => {
     if (USE_MOCK) return mockGetOrganizacionConRelaciones(id)
-    const organizacion = await organizacionesService.getById(id)
-    return { ...organizacion, contactos: [], leads: [], cotizaciones: [] }
+
+    const [orgResult, contactosResult, leadsResult, cotizacionesResult] =
+      await Promise.allSettled([
+        apiClient.get<OrganizacionConRelacionesDto>(ENDPOINTS.organizaciones.detail(id)),
+        apiClient.get<Record<string, unknown>[]>(ENDPOINTS.contactos.byOrganizacion(id)),
+        apiClient.get<LeadDtoOut[] | LeadsDtoResponse>(ENDPOINTS.leads.list, {
+          params: { idOrg: id, limit: 100 },
+        }),
+        apiClient.get<CotizacionDtoOut[] | CotizacionesDtoResponse>(
+          ENDPOINTS.cotizaciones.list,
+          { params: { idOrg: id, limit: 100 } }
+        ),
+      ])
+
+    if (orgResult.status === 'rejected') throw orgResult.reason
+
+    const organizacion = fromOrganizacionDto(orgResult.value.data)
+
+    const contactosRaw =
+      contactosResult.status === 'fulfilled' ? contactosResult.value.data : []
+
+    const strOf = (v: unknown): string => typeof v === 'string' ? v : ''
+
+    let leadsRaw: LeadDtoOut[] = []
+    if (leadsResult.status === 'fulfilled') {
+      const d = leadsResult.value.data
+      leadsRaw = Array.isArray(d) ? d : ((d as LeadsDtoResponse).data ?? [])
+    }
+
+    let cotizacionesRaw: CotizacionDtoOut[] = []
+    if (cotizacionesResult.status === 'fulfilled') {
+      const d = cotizacionesResult.value.data
+      cotizacionesRaw = Array.isArray(d) ? d : ((d as CotizacionesDtoResponse).data ?? [])
+    }
+
+    const todosContactos = contactosRaw.map((c) => ({
+      id:        Number(c.id),
+      nombres:   strOf(c.nombres),
+      apellidos: strOf(c.apellidos),
+      vocativo:  c.vocativo as string | undefined,
+      cargo:     (c.cargo as string | null) ?? undefined,
+      correo:    strOf(c.correo),
+      telefono:  (c.telefono as string | null) ?? undefined,
+    }))
+
+    return {
+      ...organizacion,
+      contactos:      todosContactos.slice(0, 6),
+      totalContactos: todosContactos.length,
+      leads: leadsRaw.map((l) => {
+        const lead = fromLeadDto(l)
+        return {
+          id:               lead.id,
+          servicio_interes: lead.servicio_interes,
+          estado:           lead.estado as string,
+          created_at:       lead.created_at,
+          encargado:        lead.encargado_nombre,
+        }
+      }),
+      cotizaciones: cotizacionesRaw.map((c) => {
+        const cot = fromCotizacionDto(c)
+        return {
+          id:               cot.id,
+          nombre_servicio:  cot.nombre_servicio,
+          monto:            cot.monto,
+          tipo:             cot.tipo as string,
+          estado:           cot.estado as string,
+          fecha_cot:        cot.fecha_cot,
+          dirigido:         cot.dirigido || undefined,
+          nombre_remitente: cot.nombre_remitente || undefined,
+          observacion:      cot.observacion ?? undefined,
+          id_lead:          cot.id_lead,
+          codigo_lead:      cot.codigo,
+        }
+      }),
+    }
   },
 }

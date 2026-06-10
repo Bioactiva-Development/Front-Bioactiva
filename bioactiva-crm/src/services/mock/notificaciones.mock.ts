@@ -85,7 +85,7 @@ export const mockMarcarLeida = async (id: number): Promise<Notificacion> => {
 
   const index = MOCK_NOTIFICACIONES.findIndex((n) => n.id === id)
   if (index === -1) {
-    throw { status: 404, message: 'Notificación no encontrada.' }
+    throw Object.assign(new Error('Notificación no encontrada.'), { status: 404 })
   }
 
   MOCK_NOTIFICACIONES[index] = {
@@ -108,15 +108,31 @@ export const mockCancelarProgramada = async (id: number): Promise<void> => {
 
   const index = MOCK_PROGRAMADAS.findIndex((n) => n.id === id)
   if (index === -1) {
-    throw { status: 404, message: 'Notificación programada no encontrada.' }
+    throw Object.assign(new Error('Notificación programada no encontrada.'), { status: 404 })
   }
 
   const notif = MOCK_PROGRAMADAS[index]
   if (notif.estado !== 'Programada') {
-    throw { status: 400, message: 'La notificación no puede cancelarse porque ya fue ejecutada.' }
+    throw Object.assign(new Error('La notificación no puede cancelarse porque ya fue ejecutada.'), { status: 400 })
   }
 
   MOCK_PROGRAMADAS.splice(index, 1)
+}
+
+export const mockCancelarPendientesPorActividad = async (
+  actividadId: number
+): Promise<void> => {
+  await delay()
+
+  for (let index = MOCK_PROGRAMADAS.length - 1; index >= 0; index -= 1) {
+    const programada = MOCK_PROGRAMADAS[index]
+    if (
+      programada.id_actividad === actividadId &&
+      programada.estado === 'Programada'
+    ) {
+      MOCK_PROGRAMADAS.splice(index, 1)
+    }
+  }
 }
 
 export const mockCreateRecordatorio = async (

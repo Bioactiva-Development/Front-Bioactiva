@@ -8,7 +8,7 @@ interface ModalProps {
     size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'md' }: Readonly<ModalProps>) {
     if (!isOpen) return null
 
     const sizeClasses = {
@@ -20,8 +20,10 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            <button
+                type="button"
+                aria-label="Cerrar modal"
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-default"
                 onClick={onClose}
             />
 

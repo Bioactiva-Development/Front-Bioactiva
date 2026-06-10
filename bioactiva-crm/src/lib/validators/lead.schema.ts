@@ -2,6 +2,8 @@ import { z } from 'zod'
 import { LeadState } from '@/types/enums'
 
 export const leadSchema = z.object({
+  estado: z.nativeEnum(LeadState),
+
   id_org: z
     .string()
     .min(1, 'La organización es obligatoria'),
@@ -9,10 +11,6 @@ export const leadSchema = z.object({
   id_contacto: z
     .number()
     .optional(),
-
-  estado: z.nativeEnum(LeadState, {
-    error: 'El estado es obligatorio',
-  }),
 
   servicio_interes: z
     .string()
@@ -58,16 +56,6 @@ export const leadSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  proxima_actividad: z
-    .string()
-    .max(120, 'Máximo 120 caracteres')
-    .optional()
-    .or(z.literal('')),
-
-  fecha_proxima_actividad: z
-    .string()
-    .optional()
-    .or(z.literal('')),
 })
 
 export type LeadFormValues = z.infer<typeof leadSchema>

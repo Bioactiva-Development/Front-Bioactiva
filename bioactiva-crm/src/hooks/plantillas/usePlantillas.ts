@@ -1,13 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { plantillasService } from '@/services/modules/plantillas.service'
 import { QUERY_KEYS } from '@/lib/constants/queryKeys'
-import { Plantilla, PlantillaFiltros } from '@/types/plantilla.types'
+import { PlantillaFormData } from '@/types/plantilla.types'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 
-export function usePlantillas(filtros?: PlantillaFiltros) {
+export function usePlantillas(includeInactive = false) {
   return useQuery({
-    queryKey: QUERY_KEYS.plantillas.list(),
-    queryFn:  () => plantillasService.getAll(filtros),
+    queryKey: QUERY_KEYS.plantillas.list(includeInactive),
+    queryFn:  () => plantillasService.getAll(includeInactive),
     staleTime: 1000 * 60 * 5,
   })
 }
@@ -32,7 +32,7 @@ export function useCrearPlantilla() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: Partial<Plantilla>) =>
+    mutationFn: (data: PlantillaFormData) =>
       plantillasService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plantillas'] })
@@ -47,7 +47,7 @@ export function useActualizarPlantilla(id: number) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: Partial<Plantilla>) =>
+    mutationFn: (data: Partial<PlantillaFormData>) =>
       plantillasService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plantillas'] })
@@ -63,6 +63,20 @@ export function useEliminarPlantilla() {
 
   return useMutation({
     mutationFn: (id: number) => plantillasService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plantillas'] })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
+export function useDesactivarPlantilla() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => plantillasService.desactivar(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plantillas'] })
     },

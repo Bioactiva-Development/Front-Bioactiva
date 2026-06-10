@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Cotizacion } from '@/types/cotizacion.types'
 import { EstadoCot, TipoMoneda } from '@/types/enums'
 import { ROUTES } from '@/lib/constants/routes'
+import { useEnviarCotizacion } from '@/hooks/cotizaciones/useCotizaciones'
 
 interface CotizacionCardProps {
   cotizacion: Cotizacion
@@ -17,8 +18,23 @@ const ESTADO_COLORS: Record<EstadoCot, string> = {
   [EstadoCot.Rechazada]:  'bg-red-50 text-red-600',
 }
 
-export function CotizacionCard({ cotizacion }: CotizacionCardProps) {
+const ESTADO_HOVER_COLORS: Record<EstadoCot, string> = {
+  [EstadoCot.Pendiente]:  'hover:bg-gray-50',
+  [EstadoCot.Enviada]:    'hover:bg-blue-50/40',
+  [EstadoCot.Aceptada]:   'hover:bg-emerald-50/30',
+  [EstadoCot.Rechazada]:  'hover:bg-red-50/40',
+}
+
+const ESTADO_CODE_COLORS: Record<EstadoCot, string> = {
+  [EstadoCot.Pendiente]:  'text-gray-600',
+  [EstadoCot.Enviada]:    'text-blue-600',
+  [EstadoCot.Aceptada]:   'text-emerald-600',
+  [EstadoCot.Rechazada]:  'text-red-600',
+}
+
+export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
   const router = useRouter()
+  const { mutateAsync: enviar, isPending: enviando } = useEnviarCotizacion()
 
   const formatMonto = (monto: number, tipo: TipoMoneda) => {
     const simbolo = tipo === TipoMoneda.Soles ? 'S/' : '$'
@@ -33,12 +49,12 @@ export function CotizacionCard({ cotizacion }: CotizacionCardProps) {
 
   return (
     <tr
-      className="border-b border-gray-50 hover:bg-emerald-50/30
-        transition-colors cursor-pointer"
+      className={`border-b border-gray-50 transition-colors cursor-pointer
+        ${ESTADO_HOVER_COLORS[cotizacion.estado]}`}
       onClick={handleVerDetalle}
     >
       <td className="px-4 py-4">
-        <p className="text-sm font-bold text-emerald-600">
+        <p className={`text-sm font-bold ${ESTADO_CODE_COLORS[cotizacion.estado]}`}>
           {cotizacion.codigo}
         </p>
       </td>
@@ -96,13 +112,18 @@ export function CotizacionCard({ cotizacion }: CotizacionCardProps) {
           >
             <Printer size={15} />
           </button>
-          <button
-            title="Enviar por correo"
-            className="p-2 rounded-lg text-gray-400 hover:text-emerald-600
-              hover:bg-emerald-50 transition-colors"
-          >
-            <Mail size={15} />
-          </button>
+          {cotizacion.estado === EstadoCot.Pendiente && (
+            <button
+              title="Marcar como enviada"
+              disabled={enviando}
+              onClick={() => enviar(cotizacion.id)}
+              className="p-2 rounded-lg text-gray-400 hover:text-emerald-600
+                hover:bg-emerald-50 transition-colors disabled:opacity-40
+                disabled:cursor-not-allowed"
+            >
+              <Mail size={15} />
+            </button>
+          )}
           <button
             title="Ver detalle"
             onClick={handleVerDetalle}

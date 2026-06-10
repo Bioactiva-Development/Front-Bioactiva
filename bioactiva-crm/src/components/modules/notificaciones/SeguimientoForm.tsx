@@ -18,6 +18,8 @@ interface SeguimientoFormProps {
   isLoading: boolean
   error?: string | null
   onCancel?: () => void
+  leadIdInicial?: number
+  actividadIdInicial?: number
 }
 
 export function SeguimientoForm({
@@ -25,6 +27,8 @@ export function SeguimientoForm({
   isLoading,
   error,
   onCancel,
+  leadIdInicial,
+  actividadIdInicial,
 }: SeguimientoFormProps) {
   const { data: leadsResponse } = useLeads({ limit: 100 })
   const leads = leadsResponse?.data ?? []
@@ -40,8 +44,8 @@ export function SeguimientoForm({
   } = useForm<SeguimientoFormValues>({
     resolver: zodResolver(seguimientoSchema),
     defaultValues: {
-      id_lead: 0,
-      id_actividad: 0,
+      id_lead: leadIdInicial ?? 0,
+      id_actividad: actividadIdInicial ?? 0,
       id_plantilla_interno: 0,
       fecha_envio_interno: '',
       hora_envio_interno: '',
@@ -67,10 +71,13 @@ export function SeguimientoForm({
     (actividad) => actividad.id === selectedActividadId
   )
 
+  useEffect(() => {
+    if (leadIdInicial) setValue('id_lead', leadIdInicial)
+    if (actividadIdInicial) setValue('id_actividad', actividadIdInicial)
+  }, [actividadIdInicial, leadIdInicial, setValue])
+
   const plantillasSeguimiento = plantillasActivas.data?.filter(
-    (plantilla) =>
-      plantilla.activo &&
-      (plantilla.uso === 'Ambos' || plantilla.uso === 'Solo Seguimiento')
+    (plantilla) => plantilla.activo
   ) ?? []
 
   const selectedPlantillaInterna = plantillasSeguimiento.find(
@@ -121,6 +128,8 @@ export function SeguimientoForm({
 
     await onSubmit({
       ...data,
+      id_lead: selectedLead.id,
+      id_actividad: selectedActividad.id,
       fecha_envio_interno: `${data.fecha_envio_interno}T${data.hora_envio_interno}`,
       fecha_envio_externo: `${data.fecha_envio_externo}T${data.hora_envio_externo}`,
       destinatario: data.correo_cliente,
@@ -159,12 +168,14 @@ export function SeguimientoForm({
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="seg-lead" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Lead <span className="text-red-500">*</span>
             </label>
             <select
+              id="seg-lead"
               {...register('id_lead', { valueAsNumber: true })}
               className={inputClass(!!errors.id_lead)}
+              disabled={Boolean(leadIdInicial)}
             >
               <option value={0}>Selecciona un lead</option>
               {leads.map((lead) => (
@@ -179,13 +190,14 @@ export function SeguimientoForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="seg-actividad" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Actividad <span className="text-red-500">*</span>
             </label>
             <select
+              id="seg-actividad"
               {...register('id_actividad', { valueAsNumber: true })}
               className={inputClass(!!errors.id_actividad)}
-              disabled={!selectedLead}
+              disabled={!selectedLead || Boolean(actividadIdInicial)}
             >
               <option value={0}>
                 {selectedLead ? 'Selecciona una actividad' : 'Selecciona primero un lead'}
@@ -204,10 +216,11 @@ export function SeguimientoForm({
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="seg-plantilla-interno" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Plantilla interna <span className="text-red-500">*</span>
             </label>
             <select
+              id="seg-plantilla-interno"
               {...register('id_plantilla_interno', { valueAsNumber: true })}
               className={inputClass(!!errors.id_plantilla_interno)}
             >
@@ -224,10 +237,11 @@ export function SeguimientoForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="seg-plantilla-externo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Plantilla externa <span className="text-red-500">*</span>
             </label>
             <select
+              id="seg-plantilla-externo"
               {...register('id_plantilla_externo', { valueAsNumber: true })}
               className={inputClass(!!errors.id_plantilla_externo)}
             >
@@ -246,10 +260,11 @@ export function SeguimientoForm({
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="seg-fecha-interno" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Fecha interna <span className="text-red-500">*</span>
             </label>
             <input
+              id="seg-fecha-interno"
               type="date"
               {...register('fecha_envio_interno')}
               className={inputClass(!!errors.fecha_envio_interno)}
@@ -260,10 +275,11 @@ export function SeguimientoForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="seg-hora-interno" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Hora interna <span className="text-red-500">*</span>
             </label>
             <input
+              id="seg-hora-interno"
               type="time"
               {...register('hora_envio_interno')}
               className={inputClass(!!errors.hora_envio_interno)}
@@ -275,10 +291,11 @@ export function SeguimientoForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="seg-asunto-interno" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Asunto interno <span className="text-red-500">*</span>
           </label>
           <input
+            id="seg-asunto-interno"
             type="text"
             {...register('asunto_interno')}
             className={inputClass(!!errors.asunto_interno)}
@@ -290,10 +307,11 @@ export function SeguimientoForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="seg-cuerpo-interno" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Cuerpo interno <span className="text-red-500">*</span>
           </label>
           <textarea
+            id="seg-cuerpo-interno"
             rows={5}
             {...register('cuerpo_interno')}
             className={`${inputClass(!!errors.cuerpo_interno)} resize-y font-mono text-xs`}
@@ -306,10 +324,11 @@ export function SeguimientoForm({
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="seg-fecha-externo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Fecha externa <span className="text-red-500">*</span>
             </label>
             <input
+              id="seg-fecha-externo"
               type="date"
               {...register('fecha_envio_externo')}
               className={inputClass(!!errors.fecha_envio_externo)}
@@ -319,10 +338,11 @@ export function SeguimientoForm({
             )}
           </div>
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="seg-hora-externo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Hora externa <span className="text-red-500">*</span>
             </label>
             <input
+              id="seg-hora-externo"
               type="time"
               {...register('hora_envio_externo')}
               className={inputClass(!!errors.hora_envio_externo)}
@@ -334,10 +354,11 @@ export function SeguimientoForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="seg-correo-cliente" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Correo del cliente <span className="text-red-500">*</span>
           </label>
           <input
+            id="seg-correo-cliente"
             type="email"
             {...register('correo_cliente')}
             className={inputClass(!!errors.correo_cliente)}
@@ -349,10 +370,11 @@ export function SeguimientoForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="seg-asunto-externo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Asunto externo <span className="text-red-500">*</span>
           </label>
           <input
+            id="seg-asunto-externo"
             type="text"
             {...register('asunto_externo')}
             className={inputClass(!!errors.asunto_externo)}
@@ -365,7 +387,7 @@ export function SeguimientoForm({
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="seg-cuerpo-externo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Cuerpo externo <span className="text-red-500">*</span>
             </label>
             <span className="text-xs text-gray-400 flex items-center gap-1">
@@ -373,6 +395,7 @@ export function SeguimientoForm({
             </span>
           </div>
           <textarea
+            id="seg-cuerpo-externo"
             rows={7}
             {...register('cuerpo_externo')}
             className={`${inputClass(!!errors.cuerpo_externo)} resize-y font-mono text-xs`}

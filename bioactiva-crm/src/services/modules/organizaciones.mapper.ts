@@ -13,9 +13,6 @@ import {
  * Documentación del contrato: `Documentación de endpoints por módulo > Módulo
  * organizations`. Si el backend ajusta valores de enum (ej. EnterpriseType,
  * Sector, Size), modificar únicamente este archivo.
- *
- * TODO(coord-backend): confirmar los valores exactos de los enums `EnterpriseType`,
- * `Sector` y `Size` cuando el equipo backend publique la lista cerrada.
  */
 
 // ---------------------------------------------------------------------------
@@ -62,6 +59,21 @@ export interface OrganizacionCreateDto {
 }
 
 export type OrganizacionUpdateDto = Partial<Omit<OrganizacionCreateDto, 'idAuthor'>>
+
+export interface ContactoResumidoDto {
+  id:        number
+  nombres:   string
+  apellidos: string
+  vocativo?: string
+  cargo?:    string | null
+  correo:    string
+  telefono?: string | null
+}
+
+export interface OrganizacionConRelacionesDto extends OrganizacionDtoOut {
+  contactos?:      ContactoResumidoDto[]
+  totalContactos?: number
+}
 
 export interface SunatRucDto {
   ruc: string
@@ -240,10 +252,19 @@ export const fromSunatRucDto = (dto: SunatRucDto): SunatRucResult => ({
   ruc: dto.ruc,
   nombre: dto.razonSocial,
   nombreCompleto: dto.nombreComercial ?? dto.razonSocial,
+  tipo: dto.tipo
+    ? safeMap(TIPO_BACKEND_TO_DOMAIN, dto.tipo, TipoEmpresa.Privada)
+    : undefined,
   ubicacion: dto.ubicacion,
   estado: undefined,
   condicion: undefined,
   actividades: dto.actividadEconomica,
+  tamano: dto.tamano
+    ? safeMap(TAMANO_BACKEND_TO_DOMAIN, dto.tamano, TamanoEmpresa.Micro)
+    : undefined,
+  sector: dto.sector
+    ? safeMap(SECTOR_BACKEND_TO_DOMAIN, dto.sector, Sector.OTROS)
+    : undefined,
 })
 
 export const fromSunatNombreDto = (dto: SunatRucDto): SunatNombreResult => ({

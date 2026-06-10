@@ -19,9 +19,7 @@ interface PlantillaFormProps {
   error?:     string | null
 }
 
-const CATEGORIAS = ['Email', 'Reunion', 'Llamada', 'Otro'] as const
-const USOS       = ['Ambos', 'Solo Recordatorio', 'Solo Seguimiento'] as const
-const ESTADOS    = [
+const ESTADOS = [
   { value: true,  label: 'Activa' },
   { value: false, label: 'Inactiva' },
 ]
@@ -31,7 +29,7 @@ export function PlantillaForm({
   onSubmit,
   isLoading,
   error,
-}: PlantillaFormProps) {
+}: Readonly<PlantillaFormProps>) {
   const router    = useRouter()
   const esEdicion = !!plantilla
   const cuerpoRef = useRef<HTMLTextAreaElement | null>(null)
@@ -47,21 +45,16 @@ export function PlantillaForm({
     resolver: zodResolver(plantillaSchema),
     defaultValues: plantilla
       ? {
-          nombre:    plantilla.nombre,
-          asunto:    plantilla.asunto,
-          cuerpo:    plantilla.cuerpo,
-          categoria: plantilla.categoria,
-          uso:       plantilla.uso,
-          activo:    plantilla.activo,
+          nombre: plantilla.nombre,
+          asunto: plantilla.asunto,
+          cuerpo: plantilla.cuerpo,
+          activo: plantilla.activo,
         }
       : {
-          categoria: 'Email',
-          uso:       'Ambos',
-          activo:    true,
+          activo: true,
         },
   })
 
-  // ✅ Observar activo para mostrar el valor correcto en el select
   const activoValue = watch('activo')
 
   const insertarVariable = (variable: string) => {
@@ -94,10 +87,11 @@ export function PlantillaForm({
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="pf-nombre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Nombre de la plantilla <span className="text-red-500">*</span>
           </label>
           <input
+            id="pf-nombre"
             type="text"
             placeholder="Ej: Confirmación de reunión"
             {...register('nombre')}
@@ -109,10 +103,11 @@ export function PlantillaForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="pf-asunto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Asunto del correo <span className="text-red-500">*</span>
           </label>
           <input
+            id="pf-asunto"
             type="text"
             placeholder="Ej: Reunión con {{nombre_organizacion}} — {{fecha_actividad}}"
             {...register('asunto')}
@@ -123,60 +118,11 @@ export function PlantillaForm({
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Categoría
-            </label>
-            <select
-              {...register('categoria')}
-              className={`${inputClass(!!errors.categoria)} cursor-pointer`}
-            >
-              {CATEGORIAS.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
-              Uso
-              <Info size={12} className="text-gray-400" />
-            </label>
-            <select
-              {...register('uso')}
-              className={`${inputClass(!!errors.uso)} cursor-pointer`}
-            >
-              {USOS.map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* ✅ activo manejado manualmente con setValue, no con register */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Estado
-            </label>
-            <select
-              value={String(activoValue)}
-              onChange={(e) => setValue('activo', e.target.value === 'true')}
-              className={`${inputClass(false)} cursor-pointer`}
-            >
-              {ESTADOS.map((e) => (
-                <option key={String(e.value)} value={String(e.value)}>
-                  {e.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Variables disponibles
-            </label>
+            </p>
             <span className="text-xs text-gray-400">
               Haz clic para insertar en el cuerpo
             </span>
@@ -200,10 +146,11 @@ export function PlantillaForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="pf-cuerpo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Cuerpo del mensaje <span className="text-red-500">*</span>
           </label>
           <textarea
+            id="pf-cuerpo"
             rows={10}
             placeholder="Escribe el cuerpo del correo aquí. Usa las variables de arriba para personalizar."
             {...cuerpoRegRest}
@@ -217,6 +164,29 @@ export function PlantillaForm({
             <p className="text-red-500 text-xs">{errors.cuerpo.message}</p>
           )}
         </div>
+
+        {esEdicion && (
+          <div className="space-y-1.5 pt-2 border-t border-gray-100">
+            <label htmlFor="pf-estado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Estado de la plantilla
+            </label>
+            <select
+              id="pf-estado"
+              value={String(activoValue)}
+              onChange={(e) => setValue('activo', e.target.value === 'true')}
+              className={`${inputClass(false)} cursor-pointer`}
+            >
+              {ESTADOS.map((e) => (
+                <option key={String(e.value)} value={String(e.value)}>
+                  {e.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-amber-600">
+              Una plantilla inactiva no puede seleccionarse al programar notificaciones.
+            </p>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700

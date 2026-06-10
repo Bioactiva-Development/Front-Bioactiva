@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
 import { ContactoForm } from '@/components/modules/contactos/ContactoForm'
 import { useCrearContacto } from '@/hooks/contactos/useContactos'
 import { ContactoFormValues } from '@/lib/validators/contacto.schema'

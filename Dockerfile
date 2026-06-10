@@ -14,6 +14,7 @@ ENV PORT=4000
 ARG NEXT_PUBLIC_API_BASE_URL
 ARG NEXT_PUBLIC_USE_MOCK
 ARG NEXT_PUBLIC_APP_NAME
+ARG NEXT_PUBLIC_RECAPTCHA_SITE_KEY
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY bioactiva-crm/ ./
@@ -21,6 +22,7 @@ COPY bioactiva-crm/ ./
 RUN npm run build
 
 FROM node:22-slim AS runner
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 WORKDIR /app
 
 COPY --from=builder /app/package.json ./

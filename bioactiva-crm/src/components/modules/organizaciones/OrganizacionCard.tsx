@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation'
 import { Organizacion } from '@/types/organizacion.types'
 import { TamanoEmpresa } from '@/types/enums'
 import { ROUTES } from '@/lib/constants/routes'
+import { formatSector, formatTamano } from '@/lib/utils/organizacion.utils'
 
 interface OrganizacionCardProps {
   organizacion: Organizacion
@@ -15,7 +16,7 @@ const TAMAÑO_COLORS: Record<TamanoEmpresa, string> = {
   [TamanoEmpresa.Grande]:  'bg-emerald-50 text-emerald-700',
 }
 
-export function OrganizacionCard({ organizacion }: OrganizacionCardProps) {
+export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProps>) {
   const router  = useRouter()
   const inicial = organizacion.nombre.charAt(0).toUpperCase()
 
@@ -55,7 +56,7 @@ export function OrganizacionCard({ organizacion }: OrganizacionCardProps) {
 
       <td className="px-4 py-4">
         <span className="text-sm text-gray-600">
-          {organizacion.sector}
+          {formatSector(organizacion.sector)}
           {organizacion.actividad_economica && (
             <span className="text-gray-400"> / {organizacion.actividad_economica}</span>
           )}
@@ -66,7 +67,7 @@ export function OrganizacionCard({ organizacion }: OrganizacionCardProps) {
         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs
           font-bold uppercase tracking-wide
           ${TAMAÑO_COLORS[organizacion.tamano]}`}>
-          {organizacion.tamano}
+          {formatTamano(organizacion.tamano)}
         </span>
       </td>
 

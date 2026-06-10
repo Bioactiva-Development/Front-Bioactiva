@@ -18,6 +18,8 @@ interface RecordatorioFormProps {
   isLoading: boolean
   error?: string | null
   onCancel?: () => void
+  leadIdInicial?: number
+  actividadIdInicial?: number
 }
 
 export function RecordatorioForm({
@@ -25,6 +27,8 @@ export function RecordatorioForm({
   isLoading,
   error,
   onCancel,
+  leadIdInicial,
+  actividadIdInicial,
 }: RecordatorioFormProps) {
   const { data: leadsResponse } = useLeads({ limit: 100 })
   const leads = leadsResponse?.data ?? []
@@ -40,8 +44,8 @@ export function RecordatorioForm({
   } = useForm<RecordatorioFormValues>({
     resolver: zodResolver(recordatorioSchema),
     defaultValues: {
-      id_lead: 0,
-      id_actividad: 0,
+      id_lead: leadIdInicial ?? 0,
+      id_actividad: actividadIdInicial ?? 0,
       id_plantilla: 0,
       fecha_envio: '',
       hora_envio: '',
@@ -60,10 +64,13 @@ export function RecordatorioForm({
     (actividad) => actividad.id === selectedActividadId
   )
 
+  useEffect(() => {
+    if (leadIdInicial) setValue('id_lead', leadIdInicial)
+    if (actividadIdInicial) setValue('id_actividad', actividadIdInicial)
+  }, [actividadIdInicial, leadIdInicial, setValue])
+
   const plantillasDisponibles = plantillasActivas.data?.filter(
-    (plantilla) =>
-      plantilla.activo &&
-      (plantilla.uso === 'Ambos' || plantilla.uso === 'Solo Recordatorio')
+    (plantilla) => plantilla.activo
   ) ?? []
 
   const selectedPlantilla = plantillasDisponibles.find(
@@ -90,6 +97,8 @@ export function RecordatorioForm({
 
     await onSubmit({
       ...data,
+      id_lead: selectedLead.id,
+      id_actividad: selectedActividad.id,
       fecha_envio: `${data.fecha_envio}T${data.hora_envio}`,
       destinatario: selectedLead.encargado_nombre ?? 'Responsable',
       lead_codigo: selectedLead.codigo,
@@ -127,12 +136,14 @@ export function RecordatorioForm({
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="rec-lead" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Lead <span className="text-red-500">*</span>
             </label>
             <select
+              id="rec-lead"
               {...register('id_lead', { valueAsNumber: true })}
               className={inputClass(!!errors.id_lead)}
+              disabled={Boolean(leadIdInicial)}
             >
               <option value={0}>Selecciona un lead</option>
               {leads.map((lead) => (
@@ -147,13 +158,14 @@ export function RecordatorioForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="rec-actividad" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Actividad <span className="text-red-500">*</span>
             </label>
             <select
+              id="rec-actividad"
               {...register('id_actividad', { valueAsNumber: true })}
               className={inputClass(!!errors.id_actividad)}
-              disabled={!selectedLead}
+              disabled={!selectedLead || Boolean(actividadIdInicial)}
             >
               <option value={0}>
                 {selectedLead ? 'Selecciona una actividad' : 'Selecciona primero un lead'}
@@ -172,10 +184,11 @@ export function RecordatorioForm({
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="rec-plantilla" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Plantilla <span className="text-red-500">*</span>
             </label>
             <select
+              id="rec-plantilla"
               {...register('id_plantilla', { valueAsNumber: true })}
               className={inputClass(!!errors.id_plantilla)}
             >
@@ -193,10 +206,11 @@ export function RecordatorioForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <label htmlFor="rec-fecha" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Fecha <span className="text-red-500">*</span>
               </label>
               <input
+                id="rec-fecha"
                 type="date"
                 {...register('fecha_envio')}
                 className={inputClass(!!errors.fecha_envio)}
@@ -206,10 +220,11 @@ export function RecordatorioForm({
               )}
             </div>
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <label htmlFor="rec-hora" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Hora <span className="text-red-500">*</span>
               </label>
               <input
+                id="rec-hora"
                 type="time"
                 {...register('hora_envio')}
                 className={inputClass(!!errors.hora_envio)}
@@ -222,10 +237,11 @@ export function RecordatorioForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="rec-asunto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Asunto <span className="text-red-500">*</span>
           </label>
           <input
+            id="rec-asunto"
             type="text"
             {...register('asunto')}
             className={inputClass(!!errors.asunto)}
@@ -238,7 +254,7 @@ export function RecordatorioForm({
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="rec-cuerpo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Cuerpo del mensaje <span className="text-red-500">*</span>
             </label>
             <span className="text-xs text-gray-400 flex items-center gap-1">
@@ -247,6 +263,7 @@ export function RecordatorioForm({
             </span>
           </div>
           <textarea
+            id="rec-cuerpo"
             rows={8}
             {...register('cuerpo')}
             className={`${inputClass(!!errors.cuerpo)} resize-y font-mono text-xs`}

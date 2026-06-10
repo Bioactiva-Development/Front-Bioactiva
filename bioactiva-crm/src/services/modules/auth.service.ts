@@ -6,7 +6,6 @@ import {
     mockForgotPassword,
     mockValidateToken,
     mockResetPassword,
-    mockActivateAccount,
 } from '@/services/mock/auth.mock'
 import {
     LoginRequest,
@@ -14,8 +13,6 @@ import {
     RefreshResponse,
     ForgotPasswordResponse,
     ResetPasswordResponse,
-    ActivateAccountRequest,
-    ActivateAccountResponse,
     ValidateTokenResponse,
     UsuarioRaw,
 } from '@/types/auth.types'
@@ -43,17 +40,17 @@ const isAppError = (e: unknown): e is AppError =>
     typeof e === 'object' && e !== null
 
 export const authService = {
-    login: async (data: LoginRequest, captchaToken?: string | null): Promise<LoginResponse> => {
+    login: async (data: LoginRequest, _captchaToken?: string | null): Promise<LoginResponse> => {
         if (USE_MOCK) return mockLogin(data)
         const response = await apiClient.post<LoginResponse>(
             ENDPOINTS.auth.login,
-            captchaToken ? { ...data, captchaToken } : data,
+            data,
         )
         return response.data
     },
 
     refresh: async (): Promise<RefreshResponse> => {
-        if (USE_MOCK) throw { status: 501, message: 'No implementado en mock' }
+        if (USE_MOCK) throw Object.assign(new Error('No implementado en mock'), { status: 501 })
         const response = await apiClient.post<RefreshResponse>(
             ENDPOINTS.auth.refresh,
         )
@@ -61,7 +58,7 @@ export const authService = {
     },
 
     getMe: async () => {
-        if (USE_MOCK) throw { status: 501, message: 'No implementado en mock' }
+        if (USE_MOCK) throw Object.assign(new Error('No implementado en mock'), { status: 501 })
         const response = await apiClient.get<UsuarioRaw>(ENDPOINTS.auth.me)
         return mapUsuarioRaw(response.data)
     },
@@ -73,11 +70,11 @@ export const authService = {
      * (anti-enumeración de usuarios). El frontend debe mostrar siempre un
      * mensaje neutral del tipo "Si el correo está registrado, recibirás...".
      */
-    forgotPassword: async (correo: string, captchaToken?: string | null): Promise<ForgotPasswordResponse> => {
+    forgotPassword: async (correo: string, _captchaToken?: string | null): Promise<ForgotPasswordResponse> => {
         if (USE_MOCK) return mockForgotPassword(correo)
         const response = await apiClient.post<{ ok: boolean }>(
             ENDPOINTS.resetPassword.request,
-            captchaToken ? { correo, captchaToken } : { correo },
+            { correo },
         )
         return { ok: response.data?.ok ?? true }
     },
@@ -101,12 +98,14 @@ export const authService = {
             )
             return { valid: true, correo: response.data.correo }
         } catch (err) {
-            const status = isAppError(err) ? err.status : undefined
-            const message = isAppError(err)
-                ? err.message ?? 'El enlace de recuperación no es válido.'
-                : 'El enlace de recuperación no es válido.'
-            if (status === 400) return { valid: false, message }
-            throw err
+            const raw = isAppError(err) ? (err.message ?? '') : ''
+            const isTechnical = !raw || /cannot read|undefined|null|prisma|invocation|property of/i.test(raw)
+            return {
+                valid: false,
+                message: isTechnical
+                    ? 'El enlace de recuperación no es válido o ha expirado.'
+                    : raw,
+            }
         }
     },
 
@@ -121,26 +120,6 @@ export const authService = {
             { token, password, confirmPassword },
         )
         return { ok: response.data?.ok ?? true }
-    },
-
-    /**
-     * Activación de cuenta para usuarios invitados.
-     *
-     * TODO(coord-backend): el módulo correcto en el backend es `invitations`
-     * (no `/auth/activate`). El flujo correcto es:
-     *   1. GET  /invitations/info/:token  → datos de la invitación
-     *   2. POST /invitations/accept       → activa cuenta + define password
-     *
-     * Hasta que se haga el refactor del flujo, este método sigue apuntando al
-     * mock para no romper la UI existente.
-     */
-    activateAccount: async (data: ActivateAccountRequest): Promise<ActivateAccountResponse> => {
-        if (USE_MOCK) return mockActivateAccount(data)
-        const response = await apiClient.post<ActivateAccountResponse>(
-            ENDPOINTS.invitations.accept,
-            data,
-        )
-        return response.data
     },
 
     logout: async (): Promise<void> => {

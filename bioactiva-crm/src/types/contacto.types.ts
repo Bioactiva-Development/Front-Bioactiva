@@ -30,6 +30,7 @@ export interface ContactoFormData {
     telefono?: string
     comentarios?: string
     idOrganizacion: string
+    estado_correo?: EstadoCorreo
 }
 
 export interface ContactoFiltros {
@@ -44,6 +45,7 @@ export interface ContactosResponse {
     total: number
     page: number
     limit: number
+    totalPages: number
 }
 
 export interface LeadResumidoContacto {

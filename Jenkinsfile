@@ -9,11 +9,15 @@ pipeline {
 
         stage('Checkout Repo') {
             steps {
+                cleanWs()
                 checkout scm
             }
         }
 
         stage('Test') {
+            when {
+                branch 'testing'
+            }
             agent {
                 docker {
                     image 'node:22-slim'
@@ -22,38 +26,37 @@ pipeline {
             }
 
             steps {
-                sh '''
-                    cd bioactiva-crm
-                    npm install
-                    npm run test:cov
-                '''
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            agent {
-                docker {
-                    image 'node:22-slim'
-                    reuseNode true
-                    args '-u root'
-                }
-            }
-
-            environment {
-                scannerHome = tool 'SonarScanner'
-            }
-
-            steps {
-                withSonarQubeEnv('SonarQube-Server') {
+                dir('bioactiva-crm') {
                     sh '''
-                        apt-get update && apt-get install -y openjdk-17-jre-headless
-                        ${scannerHome}/bin/sonar-scanner
+                        npm install
+                        npm run test:cov
                     '''
                 }
             }
         }
 
+        stage('SonarQube Analysis') {
+            when {
+                branch 'testing'
+            }
+            agent {
+                docker {
+                    image 'sonarsource/sonar-scanner-cli:latest'
+                    reuseNode true
+                }
+            }
+
+            steps {
+                withSonarQubeEnv('SonarQube-Server') {
+                    sh 'sonar-scanner'
+                }
+            }
+        }
+
         stage('Quality Gate') {
+            when {
+                branch 'testing'
+            }
             steps {
                 timeout(time: 1, unit: 'HOURS') {
                     waitForQualityGate abortPipeline: false
@@ -61,26 +64,55 @@ pipeline {
             }
         }
 
-        stage('Deploy (Docker Compose)') {
+        stage('Deploy Testing (Docker Compose)') {
+            when {
+                branch 'testing'
+            }
             steps {
                 withCredentials([
-                    file(credentialsId: 'BIOACTIVA-SECRETS', variable: 'ENV_FILE')
+                    file(credentialsId: 'BIOACTIVA_SECRETS_FRONTEND_TEST', variable: 'ENV_FILE')
                 ]) {
                     sh '''
-                        rm -f .env
-                        cp "$ENV_FILE" .env
-                        
-                        docker compose \
-                            -p front-bioactiva \
+                        BIOACTIVA_ENV_FILE="$ENV_FILE" docker compose \
+                            -p front-bioactiva-testing \
                             -f docker-compose.yml \
-                            --profile prod \
+                            --env-file "$ENV_FILE" \
+                            --profile testing \
                             down
 
-                        docker compose \
-                            -p front-bioactiva \
+                        BIOACTIVA_ENV_FILE="$ENV_FILE" docker compose \
+                            -p front-bioactiva-testing \
                             -f docker-compose.yml \
-                            --profile prod \
-                            up -d --build bioactiva-frontend-prod
+                            --env-file "$ENV_FILE" \
+                            --profile testing \
+                            up -d --build
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Development (Docker Compose)') {
+            when {
+                branch 'development'
+            }
+            steps {
+                withCredentials([
+                    file(credentialsId: 'BIOACTIVA_SECRETS_FRONTEND_DEV', variable: 'ENV_FILE')
+                ]) {
+                    sh '''
+                        BIOACTIVA_ENV_FILE="$ENV_FILE" docker compose \
+                            -p front-bioactiva-development \
+                            -f docker-compose.yml \
+                            --env-file "$ENV_FILE" \
+                            --profile development \
+                            down
+
+                        BIOACTIVA_ENV_FILE="$ENV_FILE" docker compose \
+                            -p front-bioactiva-development \
+                            -f docker-compose.yml \
+                            --env-file "$ENV_FILE" \
+                            --profile development \
+                            up -d --build
                     '''
                 }
             }

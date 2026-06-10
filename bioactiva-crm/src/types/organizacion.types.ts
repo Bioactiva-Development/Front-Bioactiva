@@ -56,10 +56,13 @@ export interface SunatRucResult {
     ruc: string
     nombre: string
     nombreCompleto?: string
+    tipo?: TipoEmpresa
     ubicacion?: string
     estado?: string
     condicion?: string
     actividades?: string
+    tamano?: TamanoEmpresa
+    sector?: Sector
     _raw?: Record<string, string>
 }
 
@@ -103,7 +106,8 @@ export interface CotizacionResumida {
 }
 
 export interface OrganizacionConRelaciones extends Organizacion {
-  contactos:    ContactoResumido[]
-  leads:        LeadResumido[]
-  cotizaciones: CotizacionResumida[]
+  contactos:      ContactoResumido[]
+  totalContactos: number
+  leads:          LeadResumido[]
+  cotizaciones:   CotizacionResumida[]
 }

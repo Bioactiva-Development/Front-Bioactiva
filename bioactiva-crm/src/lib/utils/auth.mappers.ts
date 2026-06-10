@@ -8,8 +8,6 @@ import { decodeJwt, subToNumber } from './jwt.utils'
  *   0 → Administrador
  *   1 → Trabajador
  *
- * TODO(coord-backend): documentar oficialmente el mapping; si el backend
- * cambia, actualizar aquí.
  */
 export const mapRole = (role: number): RolUsuario => {
     return role === 0 ? RolUsuario.Administrador : RolUsuario.Trabajador

@@ -12,7 +12,7 @@ interface InvitarUsuarioFormProps {
     onClose: () => void
 }
 
-export function InvitarUsuarioForm({ onSubmit, isLoading, error, onClose }: InvitarUsuarioFormProps) {
+export function InvitarUsuarioForm({ onSubmit, isLoading, error, onClose }: Readonly<InvitarUsuarioFormProps>) {
     const { register, handleSubmit, formState: { errors } } = useForm<CreateInvitacionFormValues>({
         resolver: zodResolver(createInvitacionSchema),
         defaultValues: { rol: 1 },
@@ -24,7 +24,13 @@ export function InvitarUsuarioForm({ onSubmit, isLoading, error, onClose }: Invi
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+            <button
+                type="button"
+                className="absolute inset-0 bg-black/40 backdrop-blur-sm cursor-default"
+                onClick={onClose}
+                aria-label="Cerrar modal"
+                tabIndex={-1}
+            />
 
             <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
@@ -48,10 +54,11 @@ export function InvitarUsuarioForm({ onSubmit, isLoading, error, onClose }: Invi
                     )}
 
                     <div className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        <label htmlFor="inv-correo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                             Correo electrónico <span className="text-red-500">*</span>
                         </label>
                         <input
+                            id="inv-correo"
                             type="email"
                             placeholder="usuario@bioactiva.pe"
                             {...register('correo')}
@@ -62,10 +69,11 @@ export function InvitarUsuarioForm({ onSubmit, isLoading, error, onClose }: Invi
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        <label htmlFor="inv-rol" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                             Rol <span className="text-red-500">*</span>
                         </label>
                         <select
+                            id="inv-rol"
                             {...register('rol', { valueAsNumber: true })}
                             className={`w-full px-4 py-2.5 text-gray-900 rounded-xl border text-sm outline-none transition-colors appearance-none cursor-pointer
                                 ${errors.rol ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50 focus:border-emerald-500 focus:bg-white'}`}

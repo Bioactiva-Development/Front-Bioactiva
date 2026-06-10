@@ -21,7 +21,7 @@ const editarPerfilSchema = z.object({
 })
 type EditarPerfilFormValues = z.infer<typeof editarPerfilSchema>
 
-function RolBadge({ rol }: { rol: RolUsuario }) {
+function RolBadge({ rol }: Readonly<{ rol: RolUsuario }>) {
     if (rol === RolUsuario.Administrador) {
         return (
             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 uppercase tracking-wide">
@@ -36,7 +36,7 @@ function RolBadge({ rol }: { rol: RolUsuario }) {
     )
 }
 
-function EstadoBadge({ estado }: { estado: EstadoUsuario }) {
+function EstadoBadge({ estado }: Readonly<{ estado: EstadoUsuario }>) {
     return (
         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide
             ${estado === EstadoUsuario.Activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -47,7 +47,7 @@ function EstadoBadge({ estado }: { estado: EstadoUsuario }) {
 }
 
 // Icono SVG de Microsoft
-function MicrosoftIcon({ size = 20 }: { size?: number }) {
+function MicrosoftIcon({ size = 20 }: Readonly<{ size?: number }>) {
     return (
         <svg width={size} height={size} viewBox="0 0 21 21" fill="none">
             <rect x="1" y="1" width="9" height="9" fill="#F25022" />
@@ -158,13 +158,14 @@ export default function PerfilPage() {
 
                     <form onSubmit={perfilForm.handleSubmit(onGuardarPerfil)} className="space-y-4">
                         <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <label htmlFor="prf-nombre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 Nombre completo
                             </label>
                             <input
+                                id="prf-nombre"
                                 type="text"
                                 {...perfilForm.register('nombre_completo')}
-                                className={`w-full px-4 py-2.5 text-sm text-gray-900 rounded-xl border-2 outline-none transition-colors bg-gray-50
+                                className={`w-full px-4 py-2.5 text-sm text-gray-900 rounded-xl border-2 outline-none transition-colors
                                     ${perfilForm.formState.errors.nombre_completo
                                         ? 'border-red-400 focus:border-red-500'
                                         : 'border-gray-200 focus:border-[#1C7E3C]'}`}
@@ -175,10 +176,11 @@ export default function PerfilPage() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <label htmlFor="prf-correo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 Correo institucional
                             </label>
                             <input
+                                id="prf-correo"
                                 type="email"
                                 value={usuario?.correo ?? ''}
                                 readOnly
@@ -229,15 +231,16 @@ export default function PerfilPage() {
 
                     <form onSubmit={passwordForm.handleSubmit(onCambiarPassword)} className="space-y-4">
                         <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <label htmlFor="prf-password" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 Nueva contraseña
                             </label>
                             <div className="relative">
                                 <input
+                                    id="prf-password"
                                     type={showPassword ? 'text' : 'password'}
                                     placeholder="Mínimo 6 caracteres"
                                     {...passwordForm.register('password')}
-                                    className={`w-full px-4 py-2.5 pr-11 text-sm text-gray-900 placeholder:text-gray-400 rounded-xl border-2 outline-none transition-colors bg-gray-50
+                                    className={`w-full px-4 py-2.5 pr-11 text-sm text-gray-900 placeholder:text-gray-400 rounded-xl border-2 outline-none transition-colors
                                         ${passwordForm.formState.errors.password ? 'border-red-400' : 'border-gray-200 focus:border-[#1C7E3C]'}`}
                                 />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)}
@@ -251,15 +254,16 @@ export default function PerfilPage() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <label htmlFor="prf-confirm" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 Confirmar contraseña
                             </label>
                             <div className="relative">
                                 <input
+                                    id="prf-confirm"
                                     type={showConfirm ? 'text' : 'password'}
                                     placeholder="Repita la contraseña"
                                     {...passwordForm.register('confirmPassword')}
-                                    className={`w-full px-4 py-2.5 pr-11 text-sm text-gray-900 placeholder:text-gray-400 rounded-xl border-2 outline-none transition-colors bg-gray-50
+                                    className={`w-full px-4 py-2.5 pr-11 text-sm text-gray-900 placeholder:text-gray-400 rounded-xl border-2 outline-none transition-colors
                                         ${passwordForm.formState.errors.confirmPassword ? 'border-red-400' : 'border-gray-200 focus:border-[#1C7E3C]'}`}
                                 />
                                 <button type="button" onClick={() => setShowConfirm(!showConfirm)}
@@ -334,7 +338,7 @@ export default function PerfilPage() {
                                         </span>
                                     ) : (
                                         <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />{' '}
                                             No conectado
                                         </span>
                                     )}
@@ -365,7 +369,7 @@ export default function PerfilPage() {
                                         </span>
                                     ) : (
                                         <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />{' '}
                                             No conectado
                                         </span>
                                     )}

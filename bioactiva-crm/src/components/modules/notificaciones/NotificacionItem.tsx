@@ -22,7 +22,7 @@ const formatTiempo = (fecha: string, ahora: number) => {
   return 'Hace un momento'
 }
 
-export function NotificacionAlerta({ notificacion }: NotificacionAlertaProps) {
+export function NotificacionAlerta({ notificacion }: Readonly<NotificacionAlertaProps>) {
   const router = useRouter()
   const { mutateAsync: marcarLeida } = useMarcarLeida()
 
@@ -38,7 +38,10 @@ export function NotificacionAlerta({ notificacion }: NotificacionAlertaProps) {
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={handleClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick() }}
       className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer
         transition-colors
         ${esNoLeida
@@ -80,7 +83,7 @@ interface NotificacionProgramadaItemProps {
 
 export function NotificacionProgramadaItem({
   notificacion,
-}: NotificacionProgramadaItemProps) {
+}: Readonly<NotificacionProgramadaItemProps>) {
   const { mutateAsync: cancelar, isPending } = useCancelarProgramada()
 
   const formatFecha = (fecha: string) =>
@@ -142,7 +145,7 @@ interface NotificacionDropdownProps {
 export function NotificacionDropdown({
   onVerTodas,
   onVerPipeline,
-}: NotificacionDropdownProps) {
+}: Readonly<NotificacionDropdownProps>) {
   return (
     <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl
       shadow-2xl border border-gray-100 z-50 overflow-hidden">

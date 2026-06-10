@@ -1,19 +1,23 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Building2, MapPin,
-  ExternalLink, ArrowLeft, Pencil,
+  ExternalLink, ArrowLeft, Pencil, Trash2,
   FileText, DollarSign, Globe,
   Mail, Phone, Users,
 } from 'lucide-react'
 import { OrganizacionConRelaciones } from '@/types/organizacion.types'
 import { ROUTES } from '@/lib/constants/routes'
 import { TamanoEmpresa } from '@/types/enums'
+import { formatSector, formatTamano } from '@/lib/utils/organizacion.utils'
 
 interface OrganizacionDetalleProps {
   organizacion: OrganizacionConRelaciones
   onEditar:     () => void
+  onEliminar?:  () => void
+  eliminando?:  boolean
 }
 
 const TAMANO_COLORS: Record<TamanoEmpresa, string> = {
@@ -41,11 +45,11 @@ function InfoItem({
   icono,
   label,
   valor,
-}: {
+}: Readonly<{
   icono:  React.ReactNode
   label:  string
   valor?: string
-}) {
+}>) {
   if (!valor) return null
   return (
     <div className="flex items-start gap-3">
@@ -66,12 +70,14 @@ function InfoItem({
 export function OrganizacionDetalle({
   organizacion,
   onEditar,
-}: OrganizacionDetalleProps) {
-  const router        = useRouter()
-  const inicial       = organizacion.nombre.charAt(0).toUpperCase()
-  const MAX_CONTACTOS = 6
-  const contactosVisibles  = organizacion.contactos.slice(0, MAX_CONTACTOS)
-  const contactosRestantes = organizacion.contactos.length - MAX_CONTACTOS
+  onEliminar,
+  eliminando = false,
+}: Readonly<OrganizacionDetalleProps>) {
+  const router                              = useRouter()
+  const [confirmarEliminar, setConfirmarEliminar]   = useState(false)
+  const inicial                             = organizacion.nombre.charAt(0).toUpperCase()
+  const contactosVisibles  = organizacion.contactos
+  const contactosRestantes = organizacion.totalContactos - organizacion.contactos.length
 
   const formatFecha = (fecha: string) => {
     return new Date(fecha).toLocaleDateString('es-PE', {
@@ -121,11 +127,11 @@ export function OrganizacionDetalle({
                 </span>
                 <span className={`text-xs px-2.5 py-1 rounded-lg font-bold uppercase
                   tracking-wide ${TAMANO_COLORS[organizacion.tamano]}`}>
-                  {organizacion.tamano}
+                  {formatTamano(organizacion.tamano)}
                 </span>
                 <span className="text-xs bg-emerald-50 text-emerald-600 px-2.5 py-1
                   rounded-lg font-medium">
-                  {organizacion.sector}
+                  {formatSector(organizacion.sector)}
                   {organizacion.actividad_economica && ` / ${organizacion.actividad_economica}`}
                 </span>
                 {organizacion.ubicacion && (
@@ -138,7 +144,7 @@ export function OrganizacionDetalle({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => router.push(ROUTES.organizaciones)}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
@@ -148,6 +154,43 @@ export function OrganizacionDetalle({
               <ArrowLeft size={14} />
               Volver a Organizaciones
             </button>
+
+            {onEliminar && !confirmarEliminar && (
+              <button
+                onClick={() => setConfirmarEliminar(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
+                  text-red-500 hover:text-red-700 hover:bg-red-50
+                  border border-red-200 transition-colors"
+              >
+                <Trash2 size={14} />
+                Eliminar
+              </button>
+            )}
+
+            {onEliminar && confirmarEliminar && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-red-600 font-semibold">
+                  ¿Confirmar eliminación?
+                </span>
+                <button
+                  onClick={onEliminar}
+                  disabled={eliminando}
+                  className="px-3 py-2 rounded-xl text-xs font-bold text-white
+                    bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors"
+                >
+                  {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
+                </button>
+                <button
+                  onClick={() => setConfirmarEliminar(false)}
+                  disabled={eliminando}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold text-gray-600
+                    hover:bg-gray-100 border border-gray-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
+
             <button
               onClick={onEditar}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
@@ -167,14 +210,14 @@ export function OrganizacionDetalle({
             <Users size={16} className="text-emerald-600" />
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
               Contactos asociados
-              {organizacion.contactos.length > 0 && (
+              {organizacion.totalContactos > 0 && (
                 <span className="ml-2 text-emerald-600">
-                  ({organizacion.contactos.length})
+                  ({organizacion.totalContactos})
                 </span>
               )}
             </h3>
           </div>
-          {organizacion.contactos.length > 0 && (
+          {organizacion.totalContactos > 0 && (
             <button
               onClick={() => router.push(
                 `${ROUTES.contactos}?organizacion=${organizacion.id}`
@@ -182,7 +225,7 @@ export function OrganizacionDetalle({
               className="text-xs text-emerald-600 hover:underline font-semibold
                 flex items-center gap-1"
             >
-              Ver todos ({organizacion.contactos.length}) en Contactos
+              Ver todos ({organizacion.totalContactos}) en Contactos
               <ExternalLink size={10} />
             </button>
           )}
@@ -207,10 +250,12 @@ export function OrganizacionDetalle({
               {contactosVisibles.map((contacto) => {
                 const inicialesContacto = `${contacto.nombres.charAt(0)}${contacto.apellidos.charAt(0)}`.toUpperCase()
                 return (
-                  <div
+                  <button
                     key={contacto.id}
-                    className="border border-gray-100 rounded-xl p-4 hover:border-emerald-200
-                      hover:bg-emerald-50/30 transition-colors"
+                    type="button"
+                    className="w-full text-left border border-gray-100 rounded-xl p-4
+                      hover:border-emerald-200 hover:bg-emerald-50/30 transition-colors"
+                    onClick={() => router.push(ROUTES.contacto(contacto.id))}
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center
@@ -241,7 +286,7 @@ export function OrganizacionDetalle({
                         </p>
                       )}
                     </div>
-                  </div>
+                  </button>
                 )
               })}
             </div>
@@ -292,11 +337,12 @@ export function OrganizacionDetalle({
         ) : (
           <div className="space-y-2">
             {organizacion.leads.map((lead) => (
-              <div
+              <button
                 key={lead.id}
-                className="flex items-center justify-between p-4 border border-gray-100
-                  rounded-xl hover:border-emerald-200 hover:bg-emerald-50/30
-                  transition-colors cursor-pointer"
+                type="button"
+                className="w-full text-left flex items-center justify-between p-4
+                  border border-gray-100 rounded-xl hover:border-emerald-200
+                  hover:bg-emerald-50/30 transition-colors"
                 onClick={() => router.push(ROUTES.lead(lead.id))}
               >
                 <div>
@@ -316,7 +362,7 @@ export function OrganizacionDetalle({
                     {formatFecha(lead.created_at)}
                   </span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -361,7 +407,7 @@ export function OrganizacionDetalle({
                 </div>
 
                 <div className="flex items-center gap-2 mb-4">
-                  {cot.id && (
+                  {!!cot.id && (
                     <span className="text-xs text-gray-400 font-mono">
                       COT-{String(cot.id).padStart(3, '0')}
                     </span>

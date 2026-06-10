@@ -1,7 +1,7 @@
 import { RolUsuario, EstadoUsuario, TokenPurpose, EstadoToken } from '@/types/enums'
 import {
     LoginRequest, LoginResponse, ForgotPasswordResponse, ResetPasswordResponse,
-    ActivateAccountRequest, ActivateAccountResponse, ValidateTokenResponse, Usuario,
+    ValidateTokenResponse, Usuario,
 } from '@/types/auth.types'
 import { useAuthStore } from '@/store/auth.store'
 
@@ -71,15 +71,15 @@ export const mockLogin = async (data: LoginRequest): Promise<LoginResponse> => {
     const usuario = MOCK_USUARIOS.find((u) => u.correo === data.correo)
 
     if (!usuario) {
-        throw { status: 404, message: 'Usuario no autorizado o no registrado.' }
+        throw Object.assign(new Error('Usuario no autorizado o no registrado.'), { status: 404 })
     }
 
     if (usuario.estado === EstadoUsuario.Inactivo) {
-        throw { status: 403, message: 'Usuario deshabilitado. Contacte al administrador.' }
+        throw Object.assign(new Error('Usuario deshabilitado. Contacte al administrador.'), { status: 403 })
     }
 
     if (usuario.estado === EstadoUsuario.Pendiente) {
-        throw { status: 403, message: 'Cuenta pendiente de activación.' }
+        throw Object.assign(new Error('Cuenta pendiente de activación.'), { status: 403 })
     }
 
     const passwordsValidas: Record<string, string> = {
@@ -88,7 +88,7 @@ export const mockLogin = async (data: LoginRequest): Promise<LoginResponse> => {
     }
 
     if (passwordsValidas[data.correo] !== data.password) {
-        throw { status: 401, message: 'Correo o contraseña incorrectos.' }
+        throw Object.assign(new Error('Correo o contraseña incorrectos.'), { status: 401 })
     }
 
     const accessToken = `mock-jwt-token-${usuario.id}-${Date.now()}`
@@ -104,7 +104,7 @@ function ofuscarCorreo(correo: string): string {
     if (local.length <= 2) {
         ofuscado = local[0] + '*'
     } else {
-        ofuscado = local[0] + '*'.repeat(local.length - 2) + local[local.length - 1]
+        ofuscado = local[0] + '*'.repeat(local.length - 2) + local.at(-1)
     }
     return `${ofuscado}@${domain}`
 }
@@ -120,13 +120,13 @@ export const mockValidateToken = async (token: string): Promise<ValidateTokenRes
     const mockToken = MOCK_TOKENS.find((t) => t.token === token)
 
     if (!mockToken || mockToken.estado === EstadoToken.Consumido) {
-        throw { status: 400, message: 'Token de restablecimiento de contraseña inválido o ya utilizado.' }
+        throw Object.assign(new Error('Token de restablecimiento de contraseña inválido o ya utilizado.'), { status: 400 })
     }
 
     const ahora = new Date()
     const expiracion = new Date(mockToken.expires_at)
     if (ahora > expiracion || mockToken.estado === EstadoToken.Expirado) {
-        throw { status: 400, message: 'El token de restablecimiento de contraseña ha expirado.' }
+        throw Object.assign(new Error('El token de restablecimiento de contraseña ha expirado.'), { status: 400 })
     }
 
     return { valid: true, correo: ofuscarCorreo(mockToken.correo) }
@@ -137,47 +137,11 @@ export const mockResetPassword = async (token: string, _password: string): Promi
 
     const mockToken = MOCK_TOKENS.find((t) => t.token === token)
 
-    if (!mockToken || mockToken.estado !== EstadoToken.Pendiente) {
-        throw { status: 400, message: 'Token de restablecimiento de contraseña inválido o ya utilizado.' }
+    if (mockToken?.estado !== EstadoToken.Pendiente) {
+        throw Object.assign(new Error('Token de restablecimiento de contraseña inválido o ya utilizado.'), { status: 400 })
     }
 
     mockToken.estado = EstadoToken.Consumido
     return { ok: true }
 }
 
-export const mockActivateAccount = async (data: ActivateAccountRequest): Promise<ActivateAccountResponse> => {
-    await delay()
-    const mockToken = MOCK_TOKENS.find((t) => t.token === data.token)
-
-    if (!mockToken || mockToken.estado !== EstadoToken.Pendiente) {
-        throw { status: 400, message: 'El enlace de activación no es válido o ya fue utilizado.' }
-    }
-
-    const ahora = new Date()
-    const expiracion = new Date(mockToken.expires_at)
-
-    if (ahora > expiracion) {
-        throw {
-            status: 400,
-            message: 'El tiempo para definir las credenciales venció. Solicite un nuevo correo.',
-        }
-    }
-
-    mockToken.estado = EstadoToken.Consumido
-
-    const nuevoUsuario: Usuario = {
-        id: Date.now(),
-        nombres: data.nombres,
-        apellidos: data.apellidos,
-        correo: mockToken.correo,
-        rol: RolUsuario.Trabajador,
-        estado: EstadoUsuario.Activo,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-    }
-
-    return {
-        message: 'Cuenta activada correctamente.',
-        usuario: nuevoUsuario,
-    }
-}

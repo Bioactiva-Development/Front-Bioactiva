@@ -3,11 +3,19 @@
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Pencil, ExternalLink,
-  Printer, Mail, DollarSign,
+  Printer, Send, CheckCircle2, XCircle, Loader2,
+  DollarSign,
 } from 'lucide-react'
 import { Cotizacion } from '@/types/cotizacion.types'
 import { EstadoCot, TipoMoneda } from '@/types/enums'
 import { ROUTES } from '@/lib/constants/routes'
+import {
+  useEnviarCotizacion,
+  useAceptarCotizacion,
+  useRechazarCotizacion,
+} from '@/hooks/cotizaciones/useCotizaciones'
+import { getErrorMessage } from '@/lib/utils/error.utils'
+import { useState } from 'react'
 
 interface CotizacionDetalleProps {
   cotizacion: Cotizacion
@@ -15,19 +23,13 @@ interface CotizacionDetalleProps {
 }
 
 const ESTADO_COLORS: Record<EstadoCot, string> = {
-  [EstadoCot.Pendiente]:  'bg-gray-100 text-gray-600',
-  [EstadoCot.Enviada]:    'bg-blue-50 text-blue-700',
-  [EstadoCot.Aceptada]:   'bg-emerald-50 text-emerald-700',
-  [EstadoCot.Rechazada]:  'bg-red-50 text-red-600',
+  [EstadoCot.Pendiente]: 'bg-gray-100 text-gray-600',
+  [EstadoCot.Enviada]:   'bg-blue-50 text-blue-700',
+  [EstadoCot.Aceptada]:  'bg-emerald-50 text-emerald-700',
+  [EstadoCot.Rechazada]: 'bg-red-50 text-red-600',
 }
 
-function InfoItem({
-  label,
-  valor,
-}: {
-  label: string
-  valor?: string
-}) {
+function InfoItem({ label, valor }: Readonly<{ label: string; valor?: string | null }>) {
   if (!valor) return null
   return (
     <div>
@@ -39,31 +41,46 @@ function InfoItem({
   )
 }
 
-export function CotizacionDetalle({
-  cotizacion,
-  onEditar,
-}: CotizacionDetalleProps) {
-  const router = useRouter()
+export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionDetalleProps>) {
+  const router  = useRouter()
+  const [accionError, setAccionError] = useState<string | null>(null)
+
+  const { mutateAsync: enviar,   isPending: enviando }   = useEnviarCotizacion()
+  const { mutateAsync: aceptar,  isPending: aceptando }  = useAceptarCotizacion()
+  const { mutateAsync: rechazar, isPending: rechazando } = useRechazarCotizacion()
+
+  const anyPending   = enviando || aceptando || rechazando
+  const esTerminal   = cotizacion.estado === EstadoCot.Aceptada ||
+                       cotizacion.estado === EstadoCot.Rechazada
+  const esPendiente  = cotizacion.estado === EstadoCot.Pendiente
+  const esEnviada    = cotizacion.estado === EstadoCot.Enviada
+
+  const handleAccion = async (fn: () => Promise<unknown>) => {
+    try {
+      setAccionError(null)
+      await fn()
+    } catch (err) {
+      setAccionError(getErrorMessage(err))
+    }
+  }
 
   const formatMonto = (monto: number, tipo: TipoMoneda) => {
     const simbolo = tipo === TipoMoneda.Soles ? 'S/' : '$'
-    return `${simbolo} ${monto.toLocaleString('es-PE', {
-      minimumFractionDigits: 2,
-    })}`
+    return `${simbolo} ${monto.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
   }
 
   const formatFecha = (fecha: string) =>
     new Date(fecha).toLocaleDateString('es-PE', {
-      day:   '2-digit',
-      month: 'long',
-      year:  'numeric',
+      day: '2-digit', month: 'long', year: 'numeric',
     })
 
   return (
     <div className="space-y-6">
 
+      {/* Header */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-start justify-between flex-wrap gap-4">
+
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push(ROUTES.cotizaciones)}
@@ -83,7 +100,7 @@ export function CotizacionDetalle({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl font-bold text-emerald-600">
-                  {cotizacion.codigo}
+                  {cotizacion.codigo ?? `COT-${cotizacion.id}`}
                 </h1>
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-lg
                   uppercase tracking-wide ${ESTADO_COLORS[cotizacion.estado]}`}>
@@ -96,7 +113,7 @@ export function CotizacionDetalle({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => window.print()}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
@@ -106,69 +123,124 @@ export function CotizacionDetalle({
               <Printer size={14} />
               Imprimir
             </button>
-            <button
-              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
-                text-gray-500 hover:text-emerald-600 hover:bg-emerald-50
-                border border-gray-200 transition-colors"
-            >
-              <Mail size={14} />
-              Enviar
-            </button>
-            <button
-              onClick={onEditar}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
-                font-semibold bg-emerald-600 hover:bg-emerald-700
-                text-white transition-colors"
-            >
-              <Pencil size={14} />
-              Editar
-            </button>
+
+            {!esTerminal && (
+              <button
+                onClick={onEditar}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
+                  font-semibold border border-emerald-600 text-emerald-600
+                  hover:bg-emerald-50 transition-colors"
+              >
+                <Pencil size={14} />
+                Editar
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Acciones de ciclo de vida */}
+        {!esTerminal && (
+          <div className="mt-4 pt-4 border-t border-gray-50 space-y-3">
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
+              Avanzar estado
+            </p>
+
+            {accionError && (
+              <div className="bg-red-50 border border-red-200 text-red-700
+                text-xs rounded-xl px-3 py-2">
+                {accionError}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 flex-wrap">
+              {esPendiente && (
+                <button
+                  onClick={() => handleAccion(() => enviar(cotizacion.id))}
+                  disabled={anyPending}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
+                    font-semibold text-blue-600 border border-blue-200
+                    hover:bg-blue-50 transition-colors
+                    disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {enviando
+                    ? <Loader2 size={14} className="animate-spin" />
+                    : <Send size={14} />
+                  }
+                  Marcar como enviada
+                </button>
+              )}
+
+              {(esPendiente || esEnviada) && (
+                <>
+                  <button
+                    onClick={() => handleAccion(() => aceptar(cotizacion.id))}
+                    disabled={anyPending}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
+                      font-semibold text-emerald-700 border border-emerald-300
+                      hover:bg-emerald-50 transition-colors
+                      disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {aceptando
+                      ? <Loader2 size={14} className="animate-spin" />
+                      : <CheckCircle2 size={14} />
+                    }
+                    Aceptar
+                  </button>
+
+                  <button
+                    onClick={() => handleAccion(() => rechazar(cotizacion.id))}
+                    disabled={anyPending}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
+                      font-semibold text-red-600 border border-red-200
+                      hover:bg-red-50 transition-colors
+                      disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {rechazando
+                      ? <Loader2 size={14} className="animate-spin" />
+                      : <XCircle size={14} />
+                    }
+                    Rechazar
+                  </button>
+                </>
+              )}
+            </div>
+
+            {(cotizacion.estado === EstadoCot.Aceptada ||
+              cotizacion.estado === EstadoCot.Rechazada) && (
+              <p className="text-xs text-gray-400 italic">
+                Esta cotización está en estado terminal y no puede modificarse.
+              </p>
+            )}
+          </div>
+        )}
+
+        {esTerminal && (
+          <div className="mt-4 pt-4 border-t border-gray-50">
+            <p className="text-xs text-gray-400 italic">
+              Esta cotización está en estado terminal y no puede modificarse.
+            </p>
+          </div>
+        )}
       </div>
 
+      {/* Detalle */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
             Datos de la cotización
           </h3>
-
           <div className="grid grid-cols-2 gap-4">
-            <InfoItem
-              label="Código"
-              valor={cotizacion.codigo}
-            />
-            <InfoItem
-              label="Lead asociado"
-              valor={cotizacion.lead_codigo ?? `#${cotizacion.id_lead}`}
-            />
-            <InfoItem
-              label="Fecha"
-              valor={formatFecha(cotizacion.fecha_cot)}
-            />
-            <InfoItem
-              label="Periodo"
-              valor={cotizacion.periodo}
-            />
-            <InfoItem
-              label="Dirigido a"
-              valor={cotizacion.dirigido}
-            />
-            <InfoItem
-              label="Cliente"
-              valor={cotizacion.cliente}
-            />
-            <InfoItem
-              label="Producto"
-              valor={cotizacion.producto}
-            />
-            <InfoItem
-              label="Remitente"
-              valor={cotizacion.nombre_remitente}
-            />
+            <InfoItem label="Fecha"     valor={formatFecha(cotizacion.fecha_cot)} />
+            <InfoItem label="Lead"      valor={`#${cotizacion.id_lead}`} />
+            <InfoItem label="Dirigido"  valor={cotizacion.dirigido} />
+            <InfoItem label="Cliente"   valor={cotizacion.cliente ?? undefined} />
+            <InfoItem label="Producto"  valor={cotizacion.producto ?? undefined} />
+            <InfoItem label="Remitente" valor={cotizacion.nombre_remitente} />
+            {cotizacion.contacto_nombre && (
+              <InfoItem label="Contacto" valor={cotizacion.contacto_nombre} />
+            )}
           </div>
-
           <div className="pt-2 border-t border-gray-50">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">
               Nombre del servicio
@@ -208,8 +280,7 @@ export function CotizacionDetalle({
                 href={cotizacion.link_propuesta}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-emerald-600
-                  hover:underline"
+                className="flex items-center gap-2 text-sm text-emerald-600 hover:underline"
               >
                 <ExternalLink size={14} />
                 Ver propuesta
@@ -221,3 +292,4 @@ export function CotizacionDetalle({
     </div>
   )
 }
+

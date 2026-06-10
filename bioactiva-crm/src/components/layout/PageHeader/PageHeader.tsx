@@ -4,7 +4,7 @@ interface PageHeaderProps {
     acciones?: React.ReactNode
 }
 
-export function PageHeader({ titulo, descripcion, acciones }: PageHeaderProps) {
+export function PageHeader({ titulo, descripcion, acciones }: Readonly<PageHeaderProps>) {
     return (
         <div className="flex items-start justify-between mb-6">
             <div>

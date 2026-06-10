@@ -96,7 +96,7 @@ export function Sidebar() {
         fixed top-0 left-0 h-full z-40 flex flex-col
         bg-white border-r border-gray-100 shadow-sm
         transition-all duration-300
-        ${sidebarCollapsed ? 'w-16' : 'w-60'}
+        ${sidebarCollapsed ? 'w-16' : 'w-52'}
       `}
     >
       <button
@@ -132,7 +132,7 @@ export function Sidebar() {
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3 space-y-0.5">
         {itemsVisibles.map((item) => {
           const isActive = pathname === item.href ||
             (item.href !== ROUTES.dashboard && pathname.startsWith(item.href))
@@ -178,7 +178,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-gray-100 p-2">
+      <div className="border-t border-gray-100 p-3">
         <button
           onClick={logout}
           className={`

@@ -40,7 +40,7 @@ export function PreviewTabla({
     onConfirmar,
     onVolver,
     isLoading,
-}: PreviewTablaProps) {
+}: Readonly<PreviewTablaProps>) {
     const tieneErrores = preview.conflictos.some(c => c.tipo === 'error')
     const tieneConflictosSalvables = preview.conflictos.some(c => c.tipo !== 'error')
     const puedeConfirmar = !tieneErrores || omitirConflictos
@@ -73,7 +73,7 @@ export function PreviewTabla({
                         {preview.conflictos.map((c, i) => {
                             const style = CONFLICTO_STYLES[c.tipo]
                             return (
-                                <div key={i} className={`flex items-start gap-2 border rounded-lg px-3 py-2 text-xs ${style.bg} ${style.text}`}>
+                                <div key={`${c.fila}-${c.campo}`} className={`flex items-start gap-2 border rounded-lg px-3 py-2 text-xs ${style.bg} ${style.text}`}>
                                     {style.icon}
                                     <span>
                                         <span className="font-semibold">Fila {c.fila} · {c.campo}:</span>{' '}
@@ -109,7 +109,7 @@ export function PreviewTabla({
                                 const tieneConflicto = filasConConflicto.has(rowIdx)
                                 return (
                                     <tr
-                                        key={rowIdx}
+                                        key={`row-${rowIdx + 1}`}
                                         className={`border-b border-gray-100 last:border-0 ${tieneConflicto ? 'bg-red-50' : 'hover:bg-gray-50'}`}
                                     >
                                         <td className={`px-3 py-2 font-medium ${tieneConflicto ? 'text-red-500' : 'text-gray-400'}`}>

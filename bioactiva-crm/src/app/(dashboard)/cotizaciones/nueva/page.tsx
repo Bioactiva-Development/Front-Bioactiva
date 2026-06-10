@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
 import { CotizacionForm } from '@/components/modules/cotizaciones/CotizacionForm'
 import { useCrearCotizacion } from '@/hooks/cotizaciones/useCotizaciones'
 import { CotizacionFormValues } from '@/lib/validators/cotizacion.schema'
@@ -19,6 +18,14 @@ function NuevaCotizacionContent() {
   const [error, setError]     = useState<string | null>(null)
 
   const { mutateAsync: crear, isPending } = useCrearCotizacion()
+
+  useEffect(() => {
+    if (!leadIdInicial) {
+      router.replace(ROUTES.pipeline)
+    }
+  }, [leadIdInicial, router])
+
+  if (!leadIdInicial) return null
 
   const handleSubmit = async (data: CotizacionFormValues) => {
     try {

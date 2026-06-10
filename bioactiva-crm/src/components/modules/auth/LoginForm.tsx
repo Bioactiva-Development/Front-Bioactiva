@@ -67,10 +67,11 @@ export function LoginForm() {
 
                     <form onSubmit={handleSubmit(onSubmit)} method="post" className="space-y-5">
                         <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <label htmlFor="lf-correo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 Correo electrónico
                             </label>
                             <input
+                                id="lf-correo"
                                 type="email"
                                 autoComplete="email"
                                 placeholder="correo@bioactiva.pe"
@@ -87,11 +88,12 @@ export function LoginForm() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            <label htmlFor="lf-password" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 Contraseña
                             </label>
                             <div className="relative">
                                 <input
+                                    id="lf-password"
                                     type={showPassword ? 'text' : 'password'}
                                     autoComplete="current-password"
                                     placeholder="••••••••"

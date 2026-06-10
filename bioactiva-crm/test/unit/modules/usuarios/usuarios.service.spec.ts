@@ -52,7 +52,6 @@ describe('usuarios/usuarios.service (API mode)', () => {
       expect(result.usuarios).toHaveLength(1)
       expect(result.usuarios[0].rol).toBe(RolUsuario.Administrador)
       expect(result.usuarios[0].estado).toBe(EstadoUsuario.Activo)
-      expect(result.usuarios[0].ultimo_acceso).toBe('Hace 11 min')
     })
 
     it('handles { data: [...], meta: { total } } response shape', async () => {
@@ -155,7 +154,7 @@ describe('usuarios/usuarios.service (API mode)', () => {
 
   describe('editar', () => {
     it('PUTs to correct endpoint', async () => {
-      putMock.mockResolvedValueOnce({ data: { id: 1 } })
+      patchMock.mockResolvedValueOnce({ data: { id: 1 } })
 
       const result = await usuariosService.editar({
         id: 1,
@@ -164,7 +163,7 @@ describe('usuarios/usuarios.service (API mode)', () => {
         rol: RolUsuario.Administrador,
       })
 
-      expect(putMock).toHaveBeenCalledWith('/users/1', {
+      expect(patchMock).toHaveBeenCalledWith('/users/1', {
         id: 1,
         nombre_completo: 'Admin User',
         correo: 'admin@bioactiva.pe',
@@ -186,24 +185,22 @@ describe('usuarios/usuarios.service (API mode)', () => {
   })
 
   describe('deshabilitar', () => {
-    it('PATCHes to disable endpoint', async () => {
-      patchMock.mockResolvedValueOnce({ data: { id: 1, estado: 'Inactivo' } })
+    it('PATCHes to disable endpoint and returns void', async () => {
+      patchMock.mockResolvedValueOnce({ data: undefined })
 
-      const result = await usuariosService.deshabilitar(1)
+      await usuariosService.deshabilitar(1)
 
       expect(patchMock).toHaveBeenCalledWith('/users/1/disable')
-      expect(result.estado).toBe('Inactivo')
     })
   })
 
   describe('habilitar', () => {
-    it('PATCHes to enable endpoint', async () => {
-      patchMock.mockResolvedValueOnce({ data: { id: 1, estado: 'Activo' } })
+    it('PATCHes to enable endpoint and returns void', async () => {
+      patchMock.mockResolvedValueOnce({ data: undefined })
 
-      const result = await usuariosService.habilitar(1)
+      await usuariosService.habilitar(1)
 
       expect(patchMock).toHaveBeenCalledWith('/users/1/enable')
-      expect(result.estado).toBe('Activo')
     })
   })
 
@@ -213,9 +210,9 @@ describe('usuarios/usuarios.service (API mode)', () => {
       correo: 'nuevo@bioactiva.pe',
       rol: 2,
       estado: 0,
-      expired_at: '2025-06-03T00:00:00Z',
+      expired_at: '2027-06-03T00:00:00Z',
       consumed_at: null,
-      created_at: '2025-05-27T00:00:00Z',
+      created_at: '2027-05-27T00:00:00Z',
     }
 
     it('fetches and normalizes invitations from flat array', async () => {
@@ -272,7 +269,7 @@ describe('usuarios/usuarios.service (API mode)', () => {
 
       const result = await usuariosService.listInvitaciones()
 
-      expect(result.data[0].expires_at).toBe('2025-06-03T00:00:00Z')
+      expect(result.data[0].expires_at).toBe('2027-06-03T00:00:00Z')
     })
   })
 
@@ -319,7 +316,7 @@ describe('usuarios/usuarios.service (API mode)', () => {
 
   describe('acceptInvitacion', () => {
     it('POSTs to correct endpoint', async () => {
-      postMock.mockResolvedValueOnce({ data: { message: 'Cuenta activada correctamente.' } })
+      postMock.mockResolvedValueOnce({ data: { accessToken: 'jwt-abc', accessTokenExpiresIn: 900 } })
 
       const result = await usuariosService.acceptInvitacion({
         token: 't',
@@ -336,7 +333,7 @@ describe('usuarios/usuarios.service (API mode)', () => {
         nombres: 'Juan',
         apellidos: 'Pérez',
       })
-      expect(result.message).toBe('Cuenta activada correctamente.')
+      expect(result.accessToken).toBe('jwt-abc')
     })
   })
 })

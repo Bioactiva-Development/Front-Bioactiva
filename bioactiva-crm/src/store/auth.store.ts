@@ -8,8 +8,8 @@ interface AuthStore extends AuthState {
     _hasHydrated: boolean
     _setHasHydrated: (value: boolean) => void
 
-    setSession: (accessToken: string, usuario: Usuario) => void
-    updateToken: (accessToken: string) => void
+    setSession: (accessToken: string, usuario: Usuario, expiresIn?: number) => void
+    updateToken: (accessToken: string, expiresIn?: number) => void
     clearSession: () => void
     setLoading: (isLoading: boolean) => void
 
@@ -22,39 +22,45 @@ export const useAuthStore = create<AuthStore>()(
         (set, get) => ({
             usuario: null,
             accessToken: null,
+            tokenExpiresAt: null,
             isAuthenticated: false,
             isLoading: false,
             _hasHydrated: false,
 
             _setHasHydrated: (value) => set({ _hasHydrated: value }),
 
-            setSession: (accessToken, usuario) => {
-                if (typeof window !== 'undefined') {
+            setSession: (accessToken, usuario, expiresIn) => {
+                if (globalThis.window !== undefined) {
                     localStorage.setItem(TOKEN_KEY, accessToken)
                     localStorage.setItem(USER_KEY, JSON.stringify(usuario))
                 }
                 set({
                     accessToken,
                     usuario,
+                    tokenExpiresAt: expiresIn ? Date.now() + expiresIn * 1000 : null,
                     isAuthenticated: true,
                     isLoading: false,
                 })
             },
 
-            updateToken: (accessToken) => {
-                if (typeof window !== 'undefined') {
+            updateToken: (accessToken, expiresIn) => {
+                if (globalThis.window !== undefined) {
                     localStorage.setItem(TOKEN_KEY, accessToken)
                 }
-                set({ accessToken })
+                set({
+                    accessToken,
+                    tokenExpiresAt: expiresIn ? Date.now() + expiresIn * 1000 : null,
+                })
             },
 
             clearSession: () => {
-                if (typeof window !== 'undefined') {
+                if (globalThis.window !== undefined) {
                     localStorage.removeItem(TOKEN_KEY)
                     localStorage.removeItem(USER_KEY)
                 }
                 set({
                     accessToken: null,
+                    tokenExpiresAt: null,
                     usuario: null,
                     isAuthenticated: false,
                     isLoading: false,
@@ -69,6 +75,7 @@ export const useAuthStore = create<AuthStore>()(
             name: 'bioactiva-auth',
             partialize: (state) => ({
                 accessToken: state.accessToken,
+                tokenExpiresAt: state.tokenExpiresAt,
                 usuario: state.usuario,
                 isAuthenticated: state.isAuthenticated,
             }),

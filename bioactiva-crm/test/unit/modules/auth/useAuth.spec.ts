@@ -83,7 +83,7 @@ describe('security/useAuth', () => {
     expect(authServiceMock.login).toHaveBeenCalledWith({
       correo: 'admin@bioactiva.pe',
       password: 'Secret123!',
-    })
+    }, undefined)
     expect(pushMock).toHaveBeenCalledWith('/dashboard')
   })
 
@@ -96,7 +96,7 @@ describe('security/useAuth', () => {
       await result.current.forgotPassword({ correo: 'admin@bioactiva.pe' })
     })
 
-    expect(authServiceMock.forgotPassword).toHaveBeenCalledWith('admin@bioactiva.pe')
+    expect(authServiceMock.forgotPassword).toHaveBeenCalledWith('admin@bioactiva.pe', undefined)
     expect(result.current.success).toBe(
       'Si el correo está registrado en el sistema, recibirás un enlace de recuperación en los próximos minutos.'
     )
@@ -183,56 +183,6 @@ describe('security/useAuth', () => {
     jest.useRealTimers()
   })
 
-  it('activates account successfully and shows success message', async () => {
-    authServiceMock.activateAccount.mockResolvedValueOnce({
-      message: 'Cuenta activada correctamente.',
-      usuario: usuarioAdmin,
-    })
-    jest.useFakeTimers()
-
-    const { result } = renderHook(() => useAuth())
-
-    await act(async () => {
-      await result.current.activateAccount('token-abc', {
-        nombres: 'Maria',
-        apellidos: 'Torres',
-        password: 'Secret123!',
-        confirmPassword: 'Secret123!',
-      })
-    })
-
-    expect(authServiceMock.activateAccount).toHaveBeenCalledWith({
-      token: 'token-abc',
-      nombres: 'Maria',
-      apellidos: 'Torres',
-      password: 'Secret123!',
-      confirmPassword: 'Secret123!',
-    })
-    expect(result.current.success).toBe('Cuenta activada correctamente. Redirigiendo...')
-
-    act(() => { jest.advanceTimersByTime(2000) })
-    expect(pushMock).toHaveBeenCalledWith(ROUTES.auth.login)
-
-    jest.useRealTimers()
-  })
-
-  it('handles activate account error', async () => {
-    authServiceMock.activateAccount.mockRejectedValueOnce({ message: 'El enlace ya expiró' })
-
-    const { result } = renderHook(() => useAuth())
-
-    await act(async () => {
-      await result.current.activateAccount('expired-token', {
-        nombres: 'Maria',
-        apellidos: 'Torres',
-        password: 'Secret123!',
-        confirmPassword: 'Secret123!',
-      })
-    })
-
-    expect(result.current.error).toBe('El enlace ya expiró')
-  })
-
   it('exposes auth state from store', () => {
     useAuthStore.setState({
       usuario: usuarioAdmin,
@@ -273,5 +223,36 @@ describe('security/useAuth', () => {
     })
 
     expect(result.current.error).toBe('Error de red')
+  })
+
+  it('handles login error that is an Error instance', async () => {
+    authServiceMock.login.mockRejectedValueOnce(new Error('Network failure'))
+
+    const { result } = renderHook(() => useAuth())
+
+    await act(async () => {
+      await result.current.login({
+        correo: 'admin@bioactiva.pe',
+        password: 'Secret123!',
+      })
+    })
+
+    expect(result.current.error).toBe('Network failure')
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
+  })
+
+  it('uses fallback message when login error is a primitive', async () => {
+    authServiceMock.login.mockRejectedValueOnce('raw string error')
+
+    const { result } = renderHook(() => useAuth())
+
+    await act(async () => {
+      await result.current.login({
+        correo: 'admin@bioactiva.pe',
+        password: 'Secret123!',
+      })
+    })
+
+    expect(result.current.error).toBe('Error al iniciar sesión. Intente nuevamente.')
   })
 })

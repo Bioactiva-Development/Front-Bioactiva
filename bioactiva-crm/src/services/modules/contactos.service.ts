@@ -20,23 +20,73 @@ function stripEmptyStrings<T extends Record<string, unknown>>(data: T): Partial<
     ) as Partial<T>
 }
 
+const strOf = (v: unknown): string => typeof v === 'string' ? v : ''
+
 function normalizeContacto(raw: Record<string, unknown>): Contacto {
     return {
         id: Number(raw.id),
-        nombres: String(raw.nombres ?? ''),
+        nombres: strOf(raw.nombres),
         apellidos: (raw.apellidos ?? null) as Contacto['apellidos'],
         vocativo: raw.vocativo as Contacto['vocativo'],
         cargo: (raw.cargo ?? null) as Contacto['cargo'],
-        correo: String(raw.correo ?? ''),
+        correo: strOf(raw.correo),
         correo2: (raw.correo2 ?? null) as Contacto['correo2'],
         telefono: (raw.telefono ?? null) as Contacto['telefono'],
         comentarios: (raw.comentarios ?? null) as Contacto['comentarios'],
-        idOrganizacion: String(raw.idOrganizacion ?? ''),
+        idOrganizacion: strOf(raw.idOrganizacion),
         idAuthor: Number(raw.idAuthor ?? 0),
         estado_correo: (raw.estado_correo ?? 'VIGENTE') as Contacto['estado_correo'],
-        createdAt: String(raw.createdAt ?? ''),
-        updatedAt: String(raw.updatedAt ?? raw.createdAt ?? ''),
+        createdAt: strOf(raw.createdAt),
+        updatedAt: strOf(raw.updatedAt ?? raw.createdAt),
         organizacion_nombre: (raw.organizacionNombre ?? raw.organizacion_nombre) as string | undefined,
+    }
+}
+
+type ContactosBackendResponse =
+    | Record<string, unknown>[]
+    | {
+        data?: Record<string, unknown>[]
+        meta?: {
+            page?: number
+            limit?: number
+            total?: number
+            totalPages?: number
+        }
+    }
+
+function normalizeContactosResponse(
+    raw: ContactosBackendResponse,
+    filtros?: ContactoFiltros
+): ContactosResponse {
+    if (Array.isArray(raw)) {
+        const data = raw.map(normalizeContacto)
+        const page = filtros?.page ?? 1
+        const limit = filtros?.limit ?? data.length
+
+        return {
+            data,
+            total: data.length,
+            page,
+            limit,
+            totalPages: limit > 0 ? Math.ceil(data.length / limit) : 1,
+        }
+    }
+
+    if (!Array.isArray(raw.data)) {
+        throw new TypeError('La respuesta de contactos no tiene el formato esperado.')
+    }
+
+    const data = raw.data.map(normalizeContacto)
+    const page = raw.meta?.page ?? filtros?.page ?? 1
+    const limit = raw.meta?.limit ?? filtros?.limit ?? data.length
+    const total = raw.meta?.total ?? data.length
+
+    return {
+        data,
+        total,
+        page,
+        limit,
+        totalPages: raw.meta?.totalPages ?? (limit > 0 ? Math.ceil(total / limit) : 1),
     }
 }
 
@@ -44,17 +94,19 @@ export const contactosService = {
 
     getAll: async (filtros?: ContactoFiltros): Promise<ContactosResponse> => {
         if (USE_MOCK) return mockGetContactos(filtros)
-        const response = await apiClient.get<Record<string, unknown>[]>(
+
+        const params: Record<string, unknown> = {}
+        if (filtros?.idOrganizacion) params.idOrganization = filtros.idOrganizacion
+        if (filtros?.search)         params.search         = filtros.search
+        if (filtros?.page)           params.page           = filtros.page
+        if (filtros?.limit)          params.limit          = filtros.limit
+
+        const response = await apiClient.get<ContactosBackendResponse>(
             ENDPOINTS.contactos.list,
-            { params: filtros }
+            { params }
         )
-        const data = response.data.map(normalizeContacto)
-        return {
-            data,
-            total: data.length,
-            page: 1,
-            limit: data.length,
-        }
+
+        return normalizeContactosResponse(response.data, filtros)
     },
 
     getById: async (id: number): Promise<Contacto> => {
@@ -82,6 +134,18 @@ export const contactosService = {
         const response = await apiClient.patch<Record<string, unknown>>(
             ENDPOINTS.contactos.update(id),
             stripEmptyStrings(data as unknown as Record<string, unknown>)
+        )
+        return normalizeContacto(response.data)
+    },
+
+    cambiarEstado: async (
+        id: number,
+        estado_correo: 'VIGENTE' | 'VENCIDO'
+    ): Promise<Contacto> => {
+        if (USE_MOCK) return mockUpdateContacto(id, { estado_correo })
+        const response = await apiClient.patch<Record<string, unknown>>(
+            ENDPOINTS.contactos.estadoCorreo(id),
+            { estado_correo }
         )
         return normalizeContacto(response.data)
     },

@@ -3,9 +3,19 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ROUTES } from '@/lib/constants/routes'
+import { TOKEN_KEY, COOKIE_TOKEN, COOKIE_ROL } from '@/lib/constants/config'
 import { usuariosService } from '@/services/modules/usuarios.service'
+import { authService } from '@/services/modules/auth.service'
 import { AcceptInvitacionFormValues } from '@/lib/validators/invitacion.schema'
 import { InvitacionInfo } from '@/types/usuario.types'
+import { useAuthStore } from '@/store/auth.store'
+import { usuarioFromAccessToken } from '@/lib/utils/auth.mappers'
+
+const MAX_AGE = 8 * 60 * 60
+
+function setCookie(name: string, value: string): void {
+    document.cookie = `${name}=${value}; path=/; max-age=${MAX_AGE}; SameSite=Strict`
+}
 
 export function useAcceptInvitacion() {
     const router = useRouter()
@@ -36,9 +46,29 @@ export function useAcceptInvitacion() {
         try {
             resetMessages()
             setIsLoading(true)
-            await usuariosService.acceptInvitacion({ token, ...data })
-            setSuccess('Cuenta activada correctamente. Redirigiendo...')
-            setTimeout(() => router.push(ROUTES.auth.login), 2000)
+
+            const { accessToken } = await usuariosService.acceptInvitacion({ token, ...data })
+
+            if (globalThis.window !== undefined) {
+                localStorage.setItem(TOKEN_KEY, accessToken)
+            }
+
+            let usuarioData
+            try {
+                usuarioData = await authService.getMe()
+            } catch {
+                usuarioData = usuarioFromAccessToken(accessToken, '')
+            }
+
+            if (globalThis.window !== undefined) {
+                setCookie(COOKIE_TOKEN, accessToken)
+                setCookie(COOKIE_ROL, usuarioData.rol)
+            }
+
+            useAuthStore.getState().setSession(accessToken, usuarioData)
+
+            setSuccess('Cuenta activada correctamente. Redirigiendo al dashboard...')
+            setTimeout(() => router.push(ROUTES.dashboard), 1500)
         } catch (err: unknown) {
             const e = err as { message?: string }
             setError(e?.message ?? 'Error al activar la cuenta. Intente nuevamente.')

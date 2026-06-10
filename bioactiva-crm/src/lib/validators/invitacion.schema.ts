@@ -2,9 +2,8 @@ import { z } from 'zod'
 
 export const createInvitacionSchema = z.object({
     correo: z
-        .string()
-        .min(1, 'El correo es obligatorio')
-        .email('Ingrese un correo válido'),
+        .email({ message: 'Ingrese un correo válido' })
+        .min(1, 'El correo es obligatorio'),
     rol: z
         .number()
         .int()
@@ -27,7 +26,7 @@ export const acceptInvitacionSchema = z
             .string()
             .min(8, 'La contraseña debe tener al menos 8 caracteres')
             .regex(/[A-Z]/, 'Debe contener al menos una letra mayúscula')
-            .regex(/[0-9]/, 'Debe contener al menos un número')
+            .regex(/\d/, 'Debe contener al menos un número')
             .regex(/[^A-Za-z0-9]/, 'Debe contener al menos un carácter especial'),
         confirmPassword: z.string().min(1, 'Confirme su contraseña'),
     })

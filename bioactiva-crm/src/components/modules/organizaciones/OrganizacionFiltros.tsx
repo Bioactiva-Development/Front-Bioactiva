@@ -1,24 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, X, Loader2 } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { TipoEmpresa, TamanoEmpresa, Sector } from '@/types/enums'
 import { OrganizacionFiltros as FiltrosType } from '@/types/organizacion.types'
 import { useDebounce } from '@/hooks/shared/useDebounce'
+import { formatSector, formatTamano } from '@/lib/utils/organizacion.utils'
 
 interface OrganizacionFiltrosProps {
   filtros:   FiltrosType
   onChange:  (filtros: FiltrosType) => void
   onLimpiar: () => void
-  isLoading?: boolean
 }
 
 export function OrganizacionFiltros({
   filtros,
   onChange,
   onLimpiar,
-  isLoading,
-}: OrganizacionFiltrosProps) {
+}: Readonly<OrganizacionFiltrosProps>) {
   const [searchLocal, setSearchLocal] = useState(filtros.search ?? '')
   const debouncedSearch               = useDebounce(searchLocal, 400)
 
@@ -64,17 +63,10 @@ export function OrganizacionFiltros({
   return (
     <div className="space-y-3">
       <div className="relative">
-        {isLoading && searchLocal ? (
-          <Loader2
-            size={16}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 animate-spin"
-          />
-        ) : (
-          <Search
-            size={16}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-        )}
+        <Search
+          size={16}
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+        />
         <input
           type="text"
           value={searchLocal}
@@ -105,7 +97,7 @@ export function OrganizacionFiltros({
         >
           <option value="">Todos los sectores</option>
           {Object.values(Sector).map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>{formatSector(s)}</option>
           ))}
         </select>
 
@@ -118,7 +110,7 @@ export function OrganizacionFiltros({
         >
           <option value="">Todos los tamaños</option>
           {Object.values(TamanoEmpresa).map((t) => (
-            <option key={t} value={t}>{t}</option>
+            <option key={t} value={t}>{formatTamano(t)}</option>
           ))}
         </select>
 

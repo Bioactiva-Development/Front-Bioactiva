@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
-import { API_BASE_URL, TOKEN_KEY, USER_KEY } from '@/lib/constants/config'
+import { API_BASE_URL, TOKEN_KEY, COOKIE_TOKEN, COOKIE_ROL } from '@/lib/constants/config'
 import { ROUTES } from '@/lib/constants/routes'
+import { useAuthStore } from '@/store/auth.store'
 
 const apiClient: AxiosInstance = axios.create({
     baseURL: API_BASE_URL,
@@ -13,6 +14,19 @@ const apiClient: AxiosInstance = axios.create({
 
 let isRefreshing = false
 let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = []
+
+function forceLogout(): void {
+    if (globalThis.window === undefined) return
+    useAuthStore.getState().clearSession()
+    document.cookie = `${COOKIE_TOKEN}=; path=/; max-age=0; SameSite=Strict`
+    document.cookie = `${COOKIE_ROL}=; path=/; max-age=0; SameSite=Strict`
+    globalThis.location.href = ROUTES.auth.login
+}
+
+// Solo mensajes que indican expiración/invalidez del JWT de sesión del usuario.
+// Patrones genéricos como "token.*expired" quedan excluidos a propósito para
+// no confundir errores de tokens de invitación o recuperación con la sesión.
+const JWT_EXPIRED_PATTERN = /jwt expired|jwt malformed|invalid signature/i
 
 const processQueue = (error: unknown, token: string | null) => {
     failedQueue.forEach(prom => {
@@ -27,7 +41,7 @@ const processQueue = (error: unknown, token: string | null) => {
 
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        if (typeof window != 'undefined') {
+        if (globalThis.window !== undefined) {
             const token = localStorage.getItem(TOKEN_KEY)
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`
@@ -66,55 +80,90 @@ apiClient.interceptors.response.use(
             isRefreshing = true
 
             try {
-                const { data } = await apiClient.post<{ accessToken: string }>(
+                const { data } = await apiClient.post<{ accessToken: string; accessTokenExpiresIn: number }>(
                     '/auth/refresh',
                 )
 
                 const newToken = data.accessToken
 
-                if (typeof window !== 'undefined') {
+                if (globalThis.window !== undefined) {
                     localStorage.setItem(TOKEN_KEY, newToken)
                 }
 
+                useAuthStore.getState().updateToken(newToken, data.accessTokenExpiresIn)
                 originalRequest.headers.Authorization = `Bearer ${newToken}`
 
                 processQueue(null, newToken)
                 return apiClient(originalRequest)
             } catch (refreshError) {
                 processQueue(refreshError, null)
-
-                if (typeof window !== 'undefined') {
-                    localStorage.removeItem(TOKEN_KEY)
-                    localStorage.removeItem(USER_KEY)
-                    window.location.href = ROUTES.auth.login
-                }
-                return Promise.reject(refreshError)
+                forceLogout()
+                throw refreshError
             } finally {
                 isRefreshing = false
             }
         }
 
-        const backendMessage =
-            (error.response?.data as { message?: string | string[] })?.message
+        // 403: rol insuficiente — el refresh no ayuda (doc: "401 vs 403")
+        if (error.response?.status === 403) {
+            throw Object.assign(new Error('No tienes permisos para realizar esta acción.'), {
+                status: 403,
+                errorCode: (error.response.data as { error?: string })?.error,
+                data: error.response.data,
+            })
+        }
+
+        const backendMessage = (() => {
+            const data = error.response?.data
+            if (typeof data === 'string' && data.length > 0) return data
+            return (data as { message?: string | string[] } | undefined)?.message
+        })()
+
+        const rawMessage = Array.isArray(backendMessage) ? backendMessage[0] : backendMessage ?? ''
+
+        if (
+            JWT_EXPIRED_PATTERN.test(rawMessage) &&
+            !originalRequest.url?.includes('/auth/login') &&
+            !originalRequest.url?.includes('/invitations')
+        ) {
+            forceLogout()
+            throw Object.assign(new Error(rawMessage), { status: error.response?.status })
+        }
 
         let mensajeFinal: string
         if (Array.isArray(backendMessage)) {
-            mensajeFinal = backendMessage[0]
+            // Mostrar todos los mensajes de validación, no solo el primero
+            mensajeFinal = backendMessage.join('. ')
         } else if (backendMessage) {
             mensajeFinal = backendMessage
         } else if (error.code === 'ECONNABORTED' || /timeout/i.test(error.message)) {
-            // Sin response: la request fue abortada por timeout local.
             mensajeFinal = 'La consulta tardó demasiado en responder. Inténtalo nuevamente.'
-        } else if (!error.response) {
-            // Sin response y sin timeout: probablemente fallo de red o CORS.
-            mensajeFinal = 'No se pudo conectar con el servidor. Verifica tu conexión.'
-        } else {
+        } else if (error.response) {
             mensajeFinal = 'Ocurrió un error inesperado'
+        } else {
+            mensajeFinal = 'No se pudo conectar con el servidor. Verifica tu conexión.'
         }
 
-        return Promise.reject({
+        // Nunca exponer detalles internos de Prisma o la base de datos al usuario.
+        // Se usan tests separados para tolerar saltos de línea en el mensaje del backend.
+        const hasUniqueConstraint = /unique constraint|constraint failed on the fields/i.test(mensajeFinal)
+        const hasCorreo           = /correo/i.test(mensajeFinal)
+        const hasPrismaTrace      = /prisma|invalid [^\n]*invocation|p\d{4}/i.test(mensajeFinal)
+
+        if (hasUniqueConstraint && hasCorreo) {
+            mensajeFinal = 'Ya existe un usuario o invitación registrado con ese correo electrónico.'
+        } else if (hasUniqueConstraint) {
+            mensajeFinal = 'Ya existe un registro con esos datos. Verifica e inténtalo nuevamente.'
+        } else if (hasPrismaTrace) {
+            mensajeFinal = 'Ocurrió un error al procesar la solicitud. Inténtalo nuevamente.'
+        }
+
+        // errorCode: identificador estable del extended shape (ej: "ActivityNotFoundException")
+        const errorCode = (error.response?.data as { error?: string })?.error
+
+        throw Object.assign(new Error(mensajeFinal), {
             status: error.response?.status,
-            message: mensajeFinal,
+            errorCode,
             data: error.response?.data,
         })
     }

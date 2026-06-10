@@ -63,11 +63,11 @@ describe('contactos/contactos.service (API mode)', () => {
     ]
 
     it('fetches all contacts and normalizes them', async () => {
-      getMock.mockResolvedValueOnce({ data: rawArray })
+      getMock.mockResolvedValueOnce({ data: { data: rawArray, meta: { page: 1, limit: 10, total: 2, totalPages: 1 } } })
 
       const result = await contactosService.getAll()
 
-      expect(getMock).toHaveBeenCalledWith('/contacts', { params: undefined })
+      expect(getMock).toHaveBeenCalledWith('/contacts', { params: {} })
       expect(result.data).toHaveLength(2)
       expect(result.data[0].id).toBe(1)
       expect(result.data[0].nombres).toBe('Ricardo')
@@ -75,18 +75,18 @@ describe('contactos/contactos.service (API mode)', () => {
       expect(result.data[0].vocativo).toBe(Vocativo.SR)
     })
 
-    it('passes filters as params', async () => {
-      getMock.mockResolvedValueOnce({ data: rawArray })
+    it('sends search param to API', async () => {
+      getMock.mockResolvedValueOnce({ data: { data: [rawArray[0]], meta: { page: 1, limit: 10, total: 1, totalPages: 1 } } })
 
-      await contactosService.getAll({ search: 'Ricardo', page: 1, limit: 10 })
+      const result = await contactosService.getAll({ search: 'Ricardo' })
 
-      expect(getMock).toHaveBeenCalledWith('/contacts', {
-        params: { search: 'Ricardo', page: 1, limit: 10 },
-      })
+      expect(getMock).toHaveBeenCalledWith('/contacts', { params: { search: 'Ricardo' } })
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].nombres).toBe('Ricardo')
     })
 
     it('returns empty array when API returns empty', async () => {
-      getMock.mockResolvedValueOnce({ data: [] })
+      getMock.mockResolvedValueOnce({ data: { data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } } })
 
       const result = await contactosService.getAll()
 

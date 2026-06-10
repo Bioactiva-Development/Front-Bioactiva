@@ -7,7 +7,6 @@ export interface UsuarioListItem {
     correo: string
     rol: RolUsuario
     estado: EstadoUsuario
-    ultimo_acceso?: string
     created_at: string
     updated_at: string
 }
@@ -84,7 +83,8 @@ export interface AcceptInvitacionRequest {
 }
 
 export interface AcceptInvitacionResponse {
-    message?: string
+    accessToken: string
+    accessTokenExpiresIn: number
 }
 
 export interface ListInvitacionesParams {

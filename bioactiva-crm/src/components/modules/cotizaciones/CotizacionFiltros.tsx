@@ -15,18 +15,26 @@ interface CotizacionFiltrosProps {
 
 const TABS = [
   { label: 'Todas',     value: undefined },
+  { label: 'Pendiente', value: EstadoCot.Pendiente },
   { label: 'Enviada',   value: EstadoCot.Enviada },
   { label: 'Aceptada',  value: EstadoCot.Aceptada },
   { label: 'Rechazada', value: EstadoCot.Rechazada },
-  { label: 'Pendiente', value: EstadoCot.Pendiente },
 ]
+
+const TAB_ACTIVE_COLORS: Record<string, string> = {
+  todas:                         'bg-emerald-50 text-emerald-700',
+  [EstadoCot.Pendiente]:         'bg-gray-100 text-gray-700',
+  [EstadoCot.Enviada]:           'bg-blue-50 text-blue-700',
+  [EstadoCot.Aceptada]:          'bg-emerald-50 text-emerald-700',
+  [EstadoCot.Rechazada]:         'bg-red-50 text-red-700',
+}
 
 export function CotizacionFiltros({
   filtros,
   onChange,
   onLimpiar,
   isLoading,
-}: CotizacionFiltrosProps) {
+}: Readonly<CotizacionFiltrosProps>) {
   const [searchLocal, setSearchLocal] = useState(filtros.search ?? '')
   const debouncedSearch               = useDebounce(searchLocal, 400)
 
@@ -50,19 +58,24 @@ export function CotizacionFiltros({
     <div className="space-y-4">
       <div className="flex items-center gap-1 bg-white border border-gray-100
         rounded-xl px-2 py-2 shadow-sm w-fit">
-        {TABS.map((tab) => (
-          <button
-            key={tab.label}
-            onClick={() => handleTab(tab.value)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors
-              ${filtros.estado === tab.value
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {TABS.map((tab) => {
+          const isActive = filtros.estado === tab.value
+          const activeKey = tab.value ?? 'todas'
+
+          return (
+            <button
+              key={tab.label}
+              onClick={() => handleTab(tab.value)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors
+                ${isActive
+                  ? TAB_ACTIVE_COLORS[activeKey]
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
       </div>
 
       <div className="relative">
@@ -89,7 +102,7 @@ export function CotizacionFiltros({
         />
         {searchLocal && (
           <button
-            onClick={() => setSearchLocal('')}
+            onClick={handleLimpiar}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400
               hover:text-gray-600 transition-colors"
           >

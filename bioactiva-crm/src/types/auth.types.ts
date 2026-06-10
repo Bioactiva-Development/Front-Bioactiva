@@ -36,6 +36,7 @@ export interface JwtPayload {
 export interface AuthState {
     usuario: Usuario | null
     accessToken: string | null
+    tokenExpiresAt: number | null
     isAuthenticated: boolean
     isLoading: boolean
 }
@@ -79,18 +80,6 @@ export interface ValidateTokenResult {
     message?: string
 }
 
-export interface ActivateAccountRequest {
-    token: string
-    nombres: string
-    apellidos: string
-    password: string
-    confirmPassword: string
-}
-
-export interface ActivateAccountResponse {
-    message: string
-    usuario: Usuario
-}
 
 export interface UserToken {
     id: number

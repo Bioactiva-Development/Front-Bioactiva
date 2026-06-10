@@ -2,6 +2,10 @@ import { z } from 'zod'
 import { Vocativo } from '@/types/enums'
 
 export const contactoSchema = z.object({
+    estado_correo: z
+        .enum(['VIGENTE', 'VENCIDO'])
+        .optional(),
+
     nombres: z
         .string()
         .min(1, 'El nombre es obligatorio')
@@ -14,7 +18,7 @@ export const contactoSchema = z.object({
         .or(z.literal('')),
 
     vocativo: z
-        .nativeEnum(Vocativo)
+        .enum(Object.values(Vocativo) as [Vocativo, ...Vocativo[]])
         .optional(),
 
     cargo: z
@@ -24,14 +28,12 @@ export const contactoSchema = z.object({
         .or(z.literal('')),
 
     correo: z
-        .string()
+        .email({ message: 'Ingrese un correo válido' })
         .min(1, 'El correo es obligatorio')
-        .email('Ingrese un correo válido')
         .max(254, 'Máximo 254 caracteres'),
 
     correo2: z
-        .string()
-        .email('Ingrese un correo válido')
+        .email({ message: 'Ingrese un correo válido' })
         .max(254, 'Máximo 254 caracteres')
         .optional()
         .or(z.literal('')),

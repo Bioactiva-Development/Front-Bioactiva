@@ -16,7 +16,7 @@ interface Props {
     onSubmit: (id: number, password: string) => Promise<boolean>
 }
 
-export function CambiarPasswordModal({ usuario, isLoading, error, onClose, onSubmit }: Props) {
+export function CambiarPasswordModal({ usuario, isLoading, error, onClose, onSubmit }: Readonly<Props>) {
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
 

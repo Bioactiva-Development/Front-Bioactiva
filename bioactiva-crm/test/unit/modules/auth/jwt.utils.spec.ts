@@ -49,6 +49,11 @@ describe('security/jwt.utils', () => {
     it('returns null for an empty string', () => {
       expect(decodeJwt('')).toBeNull()
     })
+
+    it('returns binary if payload contains invalid UTF-8', () => {
+      const token = 'header.////.signature'
+      expect(decodeJwt(token)).toBeNull()
+    })
   })
 
   describe('subToNumber', () => {

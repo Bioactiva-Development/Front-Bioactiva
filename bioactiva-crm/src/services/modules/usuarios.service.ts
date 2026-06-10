@@ -45,14 +45,16 @@ const ESTADO_STR_MAP: Record<string, EstadoUsuario> = {
     INACTIVO: EstadoUsuario.Inactivo,
 }
 
+const strOf = (v: unknown): string => typeof v === 'string' ? v : ''
+
 function mapRolUsuario(value: unknown): RolUsuario {
     if (typeof value === 'number') return mapRole(value)
-    return ROL_STR_MAP[String(value ?? '').toUpperCase()] ?? RolUsuario.Trabajador
+    return ROL_STR_MAP[strOf(value).toUpperCase()] ?? RolUsuario.Trabajador
 }
 
 function mapEstadoUsuario(value: unknown): EstadoUsuario {
     if (typeof value === 'number') return mapEstado(value)
-    return ESTADO_STR_MAP[String(value ?? '').toUpperCase()] ?? EstadoUsuario.Pendiente
+    return ESTADO_STR_MAP[strOf(value).toUpperCase()] ?? EstadoUsuario.Pendiente
 }
 
 // Sentido inverso: del enum del frontend al string que espera GET /users.
@@ -84,20 +86,30 @@ const ESTADO_TOKEN_MAP: Record<number, EstadoToken> = {
     0: EstadoToken.Pendiente,
     1: EstadoToken.Consumido,
     2: EstadoToken.Expirado,
+    3: EstadoToken.Revocado,
 }
 
 function mapInvitacionRaw(raw: InvitacionRaw): Invitacion {
+    const expires_at = raw.expired_at ?? raw.expires_at ?? ''
+
+    let estado: EstadoToken =
+        typeof raw.estado === 'number'
+            ? (ESTADO_TOKEN_MAP[raw.estado] ?? EstadoToken.Pendiente)
+            : (raw.estado as EstadoToken)
+
+    // El backend no actualiza el estado cuando la invitación expira.
+    // Si aún figura como Pendiente pero la fecha de vigencia ya pasó, se corrige localmente.
+    if (estado === EstadoToken.Pendiente && expires_at && new Date(expires_at) < new Date()) {
+        estado = EstadoToken.Expirado
+    }
+
     return {
         id: raw.id,
         correo: raw.correo,
-        rol: typeof raw.rol === 'number' ? mapRole(raw.rol) : (raw.rol as never),
-        estado:
-            typeof raw.estado === 'number'
-                ? (ESTADO_TOKEN_MAP[raw.estado] ?? EstadoToken.Pendiente)
-                : (raw.estado as EstadoToken),
-        // El backend envía `expired_at`; se mantiene `expires_at` como nombre
-        // interno que consume la UI. Fallback a '' para no romper `.slice()`.
-        expires_at: raw.expired_at ?? raw.expires_at ?? '',
+        rol: mapRole(raw.rol),
+        estado,
+        // El backend envía `expired_at`; se mantiene `expires_at` como nombre interno.
+        expires_at,
         consumed_at: raw.consumed_at,
         created_at: raw.created_at,
     }
@@ -114,14 +126,13 @@ export const usuariosService = {
         const rows = Array.isArray(data) ? data : (data.data ?? data.usuarios ?? [])
         const usuarios: UsuarioListItem[] = rows.map((u: Record<string, unknown>) => ({
             id: Number(u.id),
-            nombres: String(u.nombres ?? ''),
-            apellidos: String(u.apellidos ?? ''),
-            correo: String(u.correo ?? ''),
+            nombres: strOf(u.nombres),
+            apellidos: strOf(u.apellidos),
+            correo: strOf(u.correo),
             rol: mapRolUsuario(u.rol ?? u.role),
             estado: mapEstadoUsuario(u.estado),
-            ultimo_acceso: (u.ultimo_acceso ?? u.ultimoAcceso) as string | undefined,
-            created_at: String(u.fechaRegistro ?? u.created_at ?? u.createdAt ?? ''),
-            updated_at: String(u.updated_at ?? u.updatedAt ?? u.fechaRegistro ?? ''),
+            created_at: strOf(u.fechaRegistro ?? u.created_at ?? u.createdAt),
+            updated_at: strOf(u.updated_at ?? u.updatedAt ?? u.fechaRegistro),
         }))
         const meta = (data?.meta ?? {}) as Record<string, unknown>
         const total = Number(meta.total ?? usuarios.length)
@@ -131,7 +142,7 @@ export const usuariosService = {
 
     editar: async (data: EditarUsuarioRequest): Promise<UsuarioListItem> => {
         if (USE_MOCK) return mockEditarUsuario(data)
-        const response = await apiClient.put<UsuarioListItem>(ENDPOINTS.usuarios.detail(data.id), data)
+        const response = await apiClient.patch<UsuarioListItem>(ENDPOINTS.usuarios.detail(data.id), data)
         return response.data
     },
 
@@ -144,16 +155,14 @@ export const usuariosService = {
         return response.data
     },
 
-    deshabilitar: async (id: number): Promise<UsuarioListItem> => {
-        if (USE_MOCK) return mockDeshabilitarUsuario(id)
-        const response = await apiClient.patch<UsuarioListItem>(ENDPOINTS.usuarios.disable(id))
-        return response.data
+    deshabilitar: async (id: number): Promise<void> => {
+        if (USE_MOCK) { mockDeshabilitarUsuario(id); return }
+        await apiClient.patch(ENDPOINTS.usuarios.disable(id))
     },
 
-    habilitar: async (id: number): Promise<UsuarioListItem> => {
-        if (USE_MOCK) return mockHabilitarUsuario(id)
-        const response = await apiClient.patch<UsuarioListItem>(ENDPOINTS.usuarios.enable(id))
-        return response.data
+    habilitar: async (id: number): Promise<void> => {
+        if (USE_MOCK) { mockHabilitarUsuario(id); return }
+        await apiClient.patch(ENDPOINTS.usuarios.enable(id))
     },
 
     // ── Invitaciones ────────────────────────────────────────────────────────────

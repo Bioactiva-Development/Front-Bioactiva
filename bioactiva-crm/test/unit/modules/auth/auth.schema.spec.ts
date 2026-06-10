@@ -1,5 +1,4 @@
 import {
-  activateAccountSchema,
   forgotPasswordSchema,
   loginSchema,
   resetPasswordSchema,
@@ -73,88 +72,13 @@ describe('security/auth.schema', () => {
     ).toThrow('Las contraseñas no coinciden')
   })
 
-  it('rejects reset password without uppercase', () => {
-    expect(() =>
-      resetPasswordSchema.parse({
-        password: 'secret123!',
-        confirmPassword: 'secret123!',
-      })
-    ).toThrow('Debe contener al menos una letra mayúscula')
-  })
-
-  it('rejects reset password without number', () => {
-    expect(() =>
-      resetPasswordSchema.parse({
-        password: 'Secret!!!',
-        confirmPassword: 'Secret!!!',
-      })
-    ).toThrow('Debe contener al menos un número')
-  })
-
-  it('rejects reset password without special char', () => {
-    expect(() =>
-      resetPasswordSchema.parse({
-        password: 'Secret123',
-        confirmPassword: 'Secret123',
-      })
-    ).toThrow('Debe contener al menos un carácter especial')
-  })
-
-  it('rejects reset password shorter than 8 chars', () => {
+  it('rejects reset password shorter than 6 chars', () => {
     expect(() =>
       resetPasswordSchema.parse({
         password: 'Se1!',
         confirmPassword: 'Se1!',
       })
-    ).toThrow('La contraseña debe tener al menos 8 caracteres')
+    ).toThrow('La contraseña debe tener al menos 6 caracteres')
   })
 
-  it('validates activate account payload', () => {
-    expect(
-      activateAccountSchema.parse({
-        nombres: 'Maria',
-        apellidos: 'Torres',
-        password: 'Secret123!',
-        confirmPassword: 'Secret123!',
-      })
-    ).toEqual({
-      nombres: 'Maria',
-      apellidos: 'Torres',
-      password: 'Secret123!',
-      confirmPassword: 'Secret123!',
-    })
-  })
-
-  it('rejects activate account with empty nombres', () => {
-    expect(() =>
-      activateAccountSchema.parse({
-        nombres: '',
-        apellidos: 'Torres',
-        password: 'Secret123!',
-        confirmPassword: 'Secret123!',
-      })
-    ).toThrow('El nombre es obligatorio')
-  })
-
-  it('rejects activate account with long nombres', () => {
-    expect(() =>
-      activateAccountSchema.parse({
-        nombres: 'A'.repeat(91),
-        apellidos: 'Torres',
-        password: 'Secret123!',
-        confirmPassword: 'Secret123!',
-      })
-    ).toThrow('Maximo de 90 caracteres')
-  })
-
-  it('rejects activate account password mismatch', () => {
-    expect(() =>
-      activateAccountSchema.parse({
-        nombres: 'Maria',
-        apellidos: 'Torres',
-        password: 'Secret123!',
-        confirmPassword: 'Secret1234!',
-      })
-    ).toThrow('Las contraseñas no coinciden')
-  })
 })

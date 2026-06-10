@@ -1,42 +1,30 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
 import { Loader2, UserCog } from 'lucide-react'
 import { RolUsuario } from '@/types/enums'
-import { editarUsuarioSchema, EditarUsuarioFormValues } from '@/lib/validators/usuario.schema'
-import { UsuarioListItem } from '@/types/usuario.types'
+import { EditarUsuarioRequest, UsuarioListItem } from '@/types/usuario.types'
 import { ModalShell, ModalHeader, ModalFormField, modalInputCn } from '@/components/ui'
 
 interface Props {
-    usuario: UsuarioListItem
+    usuario:   UsuarioListItem
     isLoading: boolean
-    error: string | null
-    onClose: () => void
-    onSubmit: (data: EditarUsuarioFormValues & { id: number }) => Promise<boolean>
+    error:     string | null
+    onClose:   () => void
+    onSubmit:  (data: EditarUsuarioRequest) => Promise<boolean>
 }
 
-export function EditarUsuarioModal({ usuario, isLoading, error, onClose, onSubmit }: Props) {
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-        reset,
-    } = useForm<EditarUsuarioFormValues>({
-        resolver: zodResolver(editarUsuarioSchema),
-    })
+export function EditarUsuarioModal({ usuario, isLoading, error, onClose, onSubmit }: Readonly<Props>) {
+    const [rol, setRol] = useState<RolUsuario>(usuario.rol)
 
-    useEffect(() => {
-        reset({
+    const handleFormSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        const ok = await onSubmit({
+            id:              usuario.id,
+            rol,
             nombre_completo: [usuario.nombres, usuario.apellidos].filter(Boolean).join(' '),
-            correo: usuario.correo,
-            rol: usuario.rol,
+            correo:          usuario.correo,
         })
-    }, [usuario, reset])
-
-    const handleFormSubmit = async (data: EditarUsuarioFormValues) => {
-        const ok = await onSubmit({ ...data, id: usuario.id })
         if (ok) onClose()
     }
 
@@ -45,40 +33,23 @@ export function EditarUsuarioModal({ usuario, isLoading, error, onClose, onSubmi
             <ModalHeader
                 icon={<UserCog size={18} className="text-blue-600" />}
                 iconBg="bg-blue-50"
-                title="Editar usuario"
-                subtitle={usuario.correo}
+                title="Editar rol"
+                subtitle={[usuario.nombres, usuario.apellidos].filter(Boolean).join(' ')}
                 onClose={onClose}
             />
 
-            <form onSubmit={handleSubmit(handleFormSubmit)} className="px-6 py-5 space-y-4">
+            <form onSubmit={handleFormSubmit} className="px-6 py-5 space-y-4">
                 {error && (
                     <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
                         {error}
                     </div>
                 )}
 
-                <ModalFormField label="Nombre completo" error={errors.nombre_completo?.message}>
-                    <input
-                        type="text"
-                        placeholder="Nombres y apellidos"
-                        {...register('nombre_completo')}
-                        className={modalInputCn(!!errors.nombre_completo)}
-                    />
-                </ModalFormField>
-
-                <ModalFormField label="Correo institucional" error={errors.correo?.message}>
-                    <input
-                        type="email"
-                        placeholder="usuario@bioactiva.pe"
-                        {...register('correo')}
-                        className={modalInputCn(!!errors.correo)}
-                    />
-                </ModalFormField>
-
-                <ModalFormField label="Rol" error={errors.rol?.message}>
+                <ModalFormField label="Rol">
                     <select
-                        {...register('rol')}
-                        className={modalInputCn(!!errors.rol)}
+                        value={rol}
+                        onChange={(e) => setRol(e.target.value as RolUsuario)}
+                        className={modalInputCn(false)}
                     >
                         <option value={RolUsuario.Trabajador}>Trabajador</option>
                         <option value={RolUsuario.Administrador}>Administrador</option>

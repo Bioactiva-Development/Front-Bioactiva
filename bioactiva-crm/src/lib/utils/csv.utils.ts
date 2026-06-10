@@ -14,7 +14,7 @@ export function formatFileSize(bytes: number): string {
 
 function escapeCSVCell(value: string): string {
     if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes(';')) {
-        return `"${value.replace(/"/g, '""')}"`
+        return `"${value.replaceAll('"', '""')}"`
     }
     return value
 }
@@ -40,6 +40,6 @@ export function downloadCSV(filename: string, content: string): void {
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
-    document.body.removeChild(link)
+    link.remove()
     URL.revokeObjectURL(url)
 }

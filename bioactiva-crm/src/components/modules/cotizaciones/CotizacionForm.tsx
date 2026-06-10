@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, ArrowLeft } from 'lucide-react'
@@ -9,26 +9,41 @@ import {
   cotizacionSchema,
   CotizacionFormValues,
 } from '@/lib/validators/cotizacion.schema'
-import { EstadoCot, TipoMoneda } from '@/types/enums'
+import { TipoMoneda } from '@/types/enums'
 import { Cotizacion } from '@/types/cotizacion.types'
 import { ROUTES } from '@/lib/constants/routes'
-import { useLeads } from '@/hooks/pipeline/useLeads'
+import { useLead } from '@/hooks/pipeline/useLeads'
 import { useAuthStore } from '@/store'
+import { usuariosService } from '@/services/modules/usuarios.service'
+import { EstadoUsuario } from '@/types/enums'
+import { UsuarioListItem } from '@/types/usuario.types'
 
 interface CotizacionFormProps {
-  cotizacion?: Cotizacion
-  onSubmit:    (data: CotizacionFormValues) => Promise<void>
-  isLoading:   boolean
-  error?:      string | null
-  leadIdInicial?: number
+  cotizacion?:     Cotizacion
+  onSubmit:        (data: CotizacionFormValues) => Promise<void>
+  isLoading:       boolean
+  error?:          string | null
+  leadIdInicial?:  number
 }
 
-const REMITENTES = [
-  { id: 1, nombre: 'Administración' },
-  { id: 2, nombre: 'Luis Torres' },
-  { id: 3, nombre: 'Karien Diaz' },
-  { id: 4, nombre: 'Carlos Mamani' },
-]
+interface RemitenteOption {
+  id: number
+  nombre: string
+}
+
+const getTodayLocalDate = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+const toRemitenteOption = (usuario: UsuarioListItem): RemitenteOption => ({
+  id: usuario.id,
+  nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
+})
 
 export function CotizacionForm({
   cotizacion,
@@ -36,13 +51,41 @@ export function CotizacionForm({
   isLoading,
   error,
   leadIdInicial,
-}: CotizacionFormProps) {
-  const router      = useRouter()
-  const esEdicion   = !!cotizacion
+}: Readonly<CotizacionFormProps>) {
+  const router    = useRouter()
+  const esEdicion = !!cotizacion
   const { usuario } = useAuthStore()
+  const [remitentes, setRemitentes] = useState<RemitenteOption[]>([])
+  const usuarioActualOption = useMemo<RemitenteOption | null>(() => {
+    if (!usuario) return null
+    return {
+      id: usuario.id,
+      nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
+    }
+  }, [usuario])
+  const remitentesDisponibles = useMemo(() => {
+    const options = [...remitentes]
 
-  const { data: leadsData } = useLeads({ limit: 100 })
-  const leads               = leadsData?.data ?? []
+    if (
+      usuarioActualOption &&
+      !options.some((remitente) => remitente.id === usuarioActualOption.id)
+    ) {
+      options.unshift(usuarioActualOption)
+    }
+
+    if (
+      cotizacion?.id_remitente &&
+      cotizacion.nombre_remitente &&
+      !options.some((remitente) => remitente.id === cotizacion.id_remitente)
+    ) {
+      options.unshift({
+        id: cotizacion.id_remitente,
+        nombre: cotizacion.nombre_remitente,
+      })
+    }
+
+    return options
+  }, [cotizacion, remitentes, usuarioActualOption])
 
   const {
     register,
@@ -54,50 +97,127 @@ export function CotizacionForm({
     resolver: zodResolver(cotizacionSchema),
     defaultValues: cotizacion
       ? {
-          id_lead:          cotizacion.id_lead,
-          id_remitente:     cotizacion.id_remitente,
-          fecha_cot:        cotizacion.fecha_cot.split('T')[0],
-          dirigido:         cotizacion.dirigido,
-          cliente:          cotizacion.cliente,
-          producto:         cotizacion.producto ?? '',
-          nombre_remitente: cotizacion.nombre_remitente,
-          nombre_servicio:  cotizacion.nombre_servicio,
-          monto:            cotizacion.monto,
-          tipo:             cotizacion.tipo,
-          estado:           cotizacion.estado,
-          observacion:      cotizacion.observacion ?? '',
-          link_propuesta:   cotizacion.link_propuesta ?? '',
+          id_lead:         cotizacion.id_lead,
+          id_remitente:    cotizacion.id_remitente,
+          fecha_cot:       cotizacion.fecha_cot.split('T')[0],
+          dirigido:        cotizacion.dirigido,
+          cliente:         cotizacion.cliente ?? '',
+          producto:        cotizacion.producto ?? '',
+          nombre_servicio: cotizacion.nombre_servicio,
+          monto:           cotizacion.monto,
+          tipo:            cotizacion.tipo,
+          observacion:     cotizacion.observacion ?? '',
+          link_propuesta:  cotizacion.link_propuesta ?? '',
         }
       : {
-          fecha_cot:        new Date().toISOString().split('T')[0],
-          tipo:             TipoMoneda.Soles,
-          estado:           EstadoCot.Enviada,
-          monto:            0,
-          id_remitente:     usuario?.id ?? 1,
-          nombre_remitente: usuario?.nombres ?? 'Administración',
-          id_lead:          leadIdInicial ?? 0,
+          fecha_cot:    getTodayLocalDate(),
+          tipo:         TipoMoneda.Soles,
+          monto:        0,
+          id_remitente: usuario?.id ?? 0,
+          id_lead:      leadIdInicial ?? 0,
         },
   })
 
+  // Autocompletar campos desde el lead seleccionado
   const leadSeleccionado = useWatch({ control, name: 'id_lead' })
+  const remitenteSeleccionado = useWatch({ control, name: 'id_remitente' })
+  const leadIdParaAutocompletar = !esEdicion
+    ? Number(leadSeleccionado || leadIdInicial || 0)
+    : 0
+  const { data: leadAutocompletado } = useLead(leadIdParaAutocompletar)
+  const bloquearCamposDesdeLead = Boolean(leadAutocompletado) && !esEdicion
+  const bloquearCamposFijos = esEdicion || bloquearCamposDesdeLead
+  const bloquearDirigido = bloquearCamposFijos && Boolean(leadAutocompletado?.contacto_nombre)
+  const readOnlyClass = 'bg-gray-50 text-gray-500 cursor-default focus:border-gray-200'
+  const remitenteAutocompletadoNombre =
+    leadAutocompletado?.encargado_nombre ??
+    remitentesDisponibles.find(
+      (remitente) => remitente.id === Number(remitenteSeleccionado)
+    )?.nombre ??
+    ''
 
   useEffect(() => {
-    if (leadSeleccionado && !esEdicion) {
-      const lead = leads.find((l) => l.id === Number(leadSeleccionado))
-      if (lead) {
-        if (lead.contacto_nombre) setValue('dirigido',  lead.contacto_nombre)
-        if (lead.organizacion_nombre) setValue('cliente', lead.organizacion_nombre)
-        if (lead.servicio_interes) setValue('nombre_servicio', lead.servicio_interes)
+    let isMounted = true
+
+    async function cargarRemitentes() {
+      try {
+        const response = await usuariosService.getUsuarios({
+          estado: EstadoUsuario.Activo,
+          limit: 100,
+        })
+
+        if (!isMounted) return
+        setRemitentes(response.usuarios.map(toRemitenteOption))
+      } catch {
+        if (!isMounted) return
+        setRemitentes(usuarioActualOption ? [usuarioActualOption] : [])
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leadSeleccionado])
 
-  const remitenteId = useWatch({ control, name: 'id_remitente' })
+    cargarRemitentes()
+
+    return () => {
+      isMounted = false
+    }
+  }, [usuarioActualOption])
+
   useEffect(() => {
-    const remitente = REMITENTES.find((r) => r.id === Number(remitenteId))
-    if (remitente) setValue('nombre_remitente', remitente.nombre)
-  }, [remitenteId, setValue])
+    if (esEdicion || remitentesDisponibles.length === 0) return
+
+    if (leadAutocompletado?.id_encargado) {
+      const leadRemitenteExists = remitentesDisponibles.some(
+        (remitente) => remitente.id === leadAutocompletado.id_encargado
+      )
+
+      if (leadRemitenteExists) {
+        setValue('id_remitente', leadAutocompletado.id_encargado, { shouldValidate: true })
+        return
+      }
+    }
+
+    const selected = Number(remitenteSeleccionado)
+    const selectedExists = remitentesDisponibles.some(
+      (remitente) => remitente.id === selected
+    )
+
+    if (selected && selectedExists) return
+
+    const fallback =
+      usuarioActualOption &&
+        remitentesDisponibles.some(
+          (remitente) => remitente.id === usuarioActualOption.id
+        )
+        ? usuarioActualOption
+        : remitentesDisponibles[0]
+
+    setValue('id_remitente', fallback.id, { shouldValidate: true })
+  }, [
+    esEdicion,
+    leadAutocompletado,
+    remitenteSeleccionado,
+    remitentesDisponibles,
+    setValue,
+    usuarioActualOption,
+  ])
+
+  useEffect(() => {
+    if (!leadAutocompletado || esEdicion) return
+
+    setValue('id_lead', leadAutocompletado.id, { shouldValidate: true })
+    setValue('fecha_cot', getTodayLocalDate(), { shouldValidate: true })
+    setValue('dirigido', leadAutocompletado.contacto_nombre ?? '', {
+      shouldValidate: true,
+    })
+    setValue('cliente', leadAutocompletado.organizacion_nombre ?? '', {
+      shouldValidate: true,
+    })
+    setValue('id_remitente', leadAutocompletado.id_encargado, {
+      shouldValidate: true,
+    })
+    setValue('nombre_servicio', leadAutocompletado.servicio_interes ?? '', {
+      shouldValidate: true,
+    })
+  }, [esEdicion, leadAutocompletado, setValue])
 
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
@@ -110,56 +230,38 @@ export function CotizacionForm({
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
+        <input type="hidden" {...register('id_lead', { valueAsNumber: true })} />
 
+        {/* Fecha */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Autocompletar desde lead
-          </label>
-          <select
-            {...register('id_lead', { valueAsNumber: true })}
-            disabled={esEdicion}
-            className={`${inputClass(!!errors.id_lead)} cursor-pointer
-              ${esEdicion ? 'opacity-60 cursor-not-allowed' : ''}`}
-          >
-            <option value={0}>Seleccionar lead...</option>
-            {leads.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.codigo} — {l.organizacion_nombre}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-gray-400">
-            Seleccionar un lead completa automáticamente cliente, contacto y servicio.
-          </p>
-          {errors.id_lead && (
-            <p className="text-red-500 text-xs">{errors.id_lead.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Fecha cotización
+          <label htmlFor="cot-fecha" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Fecha cotización <span className="text-red-500">*</span>
           </label>
           <input
+            id="cot-fecha"
             type="date"
+            readOnly
             {...register('fecha_cot')}
-            className={inputClass(!!errors.fecha_cot)}
+            className={`${inputClass(!!errors.fecha_cot)} ${readOnlyClass}`}
           />
           {errors.fecha_cot && (
             <p className="text-red-500 text-xs">{errors.fecha_cot.message}</p>
           )}
         </div>
 
+        {/* Dirigido / Cliente */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Contacto
+            <label htmlFor="cot-dirigido" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Dirigido a <span className="text-red-500">*</span>
             </label>
             <input
+              id="cot-dirigido"
               type="text"
-              placeholder="Nombre del contacto (opcional)"
+              placeholder="Nombre del destinatario"
+              readOnly={bloquearDirigido}
               {...register('dirigido')}
-              className={inputClass(!!errors.dirigido)}
+              className={`${inputClass(!!errors.dirigido)} ${bloquearDirigido ? readOnlyClass : ''}`}
             />
             {errors.dirigido && (
               <p className="text-red-500 text-xs">{errors.dirigido.message}</p>
@@ -167,74 +269,99 @@ export function CotizacionForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Cliente <span className="text-red-500">*</span>
+            <label htmlFor="cot-cliente" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Cliente
             </label>
             <input
+              id="cot-cliente"
               type="text"
               placeholder="Razón social o empresa"
+              readOnly={bloquearCamposFijos}
               {...register('cliente')}
-              className={inputClass(!!errors.cliente)}
+              className={`${inputClass(!!errors.cliente)} ${bloquearCamposFijos ? readOnlyClass : ''}`}
             />
-            {errors.cliente && (
-              <p className="text-red-500 text-xs">{errors.cliente.message}</p>
-            )}
           </div>
         </div>
 
+        {/* Producto / Remitente */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="cot-producto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Producto
             </label>
             <input
+              id="cot-producto"
               type="text"
-              placeholder="Ej: Innovasuyu, Consultoría"
+              placeholder="Ej: Consultoría, Formulación"
               {...register('producto')}
               className={inputClass(!!errors.producto)}
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="cot-remitente" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Remitente <span className="text-red-500">*</span>
             </label>
-            <select
-              {...register('id_remitente', { valueAsNumber: true })}
-              className={`${inputClass(!!errors.id_remitente)} cursor-pointer`}
-            >
-              <option value={0}>Seleccionar...</option>
-              {REMITENTES.map((r) => (
-                <option key={r.id} value={r.id}>{r.nombre}</option>
-              ))}
-            </select>
+            {bloquearCamposFijos ? (
+              <>
+                <input type="hidden" {...register('id_remitente', { valueAsNumber: true })} />
+                <input
+                  id="cot-remitente"
+                  type="text"
+                  value={remitenteAutocompletadoNombre}
+                  readOnly
+                  className={`${inputClass(!!errors.id_remitente)} ${readOnlyClass}`}
+                />
+              </>
+            ) : (
+              <select
+                id="cot-remitente"
+                {...register('id_remitente', { valueAsNumber: true })}
+                className={`${inputClass(!!errors.id_remitente)} cursor-pointer`}
+              >
+                <option value={0}>Seleccionar...</option>
+                {remitentesDisponibles.map((r) => (
+                  <option key={r.id} value={r.id}>{r.nombre}</option>
+                ))}
+              </select>
+            )}
+            {esEdicion && (
+              <p className="text-xs text-gray-400">
+                El remitente queda fijado al crear la cotización.
+              </p>
+            )}
             {errors.id_remitente && (
               <p className="text-red-500 text-xs">{errors.id_remitente.message}</p>
             )}
           </div>
         </div>
 
+        {/* Nombre del servicio */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="cot-servicio" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Nombre del servicio <span className="text-red-500">*</span>
           </label>
           <input
+            id="cot-servicio"
             type="text"
             placeholder="Descripción del servicio ofertado"
+            readOnly={bloquearCamposFijos}
             {...register('nombre_servicio')}
-            className={inputClass(!!errors.nombre_servicio)}
+            className={`${inputClass(!!errors.nombre_servicio)} ${bloquearCamposFijos ? readOnlyClass : ''}`}
           />
           {errors.nombre_servicio && (
             <p className="text-red-500 text-xs">{errors.nombre_servicio.message}</p>
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        {/* Monto / Moneda */}
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Monto
+            <label htmlFor="cot-monto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Monto <span className="text-red-500">*</span>
             </label>
             <input
+              id="cot-monto"
               type="number"
               min={0}
               step={0.01}
@@ -247,39 +374,28 @@ export function CotizacionForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="cot-moneda" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Moneda <span className="text-red-500">*</span>
             </label>
             <select
+              id="cot-moneda"
               {...register('tipo')}
               className={`${inputClass(!!errors.tipo)} cursor-pointer`}
             >
               {Object.values(TipoMoneda).map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Estado
-            </label>
-            <select
-              {...register('estado')}
-              className={`${inputClass(!!errors.estado)} cursor-pointer`}
-            >
-              {Object.values(EstadoCot).map((e) => (
-                <option key={e} value={e}>{e}</option>
+                <option key={t} value={t}>{t === TipoMoneda.Soles ? 'Soles (PEN)' : 'Dólares (USD)'}</option>
               ))}
             </select>
           </div>
         </div>
 
+        {/* Observación */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="cot-observacion" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Observación
           </label>
           <textarea
+            id="cot-observacion"
             rows={3}
             placeholder="Notas adicionales sobre la propuesta"
             {...register('observacion')}
@@ -287,12 +403,14 @@ export function CotizacionForm({
           />
         </div>
 
+        {/* Link propuesta */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="cot-link" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Link de propuesta
           </label>
           <input
-            type="text"
+            id="cot-link"
+            type="url"
             placeholder="https://drive.google.com/..."
             {...register('link_propuesta')}
             className={inputClass(!!errors.link_propuesta)}
@@ -326,15 +444,9 @@ export function CotizacionForm({
               font-semibold py-2.5 px-6 rounded-xl text-sm transition-colors"
           >
             {isLoading ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Guardando...
-              </>
+              <><Loader2 size={16} className="animate-spin" />Guardando...</>
             ) : (
-              <>
-                <Save size={16} />
-                {esEdicion ? 'Guardar cambios' : 'Guardar cotización'}
-              </>
+              <><Save size={16} />{esEdicion ? 'Guardar cambios' : 'Guardar cotización'}</>
             )}
           </button>
         </div>

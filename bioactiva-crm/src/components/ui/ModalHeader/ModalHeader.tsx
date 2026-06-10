@@ -9,7 +9,7 @@ interface ModalHeaderProps {
     onClose: () => void
 }
 
-export function ModalHeader({ icon, iconBg, title, subtitle, onClose }: ModalHeaderProps) {
+export function ModalHeader({ icon, iconBg, title, subtitle, onClose }: Readonly<ModalHeaderProps>) {
     return (
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
             <div className="flex items-center gap-3">

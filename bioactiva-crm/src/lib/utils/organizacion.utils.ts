@@ -1,3 +1,20 @@
+/** Convierte "BANCA_Y_SEGUROS" → "BANCA Y SEGUROS" para mostrar en UI. */
+export function formatSector(sector: string): string {
+    return sector.replaceAll('_', ' ')
+}
+
+const TAMANO_LABELS: Record<string, string> = {
+    Micro:   'Micro',
+    Pequena: 'Pequeña',
+    Mediana: 'Mediana',
+    Grande:  'Grande',
+}
+
+/** Devuelve el label legible de tamaño de empresa (ej. "Pequena" → "Pequeña"). */
+export function formatTamano(tamano: string): string {
+    return TAMANO_LABELS[tamano] ?? tamano
+}
+
 // Conectores y sufijos societarios que no aportan a la identidad del cliente
 // y se ignoran al construir las iniciales del código.
 const STOPWORDS = new Set([
@@ -10,9 +27,9 @@ const STOPWORDS = new Set([
 function normalizar(texto: string): string {
     return texto
         .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '') // quita acentos
+        .replaceAll(/[̀-ͯ]/gu, '') // quita acentos
         .toUpperCase()
-        .replace(/[^A-Z0-9\s]/g, ' ')    // deja letras, dígitos y espacios
+        .replaceAll(/[^A-Z0-9\s]/g, ' ')    // deja letras, dígitos y espacios
         .trim()
 }
 
@@ -46,7 +63,7 @@ export function generarCodigoCliente(nombreComercial?: string, ruc?: string): st
         letras = 'ORG'
     }
 
-    const digitos = (ruc ?? '').replace(/\D/g, '')
+    const digitos = (ruc ?? '').replaceAll(/\D/g, '')
     const numero = digitos.slice(-3) || '000'
 
     return `${letras}-${numero}`

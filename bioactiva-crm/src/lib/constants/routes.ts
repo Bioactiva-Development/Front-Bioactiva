@@ -3,7 +3,7 @@ export const ROUTES = {
         login: '/login',
         forgotPassword: '/forgot-password',
         resetPassword: '/reset-password',
-        activate: '/activate',
+        activate: '/accept-invitation',
         acceptInvitation: '/accept-invitation',
     },
 
@@ -29,5 +29,6 @@ export const ROUTES = {
 
     controlAcceso: '/control-acceso',
 
-    perfil: '/perfil',
+    perfil:   '/perfil',
+    ajustes:  '/ajustes',
 } as const

@@ -8,7 +8,6 @@ export function useCotizaciones(filtros?: CotizacionFiltros) {
   return useQuery({
     queryKey: QUERY_KEYS.cotizaciones.list(filtros),
     queryFn:  () => cotizacionesService.getAll(filtros),
-    staleTime: 1000 * 60 * 5,
   })
 }
 
@@ -24,7 +23,6 @@ export function useCotizacionKpis() {
   return useQuery({
     queryKey: ['cotizaciones', 'kpis'],
     queryFn:  () => cotizacionesService.getKpis(),
-    staleTime: 1000 * 60 * 5,
   })
 }
 
@@ -38,12 +36,11 @@ export function useCotizacionesPorLead(leadId: number) {
 
 export function useCrearCotizacion() {
   const queryClient = useQueryClient()
-
   return useMutation({
-    mutationFn: (data: CotizacionFormData) =>
-      cotizacionesService.create(data),
+    mutationFn: (data: CotizacionFormData) => cotizacionesService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
@@ -53,12 +50,12 @@ export function useCrearCotizacion() {
 
 export function useActualizarCotizacion(id: number) {
   const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: (data: Partial<CotizacionFormData>) =>
       cotizacionesService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.cotizaciones.detail(id),
       })
@@ -67,4 +64,34 @@ export function useActualizarCotizacion(id: number) {
       console.error(getErrorMessage(err))
     },
   })
+}
+
+function useCotizacionEstadoMutation(
+  mutationFn: (id: number) => Promise<unknown>
+) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
+export function useEnviarCotizacion() {
+  return useCotizacionEstadoMutation((id) => cotizacionesService.enviar(id))
+}
+
+export function useAceptarCotizacion() {
+  return useCotizacionEstadoMutation((id) => cotizacionesService.aceptar(id))
+}
+
+export function useRechazarCotizacion() {
+  return useCotizacionEstadoMutation((id) => cotizacionesService.rechazar(id))
 }

@@ -6,13 +6,12 @@ import { Pencil } from 'lucide-react'
 import { usePlantilla } from '@/hooks/plantillas/usePlantillas'
 import { PageHeader } from '@/components/layout/PageHeader/PageHeader'
 import { ROUTES } from '@/lib/constants/routes'
-import { getErrorMessage } from '@/lib/utils/error.utils'
 
 export default function PlantillaDetallePage() {
   const params = useParams()
   const router = useRouter()
   const id = Number(params.id)
-  const [error, setError] = useState<string | null>(null)
+  const [error] = useState<string | null>(null)
 
   const { data: plantilla, isLoading, isError } = usePlantilla(id)
 
@@ -71,14 +70,6 @@ export default function PlantillaDetallePage() {
 
           <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm space-y-4">
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-400">Categoría</p>
-              <p className="mt-2 text-sm text-gray-900">{plantilla.categoria}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-gray-400">Uso</p>
-              <p className="mt-2 text-sm text-gray-900">{plantilla.uso}</p>
-            </div>
-            <div>
               <p className="text-xs uppercase tracking-wide text-gray-400">Estado</p>
               <p className="mt-2 text-sm text-gray-900">
                 {plantilla.activo ? 'Activa' : 'Inactiva'}
@@ -86,7 +77,7 @@ export default function PlantillaDetallePage() {
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-gray-400">Creada</p>
-              <p className="mt-2 text-sm text-gray-900">{new Date(plantilla.created_at).toLocaleDateString('es-PE')}</p>
+              <p className="mt-2 text-sm text-gray-900">{new Date(plantilla.createdAt).toLocaleDateString('es-PE')}</p>
             </div>
             {error && (
               <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">

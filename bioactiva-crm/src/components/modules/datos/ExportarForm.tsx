@@ -71,6 +71,11 @@ export function ExportarForm() {
     const leadFiltros = filtros as FiltrosLead
     const cotFiltros = filtros as FiltrosCotizacion
 
+    let searchPlaceholder = 'Cliente, servicio...'
+    if (entidad === 'organizaciones') searchPlaceholder = 'Nombre, RUC...'
+    else if (entidad === 'contactos') searchPlaceholder = 'Nombre, correo...'
+    else if (entidad === 'leads') searchPlaceholder = 'Organización, servicio...'
+
     return (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {/* Header */}
@@ -99,10 +104,11 @@ export function ExportarForm() {
                 {/* Fila 1: Entidad + Búsqueda */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        <label htmlFor="exp-entidad" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                             Qué exportar
                         </label>
                         <select
+                            id="exp-entidad"
                             value={entidad}
                             onChange={e => handleEntidadChange(e.target.value as EntidadExportable)}
                             className="w-full px-3 py-2.5 text-sm text-gray-800 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
@@ -114,21 +120,17 @@ export function ExportarForm() {
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        <label htmlFor="exp-busqueda" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                             Buscar
                         </label>
                         <div className="relative">
                             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
+                                id="exp-busqueda"
                                 type="text"
                                 value={busqueda}
                                 onChange={e => setBusqueda(e.target.value)}
-                                placeholder={
-                                    entidad === 'organizaciones' ? 'Nombre, RUC...' :
-                                    entidad === 'contactos' ? 'Nombre, correo...' :
-                                    entidad === 'leads' ? 'Organización, servicio...' :
-                                    'Cliente, servicio...'
-                                }
+                                placeholder={searchPlaceholder}
                                 className="w-full pl-9 pr-9 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
                             />
                             {busqueda && (
@@ -148,8 +150,9 @@ export function ExportarForm() {
                 {entidad === 'organizaciones' && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Sector</label>
+                            <label htmlFor="exp-sector" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Sector</label>
                             <select
+                                id="exp-sector"
                                 value={orgFiltros.sector}
                                 onChange={e => setFiltros({ ...orgFiltros, sector: e.target.value as Sector | '' })}
                                 className="w-full px-3 py-2.5 text-sm text-gray-800 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
@@ -159,8 +162,9 @@ export function ExportarForm() {
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Tipo</label>
+                            <label htmlFor="exp-tipo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Tipo</label>
                             <select
+                                id="exp-tipo"
                                 value={orgFiltros.tipo}
                                 onChange={e => setFiltros({ ...orgFiltros, tipo: e.target.value as TipoEmpresa | '' })}
                                 className="w-full px-3 py-2.5 text-sm text-gray-800 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
@@ -170,8 +174,9 @@ export function ExportarForm() {
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Tamaño</label>
+                            <label htmlFor="exp-tamano" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Tamaño</label>
                             <select
+                                id="exp-tamano"
                                 value={orgFiltros.tamano}
                                 onChange={e => setFiltros({ ...orgFiltros, tamano: e.target.value as TamanoEmpresa | '' })}
                                 className="w-full px-3 py-2.5 text-sm text-gray-800 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
@@ -185,10 +190,11 @@ export function ExportarForm() {
 
                 {entidad === 'contactos' && (
                     <div className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Organización asociada</label>
+                        <label htmlFor="exp-org" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Organización asociada</label>
                         <div className="relative">
                             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
+                                id="exp-org"
                                 type="text"
                                 value={contactoFiltros.organizacion}
                                 onChange={e => setFiltros({ organizacion: e.target.value })}
@@ -201,8 +207,9 @@ export function ExportarForm() {
 
                 {entidad === 'leads' && (
                     <div className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</label>
+                        <label htmlFor="exp-lead-estado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</label>
                         <select
+                            id="exp-lead-estado"
                             value={leadFiltros.estado}
                             onChange={e => setFiltros({ estado: e.target.value as LeadState | '' })}
                             className="w-full sm:w-64 px-3 py-2.5 text-sm text-gray-800 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
@@ -215,8 +222,9 @@ export function ExportarForm() {
 
                 {entidad === 'cotizaciones' && (
                     <div className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</label>
+                        <label htmlFor="exp-cot-estado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</label>
                         <select
+                            id="exp-cot-estado"
                             value={cotFiltros.estado}
                             onChange={e => setFiltros({ estado: e.target.value as EstadoCot | '' })}
                             className="w-full sm:w-64 px-3 py-2.5 text-sm text-gray-800 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"

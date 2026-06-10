@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import React, { useState, useEffect } from 'react'
+import { useForm, UseFormSetValue } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Save, ArrowLeft } from 'lucide-react'
+import { Loader2, Save, X } from 'lucide-react'
+
 import { useRouter } from 'next/navigation'
 import {
   organizacionSchema,
@@ -11,35 +12,51 @@ import {
 } from '@/lib/validators/organizacion.schema'
 import { TipoEmpresa, TamanoEmpresa, Sector } from '@/types/enums'
 import { Organizacion, SunatRucResult } from '@/types/organizacion.types'
-import { generarCodigoCliente } from '@/lib/utils/organizacion.utils'
-import { ROUTES } from '@/lib/constants/routes'
+import { generarCodigoCliente, formatSector } from '@/lib/utils/organizacion.utils'
 
 interface OrganizacionFormProps {
   organizacion?: Organizacion
+  datosSunat?:   SunatRucResult | null
   onSubmit:      (data: OrganizacionFormValues) => Promise<void>
   isLoading:     boolean
   error?:        string | null
-  sunatData?:    SunatRucResult | null
 }
 
-type BusquedaTab = 'ruc' | 'razon'
+const MAX_ACTIVIDAD_ECONOMICA = 200
+
+function applyDatosSunat(
+  datos: SunatRucResult,
+  setValue: UseFormSetValue<OrganizacionFormValues>,
+  setSunatAplicado: (v: boolean) => void,
+): void {
+  setValue('ruc', datos.ruc, { shouldValidate: true })
+  setValue('nombre', datos.nombre, { shouldValidate: true })
+  const nombreComercial = datos.nombreCompleto || datos.nombre
+  setValue('nombre_comercial', nombreComercial, { shouldValidate: true })
+  if (datos.tipo)        setValue('tipo', datos.tipo, { shouldValidate: true })
+  if (datos.tamano)      setValue('tamano', datos.tamano, { shouldValidate: true })
+  if (datos.sector)      setValue('sector', datos.sector, { shouldValidate: true })
+  if (datos.ubicacion)   setValue('ubicacion', datos.ubicacion, { shouldValidate: true })
+  if (datos.actividades) setValue('actividad_economica', datos.actividades.slice(0, MAX_ACTIVIDAD_ECONOMICA), { shouldValidate: true })
+  setValue('codigo_cliente', generarCodigoCliente(nombreComercial, datos.ruc), { shouldValidate: true })
+  setSunatAplicado(true)
+}
 
 export function OrganizacionForm({
   organizacion,
+  datosSunat,
   onSubmit,
   isLoading,
   error,
-  sunatData,
-}: OrganizacionFormProps) {
-  const router                        = useRouter()
-  const esEdicion                     = !!organizacion
-  const [busquedaTab, setBusquedaTab] = useState<BusquedaTab>('ruc')
+}: Readonly<OrganizacionFormProps>) {
+  const router                          = useRouter()
+  const esEdicion                       = !!organizacion
+  const [sunatAplicado, setSunatAplicado] = useState(false)
 
   const {
     register,
     handleSubmit,
     setValue,
-    control,
     formState: { errors },
   } = useForm<OrganizacionFormValues>({
     resolver: zodResolver(organizacionSchema),
@@ -61,28 +78,12 @@ export function OrganizacionForm({
       : undefined,
   })
 
-  const rucValue = useWatch({ control, name: 'ruc' })
-
   useEffect(() => {
-    if (!sunatData) return
+    if (!datosSunat) return
+    applyDatosSunat(datosSunat, setValue, setSunatAplicado)
+  }, [datosSunat, setValue])
 
-    setBusquedaTab('ruc')
-    setValue('ruc',    sunatData.ruc)
-    setValue('nombre', sunatData.nombre)
-    if (sunatData.nombreCompleto) setValue('nombre_comercial',    sunatData.nombreCompleto)
-    if (sunatData.ubicacion)      setValue('ubicacion',           sunatData.ubicacion)
-    if (sunatData.actividades)    setValue('actividad_economica', sunatData.actividades)
-
-    // Hay data de SUNAT: el código de cliente se autogenera con el patrón
-    // [iniciales del nombre comercial]-[últimos 3 dígitos del RUC].
-    const nombreComercial = sunatData.nombreCompleto || sunatData.nombre
-    setValue('codigo_cliente', generarCodigoCliente(nombreComercial, sunatData.ruc))
-  }, [sunatData, setValue])
-
-  // El código de cliente solo es editable en registro manual o cuando la
-  // búsqueda SUNAT no arrojó datos. Si proviene de SUNAT (o es edición), queda
-  // bloqueado y se gestiona automáticamente.
-  const codigoBloqueado = esEdicion || !!sunatData
+  const codigoBloqueado = esEdicion || sunatAplicado
 
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
@@ -91,19 +92,32 @@ export function OrganizacionForm({
       ? 'border-red-400 bg-red-50'
       : 'border-gray-200 focus:border-emerald-400 bg-white'
     }`
+  const readOnlyClass = 'bg-gray-50 text-gray-500 cursor-default focus:border-gray-200'
+  const autocompletadoBloqueado = sunatAplicado && !esEdicion
+  const selectOverrideClass = autocompletadoBloqueado
+    ? `${readOnlyClass} pointer-events-none appearance-none`
+    : ''
+
+  let codigoClienteHint: React.ReactElement | null = null
+  if (codigoBloqueado) {
+    codigoClienteHint = <p className="text-xs text-gray-400">Generado a partir del nombre comercial y el RUC de SUNAT.</p>
+  } else if (errors.codigo_cliente) {
+    codigoClienteHint = <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-codigo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Código de Cliente{' '}
             {codigoBloqueado
               ? <span className="text-gray-400 normal-case font-normal">— generado automáticamente</span>
               : <span className="text-red-500">*</span>}
           </label>
           <input
+            id="of-codigo"
             type="text"
             placeholder="Ej: ORG-2026-001"
             {...register('codigo_cliente')}
@@ -114,90 +128,40 @@ export function OrganizacionForm({
                 bg-gray-50 text-sm text-gray-500 cursor-not-allowed`
               : inputClass(!!errors.codigo_cliente)}
           />
-          {codigoBloqueado ? (
-            <p className="text-xs text-gray-400">
-              Generado a partir del nombre comercial y el RUC de SUNAT.
-            </p>
-          ) : errors.codigo_cliente ? (
-            <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
-          ) : null}
+          {codigoClienteHint}
         </div>
 
-        {!esEdicion && (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setBusquedaTab('ruc')
-                  setValue('ruc', '')
-                }}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors
-                  ${busquedaTab === 'ruc'
-                    ? 'bg-emerald-700 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-              >
-                Por RUC
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setBusquedaTab('razon')
-                  setValue('ruc', '')
-                }}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors
-                  ${busquedaTab === 'razon'
-                    ? 'bg-emerald-700 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-              >
-                Por Razón Social
-              </button>
-            </div>
-
-            {busquedaTab === 'ruc' && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    RUC
-                  </label>
-                  <span className={`text-xs font-medium
-                    ${(rucValue?.length ?? 0) === 11 ? 'text-emerald-600' : 'text-gray-400'}`}>
-                    {rucValue?.length ?? 0}/11
-                  </span>
-                </div>
-                <input
-                  type="text"
-                  placeholder="Ingresa RUC (11 dígitos)..."
-                  maxLength={11}
-                  {...register('ruc')}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '').slice(0, 11)
-                    setValue('ruc', val)
-                  }}
-                  className={inputClass(!!errors.ruc)}
-                />
-                <p className="text-xs text-gray-400">
-                  11 dígitos → datos se completan automáticamente desde SUNAT.
-                </p>
-                {errors.ruc && (
-                  <p className="text-red-500 text-xs">{errors.ruc.message}</p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        <div className="space-y-1.5">
+          <label htmlFor="of-ruc" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            RUC{' '}
+            {sunatAplicado
+              ? <span className="text-gray-400 normal-case font-normal">— completado desde SUNAT</span>
+              : <span className="text-gray-400 normal-case font-normal">Opcional</span>}
+          </label>
+          <input
+            id="of-ruc"
+            type="text"
+            placeholder="Ej: 20123456789"
+            readOnly={sunatAplicado}
+            {...register('ruc')}
+            className={sunatAplicado
+              ? `w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-500 cursor-not-allowed`
+              : inputClass(!!errors.ruc)}
+          />
+          {errors.ruc && <p className="text-red-500 text-xs">{errors.ruc.message}</p>}
+        </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-nombre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Nombre / Razón Social <span className="text-red-500">*</span>
           </label>
           <input
+            id="of-nombre"
             type="text"
             placeholder="Nombre de la organización..."
+            readOnly={autocompletadoBloqueado}
             {...register('nombre')}
-            className={inputClass(!!errors.nombre)}
+            className={`${inputClass(!!errors.nombre)} ${autocompletadoBloqueado ? readOnlyClass : ''}`}
           />
           {errors.nombre && (
             <p className="text-red-500 text-xs">{errors.nombre.message}</p>
@@ -205,15 +169,16 @@ export function OrganizacionForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Nombre Comercial{' '}
-            <span className="text-gray-400 normal-case font-normal">Opcional</span>
+          <label htmlFor="of-nombre-comercial" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Nombre Comercial <span className="text-red-500">*</span>
           </label>
           <input
+            id="of-nombre-comercial"
             type="text"
             placeholder="Nombre comercial o marca..."
+            readOnly={autocompletadoBloqueado}
             {...register('nombre_comercial')}
-            className={inputClass(!!errors.nombre_comercial)}
+            className={`${inputClass(!!errors.nombre_comercial)} ${autocompletadoBloqueado ? readOnlyClass : ''}`}
           />
           {errors.nombre_comercial && (
             <p className="text-red-500 text-xs">{errors.nombre_comercial.message}</p>
@@ -221,11 +186,12 @@ export function OrganizacionForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-sub-area" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Área / Departamento{' '}
             <span className="text-gray-400 normal-case font-normal">Opcional</span>
           </label>
           <input
+            id="of-sub-area"
             type="text"
             placeholder="Ej: Área de Innovación, Gerencia de Proyectos"
             {...register('sub_area')}
@@ -235,12 +201,15 @@ export function OrganizacionForm({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="of-tipo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Tipo <span className="text-red-500">*</span>
             </label>
             <select
+              id="of-tipo"
               {...register('tipo')}
-              className={inputClass(!!errors.tipo)}
+              aria-disabled={autocompletadoBloqueado}
+              tabIndex={autocompletadoBloqueado ? -1 : undefined}
+              className={`${inputClass(!!errors.tipo)} ${selectOverrideClass}`}
             >
               <option value="">Seleccionar...</option>
               {Object.values(TipoEmpresa).map((t) => (
@@ -253,12 +222,15 @@ export function OrganizacionForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="of-tamano" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Tamaño <span className="text-red-500">*</span>
             </label>
             <select
+              id="of-tamano"
               {...register('tamano')}
-              className={inputClass(!!errors.tamano)}
+              aria-disabled={autocompletadoBloqueado}
+              tabIndex={autocompletadoBloqueado ? -1 : undefined}
+              className={`${inputClass(!!errors.tamano)} ${selectOverrideClass}`}
             >
               <option value="">Seleccionar...</option>
               {Object.values(TamanoEmpresa).map((t) => (
@@ -272,16 +244,19 @@ export function OrganizacionForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-sector" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Sector <span className="text-red-500">*</span>
           </label>
           <select
+            id="of-sector"
             {...register('sector')}
-            className={inputClass(!!errors.sector)}
+            aria-disabled={autocompletadoBloqueado}
+            tabIndex={autocompletadoBloqueado ? -1 : undefined}
+            className={`${inputClass(!!errors.sector)} ${selectOverrideClass}`}
           >
             <option value="">Seleccionar...</option>
             {Object.values(Sector).map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>{formatSector(s)}</option>
             ))}
           </select>
           {errors.sector && (
@@ -290,54 +265,70 @@ export function OrganizacionForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-ubicacion" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Ubicación
           </label>
           <input
+            id="of-ubicacion"
             type="text"
             placeholder="Ciudad, Región..."
             {...register('ubicacion')}
             className={inputClass(!!errors.ubicacion)}
           />
+          {errors.ubicacion && (
+            <p className="text-red-500 text-xs">{errors.ubicacion.message}</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-actividad" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Actividades Económicas{' '}
             <span className="text-gray-400 normal-case font-normal">
               Opcional — SUNAT lo completa
             </span>
           </label>
           <input
+            id="of-actividad"
             type="text"
             placeholder="Ej: Fabricación de productos orgánicos..."
             {...register('actividad_economica')}
             className={inputClass(!!errors.actividad_economica)}
           />
+          {errors.actividad_economica && (
+            <p className="text-red-500 text-xs">{errors.actividad_economica.message}</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-linkedin" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             LinkedIn
           </label>
           <input
+            id="of-linkedin"
             type="text"
             placeholder="linkedin.com/company/ejemplo"
             {...register('linkedin')}
             className={inputClass(!!errors.linkedin)}
           />
+          {errors.linkedin && (
+            <p className="text-red-500 text-xs">{errors.linkedin.message}</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="of-alianzas" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Alianzas Estratégicas
           </label>
           <input
+            id="of-alianzas"
             type="text"
             placeholder="Ej: USAID, Rainforest Alliance"
             {...register('alianzas_estrategicas')}
             className={inputClass(!!errors.alianzas_estrategicas)}
           />
+          {errors.alianzas_estrategicas && (
+            <p className="text-red-500 text-xs">{errors.alianzas_estrategicas.message}</p>
+          )}
         </div>
 
 
@@ -351,12 +342,13 @@ export function OrganizacionForm({
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <button
             type="button"
-            onClick={() => router.push(ROUTES.organizaciones)}
+            onClick={() => router.back()}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm
-              text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+              text-gray-500 hover:text-gray-700 hover:bg-gray-50
+              border border-gray-200 transition-colors"
           >
-            <ArrowLeft size={16} />
-            Volver a Organizaciones
+            <X size={16} />
+            Cancelar
           </button>
 
           <button
