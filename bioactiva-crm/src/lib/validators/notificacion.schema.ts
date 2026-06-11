@@ -82,7 +82,6 @@ export const seguimientoSchema = z.object({
     .min(1, 'El cuerpo externo es obligatorio'),
 
   correo_cliente: z
-    .string()
     .email('Correo del cliente inválido')
     .min(1, 'El correo del cliente es obligatorio'),
 })

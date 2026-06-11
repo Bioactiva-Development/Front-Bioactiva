@@ -2,13 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Bell, ChevronDown, LogOut, User, Menu } from 'lucide-react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuthStore, useUIStore } from '@/store'
 import { useAuth } from '@/hooks/auth/useAuth'
 import { useCentroNotificaciones } from '@/hooks/notificaciones/useNotificaciones'
 import { RolUsuario } from '@/types/enums'
-import { ROUTES } from '@/lib/constants/routes'
 
 export function Navbar() {
     const router = useRouter()

@@ -42,7 +42,7 @@ export const cotizacionSchema = z.object({
     .number({ error: 'El monto es obligatorio' })
     .min(0, 'El monto debe ser mayor o igual a 0'),
 
-  tipo: z.nativeEnum(TipoMoneda, {
+  tipo: z.enum(TipoMoneda, {
     error: 'La moneda es obligatoria',
   }),
 

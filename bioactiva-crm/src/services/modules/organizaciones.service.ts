@@ -221,13 +221,13 @@ export const organizacionesService = {
     let leadsRaw: LeadDtoOut[] = []
     if (leadsResult.status === 'fulfilled') {
       const d = leadsResult.value.data
-      leadsRaw = Array.isArray(d) ? d : ((d as LeadsDtoResponse).data ?? [])
+      leadsRaw = Array.isArray(d) ? d : (d.data ?? [])
     }
 
     let cotizacionesRaw: CotizacionDtoOut[] = []
     if (cotizacionesResult.status === 'fulfilled') {
       const d = cotizacionesResult.value.data
-      cotizacionesRaw = Array.isArray(d) ? d : ((d as CotizacionesDtoResponse).data ?? [])
+      cotizacionesRaw = Array.isArray(d) ? d : (d.data ?? [])
     }
 
     const todosContactos = contactosRaw.map((c) => ({

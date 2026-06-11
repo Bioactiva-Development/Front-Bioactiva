@@ -249,7 +249,7 @@ export const mockDeleteCotizacion = async (id: number): Promise<void> => {
 
   const index = MOCK_COTIZACIONES.findIndex((c) => c.id === id)
   if (index === -1) {
-    throw { status: 404, message: 'Cotización no encontrada.' }
+    throw Object.assign(new Error('Cotización no encontrada.'), { status: 404 })
   }
 
   MOCK_COTIZACIONES.splice(index, 1)

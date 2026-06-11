@@ -38,14 +38,14 @@ type LeadLocalFieldsMap = Record<number, LeadLocalFields>
 const LOCAL_LEAD_FIELDS_KEY = 'bioactiva:lead-local-fields'
 
 const canUseLocalStorage = () =>
-  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+  globalThis.window !== undefined && globalThis.localStorage !== undefined
 
 const readLeadLocalFields = (): LeadLocalFieldsMap => {
   if (!canUseLocalStorage()) return {}
 
   try {
     return JSON.parse(
-      window.localStorage.getItem(LOCAL_LEAD_FIELDS_KEY) ?? '{}'
+      globalThis.localStorage.getItem(LOCAL_LEAD_FIELDS_KEY) ?? '{}'
     ) as LeadLocalFieldsMap
   } catch {
     return {}
@@ -54,7 +54,7 @@ const readLeadLocalFields = (): LeadLocalFieldsMap => {
 
 const writeLeadLocalFields = (fields: LeadLocalFieldsMap) => {
   if (!canUseLocalStorage()) return
-  window.localStorage.setItem(LOCAL_LEAD_FIELDS_KEY, JSON.stringify(fields))
+  globalThis.localStorage.setItem(LOCAL_LEAD_FIELDS_KEY, JSON.stringify(fields))
 }
 
 const mergeLeadLocalFields = (lead: Lead): Lead => {
@@ -67,7 +67,7 @@ const persistLeadLocalFields = (
   id: number,
   data: Partial<LeadFormData>
 ) => {
-  if (!Object.prototype.hasOwnProperty.call(data, 'fecha_cierre')) return
+  if (!Object.hasOwn(data, 'fecha_cierre')) return
 
   const fields = readLeadLocalFields()
   const fechaCierre = data.fecha_cierre?.trim()

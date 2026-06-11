@@ -44,12 +44,12 @@ const ESTADO_STR_MAP: Record<string, EstadoUsuario> = {
 
 export const mapRolTolerant = (value: unknown): RolUsuario => {
     if (typeof value === 'number') return mapRole(value)
-    return ROL_STR_MAP[String(value ?? '').toUpperCase()] ?? RolUsuario.Trabajador
+    return ROL_STR_MAP[(typeof value === 'string' ? value : '').toUpperCase()] ?? RolUsuario.Trabajador
 }
 
 export const mapEstadoTolerant = (value: unknown): EstadoUsuario => {
     if (typeof value === 'number') return mapEstado(value)
-    return ESTADO_STR_MAP[String(value ?? '').toUpperCase()] ?? EstadoUsuario.Pendiente
+    return ESTADO_STR_MAP[(typeof value === 'string' ? value : '').toUpperCase()] ?? EstadoUsuario.Pendiente
 }
 
 export const mapUsuarioRaw = (raw: UsuarioRaw): Usuario => ({

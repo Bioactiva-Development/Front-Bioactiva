@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { leadsService } from '@/services/modules/leads.service'
 import { cotizacionesService } from '@/services/modules/cotizaciones.service'
 import { QUERY_KEYS } from '@/lib/constants/queryKeys'
-import { Lead, LeadFiltros, LeadFormData } from '@/types/lead.types'
+import { Lead, LeadFiltros, LeadFormData, PipelineData } from '@/types/lead.types'
 import { EstadoCot, LeadState } from '@/types/enums'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 import {
@@ -11,7 +11,6 @@ import {
   getCotizacionStateFromLeadState,
   validateLeadStateTransition,
 } from '@/lib/utils/lead-flow.utils'
-import { PipelineData } from '@/types/lead.types'
 
 export function usePipeline(filtros?: LeadFiltros) {
   return useQuery({

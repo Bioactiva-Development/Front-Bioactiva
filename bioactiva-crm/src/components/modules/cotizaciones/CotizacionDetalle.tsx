@@ -115,7 +115,7 @@ export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionD
 
           <div className="flex items-center gap-2 flex-wrap">
             <button
-              onClick={() => window.print()}
+              onClick={() => globalThis.print()}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
                 text-gray-500 hover:text-gray-700 hover:bg-gray-50
                 border border-gray-200 transition-colors"
