@@ -78,24 +78,22 @@ describe('leads.mapper', () => {
   it('maps the new lead list filters (organización, semáforo y rango de fechas)', () => {
     expect(toLeadQueryParams({
       id_org: 'org-uuid-1',
-      con_actividades_por_vencer: true,
+      alerta_actividad: 'VENCIDAS',
       fecha_desde: '2022-01-01',
       fecha_hasta: '2026-06-11',
       page: 1,
       limit: 10,
     })).toEqual({
       idOrg: 'org-uuid-1',
-      // El backend lo parsea como string.
-      conActividadesPorVencer: 'true',
+      alertaActividad: 'VENCIDAS',
       fechaDesde: '2022-01-01',
       fechaHasta: '2026-06-11',
       page: 1,
       limit: 10,
     })
 
-    // Cuando el toggle está apagado, no se envía el parámetro.
-    expect(toLeadQueryParams({ con_actividades_por_vencer: false }))
-      .toEqual({})
+    // Sin alerta_actividad no se envía el parámetro (trae todos los leads).
+    expect(toLeadQueryParams({})).toEqual({})
   })
 
   it('maps frontend states and payloads to backend DTOs', () => {

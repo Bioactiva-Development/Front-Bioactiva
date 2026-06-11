@@ -4,6 +4,11 @@ import { LeadState } from './enums'
 // VERDE = al día · AMARILLO = vence dentro de 3 días · ROJO = pendiente vencida.
 export type ActivityAlert = 'VERDE' | 'AMARILLO' | 'ROJO'
 
+// Filtro de alerta de actividades (GET /leads?alertaActividad=...).
+// TODAS = con alerta (amarillo + rojo) · POR_VENCER = amarillo · VENCIDAS = rojo.
+// Omitir el param trae todos los leads. Valores inválidos => 400.
+export type ActivityAlertFilter = 'TODAS' | 'POR_VENCER' | 'VENCIDAS'
+
 export interface Lead {
   id:number
   codigo: string
@@ -39,8 +44,8 @@ export interface LeadFiltros {
   id_org?: string
   canal_captacion?: string
   solo_alerta?: boolean
-  // Solo leads con semáforo AMARILLO o ROJO (actividades por vencer o vencidas).
-  con_actividades_por_vencer?: boolean
+  // Filtro de semáforo de actividades (backend: alertaActividad).
+  alerta_actividad?: ActivityAlertFilter
   // Filtran por fecha de creación del lead (createdAt). ISO 8601.
   fecha_desde?: string
   fecha_hasta?: string

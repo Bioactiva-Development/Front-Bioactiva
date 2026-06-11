@@ -35,8 +35,9 @@ function filtrosFromParams(sp: URLSearchParams): FiltrosType {
   const fechaHasta = sp.get('fechaHasta')
   if (fechaHasta) filtros.fecha_hasta = fechaHasta
 
-  if (sp.get('conActividadesPorVencer') === 'true') {
-    filtros.con_actividades_por_vencer = true
+  const alerta = sp.get('alertaActividad')
+  if (alerta === 'TODAS' || alerta === 'POR_VENCER' || alerta === 'VENCIDAS') {
+    filtros.alerta_actividad = alerta
   }
 
   return filtros
@@ -50,7 +51,7 @@ function paramsFromFiltros(filtros: FiltrosType): string {
   if (filtros.search) sp.set('search', filtros.search)
   if (filtros.fecha_desde) sp.set('fechaDesde', filtros.fecha_desde)
   if (filtros.fecha_hasta) sp.set('fechaHasta', filtros.fecha_hasta)
-  if (filtros.con_actividades_por_vencer) sp.set('conActividadesPorVencer', 'true')
+  if (filtros.alerta_actividad) sp.set('alertaActividad', filtros.alerta_actividad)
   return sp.toString()
 }
 
@@ -119,7 +120,13 @@ function PipelineContent() {
       const { borrador } = await moverLead({ lead, estado })
       if (borrador) setBorradorId(borrador.id)
     } catch (err: unknown) {
-      setDragError(getErrorMessage(err, 'No se pudo actualizar el estado del lead.'))
+      // 409: el lead tiene una actividad pendiente y debe resolverse antes.
+      const status = (err as { status?: number })?.status
+      setDragError(
+        status === 409
+          ? 'El lead tiene una actividad pendiente. Complétala o cancélala antes de cambiar el estado.'
+          : getErrorMessage(err, 'No se pudo actualizar el estado del lead.')
+      )
     }
   }
 

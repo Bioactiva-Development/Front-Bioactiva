@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, Filter, Search, X } from 'lucide-react'
-import { LeadFiltros as FiltrosType } from '@/types/lead.types'
+import { LeadFiltros as FiltrosType, ActivityAlertFilter } from '@/types/lead.types'
 import { EstadoUsuario, LeadState } from '@/types/enums'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { UsuarioListItem } from '@/types/usuario.types'
@@ -25,6 +25,18 @@ const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
   nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
 })
 
+// Semáforo de actividades (backend: alertaActividad). "Todas" = sin filtro.
+const SEMAFORO_OPCIONES: {
+  value: ActivityAlertFilter | undefined
+  label: string
+  dots: string[]
+}[] = [
+  { value: undefined,    label: 'Todas',      dots: [] },
+  { value: 'POR_VENCER', label: 'Por vencer', dots: ['bg-amber-500'] },
+  { value: 'VENCIDAS',   label: 'Vencidas',   dots: ['bg-red-500'] },
+  { value: 'TODAS',      label: 'Con alerta', dots: ['bg-amber-500', 'bg-red-500'] },
+]
+
 // Filtros server-side soportados por GET /leads (sin canal/solo_alerta, que eran
 // client-side). estado, encargado, organización, búsqueda, rango de fechas y el
 // toggle de "por vencer/vencidas" se mandan al backend.
@@ -33,7 +45,7 @@ const sanitizeFiltros = (filtros: FiltrosType): FiltrosType => ({
   estado: filtros.estado,
   id_encargado: filtros.id_encargado,
   id_org: filtros.id_org,
-  con_actividades_por_vencer: filtros.con_actividades_por_vencer,
+  alerta_actividad: filtros.alerta_actividad,
   fecha_desde: filtros.fecha_desde,
   fecha_hasta: filtros.fecha_hasta,
 })
@@ -79,7 +91,7 @@ export function LeadFiltros({
     filtrosBasicos.estado ||
     filtrosBasicos.id_encargado ||
     filtrosBasicos.id_org ||
-    filtrosBasicos.con_actividades_por_vencer ||
+    filtrosBasicos.alerta_actividad ||
     filtrosBasicos.fecha_desde ||
     filtrosBasicos.fecha_hasta
 
@@ -287,35 +299,29 @@ export function LeadFiltros({
                 Semáforo
               </span>
               <div className="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50 p-0.5">
-                <button
-                  type="button"
-                  onClick={() => updateFiltros({
-                    ...filtrosBasicos,
-                    con_actividades_por_vencer: undefined,
-                  })}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
-                    ${!filtrosBasicos.con_actividades_por_vencer
-                      ? 'bg-white text-gray-700 shadow-sm'
-                      : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  Todas
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateFiltros({
-                    ...filtrosBasicos,
-                    con_actividades_por_vencer: true,
-                  })}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm
-                    font-semibold transition-colors
-                    ${filtrosBasicos.con_actividades_por_vencer
-                      ? 'bg-white text-amber-700 shadow-sm'
-                      : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-amber-500" />
-                  <span className="w-2 h-2 rounded-full bg-red-500" />
-                  Por vencer o vencidas
-                </button>
+                {SEMAFORO_OPCIONES.map((opt) => {
+                  const activo = filtrosBasicos.alerta_actividad === opt.value
+                  return (
+                    <button
+                      key={opt.label}
+                      type="button"
+                      onClick={() => updateFiltros({
+                        ...filtrosBasicos,
+                        alerta_actividad: opt.value,
+                      })}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm
+                        font-medium transition-colors
+                        ${activo
+                          ? 'bg-white text-gray-800 shadow-sm'
+                          : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                      {opt.dots.map((dot) => (
+                        <span key={dot} className={`w-2 h-2 rounded-full ${dot}`} />
+                      ))}
+                      {opt.label}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 

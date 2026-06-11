@@ -201,7 +201,13 @@ export function LeadDetalle({
       // OFERTADO: el backend generó la cotización borrador automáticamente.
       if (borrador) setBorradorCotId(borrador.id)
     } catch (err: unknown) {
-      setEstadoError(getErrorMessage(err, 'No se pudo cambiar el estado del lead.'))
+      // 409: el lead tiene una actividad pendiente que debe resolverse antes.
+      const status = (err as { status?: number })?.status
+      setEstadoError(
+        status === 409
+          ? 'El lead tiene una actividad pendiente. Complétala o cancélala (en la pestaña Actividades) antes de cambiar el estado.'
+          : getErrorMessage(err, 'No se pudo cambiar el estado del lead.')
+      )
     }
   }
 

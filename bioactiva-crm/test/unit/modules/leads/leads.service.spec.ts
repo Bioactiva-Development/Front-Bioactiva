@@ -93,7 +93,7 @@ describe('leads/leads.service (API mode)', () => {
 
       await leadsService.getLeadsColumn(
         LeadState.Ofertado,
-        { id_encargado: 3, con_actividades_por_vencer: true },
+        { id_encargado: 3, alerta_actividad: 'POR_VENCER' },
         2
       )
 
@@ -101,7 +101,7 @@ describe('leads/leads.service (API mode)', () => {
         params: {
           estado: 'OFERTADO',
           idEncargado: 3,
-          conActividadesPorVencer: 'true',
+          alertaActividad: 'POR_VENCER',
           page: 2,
           limit: 10,
         },

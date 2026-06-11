@@ -116,8 +116,8 @@ export const toLeadQueryParams = (filtros?: LeadFiltros) => {
   if (filtros?.id_encargado) params.idEncargado = filtros.id_encargado
   if (filtros?.id_org) params.idOrg = filtros.id_org
   if (filtros?.search) params.search = filtros.search
-  // El backend parsea el flag como string; se serializa 'true' y se omite si no.
-  if (filtros?.con_actividades_por_vencer) params.conActividadesPorVencer = 'true'
+  // Enum TODAS | POR_VENCER | VENCIDAS. Se omite para traer todos los leads.
+  if (filtros?.alerta_actividad) params.alertaActividad = filtros.alerta_actividad
   if (filtros?.fecha_desde) params.fechaDesde = filtros.fecha_desde
   if (filtros?.fecha_hasta) params.fechaHasta = filtros.fecha_hasta
   if (filtros?.page) params.page = filtros.page
