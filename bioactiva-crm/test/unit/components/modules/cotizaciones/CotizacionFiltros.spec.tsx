@@ -1,0 +1,116 @@
+import { render, screen, fireEvent } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { CotizacionFiltros } from '@/components/modules/cotizaciones/CotizacionFiltros'
+import { CotizacionFiltros as FiltrosType } from '@/types/cotizacion.types'
+import { EstadoCot } from '@/types/enums'
+
+jest.mock('@/hooks/shared/useDebounce', () => ({
+  useDebounce: jest.fn((v: string) => v),
+}))
+
+jest.mock('lucide-react', () => ({
+  Search: () => <div data-testid="icon-search" />,
+  X: () => <div data-testid="icon-x" />,
+  Loader2: () => <div data-testid="icon-loader" />,
+}))
+
+const baseFiltros: FiltrosType = {
+  search: '',
+}
+
+const defaultProps = {
+  filtros: baseFiltros,
+  onChange: jest.fn(),
+  onLimpiar: jest.fn(),
+}
+
+describe('modules/cotizaciones/CotizacionFiltros', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('renders all 5 tab buttons', () => {
+    render(<CotizacionFiltros {...defaultProps} />)
+    expect(screen.getByText('Todas')).toBeInTheDocument()
+    expect(screen.getByText('Pendiente')).toBeInTheDocument()
+    expect(screen.getByText('Enviada')).toBeInTheDocument()
+    expect(screen.getByText('Aceptada')).toBeInTheDocument()
+    expect(screen.getByText('Rechazada')).toBeInTheDocument()
+  })
+
+  it('Todas tab is active when filtros.estado is undefined', () => {
+    render(<CotizacionFiltros {...defaultProps} />)
+    const btn = screen.getByText('Todas')
+    expect(btn.className).toContain('bg-emerald-50')
+  })
+
+  it('Pendiente tab is active when filtros.estado is EstadoCot.Pendiente', () => {
+    const filtros: FiltrosType = { ...baseFiltros, estado: EstadoCot.Pendiente }
+    render(<CotizacionFiltros {...defaultProps} filtros={filtros} />)
+    const btn = screen.getByText('Pendiente')
+    expect(btn.className).toContain('bg-gray-100')
+  })
+
+  it('clicking Pendiente tab calls onChange with that estado and page:1', async () => {
+    const onChange = jest.fn()
+    render(<CotizacionFiltros {...defaultProps} onChange={onChange} />)
+    await userEvent.click(screen.getByText('Pendiente'))
+    expect(onChange).toHaveBeenCalledWith({
+      ...baseFiltros,
+      estado: EstadoCot.Pendiente,
+      page: 1,
+    })
+  })
+
+  it('clicking Enviada tab calls onChange with Enviada and page:1', async () => {
+    const onChange = jest.fn()
+    render(<CotizacionFiltros {...defaultProps} onChange={onChange} />)
+    await userEvent.click(screen.getByText('Enviada'))
+    expect(onChange).toHaveBeenCalledWith({
+      ...baseFiltros,
+      estado: EstadoCot.Enviada,
+      page: 1,
+    })
+  })
+
+  it('renders search input with placeholder Buscar...', () => {
+    render(<CotizacionFiltros {...defaultProps} />)
+    expect(screen.getByPlaceholderText('Buscar...')).toBeInTheDocument()
+  })
+
+  it('shows clear X button when search is not empty', () => {
+    const filtros: FiltrosType = { ...baseFiltros, search: 'test' }
+    render(<CotizacionFiltros {...defaultProps} filtros={filtros} />)
+    expect(screen.getByTestId('icon-x')).toBeInTheDocument()
+  })
+
+  it('hidden clear X button when search is empty', () => {
+    render(<CotizacionFiltros {...defaultProps} filtros={baseFiltros} />)
+    expect(screen.queryByTestId('icon-x')).not.toBeInTheDocument()
+  })
+
+  it('clicking clear X clears search input value', async () => {
+    const filtros: FiltrosType = { ...baseFiltros, search: 'test' }
+    render(<CotizacionFiltros {...defaultProps} filtros={filtros} />)
+    const input = screen.getByPlaceholderText('Buscar...') as HTMLInputElement
+    expect(input.value).toBe('test')
+    await userEvent.click(screen.getByTestId('icon-x').closest('button')!)
+    expect(input.value).toBe('')
+  })
+
+  it('shows Loader2 when isLoading is true and search is not empty', () => {
+    const filtros: FiltrosType = { ...baseFiltros, search: 'test' }
+    render(<CotizacionFiltros {...defaultProps} filtros={filtros} isLoading={true} />)
+    expect(screen.getByTestId('icon-loader')).toBeInTheDocument()
+  })
+
+  it('shows Search icon when isLoading is false', () => {
+    render(<CotizacionFiltros {...defaultProps} />)
+    expect(screen.getByTestId('icon-search')).toBeInTheDocument()
+  })
+
+  it('shows Search icon when isLoading is true but search is empty', () => {
+    render(<CotizacionFiltros {...defaultProps} isLoading={true} />)
+    expect(screen.getByTestId('icon-search')).toBeInTheDocument()
+  })
+})
