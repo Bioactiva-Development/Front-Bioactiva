@@ -128,7 +128,7 @@ describe('modules/contactos/ContactoForm', () => {
       const input = screen.getByLabelText('Teléfono Opcional')
       expect(input).toBeInTheDocument()
       expect(input).toHaveAttribute('type', 'text')
-      expect(input).toHaveAttribute('placeholder', 'Ej: 999 123 456')
+      expect(input).toHaveAttribute('placeholder', 'Ej: +51987654321')
     })
 
     it('renders comentarios textarea', () => {
