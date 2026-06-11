@@ -33,5 +33,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: [String.raw`/((?!api|_next/static|_next/image|favicon.ico|.*\.(?:png|jpg|jpeg|svg|ico)$).*)`],
+    // Nota: el matcher debe ser un literal estático analizable por Next.js;
+    // no usar String.raw ni concatenaciones (rompe "next build"). Sonar S7780.
+    matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|ico)$).*)'],
 }
