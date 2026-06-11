@@ -3,24 +3,23 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-    Pencil, UserX, UserCheck, UserPlus, Users,
+    UserX, UserCheck, UserPlus, Users,
     Mail, Search, ChevronLeft, ChevronRight, ShieldAlert,
 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { InvitarUsuarioModal } from '@/components/modules/control-acceso/InvitarUsuarioModal'
-import { EditarUsuarioModal } from '@/components/modules/control-acceso/EditarUsuarioModal'
 import { CambiarPasswordModal } from '@/components/modules/control-acceso/CambiarPasswordModal'
 import { DeshabilitarUsuarioModal } from '@/components/modules/control-acceso/DeshabilitarUsuarioModal'
 import { useUsuarios } from '@/hooks/usuarios/useUsuarios'
 import { useInvitaciones } from '@/hooks/usuarios/useInvitaciones'
 import { useAuthStore } from '@/store/auth.store'
 import { useDebounce } from '@/hooks/shared/useDebounce'
-import { UsuarioListItem, EditarUsuarioRequest, CambiarPasswordRequest, ListInvitacionesParams } from '@/types/usuario.types'
+import { UsuarioListItem, CambiarPasswordRequest, ListInvitacionesParams } from '@/types/usuario.types'
 import { RolUsuario, EstadoUsuario, EstadoToken } from '@/types/enums'
 import { InvitarUsuarioFormValues } from '@/lib/validators/usuario.schema'
 import { ROUTES } from '@/lib/constants/routes'
 
-type ModalType = 'invitar' | 'editar' | 'password' | 'estado' | null
+type ModalType = 'invitar' | 'password' | 'estado' | null
 
 const LIMIT = 10
 
@@ -99,12 +98,13 @@ export default function ControlAccesoPage() {
     const {
         usuarios, total: totalUsuarios, activos,
         isLoading: isLoadingUsuarios, error: errorUsuarios, successMessage,
-        cargar, editar, cambiarPassword, deshabilitar, habilitar, clearMessages,
+        cargar, cambiarRol, cambiarPassword, deshabilitar, habilitar, clearMessages,
     } = useUsuarios()
 
     const [modalAbierto, setModalAbierto] = useState<ModalType>(null)
     const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<UsuarioListItem | null>(null)
     const [inviteError, setInviteError] = useState<string | null>(null)
+    const [cambiandoRolId, setCambiandoRolId] = useState<number | null>(null)
 
     const [term, setTerm] = useState('')
     const [estadoFiltro, setEstadoFiltro] = useState('')
@@ -183,8 +183,14 @@ export default function ControlAccesoPage() {
         }
     }
 
-    const handleEditar = async (data: EditarUsuarioRequest): Promise<boolean> => {
-        return editar(data)
+    // Mantis #333 — selector de rol por fila vía PATCH /users/:id/role.
+    // El propio admin no puede cambiar su rol (la fila propia muestra un badge).
+    const handleCambiarRol = async (u: UsuarioListItem, nuevoRol: RolUsuario) => {
+        if (nuevoRol === u.rol) return
+        clearMessages()
+        setCambiandoRolId(u.id)
+        await cambiarRol(u.id, nuevoRol)
+        setCambiandoRolId(null)
     }
 
     const handleCambiarPassword = async (id: number, password: string): Promise<boolean> => {
@@ -315,22 +321,30 @@ export default function ControlAccesoPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <RolBadge rol={u.rol} />
+                                            {u.id === currentUser?.id ? (
+                                                // Mantis #333 — un admin no puede cambiar su propio rol.
+                                                <div className="flex items-center gap-2">
+                                                    <RolBadge rol={u.rol} />
+                                                    <span className="text-xs text-gray-400">(tú)</span>
+                                                </div>
+                                            ) : (
+                                                <select
+                                                    value={u.rol}
+                                                    disabled={cambiandoRolId === u.id}
+                                                    onChange={(e) => handleCambiarRol(u, e.target.value as RolUsuario)}
+                                                    title="Cambiar rol"
+                                                    className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg outline-none focus:border-emerald-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+                                                >
+                                                    <option value={RolUsuario.Trabajador}>Trabajador</option>
+                                                    <option value={RolUsuario.Administrador}>Administrador</option>
+                                                </select>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             <EstadoBadge estado={u.estado} />
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-1">
-                                                {u.id !== currentUser?.id && (
-                                                    <button
-                                                        onClick={() => abrirModal('editar', u)}
-                                                        title="Editar rol"
-                                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                                                    >
-                                                        <Pencil size={15} />
-                                                    </button>
-                                                )}
                                                 {u.estado !== EstadoUsuario.Pendiente && u.id !== currentUser?.id && (
                                                     <button
                                                         onClick={() => abrirModal('estado', u)}
@@ -467,16 +481,6 @@ export default function ControlAccesoPage() {
                     error={inviteError}
                     onClose={cerrarModal}
                     onSubmit={handleInvitar}
-                />
-            )}
-
-            {modalAbierto === 'editar' && usuarioSeleccionado && (
-                <EditarUsuarioModal
-                    usuario={usuarioSeleccionado}
-                    isLoading={isLoadingUsuarios}
-                    error={errorUsuarios}
-                    onClose={cerrarModal}
-                    onSubmit={handleEditar}
                 />
             )}
 

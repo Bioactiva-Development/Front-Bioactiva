@@ -1,6 +1,6 @@
 import { RolUsuario, EstadoUsuario } from '@/types/enums'
-import { UsuarioRaw } from '@/types/auth.types'
-import { mapRole, mapEstado, mapUsuarioRaw, usuarioFromAccessToken } from '@/lib/utils/auth.mappers'
+import { UsuarioRaw, UserResponseDto } from '@/types/auth.types'
+import { mapRole, mapEstado, mapUsuarioRaw, mapPerfilUsuario, usuarioFromAccessToken } from '@/lib/utils/auth.mappers'
 
 jest.mock('@/lib/utils/jwt.utils', () => ({
   decodeJwt: jest.fn(),
@@ -93,6 +93,41 @@ describe('security/auth.mappers', () => {
 
       expect(result.rol).toBe(RolUsuario.Trabajador)
       expect(result.estado).toBe(EstadoUsuario.Inactivo)
+    })
+  })
+
+  describe('mapPerfilUsuario', () => {
+    it('maps a UserResponseDto with string rol/estado (Mantis #333)', () => {
+      const raw: UserResponseDto = {
+        id: 7,
+        nombres: 'Ana',
+        apellidos: 'Lopez',
+        correo: 'ana@bioactiva.pe',
+        rol: 'ADMINISTRADOR',
+        estado: 'ACTIVO',
+        fechaRegistro: '2025-03-01T08:00:00Z',
+      }
+
+      expect(mapPerfilUsuario(raw)).toEqual({
+        id: 7,
+        nombres: 'Ana',
+        apellidos: 'Lopez',
+        correo: 'ana@bioactiva.pe',
+        rol: RolUsuario.Administrador,
+        estado: EstadoUsuario.Activo,
+        created_at: '2025-03-01T08:00:00Z',
+        updated_at: '2025-03-01T08:00:00Z',
+      })
+    })
+
+    it('maps TRABAJADOR / PENDIENTE correctly', () => {
+      const result = mapPerfilUsuario({
+        id: 8, nombres: 'Beto', apellidos: 'Diaz', correo: 'beto@bioactiva.pe',
+        rol: 'TRABAJADOR', estado: 'PENDIENTE', fechaRegistro: '2025-04-01T08:00:00Z',
+      })
+
+      expect(result.rol).toBe(RolUsuario.Trabajador)
+      expect(result.estado).toBe(EstadoUsuario.Pendiente)
     })
   })
 

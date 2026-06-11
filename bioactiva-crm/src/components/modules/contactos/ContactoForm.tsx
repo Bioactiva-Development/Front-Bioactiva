@@ -203,7 +203,7 @@ export function ContactoForm({
           <input
             id="cf-telefono"
             type="text"
-            placeholder="Ej: 999 123 456"
+            placeholder="Ej: +51987654321"
             {...register('telefono')}
             className={inputClass(!!errors.telefono)}
           />

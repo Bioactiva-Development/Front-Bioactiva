@@ -2,8 +2,10 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useAuthStore } from '@/store/auth.store'
+import { perfilService } from '@/services/modules/perfil.service'
 import { integracionesService } from '@/services/modules/integraciones.service'
 import { IntegracionesResponse } from '@/types/integracion.types'
+import { UpdateProfileRequest } from '@/types/auth.types'
 
 function extractMessage(err: unknown, fallback: string): string {
     if (err instanceof Error) return err.message
@@ -14,7 +16,7 @@ function extractMessage(err: unknown, fallback: string): string {
 }
 
 export function usePerfil() {
-    const { usuario, setSession, accessToken } = useAuthStore()
+    const { usuario, setUsuario } = useAuthStore()
 
     const [isLoadingPerfil, setIsLoadingPerfil] = useState(false)
     const [isLoadingPassword, setIsLoadingPassword] = useState(false)
@@ -28,6 +30,14 @@ export function usePerfil() {
     const [errorPerfil, setErrorPerfil] = useState<string | null>(null)
     const [errorPassword, setErrorPassword] = useState<string | null>(null)
 
+    // Precarga "Mi perfil" desde GET /profile (Mantis #333). Si falla, se mantienen
+    // los datos del store cargados al iniciar sesión.
+    useEffect(() => {
+        perfilService.getProfile()
+            .then(setUsuario)
+            .catch(() => { /* best effort: se conserva el usuario del store */ })
+    }, [setUsuario])
+
     useEffect(() => {
         integracionesService.getEstado()
             .then(setIntegraciones)
@@ -37,19 +47,19 @@ export function usePerfil() {
             }))
     }, [])
 
-    const actualizarNombre = useCallback(async (nombre_completo: string) => {
-        if (!usuario || !accessToken) return false
+    // PATCH /profile — nombres/apellidos por separado; el correo no es editable.
+    // Solo se envían los campos no vacíos (backend exige 1–90 chars y al menos uno).
+    const actualizarPerfil = useCallback(async (nombres: string, apellidos: string) => {
         try {
             setIsLoadingPerfil(true)
             setErrorPerfil(null)
 
-            const partes = nombre_completo.trim().split(' ')
-            const nombres = partes[0] ?? ''
-            const apellidos = partes.slice(1).join(' ')
+            const payload: UpdateProfileRequest = {}
+            if (nombres.trim()) payload.nombres = nombres.trim()
+            if (apellidos.trim()) payload.apellidos = apellidos.trim()
 
-            // En modo real: llamar al backend PATCH /api/perfil
-            // En mock: actualizar directamente el store
-            setSession(accessToken, { ...usuario, nombres, apellidos })
+            const actualizado = await perfilService.updateProfile(payload)
+            setUsuario(actualizado)
             setSuccessPerfil('Perfil actualizado correctamente.')
             setTimeout(() => setSuccessPerfil(null), 3000)
             return true
@@ -59,14 +69,14 @@ export function usePerfil() {
         } finally {
             setIsLoadingPerfil(false)
         }
-    }, [usuario, accessToken, setSession])
+    }, [setUsuario])
 
-    const cambiarPassword = useCallback(async (_password: string) => {
+    // PATCH /profile/password — requiere la contraseña actual y la nueva (8–72).
+    const cambiarPassword = useCallback(async (currentPassword: string, newPassword: string) => {
         try {
             setIsLoadingPassword(true)
             setErrorPassword(null)
-            // En modo real: llamar al backend PATCH /api/perfil/password
-            await new Promise((r) => setTimeout(r, 600))
+            await perfilService.changePassword({ currentPassword, newPassword })
             setSuccessPassword('Contraseña actualizada correctamente.')
             setTimeout(() => setSuccessPassword(null), 3000)
             return true
@@ -120,7 +130,7 @@ export function usePerfil() {
         successPassword,
         errorPerfil,
         errorPassword,
-        actualizarNombre,
+        actualizarPerfil,
         cambiarPassword,
         conectarMicrosoft,
         desconectarMicrosoft,

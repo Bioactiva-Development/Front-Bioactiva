@@ -7,6 +7,7 @@ import {
     EditarUsuarioRequest,
     CambiarPasswordRequest,
 } from '@/types/usuario.types'
+import { RolUsuario } from '@/types/enums'
 
 interface UsuariosState {
     usuarios: UsuarioListItem[]
@@ -76,6 +77,23 @@ export function useUsuarios() {
         }
     }, [cargar])
 
+    const cambiarRol = useCallback(async (id: number, rol: RolUsuario): Promise<boolean> => {
+        try {
+            setState(prev => ({ ...prev, isLoading: true, error: null }))
+            await usuariosService.cambiarRol(id, rol)
+            await cargar()
+            setState(prev => ({ ...prev, isLoading: false, successMessage: 'Rol actualizado correctamente.' }))
+            return true
+        } catch (err: unknown) {
+            setState(prev => ({
+                ...prev,
+                isLoading: false,
+                error: extractMessage(err, 'Error al cambiar el rol del usuario.'),
+            }))
+            return false
+        }
+    }, [cargar])
+
     const cambiarPassword = useCallback(async (data: CambiarPasswordRequest): Promise<boolean> => {
         try {
             setState(prev => ({ ...prev, isLoading: true, error: null }))
@@ -130,6 +148,7 @@ export function useUsuarios() {
         ...state,
         cargar,
         editar,
+        cambiarRol,
         cambiarPassword,
         deshabilitar,
         habilitar,

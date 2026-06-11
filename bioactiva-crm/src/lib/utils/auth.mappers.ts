@@ -1,5 +1,5 @@
 import { RolUsuario, EstadoUsuario } from '@/types/enums'
-import { UsuarioRaw, Usuario } from '@/types/auth.types'
+import { UsuarioRaw, Usuario, UserResponseDto } from '@/types/auth.types'
 import { decodeJwt, subToNumber } from './jwt.utils'
 
 /**
@@ -27,6 +27,31 @@ export const mapEstado = (estado: number): EstadoUsuario => {
     }
 }
 
+// Algunos endpoints (GET /profile, GET /users) entregan `rol`/`estado` como
+// strings uppercase en vez de los enteros de `/auth/me`. Estos helpers toleran
+// ambas formas para reutilizar el mismo mapeo a los enums del frontend.
+const ROL_STR_MAP: Record<string, RolUsuario> = {
+    ADMINISTRADOR: RolUsuario.Administrador,
+    TRABAJADOR: RolUsuario.Trabajador,
+}
+
+const ESTADO_STR_MAP: Record<string, EstadoUsuario> = {
+    PENDIENTE: EstadoUsuario.Pendiente,
+    ACTIVO: EstadoUsuario.Activo,
+    SUSPENDIDO: EstadoUsuario.Inactivo,
+    INACTIVO: EstadoUsuario.Inactivo,
+}
+
+export const mapRolTolerant = (value: unknown): RolUsuario => {
+    if (typeof value === 'number') return mapRole(value)
+    return ROL_STR_MAP[String(value ?? '').toUpperCase()] ?? RolUsuario.Trabajador
+}
+
+export const mapEstadoTolerant = (value: unknown): EstadoUsuario => {
+    if (typeof value === 'number') return mapEstado(value)
+    return ESTADO_STR_MAP[String(value ?? '').toUpperCase()] ?? EstadoUsuario.Pendiente
+}
+
 export const mapUsuarioRaw = (raw: UsuarioRaw): Usuario => ({
     id: raw.id,
     nombres: raw.nombres,
@@ -36,6 +61,21 @@ export const mapUsuarioRaw = (raw: UsuarioRaw): Usuario => ({
     estado: mapEstado(raw.estado),
     created_at: raw.created_at,
     updated_at: raw.updated_at,
+})
+
+/**
+ * Mapea la respuesta de GET/PATCH /profile (UserResponseDto) al `Usuario` del
+ * frontend. `rol`/`estado` llegan como strings y la fecha como `fechaRegistro`.
+ */
+export const mapPerfilUsuario = (raw: UserResponseDto): Usuario => ({
+    id: raw.id,
+    nombres: raw.nombres,
+    apellidos: raw.apellidos,
+    correo: raw.correo,
+    rol: mapRolTolerant(raw.rol),
+    estado: mapEstadoTolerant(raw.estado),
+    created_at: raw.fechaRegistro,
+    updated_at: raw.fechaRegistro,
 })
 
 /**

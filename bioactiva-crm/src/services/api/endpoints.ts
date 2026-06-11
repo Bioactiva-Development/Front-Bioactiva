@@ -19,12 +19,15 @@ export const ENDPOINTS = {
         cambiarPassword: (id: number) => `/users/${id}/password`,
         disable: (id: number) => `/users/${id}/disable`,
         enable: (id: number) => `/users/${id}/enable`,
+        // Mantis #333 — solo ADMINISTRADOR. Body { rol: 'ADMINISTRADOR' | 'TRABAJADOR' }.
+        role: (id: number) => `/users/${id}/role`,
     },
 
+    // Mantis #333 — "Mi perfil" editable (GET/PATCH /profile, PATCH /profile/password).
     perfil: {
-        get: '/api/perfil',
-        update: '/api/perfil',
-        password: '/api/perfil/password',
+        get: '/profile',
+        update: '/profile',
+        password: '/profile/password',
     },
 
     integraciones: {
