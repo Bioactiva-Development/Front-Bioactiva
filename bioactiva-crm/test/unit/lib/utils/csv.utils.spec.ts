@@ -163,9 +163,9 @@ describe('csv.utils', () => {
     beforeEach(() => {
       link = document.createElement('a')
       jest.spyOn(link, 'click').mockImplementation()
+      jest.spyOn(link, 'remove').mockImplementation()
       jest.spyOn(document, 'createElement').mockReturnValue(link)
       jest.spyOn(document.body, 'appendChild').mockImplementation()
-      jest.spyOn(document.body, 'removeChild').mockImplementation()
     })
 
     afterEach(() => {
@@ -179,7 +179,7 @@ describe('csv.utils', () => {
       expect(link.href).toContain('blob:')
       expect(document.body.appendChild).toHaveBeenCalledWith(link)
       expect(link.click).toHaveBeenCalled()
-      expect(document.body.removeChild).toHaveBeenCalledWith(link)
+      expect(link.remove).toHaveBeenCalled()
     })
 
     it('includes UTF-8 BOM in the blob', () => {

@@ -125,4 +125,58 @@ describe('security/auth.store', () => {
     expect(useAuthStore.getState().isAdministrador()).toBe(false)
     expect(useAuthStore.getState().isWorker()).toBe(false)
   })
+
+  it('tracks hydration state via _hasHydrated and _setHasHydrated', () => {
+    expect(useAuthStore.getState()._hasHydrated).toBe(false)
+    useAuthStore.getState()._setHasHydrated(true)
+    expect(useAuthStore.getState()._hasHydrated).toBe(true)
+  })
+
+  it('sets tokenExpiresAt when expiresIn is provided to setSession', () => {
+    const before = Date.now()
+    useAuthStore.getState().setSession('token-123', {
+      id: 1,
+      nombres: 'Carlos',
+      apellidos: 'Ramírez',
+      correo: 'admin@bioactiva.pe',
+      rol: RolUsuario.Administrador,
+      estado: EstadoUsuario.Activo,
+      created_at: '2025-01-01T08:00:00Z',
+      updated_at: '2025-01-01T08:00:00Z',
+    }, 3600)
+
+    expect(useAuthStore.getState().tokenExpiresAt).toBeGreaterThanOrEqual(before + 3600 * 1000)
+  })
+
+  it('does not set tokenExpiresAt when expiresIn is not provided', () => {
+    useAuthStore.getState().setSession('token-123', {
+      id: 1,
+      nombres: 'Carlos',
+      apellidos: 'Ramírez',
+      correo: 'admin@bioactiva.pe',
+      rol: RolUsuario.Administrador,
+      estado: EstadoUsuario.Activo,
+      created_at: '2025-01-01T08:00:00Z',
+      updated_at: '2025-01-01T08:00:00Z',
+    })
+
+    expect(useAuthStore.getState().tokenExpiresAt).toBeNull()
+  })
+
+  it('updates tokenExpiresAt when updateToken receives expiresIn', () => {
+    useAuthStore.getState().setSession('token-123', {
+      id: 1,
+      nombres: 'Carlos',
+      apellidos: 'Ramírez',
+      correo: 'admin@bioactiva.pe',
+      rol: RolUsuario.Administrador,
+      estado: EstadoUsuario.Activo,
+      created_at: '2025-01-01T08:00:00Z',
+      updated_at: '2025-01-01T08:00:00Z',
+    })
+    useAuthStore.getState().updateToken('new-token', 1800)
+
+    expect(useAuthStore.getState().accessToken).toBe('new-token')
+    expect(useAuthStore.getState().tokenExpiresAt).toBeGreaterThan(Date.now())
+  })
 })

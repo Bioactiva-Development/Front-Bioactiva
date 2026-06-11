@@ -22,12 +22,16 @@ jest.mock('@/services/modules/organizaciones.service', () => ({
   },
 }))
 
+const mockUseAuthStore = jest.fn(
+  (selector?: (s: Record<string, unknown>) => unknown) =>
+    typeof selector === 'function'
+      ? selector({ usuario: { id: 1 } })
+      : { usuario: { id: 1 } },
+)
+
 jest.mock('@/store/auth.store', () => ({
   useAuthStore: Object.assign(
-    (selector?: (s: Record<string, unknown>) => unknown) =>
-      typeof selector === 'function'
-        ? selector({ usuario: { id: 1 } })
-        : { usuario: { id: 1 } },
+    mockUseAuthStore,
     { getState: () => ({ usuario: { id: 1 } }), setState: jest.fn() }
   ),
 }))
@@ -136,6 +140,28 @@ describe('organizaciones/useOrganizaciones', () => {
       })
 
       expect(mockCreate).toHaveBeenCalled()
+    })
+
+    it('rejects when idAuthor is missing', async () => {
+      mockUseAuthStore.mockImplementationOnce(
+        (selector?: (s: Record<string, unknown>) => unknown) =>
+          typeof selector === 'function'
+            ? selector({ usuario: undefined })
+            : { usuario: undefined },
+      )
+
+      const { result } = renderHook(() => useCrearOrganizacion(), { wrapper })
+
+      await expect(async () => {
+        await result.current.mutateAsync({
+          nombre: 'Nueva Org',
+          nombre_comercial: 'Nueva Org',
+          codigo_cliente: 'NVA-001',
+          tipo: TipoEmpresa.Privada,
+          tamano: TamanoEmpresa.Micro,
+          sector: Sector.OTROS,
+        })
+      }).rejects.toThrow('Sesión expirada. Vuelve a iniciar sesión para registrar una organización.')
     })
   })
 

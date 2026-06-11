@@ -261,7 +261,7 @@ describe('organizaciones/organizaciones.service (API mode)', () => {
 
       const result = await organizacionesService.sunatPorRuc('20601258529')
 
-      expect(getMock).toHaveBeenCalledWith('/organizations/sunat/20601258529', { timeout: 30000 })
+      expect(getMock).toHaveBeenCalledWith('/organizations/sunat', { params: { query: '20601258529' }, timeout: 30000 })
       expect(result.ruc).toBe('20601258529')
       expect(result.nombre).toBe('ALTOMAYO PERU S.A.C.')
     })
@@ -277,7 +277,7 @@ describe('organizaciones/organizaciones.service (API mode)', () => {
 
       const result = await organizacionesService.sunatPorNombre('Altomayo')
 
-      expect(getMock).toHaveBeenCalledWith('/organizations/sunat/Altomayo', { timeout: 30000 })
+      expect(getMock).toHaveBeenCalledWith('/organizations/sunat', { params: { query: 'Altomayo' }, timeout: 30000 })
       expect(result).toHaveLength(1)
       expect(result[0].ruc).toBe('20601258529')
     })
@@ -293,7 +293,7 @@ describe('organizaciones/organizaciones.service (API mode)', () => {
 
       const result = await organizacionesService.sunatPorNombre('20601258529')
 
-      expect(getMock).toHaveBeenCalledWith('/organizations/sunat/20601258529', { timeout: 30000 })
+      expect(getMock).toHaveBeenCalledWith('/organizations/sunat', { params: { query: '20601258529' }, timeout: 30000 })
       expect(result).toHaveLength(1)
     })
 
@@ -332,6 +332,9 @@ describe('organizaciones/organizaciones.service (API mode)', () => {
         updatedAt: '2025-01-01T08:00:00Z',
       }
       getMock.mockResolvedValueOnce({ data: dto })
+      getMock.mockResolvedValueOnce({ data: [] })
+      getMock.mockResolvedValueOnce({ data: { data: [] } })
+      getMock.mockResolvedValueOnce({ data: { data: [] } })
 
       const result = await organizacionesService.getByIdConRelaciones('org-001')
 

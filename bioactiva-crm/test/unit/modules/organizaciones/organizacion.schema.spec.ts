@@ -145,10 +145,10 @@ describe('organizaciones/organizacion.schema', () => {
     ).toMatchObject({ sub_area: 'Innovación' })
   })
 
-  it('rejects sub_area exceeding 20 characters', () => {
+  it('rejects sub_area exceeding 60 characters', () => {
     expect(() =>
-      organizacionSchema.parse({ ...VALID_DATA, sub_area: 'X'.repeat(21) })
-    ).toThrow('Maximo de 20 caracteres')
+      organizacionSchema.parse({ ...VALID_DATA, sub_area: 'X'.repeat(61) })
+    ).toThrow('Máximo 60 caracteres')
   })
 
   it('parses all TipoEmpresa values', () => {

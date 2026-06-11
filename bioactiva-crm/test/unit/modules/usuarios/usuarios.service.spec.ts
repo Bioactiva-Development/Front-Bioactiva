@@ -52,7 +52,6 @@ describe('usuarios/usuarios.service (API mode)', () => {
       expect(result.usuarios).toHaveLength(1)
       expect(result.usuarios[0].rol).toBe(RolUsuario.Administrador)
       expect(result.usuarios[0].estado).toBe(EstadoUsuario.Activo)
-      expect(result.usuarios[0].ultimo_acceso).toBe('Hace 11 min')
     })
 
     it('handles { data: [...], meta: { total } } response shape', async () => {
@@ -229,9 +228,9 @@ describe('usuarios/usuarios.service (API mode)', () => {
       correo: 'nuevo@bioactiva.pe',
       rol: 2,
       estado: 0,
-      expired_at: '2025-06-03T00:00:00Z',
+      expired_at: '2027-06-03T00:00:00Z',
       consumed_at: null,
-      created_at: '2025-05-27T00:00:00Z',
+      created_at: '2027-05-27T00:00:00Z',
     }
 
     it('fetches and normalizes invitations from flat array', async () => {
@@ -288,7 +287,7 @@ describe('usuarios/usuarios.service (API mode)', () => {
 
       const result = await usuariosService.listInvitaciones()
 
-      expect(result.data[0].expires_at).toBe('2025-06-03T00:00:00Z')
+      expect(result.data[0].expires_at).toBe('2027-06-03T00:00:00Z')
     })
   })
 

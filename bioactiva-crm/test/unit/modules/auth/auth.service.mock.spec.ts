@@ -77,17 +77,11 @@ describe('security/auth.service (mock mode)', () => {
   })
 
   it('throws on refresh in mock mode', async () => {
-    await expect(authService.refresh()).rejects.toEqual({
-      status: 501,
-      message: 'No implementado en mock',
-    })
+    await expect(authService.refresh()).rejects.toThrow('No implementado en mock')
   })
 
   it('throws on getMe in mock mode', async () => {
-    await expect(authService.getMe()).rejects.toEqual({
-      status: 501,
-      message: 'No implementado en mock',
-    })
+    await expect(authService.getMe()).rejects.toThrow('No implementado en mock')
   })
 
   it('does not call API on logout (no-op)', async () => {
