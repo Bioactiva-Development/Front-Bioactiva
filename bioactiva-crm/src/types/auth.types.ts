@@ -34,7 +34,8 @@ export interface UserResponseDto {
     apellidos: string
     correo: string
     rol: 'ADMINISTRADOR' | 'TRABAJADOR'
-    estado: 'ACTIVO' | 'PENDIENTE' | string
+    // Valores conocidos del backend: 'ACTIVO' | 'PENDIENTE' (puede llegar otro string).
+    estado: string
     fechaRegistro: string
 }
 

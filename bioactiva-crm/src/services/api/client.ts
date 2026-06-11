@@ -57,55 +57,96 @@ apiClient.interceptors.request.use(
 )
 
 
+type RetryableRequest = InternalAxiosRequestConfig & { _retry?: boolean }
+
+const shouldAttemptRefresh = (error: AxiosError, req: RetryableRequest): boolean =>
+    error.response?.status === 401 &&
+    !req._retry &&
+    !req.url?.includes('/auth/refresh') &&
+    !req.url?.includes('/auth/login')
+
+// Refresca el token y reintenta la petición original. Si ya hay un refresh en
+// curso, encola la petición hasta que termine (evita múltiples /auth/refresh).
+const refreshAndRetry = async (originalRequest: RetryableRequest) => {
+    if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+            failedQueue.push({
+                resolve: token => {
+                    originalRequest.headers.Authorization = `Bearer ${token}`
+                    resolve(apiClient(originalRequest))
+                },
+                reject,
+            })
+        })
+    }
+
+    originalRequest._retry = true
+    isRefreshing = true
+
+    try {
+        const { data } = await apiClient.post<{ accessToken: string; accessTokenExpiresIn: number }>(
+            '/auth/refresh',
+        )
+
+        const newToken = data.accessToken
+
+        if (globalThis.window !== undefined) {
+            localStorage.setItem(TOKEN_KEY, newToken)
+        }
+
+        useAuthStore.getState().updateToken(newToken, data.accessTokenExpiresIn)
+        originalRequest.headers.Authorization = `Bearer ${newToken}`
+
+        processQueue(null, newToken)
+        return apiClient(originalRequest)
+    } catch (refreshError) {
+        processQueue(refreshError, null)
+        forceLogout()
+        throw refreshError
+    } finally {
+        isRefreshing = false
+    }
+}
+
+const extractBackendMessage = (error: AxiosError): string | string[] | undefined => {
+    const data = error.response?.data
+    if (typeof data === 'string' && data.length > 0) return data
+    return (data as { message?: string | string[] } | undefined)?.message
+}
+
+const resolveErrorMessage = (error: AxiosError, backendMessage: string | string[] | undefined): string => {
+    // Mostrar todos los mensajes de validación, no solo el primero
+    if (Array.isArray(backendMessage)) return backendMessage.join('. ')
+    if (backendMessage) return backendMessage
+    if (error.code === 'ECONNABORTED' || /timeout/i.test(error.message))
+        return 'La consulta tardó demasiado en responder. Inténtalo nuevamente.'
+    if (error.response) return 'Ocurrió un error inesperado'
+    return 'No se pudo conectar con el servidor. Verifica tu conexión.'
+}
+
+// Nunca exponer detalles internos de Prisma o la base de datos al usuario.
+// Se usan tests separados para tolerar saltos de línea en el mensaje del backend.
+const sanitizeSensitiveMessage = (mensaje: string): string => {
+    const hasUniqueConstraint = /unique constraint|constraint failed on the fields/i.test(mensaje)
+    const hasPrismaTrace      = /prisma|invalid [^\n]*invocation|p\d{4}/i.test(mensaje)
+
+    if (hasUniqueConstraint && /correo/i.test(mensaje))
+        return 'Ya existe un usuario o invitación registrado con ese correo electrónico.'
+    if (hasUniqueConstraint)
+        return 'Ya existe un registro con esos datos. Verifica e inténtalo nuevamente.'
+    if (hasPrismaTrace)
+        return 'Ocurrió un error al procesar la solicitud. Inténtalo nuevamente.'
+    return mensaje
+}
+
+
 apiClient.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
-        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+        const originalRequest = error.config as RetryableRequest
 
-        if (
-            error.response?.status === 401 &&
-            !originalRequest._retry &&
-            !originalRequest.url?.includes('/auth/refresh') &&
-            !originalRequest.url?.includes('/auth/login')
-        ) {
-            if (isRefreshing) {
-                return new Promise((resolve, reject) => {
-                    failedQueue.push({
-                        resolve: token => {
-                            originalRequest.headers.Authorization = `Bearer ${token}`
-                            resolve(apiClient(originalRequest))
-                        },
-                        reject,
-                    })
-                })
-            }
-
-            originalRequest._retry = true
-            isRefreshing = true
-
-            try {
-                const { data } = await apiClient.post<{ accessToken: string; accessTokenExpiresIn: number }>(
-                    '/auth/refresh',
-                )
-
-                const newToken = data.accessToken
-
-                if (globalThis.window !== undefined) {
-                    localStorage.setItem(TOKEN_KEY, newToken)
-                }
-
-                useAuthStore.getState().updateToken(newToken, data.accessTokenExpiresIn)
-                originalRequest.headers.Authorization = `Bearer ${newToken}`
-
-                processQueue(null, newToken)
-                return apiClient(originalRequest)
-            } catch (refreshError) {
-                processQueue(refreshError, null)
-                forceLogout()
-                throw refreshError
-            } finally {
-                isRefreshing = false
-            }
+        if (shouldAttemptRefresh(error, originalRequest)) {
+            return refreshAndRetry(originalRequest)
         }
 
         // 403: rol insuficiente — el refresh no ayuda (doc: "401 vs 403")
@@ -117,12 +158,7 @@ apiClient.interceptors.response.use(
             })
         }
 
-        const backendMessage = (() => {
-            const data = error.response?.data
-            if (typeof data === 'string' && data.length > 0) return data
-            return (data as { message?: string | string[] } | undefined)?.message
-        })()
-
+        const backendMessage = extractBackendMessage(error)
         const rawMessage = Array.isArray(backendMessage) ? backendMessage[0] : backendMessage ?? ''
 
         if (
@@ -134,33 +170,7 @@ apiClient.interceptors.response.use(
             throw Object.assign(new Error(rawMessage), { status: error.response?.status })
         }
 
-        let mensajeFinal: string
-        if (Array.isArray(backendMessage)) {
-            // Mostrar todos los mensajes de validación, no solo el primero
-            mensajeFinal = backendMessage.join('. ')
-        } else if (backendMessage) {
-            mensajeFinal = backendMessage
-        } else if (error.code === 'ECONNABORTED' || /timeout/i.test(error.message)) {
-            mensajeFinal = 'La consulta tardó demasiado en responder. Inténtalo nuevamente.'
-        } else if (error.response) {
-            mensajeFinal = 'Ocurrió un error inesperado'
-        } else {
-            mensajeFinal = 'No se pudo conectar con el servidor. Verifica tu conexión.'
-        }
-
-        // Nunca exponer detalles internos de Prisma o la base de datos al usuario.
-        // Se usan tests separados para tolerar saltos de línea en el mensaje del backend.
-        const hasUniqueConstraint = /unique constraint|constraint failed on the fields/i.test(mensajeFinal)
-        const hasCorreo           = /correo/i.test(mensajeFinal)
-        const hasPrismaTrace      = /prisma|invalid [^\n]*invocation|p\d{4}/i.test(mensajeFinal)
-
-        if (hasUniqueConstraint && hasCorreo) {
-            mensajeFinal = 'Ya existe un usuario o invitación registrado con ese correo electrónico.'
-        } else if (hasUniqueConstraint) {
-            mensajeFinal = 'Ya existe un registro con esos datos. Verifica e inténtalo nuevamente.'
-        } else if (hasPrismaTrace) {
-            mensajeFinal = 'Ocurrió un error al procesar la solicitud. Inténtalo nuevamente.'
-        }
+        const mensajeFinal = sanitizeSensitiveMessage(resolveErrorMessage(error, backendMessage))
 
         // errorCode: identificador estable del extended shape (ej: "ActivityNotFoundException")
         const errorCode = (error.response?.data as { error?: string })?.error

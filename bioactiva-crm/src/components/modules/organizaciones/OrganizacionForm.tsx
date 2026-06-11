@@ -13,7 +13,6 @@ import {
 import { TipoEmpresa, TamanoEmpresa, Sector } from '@/types/enums'
 import { Organizacion, SunatRucResult } from '@/types/organizacion.types'
 import { generarCodigoCliente, formatSector } from '@/lib/utils/organizacion.utils'
-import { ROUTES } from '@/lib/constants/routes'
 
 interface OrganizacionFormProps {
   organizacion?: Organizacion
@@ -94,11 +93,13 @@ export function OrganizacionForm({
   const readOnlyClass = 'bg-gray-50 text-gray-500 cursor-default focus:border-gray-200'
   const autocompletadoBloqueado = !!sunatData && !esEdicion
 
-  const codigoClienteHint = codigoBloqueado
-    ? <p className="text-xs text-gray-400">Generado a partir del nombre comercial y el RUC de SUNAT.</p>
-    : errors.codigo_cliente
-      ? <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
-      : null
+  const codigoClienteHint = (() => {
+    if (codigoBloqueado)
+      return <p className="text-xs text-gray-400">Generado a partir del nombre comercial y el RUC de SUNAT.</p>
+    if (errors.codigo_cliente)
+      return <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
+    return null
+  })()
 
   return (
     <div className="max-w-2xl mx-auto">
