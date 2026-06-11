@@ -11,13 +11,19 @@ import {
 import { PageHeader } from '@/components/layout/PageHeader'
 import { usePerfil } from '@/hooks/perfil/usePerfil'
 import { RolUsuario, EstadoUsuario } from '@/types/enums'
-import { cambiarPasswordSchema, CambiarPasswordFormValues } from '@/lib/validators/usuario.schema'
+import { cambiarPasswordPerfilSchema, CambiarPasswordPerfilFormValues } from '@/lib/validators/usuario.schema'
 
+// PATCH /profile (Mantis #333): nombres/apellidos 1–90 chars, al menos uno.
 const editarPerfilSchema = z.object({
-    nombre_completo: z
+    nombres: z
         .string()
-        .min(2, 'El nombre debe tener al menos 2 caracteres')
-        .max(100, 'El nombre es demasiado largo'),
+        .min(1, 'El nombre es obligatorio')
+        .max(90, 'Máximo 90 caracteres'),
+    apellidos: z
+        .string()
+        .max(90, 'Máximo 90 caracteres')
+        .optional()
+        .or(z.literal('')),
 })
 type EditarPerfilFormValues = z.infer<typeof editarPerfilSchema>
 
@@ -70,12 +76,13 @@ export default function PerfilPage() {
         successPassword,
         errorPerfil,
         errorPassword,
-        actualizarNombre,
+        actualizarPerfil,
         cambiarPassword,
         conectarMicrosoft,
         desconectarMicrosoft,
     } = usePerfil()
 
+    const [showCurrent, setShowCurrent] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
 
@@ -83,24 +90,25 @@ export default function PerfilPage() {
         resolver: zodResolver(editarPerfilSchema),
     })
 
-    const passwordForm = useForm<CambiarPasswordFormValues>({
-        resolver: zodResolver(cambiarPasswordSchema),
+    const passwordForm = useForm<CambiarPasswordPerfilFormValues>({
+        resolver: zodResolver(cambiarPasswordPerfilSchema),
     })
 
     useEffect(() => {
         if (usuario) {
             perfilForm.reset({
-                nombre_completo: [usuario.nombres, usuario.apellidos].filter(Boolean).join(' '),
+                nombres: usuario.nombres,
+                apellidos: usuario.apellidos ?? '',
             })
         }
     }, [usuario, perfilForm])
 
     const onGuardarPerfil = async (data: EditarPerfilFormValues) => {
-        await actualizarNombre(data.nombre_completo)
+        await actualizarPerfil(data.nombres, data.apellidos ?? '')
     }
 
-    const onCambiarPassword = async (data: CambiarPasswordFormValues) => {
-        const ok = await cambiarPassword(data.password)
+    const onCambiarPassword = async (data: CambiarPasswordPerfilFormValues) => {
+        const ok = await cambiarPassword(data.currentPassword, data.newPassword)
         if (ok) passwordForm.reset()
     }
 
@@ -157,22 +165,44 @@ export default function PerfilPage() {
                     )}
 
                     <form onSubmit={perfilForm.handleSubmit(onGuardarPerfil)} className="space-y-4">
-                        <div className="space-y-1.5">
-                            <label htmlFor="prf-nombre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                Nombre completo
-                            </label>
-                            <input
-                                id="prf-nombre"
-                                type="text"
-                                {...perfilForm.register('nombre_completo')}
-                                className={`w-full px-4 py-2.5 text-sm text-gray-900 rounded-xl border-2 outline-none transition-colors
-                                    ${perfilForm.formState.errors.nombre_completo
-                                        ? 'border-red-400 focus:border-red-500'
-                                        : 'border-gray-200 focus:border-[#1C7E3C]'}`}
-                            />
-                            {perfilForm.formState.errors.nombre_completo && (
-                                <p className="text-red-500 text-xs">{perfilForm.formState.errors.nombre_completo.message}</p>
-                            )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label htmlFor="prf-nombres" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                    Nombres
+                                </label>
+                                <input
+                                    id="prf-nombres"
+                                    type="text"
+                                    placeholder="Tus nombres"
+                                    {...perfilForm.register('nombres')}
+                                    className={`w-full px-4 py-2.5 text-sm text-gray-900 rounded-xl border-2 outline-none transition-colors
+                                        ${perfilForm.formState.errors.nombres
+                                            ? 'border-red-400 focus:border-red-500'
+                                            : 'border-gray-200 focus:border-[#1C7E3C]'}`}
+                                />
+                                {perfilForm.formState.errors.nombres && (
+                                    <p className="text-red-500 text-xs">{perfilForm.formState.errors.nombres.message}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label htmlFor="prf-apellidos" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                    Apellidos
+                                </label>
+                                <input
+                                    id="prf-apellidos"
+                                    type="text"
+                                    placeholder="Tus apellidos"
+                                    {...perfilForm.register('apellidos')}
+                                    className={`w-full px-4 py-2.5 text-sm text-gray-900 rounded-xl border-2 outline-none transition-colors
+                                        ${perfilForm.formState.errors.apellidos
+                                            ? 'border-red-400 focus:border-red-500'
+                                            : 'border-gray-200 focus:border-[#1C7E3C]'}`}
+                                />
+                                {perfilForm.formState.errors.apellidos && (
+                                    <p className="text-red-500 text-xs">{perfilForm.formState.errors.apellidos.message}</p>
+                                )}
+                            </div>
                         </div>
 
                         <div className="space-y-1.5">
@@ -231,6 +261,30 @@ export default function PerfilPage() {
 
                     <form onSubmit={passwordForm.handleSubmit(onCambiarPassword)} className="space-y-4">
                         <div className="space-y-1.5">
+                            <label htmlFor="prf-current" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                Contraseña actual
+                            </label>
+                            <div className="relative">
+                                <input
+                                    id="prf-current"
+                                    type={showCurrent ? 'text' : 'password'}
+                                    placeholder="Tu contraseña actual"
+                                    autoComplete="current-password"
+                                    {...passwordForm.register('currentPassword')}
+                                    className={`w-full px-4 py-2.5 pr-11 text-sm text-gray-900 placeholder:text-gray-400 rounded-xl border-2 outline-none transition-colors
+                                        ${passwordForm.formState.errors.currentPassword ? 'border-red-400' : 'border-gray-200 focus:border-[#1C7E3C]'}`}
+                                />
+                                <button type="button" onClick={() => setShowCurrent(!showCurrent)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                    {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
+                            {passwordForm.formState.errors.currentPassword && (
+                                <p className="text-red-500 text-xs">{passwordForm.formState.errors.currentPassword.message}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-1.5">
                             <label htmlFor="prf-password" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 Nueva contraseña
                             </label>
@@ -238,18 +292,19 @@ export default function PerfilPage() {
                                 <input
                                     id="prf-password"
                                     type={showPassword ? 'text' : 'password'}
-                                    placeholder="Mínimo 6 caracteres"
-                                    {...passwordForm.register('password')}
+                                    placeholder="Entre 8 y 72 caracteres"
+                                    autoComplete="new-password"
+                                    {...passwordForm.register('newPassword')}
                                     className={`w-full px-4 py-2.5 pr-11 text-sm text-gray-900 placeholder:text-gray-400 rounded-xl border-2 outline-none transition-colors
-                                        ${passwordForm.formState.errors.password ? 'border-red-400' : 'border-gray-200 focus:border-[#1C7E3C]'}`}
+                                        ${passwordForm.formState.errors.newPassword ? 'border-red-400' : 'border-gray-200 focus:border-[#1C7E3C]'}`}
                                 />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
                             </div>
-                            {passwordForm.formState.errors.password && (
-                                <p className="text-red-500 text-xs">{passwordForm.formState.errors.password.message}</p>
+                            {passwordForm.formState.errors.newPassword && (
+                                <p className="text-red-500 text-xs">{passwordForm.formState.errors.newPassword.message}</p>
                             )}
                         </div>
 

@@ -25,6 +25,31 @@ export interface UsuarioRaw {
     updated_at: string
 }
 
+// Respuesta de GET/PATCH /profile (UserResponseDto, Mantis #333).
+// A diferencia de /auth/me, aquí `rol` y `estado` llegan como strings
+// legibles y la fecha de alta como `fechaRegistro` (ISO 8601).
+export interface UserResponseDto {
+    id: number
+    nombres: string
+    apellidos: string
+    correo: string
+    rol: 'ADMINISTRADOR' | 'TRABAJADOR'
+    estado: 'ACTIVO' | 'PENDIENTE' | string
+    fechaRegistro: string
+}
+
+// PATCH /profile — al menos uno de los dos; 1–90 chars. El correo NO es editable.
+export interface UpdateProfileRequest {
+    nombres?: string
+    apellidos?: string
+}
+
+// PATCH /profile/password — newPassword 8–72 chars.
+export interface ChangePasswordRequest {
+    currentPassword: string
+    newPassword: string
+}
+
 export interface JwtPayload {
     sub: number
     correo: string

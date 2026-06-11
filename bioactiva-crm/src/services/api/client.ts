@@ -20,7 +20,11 @@ function forceLogout(): void {
     useAuthStore.getState().clearSession()
     document.cookie = `${COOKIE_TOKEN}=; path=/; max-age=0; SameSite=Strict`
     document.cookie = `${COOKIE_ROL}=; path=/; max-age=0; SameSite=Strict`
-    globalThis.location.href = ROUTES.auth.login
+    // Si ya estamos en /login no redirigimos de nuevo (evita parpadeos / bucles).
+    if (globalThis.location.pathname.startsWith(ROUTES.auth.login)) return
+    // Mantis #271/#104: señalizamos a /login que la sesión caducó o fue
+    // invalidada (login en otro dispositivo / cambio de rol) para mostrar el aviso.
+    globalThis.location.href = `${ROUTES.auth.login}?expired=1`
 }
 
 // Solo mensajes que indican expiración/invalidez del JWT de sesión del usuario.

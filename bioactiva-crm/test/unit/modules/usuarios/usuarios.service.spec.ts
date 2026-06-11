@@ -174,6 +174,24 @@ describe('usuarios/usuarios.service (API mode)', () => {
     })
   })
 
+  describe('cambiarRol', () => {
+    it('PATCHes /users/:id/role with the backend rol string (Mantis #333)', async () => {
+      patchMock.mockResolvedValueOnce({ data: undefined })
+
+      await usuariosService.cambiarRol(3, RolUsuario.Administrador)
+
+      expect(patchMock).toHaveBeenCalledWith('/users/3/role', { rol: 'ADMINISTRADOR' })
+    })
+
+    it('maps Trabajador to TRABAJADOR', async () => {
+      patchMock.mockResolvedValueOnce({ data: undefined })
+
+      await usuariosService.cambiarRol(9, RolUsuario.Trabajador)
+
+      expect(patchMock).toHaveBeenCalledWith('/users/9/role', { rol: 'TRABAJADOR' })
+    })
+  })
+
   describe('cambiarPassword', () => {
     it('PATCHes to correct endpoint', async () => {
       patchMock.mockResolvedValueOnce({ data: { message: 'Contraseña actualizada correctamente.' } })

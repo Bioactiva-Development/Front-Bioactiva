@@ -82,6 +82,11 @@ export interface AcceptInvitacionRequest {
     apellidos: string
 }
 
+export interface CambiarRolRequest {
+    id: number
+    rol: string
+}
+
 export interface AcceptInvitacionResponse {
     accessToken: string
     accessTokenExpiresIn: number

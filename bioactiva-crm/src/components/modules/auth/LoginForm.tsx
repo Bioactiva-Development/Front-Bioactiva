@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import ReCAPTCHA from 'react-google-recaptcha'
 import { loginSchema, LoginFormValues } from '@/lib/validators/auth.schema'
 import { useAuth } from '@/hooks/auth/useAuth'
@@ -12,6 +13,10 @@ import { ROUTES } from '@/lib/constants/routes'
 
 export function LoginForm() {
     const { login, isLoading, error } = useAuth()
+    const searchParams                      = useSearchParams()
+    // Mantis #271/#104: el interceptor redirige con ?expired=1 cuando la sesión
+    // caducó o fue invalidada (login en otro dispositivo / cambio de rol).
+    const sessionExpired                    = searchParams.get('expired') !== null
     const [showPassword, setShowPassword]   = useState(false)
     const [captchaToken, setCaptchaToken]   = useState<string | null>(null)
     const recaptchaRef                      = useRef<ReCAPTCHA>(null)
@@ -58,6 +63,12 @@ export function LoginForm() {
                         <h2 className="text-gray-900 text-xl font-bold">Iniciar sesión</h2>
                         <p className="text-gray-500 text-sm mt-1">Accede a tu cuenta para continuar</p>
                     </div>
+
+                    {sessionExpired && !error && (
+                        <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg px-4 py-3">
+                            Tu sesión expiró o se inició en otro dispositivo. Vuelve a iniciar sesión.
+                        </div>
+                    )}
 
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
