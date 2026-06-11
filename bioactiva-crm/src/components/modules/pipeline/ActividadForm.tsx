@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, X } from 'lucide-react'
@@ -8,28 +8,17 @@ import {
   actividadSchema,
   ActividadFormValues,
 } from '@/lib/validators/actividad.schema'
-import { EstadoActividad, EstadoUsuario, TipoActividad } from '@/types/enums'
-import { useAuthStore } from '@/store'
-import { usuariosService } from '@/services/modules/usuarios.service'
-import { UsuarioListItem } from '@/types/usuario.types'
+import { EstadoActividad, TipoActividad } from '@/types/enums'
 
 interface ActividadFormProps {
   leadId: number
+  responsableId: number
+  responsableNombre?: string
   onSubmit: (data: ActividadFormValues) => Promise<void>
   onCancelar: () => void
   isLoading: boolean
   error?: string | null
 }
-
-interface ResponsableOption {
-  id: number
-  nombre: string
-}
-
-const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
-  id: usuario.id,
-  nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
-})
 
 const toDateTimeLocalValue = (date: Date) => {
   const pad = (value: number) => String(value).padStart(2, '0')
@@ -50,14 +39,13 @@ const addDefaultDuration = (value?: string) => {
 
 export function ActividadForm({
   leadId,
+  responsableId,
+  responsableNombre,
   onSubmit,
   onCancelar,
   isLoading,
   error,
 }: ActividadFormProps) {
-  const { usuario } = useAuthStore()
-  const [responsables, setResponsables] = useState<ResponsableOption[]>([])
-
   const {
     register,
     handleSubmit,
@@ -70,32 +58,10 @@ export function ActividadForm({
       id_lead: leadId,
       estado: EstadoActividad.Pendiente,
       tipo: TipoActividad.Llamada,
-      id_responsable: usuario?.id ?? 0,
+      id_responsable: responsableId,
     },
   })
   const fecha = useWatch({ control, name: 'fecha_inicio' })
-  const responsableSelected = useWatch({ control, name: 'id_responsable' })
-
-  const usuarioActualOption = useMemo<ResponsableOption | null>(() => {
-    if (!usuario) return null
-    return {
-      id: usuario.id,
-      nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
-    }
-  }, [usuario])
-
-  const responsablesDisponibles = useMemo(() => {
-    const options = [...responsables]
-
-    if (
-      usuarioActualOption &&
-      !options.some((responsable) => responsable.id === usuarioActualOption.id)
-    ) {
-      options.unshift(usuarioActualOption)
-    }
-
-    return options
-  }, [responsables, usuarioActualOption])
 
   useEffect(() => {
     setValue('fecha_fin', addDefaultDuration(fecha), {
@@ -104,55 +70,8 @@ export function ActividadForm({
   }, [fecha, setValue])
 
   useEffect(() => {
-    let isMounted = true
-
-    async function cargarResponsables() {
-      try {
-        const response = await usuariosService.getUsuarios({
-          estado: EstadoUsuario.Activo,
-          limit: 100,
-        })
-
-        if (!isMounted) return
-        setResponsables(response.usuarios.map(toResponsableOption))
-      } catch {
-        if (!isMounted) return
-        setResponsables(usuarioActualOption ? [usuarioActualOption] : [])
-      }
-    }
-
-    cargarResponsables()
-
-    return () => {
-      isMounted = false
-    }
-  }, [usuarioActualOption])
-
-  useEffect(() => {
-    if (responsablesDisponibles.length === 0) return
-
-    const selected = Number(responsableSelected)
-    const selectedExists = responsablesDisponibles.some(
-      (responsable) => responsable.id === selected
-    )
-
-    if (selected && selectedExists) return
-
-    const fallback =
-      usuarioActualOption &&
-        responsablesDisponibles.some(
-          (responsable) => responsable.id === usuarioActualOption.id
-        )
-        ? usuarioActualOption
-        : responsablesDisponibles[0]
-
-    setValue('id_responsable', fallback.id, { shouldValidate: true })
-  }, [
-    responsableSelected,
-    responsablesDisponibles,
-    setValue,
-    usuarioActualOption,
-  ])
+    setValue('id_responsable', responsableId, { shouldValidate: true })
+  }, [responsableId, setValue])
 
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
@@ -182,6 +101,10 @@ export function ActividadForm({
       >
         <input type="hidden" {...register('id_lead', { valueAsNumber: true })} />
         <input type="hidden" {...register('fecha_fin')} />
+        <input
+          type="hidden"
+          {...register('id_responsable', { valueAsNumber: true })}
+        />
 
         <div className="space-y-1">
           <label htmlFor="af-nombre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -218,16 +141,12 @@ export function ActividadForm({
           <label htmlFor="af-responsable" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Responsable <span className="text-red-500">*</span>
           </label>
-          <select
+          <div
             id="af-responsable"
-            {...register('id_responsable', { valueAsNumber: true })}
-            className={`${inputClass(!!errors.id_responsable)} cursor-pointer`}
+            className={inputClass(!!errors.id_responsable)}
           >
-            <option value="">Seleccionar...</option>
-            {responsablesDisponibles.map((r) => (
-              <option key={r.id} value={r.id}>{r.nombre}</option>
-            ))}
-          </select>
+            {responsableNombre ?? 'Encargado del lead'}
+          </div>
           {errors.id_responsable && (
             <p className="text-red-500 text-xs">{errors.id_responsable.message}</p>
           )}
