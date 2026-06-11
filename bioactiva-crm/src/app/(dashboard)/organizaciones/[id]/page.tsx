@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react'
 import {
   useOrganizacionConRelaciones,
   useActualizarOrganizacion,
+  useEliminarOrganizacion,
 } from '@/hooks/organizaciones/useOrganizaciones'
 import { OrganizacionDetalle } from '@/components/modules/organizaciones/OrganizacionDetalle'
 import { OrganizacionForm } from '@/components/modules/organizaciones/OrganizacionForm'
@@ -22,6 +23,7 @@ export default function OrganizacionDetallePage() {
     useOrganizacionConRelaciones(id)
 
   const { mutateAsync: actualizar, isPending } = useActualizarOrganizacion(id)
+  const { mutateAsync: desactivar, isPending: desactivando } = useEliminarOrganizacion()
 
   const handleGuardar = async (data: OrganizacionFormValues) => {
     try {
@@ -30,6 +32,16 @@ export default function OrganizacionDetallePage() {
       setEditando(false)
     } catch (err: unknown) {
       setErrorGuardar(getErrorMessage(err, 'No se pudo guardar la organización.'))
+    }
+  }
+
+  // Soft-delete: DELETE /organizations/:id. El hook invalida el listado y
+  // redirige a /organizaciones, así la org desactivada desaparece de la vista.
+  const handleDesactivar = async () => {
+    try {
+      await desactivar(id)
+    } catch (err: unknown) {
+      setErrorGuardar(getErrorMessage(err, 'No se pudo desactivar la organización.'))
     }
   }
 
@@ -82,6 +94,8 @@ export default function OrganizacionDetallePage() {
     <OrganizacionDetalle
       organizacion={organizacion}
       onEditar={() => setEditando(true)}
+      onEliminar={handleDesactivar}
+      eliminando={desactivando}
     />
   )
 }

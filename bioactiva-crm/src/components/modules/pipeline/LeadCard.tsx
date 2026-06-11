@@ -14,7 +14,35 @@ import {
   FileText,
   Send,
 } from 'lucide-react'
-import { Lead } from '@/types/lead.types'
+import { ActivityAlert, Lead } from '@/types/lead.types'
+
+// Semáforo de actividades (backend: activityAlert). El color/label se pinta tal
+// cual llega del backend; el front NO recalcula el nivel.
+const SEMAFORO: Record<ActivityAlert, {
+  dot: string
+  pill: string
+  label: string
+  descripcion: string
+}> = {
+  VERDE: {
+    dot: 'bg-emerald-500',
+    pill: 'bg-emerald-50 text-emerald-700',
+    label: 'Al día',
+    descripcion: 'Sin actividades pendientes por vencer ni vencidas',
+  },
+  AMARILLO: {
+    dot: 'bg-amber-500',
+    pill: 'bg-amber-50 text-amber-700',
+    label: 'Por vencer',
+    descripcion: 'Actividad pendiente próxima a vencer (≤ 3 días)',
+  },
+  ROJO: {
+    dot: 'bg-red-500',
+    pill: 'bg-red-50 text-red-700',
+    label: 'Vencida',
+    descripcion: 'Actividad pendiente vencida',
+  },
+}
 
 interface LeadCardProps {
   lead:     Lead
@@ -90,6 +118,18 @@ export function LeadCard({
         <p className="text-sm font-bold text-gray-900 truncate">
           {lead.organizacion_nombre}
         </p>
+        {lead.activity_alert && (
+          <span
+            title={SEMAFORO[lead.activity_alert].descripcion}
+            aria-label={`Semáforo de actividades: ${SEMAFORO[lead.activity_alert].descripcion}`}
+            className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5
+              text-[10px] font-bold uppercase tracking-wide shrink-0
+              ${SEMAFORO[lead.activity_alert].pill}`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${SEMAFORO[lead.activity_alert].dot}`} />
+            {SEMAFORO[lead.activity_alert].label}
+          </span>
+        )}
       </div>
 
         {lead.contacto_nombre && (

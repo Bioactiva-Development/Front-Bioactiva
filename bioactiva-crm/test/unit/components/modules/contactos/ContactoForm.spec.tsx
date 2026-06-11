@@ -185,23 +185,24 @@ describe('modules/contactos/ContactoForm', () => {
       expect(screen.queryByText('Guardar contacto')).not.toBeInTheDocument()
     })
 
-    it('disables organization select in edit mode', () => {
+    it('allows changing the organization in edit mode (mover contacto)', () => {
+      // PR #121: PATCH /contacts/:id ahora reasigna el contacto a otra
+      // organización, así que el selector queda habilitado en edición.
       const select = screen.getByLabelText('Organización *')
-      expect(select).toBeDisabled()
+      expect(select).not.toBeDisabled()
     })
 
-    it('shows organization non-modifiable message in edit mode', () => {
-      expect(screen.getByText('La organización no puede modificarse una vez creado el contacto.')).toBeInTheDocument()
+    it('shows the move-organization hint in edit mode', () => {
+      expect(
+        screen.getByText(/Cambiar la organización moverá el contacto/i)
+      ).toBeInTheDocument()
     })
 
-    it('shows estado_correo select with Activo/Inactivo options', () => {
-      expect(screen.getByLabelText('Estado del contacto')).toBeInTheDocument()
-      expect(screen.getByText('Activo')).toBeInTheDocument()
-      expect(screen.getByText('Inactivo')).toBeInTheDocument()
-    })
-
-    it('shows warning about inactive contacts', () => {
-      expect(screen.getByText('Un contacto inactivo no puede asociarse a nuevos leads.')).toBeInTheDocument()
+    it('does not render an estado_correo field (lo gestiona el backend)', () => {
+      expect(screen.queryByLabelText('Estado del contacto')).not.toBeInTheDocument()
+      expect(
+        screen.queryByText('Un contacto inactivo no puede asociarse a nuevos leads.')
+      ).not.toBeInTheDocument()
     })
   })
 
@@ -217,6 +218,21 @@ describe('modules/contactos/ContactoForm', () => {
     it('shows error banner when error prop is passed', () => {
       render(<ContactoForm {...defaultProps} error="Error al guardar" />)
       expect(screen.getByText('Error al guardar')).toBeInTheDocument()
+    })
+
+    it('surfaces the destination-organization 404 (mover contacto) on the org field', () => {
+      // PR #121: el 404 de organización destino inexistente/desactivada se
+      // muestra junto al campo de organización, no como banner genérico.
+      render(
+        <ContactoForm
+          {...defaultProps}
+          contacto={baseContacto}
+          error="Organización con id 99 no encontrada o desactivada"
+        />
+      )
+      expect(
+        screen.getByText('Organización con id 99 no encontrada o desactivada')
+      ).toBeInTheDocument()
     })
   })
 })

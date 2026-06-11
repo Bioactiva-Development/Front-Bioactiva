@@ -28,6 +28,7 @@ export const QUERY_KEYS = {
     leads: {
         list:        (filters?: unknown) => ['leads', 'list', filters],
         pipeline:    (filters?: unknown) => ['leads', 'pipeline', filters],
+        column:      (estado: string, filters?: unknown) => ['leads', 'column', estado, filters],
         detail:      (id: number) => ['leads', id],
         byContacto:  (id: number) => ['leads', 'contacto', id],
     },
