@@ -47,6 +47,55 @@ describe('leads.mapper', () => {
     })
   })
 
+  it('maps the activity alert (semáforo) and ignores unknown values', () => {
+    const base = {
+      id: 1,
+      estado: 'EN_PROSPECTO',
+      servicioInteres: 'X',
+      comentarios: null,
+      desafioOportunidad: null,
+      notasContacto: null,
+      canalCaptacion: null,
+      idOrg: 'org-1',
+      organizationName: 'Org',
+      idContacto: null,
+      contactName: null,
+      idEncargado: 1,
+      encargadoName: 'Enc',
+      idAuthor: 1,
+      createdAt: '2026-06-02T10:00:00.000Z',
+      updatedAt: '2026-06-02T10:00:00.000Z',
+      ultimoCambioEstado: '2026-06-02T10:00:00.000Z',
+    }
+
+    expect(fromLeadDto({ ...base, activityAlert: 'ROJO' }).activity_alert).toBe('ROJO')
+    expect(fromLeadDto({ ...base, activityAlert: 'AMARILLO' }).activity_alert).toBe('AMARILLO')
+    expect(fromLeadDto({ ...base, activityAlert: 'VERDE' }).activity_alert).toBe('VERDE')
+    expect(fromLeadDto({ ...base, activityAlert: 'desconocido' }).activity_alert).toBeUndefined()
+    expect(fromLeadDto(base).activity_alert).toBeUndefined()
+  })
+
+  it('maps the new lead list filters (organización, semáforo y rango de fechas)', () => {
+    expect(toLeadQueryParams({
+      id_org: 'org-uuid-1',
+      alerta_actividad: 'VENCIDAS',
+      fecha_desde: '2022-01-01',
+      fecha_hasta: '2026-06-11',
+      page: 1,
+      limit: 10,
+    })).toEqual({
+      idOrg: 'org-uuid-1',
+      alertaActividad: 'VENCIDAS',
+      fechaDesde: '2022-01-01',
+      fechaHasta: '2026-06-11',
+      page: 1,
+      limit: 10,
+    })
+
+    // Sin alerta_actividad no se envía el parámetro (trae todos los leads).
+    expect(toLeadQueryParams({})).toEqual({})
+  })
+
   it('maps frontend states and payloads to backend DTOs', () => {
     expect(toBackendLeadState(LeadState.CierreVenta)).toBe('CIERRE_CON_VENTA')
 

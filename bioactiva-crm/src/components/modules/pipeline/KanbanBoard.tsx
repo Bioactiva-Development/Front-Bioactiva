@@ -9,11 +9,19 @@ import {
   useSensors,
 } from '@dnd-kit/core'
 import { KanbanColumn } from '@/components/modules/pipeline/KanbanColumn'
-import { PipelineData, Lead } from '@/types/lead.types'
+import { Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
+import { PipelineColumn } from '@/hooks/pipeline/useLeads'
+
+export interface PipelineColumns {
+  prospecto:      PipelineColumn
+  ofertado:       PipelineColumn
+  cierreVenta:    PipelineColumn
+  cierreSinVenta: PipelineColumn
+}
 
 interface KanbanBoardProps {
-  pipeline:    PipelineData
+  columnas:    PipelineColumns
   onClickLead: (lead: Lead) => void
   onQuickAction?: (
     lead: Lead,
@@ -22,35 +30,16 @@ interface KanbanBoardProps {
   onMoveLead: (lead: Lead, estado: LeadState) => void
 }
 
+// Orden EN_PROSPECTO → OFERTADO → CIERRE_CON_VENTA → CIERRE_SIN_VENTA.
 const COLUMNAS = [
-  {
-    key: 'prospecto' as keyof PipelineData,
-    titulo: 'En prospecto',
-    estado: LeadState.Prospecto,
-    color: 'bg-gray-400',
-  },
-  {
-    key: 'ofertado' as keyof PipelineData,
-    titulo: 'Ofertado',
-    estado: LeadState.Ofertado,
-    color: 'bg-amber-400',
-  },
-  {
-    key: 'cierreVenta' as keyof PipelineData,
-    titulo: 'Cierre con venta',
-    estado: LeadState.CierreVenta,
-    color: 'bg-emerald-500',
-  },
-  {
-    key: 'cierreSinVenta' as keyof PipelineData,
-    titulo: 'Cierre sin venta',
-    estado: LeadState.CierreSinVenta,
-    color: 'bg-red-400',
-  },
+  { key: 'prospecto'      as const, titulo: 'En prospecto',     estado: LeadState.Prospecto,      color: 'bg-gray-400' },
+  { key: 'ofertado'       as const, titulo: 'Ofertado',         estado: LeadState.Ofertado,       color: 'bg-amber-400' },
+  { key: 'cierreVenta'    as const, titulo: 'Cierre con venta', estado: LeadState.CierreVenta,    color: 'bg-emerald-500' },
+  { key: 'cierreSinVenta' as const, titulo: 'Cierre sin venta', estado: LeadState.CierreSinVenta, color: 'bg-red-400' },
 ]
 
 export function KanbanBoard({
-  pipeline,
+  columnas,
   onClickLead,
   onQuickAction,
   onMoveLead,
@@ -77,18 +66,22 @@ export function KanbanBoard({
     >
       <div className="flex gap-4 overflow-x-auto pb-4">
         {COLUMNAS.map((col) => {
-          const leads = pipeline[col.key]
-          if (!Array.isArray(leads)) return null
+          const columna = columnas[col.key]
 
           return (
             <KanbanColumn
               key={col.key}
               titulo={col.titulo}
               estado={col.estado}
-              leads={leads}
               color={col.color}
+              leads={columna.leads}
+              total={columna.total}
+              isLoading={columna.isLoading}
+              hasMore={columna.hasMore}
+              loadingMore={columna.loadingMore}
               onClickLead={onClickLead}
               onQuickAction={onQuickAction}
+              onCargarMas={columna.cargarMas}
             />
           )
         })}

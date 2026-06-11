@@ -41,10 +41,12 @@ describe('lead-flow.utils', () => {
     )
   })
 
-  it('blocks moving to ofertado without a quotation', () => {
+  it('allows moving to ofertado without a quotation (backend auto-creates the draft)', () => {
+    // PR #121: al pasar a OFERTADO el backend genera la cotización borrador, así
+    // que el front ya no exige una cotización previa para esta transición.
     expect(
       validateLeadStateTransition(LeadState.Prospecto, LeadState.Ofertado, []).allowed
-    ).toBe(false)
+    ).toBe(true)
   })
 
   it('allows moving to ofertado when a pendiente quotation exists', () => {

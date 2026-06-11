@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, Filter, Search, X } from 'lucide-react'
-import { LeadFiltros as FiltrosType } from '@/types/lead.types'
+import { LeadFiltros as FiltrosType, ActivityAlertFilter } from '@/types/lead.types'
 import { EstadoUsuario, LeadState } from '@/types/enums'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { UsuarioListItem } from '@/types/usuario.types'
+import { useOrganizaciones } from '@/hooks/organizaciones/useOrganizaciones'
 
 interface LeadFiltrosProps {
   filtros:   FiltrosType
@@ -19,23 +20,34 @@ interface ResponsableOption {
   nombre: string
 }
 
-const CANALES = [
-  'Web / Redes sociales',
-  'Referido',
-  'Prospección directa',
-]
-
 const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
   id: usuario.id,
   nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
 })
 
+// Semáforo de actividades (backend: alertaActividad). "Todas" = sin filtro.
+const SEMAFORO_OPCIONES: {
+  value: ActivityAlertFilter | undefined
+  label: string
+  dots: string[]
+}[] = [
+  { value: undefined,    label: 'Todas',      dots: [] },
+  { value: 'POR_VENCER', label: 'Por vencer', dots: ['bg-amber-500'] },
+  { value: 'VENCIDAS',   label: 'Vencidas',   dots: ['bg-red-500'] },
+  { value: 'TODAS',      label: 'Con alerta', dots: ['bg-amber-500', 'bg-red-500'] },
+]
+
+// Filtros server-side soportados por GET /leads (sin canal/solo_alerta, que eran
+// client-side). estado, encargado, organización, búsqueda, rango de fechas y el
+// toggle de "por vencer/vencidas" se mandan al backend.
 const sanitizeFiltros = (filtros: FiltrosType): FiltrosType => ({
   search: filtros.search,
   estado: filtros.estado,
   id_encargado: filtros.id_encargado,
-  canal_captacion: filtros.canal_captacion,
-  solo_alerta: filtros.solo_alerta,
+  id_org: filtros.id_org,
+  alerta_actividad: filtros.alerta_actividad,
+  fecha_desde: filtros.fecha_desde,
+  fecha_hasta: filtros.fecha_hasta,
 })
 
 export function LeadFiltros({
@@ -47,14 +59,41 @@ export function LeadFiltros({
   const [abierto, setAbierto] = useState(true)
   const [responsables, setResponsables] = useState<ResponsableOption[]>([])
 
+  const { data: orgsData } = useOrganizaciones({ limit: 100 })
+  const organizaciones = orgsData?.data ?? []
+
   const filtrosBasicos = useMemo(() => sanitizeFiltros(filtros), [filtros])
+
+  // Las fechas se controlan localmente para validar (hasta >= desde) antes de
+  // aplicar el filtro y evitar el 400 del backend.
+  const [fechaDesde, setFechaDesde] = useState(filtros.fecha_desde ?? '')
+  const [fechaHasta, setFechaHasta] = useState(filtros.fecha_hasta ?? '')
+
+  // Sincroniza el estado local cuando el padre cambia las fechas (p. ej. al
+  // limpiar filtros), ajustando estado en render en vez de en un efecto.
+  const [fechasPrevias, setFechasPrevias] = useState({
+    desde: filtros.fecha_desde,
+    hasta: filtros.fecha_hasta,
+  })
+  if (
+    fechasPrevias.desde !== filtros.fecha_desde ||
+    fechasPrevias.hasta !== filtros.fecha_hasta
+  ) {
+    setFechasPrevias({ desde: filtros.fecha_desde, hasta: filtros.fecha_hasta })
+    setFechaDesde(filtros.fecha_desde ?? '')
+    setFechaHasta(filtros.fecha_hasta ?? '')
+  }
+
+  const rangoInvalido = !!fechaDesde && !!fechaHasta && fechaHasta < fechaDesde
 
   const hayFiltrosActivos =
     filtrosBasicos.search ||
     filtrosBasicos.estado ||
     filtrosBasicos.id_encargado ||
-    filtrosBasicos.canal_captacion ||
-    filtrosBasicos.solo_alerta
+    filtrosBasicos.id_org ||
+    filtrosBasicos.alerta_actividad ||
+    filtrosBasicos.fecha_desde ||
+    filtrosBasicos.fecha_hasta
 
   useEffect(() => {
     let isMounted = true
@@ -83,6 +122,17 @@ export function LeadFiltros({
 
   const updateFiltros = (next: FiltrosType) => {
     onChange(sanitizeFiltros(next))
+  }
+
+  // Solo aplica el rango cuando es válido (hasta >= desde). Si está incompleto
+  // o vacío, aplica lo que haya; si es inválido, no propaga (se muestra el error).
+  const aplicarFechas = (desde: string, hasta: string) => {
+    if (desde && hasta && hasta < desde) return
+    updateFiltros({
+      ...filtrosBasicos,
+      fecha_desde: desde || undefined,
+      fecha_hasta: hasta || undefined,
+    })
   }
 
   return (
@@ -176,39 +226,104 @@ export function LeadFiltros({
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="lflt-canal" className="text-xs text-gray-400 font-medium">Canal</label>
+              <label htmlFor="lflt-org" className="text-xs text-gray-400 font-medium">Organización</label>
               <select
-                value={filtrosBasicos.canal_captacion ?? ''}
+                id="lflt-org"
+                value={filtrosBasicos.id_org ?? ''}
                 onChange={(e) => updateFiltros({
                   ...filtrosBasicos,
-                  canal_captacion: e.target.value || undefined,
+                  id_org: e.target.value || undefined,
                 })}
                 className="w-full px-3 py-2 rounded-xl border border-gray-200
                   bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
                   cursor-pointer"
               >
-                <option value="">Todos los canales</option>
-                {CANALES.map((canal) => (
-                  <option key={canal} value={canal}>{canal}</option>
+                <option value="">Todas las organizaciones</option>
+                {organizaciones.map((org) => (
+                  <option key={org.id} value={org.id}>{org.nombre}</option>
                 ))}
               </select>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            <label className="flex items-center gap-2 cursor-pointer">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label htmlFor="lflt-desde" className="text-xs text-gray-400 font-medium">
+                Creados desde
+              </label>
               <input
-                type="checkbox"
-                checked={filtrosBasicos.solo_alerta ?? false}
-                onChange={(e) => updateFiltros({
-                  ...filtrosBasicos,
-                  solo_alerta: e.target.checked || undefined,
-                })}
-                className="w-4 h-4 rounded border-gray-300 text-emerald-600
-                  focus:ring-emerald-500"
+                id="lflt-desde"
+                type="date"
+                value={fechaDesde}
+                max={fechaHasta || undefined}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setFechaDesde(v)
+                  aplicarFechas(v, fechaHasta)
+                }}
+                className="w-full px-3 py-2 rounded-xl border border-gray-200
+                  bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
+                  cursor-pointer"
               />
-              <span className="text-sm text-gray-600">Solo con alerta activa</span>
-            </label>
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="lflt-hasta" className="text-xs text-gray-400 font-medium">
+                Creados hasta
+              </label>
+              <input
+                id="lflt-hasta"
+                type="date"
+                value={fechaHasta}
+                min={fechaDesde || undefined}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setFechaHasta(v)
+                  aplicarFechas(fechaDesde, v)
+                }}
+                className={`w-full px-3 py-2 rounded-xl border bg-white text-sm
+                  text-gray-700 outline-none cursor-pointer
+                  ${rangoInvalido ? 'border-red-400' : 'border-gray-200 focus:border-emerald-400'}`}
+              />
+            </div>
+          </div>
+
+          {rangoInvalido && (
+            <p className="text-xs text-red-500">
+              La fecha &quot;hasta&quot; debe ser igual o posterior a la fecha &quot;desde&quot;.
+            </p>
+          )}
+
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">
+                Semáforo
+              </span>
+              <div className="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50 p-0.5">
+                {SEMAFORO_OPCIONES.map((opt) => {
+                  const activo = filtrosBasicos.alerta_actividad === opt.value
+                  return (
+                    <button
+                      key={opt.label}
+                      type="button"
+                      onClick={() => updateFiltros({
+                        ...filtrosBasicos,
+                        alerta_actividad: opt.value,
+                      })}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm
+                        font-medium transition-colors
+                        ${activo
+                          ? 'bg-white text-gray-800 shadow-sm'
+                          : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                      {opt.dots.map((dot) => (
+                        <span key={dot} className={`w-2 h-2 rounded-full ${dot}`} />
+                      ))}
+                      {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
             {hayFiltrosActivos && (
               <button
