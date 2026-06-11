@@ -600,6 +600,8 @@ export function LeadDetalle({
             <div className="mb-4">
               <ActividadForm
                 leadId={lead.id}
+                responsableId={lead.id_encargado}
+                responsableNombre={lead.encargado_nombre}
                 onSubmit={handleCrearActividad}
                 onCancelar={() => setMostrarForm(false)}
                 isLoading={creando}
