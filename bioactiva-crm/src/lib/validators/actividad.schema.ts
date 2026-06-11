@@ -15,11 +15,11 @@ export const actividadSchema = z
       .min(1, 'El nombre de la actividad es obligatorio')
       .max(90, 'Máximo 90 caracteres'),
 
-    tipo: z.nativeEnum(TipoActividad, {
+    tipo: z.enum(TipoActividad, {
       error: 'El tipo de actividad es obligatorio',
     }),
 
-    estado: z.nativeEnum(EstadoActividad, {
+    estado: z.enum(EstadoActividad, {
       error: 'El estado es obligatorio',
     }),
 

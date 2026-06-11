@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { LeadState } from '@/types/enums'
 
 export const leadSchema = z.object({
-  estado: z.nativeEnum(LeadState),
+  estado: z.enum(LeadState),
 
   id_org: z
     .string()
@@ -40,7 +40,6 @@ export const leadSchema = z.object({
     .min(1, 'El encargado es obligatorio'),
 
   encargado_correo: z
-    .string()
     .email('Ingrese un correo válido')
     .optional()
     .or(z.literal('')),

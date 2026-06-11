@@ -9,13 +9,12 @@ import {
   cotizacionSchema,
   CotizacionFormValues,
 } from '@/lib/validators/cotizacion.schema'
-import { TipoMoneda } from '@/types/enums'
+import { TipoMoneda, EstadoUsuario } from '@/types/enums'
 import { Cotizacion } from '@/types/cotizacion.types'
 import { ROUTES } from '@/lib/constants/routes'
 import { useLead } from '@/hooks/pipeline/useLeads'
 import { useAuthStore } from '@/store'
 import { usuariosService } from '@/services/modules/usuarios.service'
-import { EstadoUsuario } from '@/types/enums'
 import { UsuarioListItem } from '@/types/usuario.types'
 
 interface CotizacionFormProps {
@@ -121,9 +120,9 @@ export function CotizacionForm({
   // Autocompletar campos desde el lead seleccionado
   const leadSeleccionado = useWatch({ control, name: 'id_lead' })
   const remitenteSeleccionado = useWatch({ control, name: 'id_remitente' })
-  const leadIdParaAutocompletar = !esEdicion
-    ? Number(leadSeleccionado || leadIdInicial || 0)
-    : 0
+  const leadIdParaAutocompletar = esEdicion
+    ? 0
+    : Number(leadSeleccionado || leadIdInicial || 0)
   const { data: leadAutocompletado } = useLead(leadIdParaAutocompletar)
   const bloquearCamposDesdeLead = Boolean(leadAutocompletado) && !esEdicion
   const bloquearCamposFijos = esEdicion || bloquearCamposDesdeLead

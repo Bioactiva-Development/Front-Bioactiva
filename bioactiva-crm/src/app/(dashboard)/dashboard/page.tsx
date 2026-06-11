@@ -411,15 +411,17 @@ export default function DashboardPage() {
           <p className="text-xs text-gray-400 mt-0.5 mb-6">
             Cantidad de leads por estado comercial.
           </p>
-          {cargandoLeads ? (
+          {cargandoLeads && (
             <div className="h-60 flex items-center justify-center">
               <p className="text-sm text-gray-400">Cargando pipeline...</p>
             </div>
-          ) : errorLeads ? (
+          )}
+          {!cargandoLeads && errorLeads && (
             <div className="h-60 flex items-center justify-center">
               <p className="text-sm text-red-500">No se pudo cargar el pipeline.</p>
             </div>
-          ) : (
+          )}
+          {!cargandoLeads && !errorLeads && (
             <ResponsiveContainer width="100%" height={240}>
               <BarChart
                 data={pipelineData}
@@ -462,21 +464,24 @@ export default function DashboardPage() {
             Distribución de propuestas del periodo.
           </p>
 
-          {cargandoCotizaciones ? (
+          {cargandoCotizaciones && (
             <div className="h-48 flex items-center justify-center">
               <p className="text-sm text-gray-400">Cargando cotizaciones...</p>
             </div>
-          ) : errorCotizaciones ? (
+          )}
+          {!cargandoCotizaciones && errorCotizaciones && (
             <div className="h-48 flex items-center justify-center">
               <p className="text-sm text-red-500">No se pudieron cargar las cotizaciones.</p>
             </div>
-          ) : cotizacionesData.length === 0 ? (
+          )}
+          {!cargandoCotizaciones && !errorCotizaciones && cotizacionesData.length === 0 && (
             <div className="h-48 flex items-center justify-center">
               <p className="text-sm text-emerald-600 font-medium">
                 Sin cotizaciones en el periodo seleccionado.
               </p>
             </div>
-          ) : (
+          )}
+          {!cargandoCotizaciones && !errorCotizaciones && cotizacionesData.length !== 0 && (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie

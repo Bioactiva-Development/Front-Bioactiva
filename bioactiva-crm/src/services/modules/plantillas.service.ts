@@ -11,15 +11,17 @@ import {
 } from '@/services/mock/plantillas.mock'
 import { Plantilla, PlantillaFormData } from '@/types/plantilla.types'
 
+const str = (v: unknown): string => (typeof v === 'string' ? v : '')
+
 function normalizePlantilla(raw: Record<string, unknown>): Plantilla {
     return {
         id:        Number(raw.id),
-        nombre:    String(raw.nombre ?? ''),
-        asunto:    String(raw.asunto ?? ''),
-        cuerpo:    String(raw.cuerpo ?? ''),
+        nombre:    str(raw.nombre),
+        asunto:    str(raw.asunto),
+        cuerpo:    str(raw.cuerpo),
         activo:    Boolean(raw.activo ?? true),
-        createdAt: String(raw.createdAt ?? ''),
-        updatedAt: String(raw.updatedAt ?? raw.createdAt ?? ''),
+        createdAt: str(raw.createdAt),
+        updatedAt: str(raw.updatedAt) || str(raw.createdAt),
     }
 }
 

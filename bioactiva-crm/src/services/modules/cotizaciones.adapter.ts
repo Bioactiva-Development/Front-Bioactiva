@@ -82,7 +82,7 @@ export function mapBackendCotizacion(raw: BackendCotizacion): Cotizacion {
     nombre_remitente: raw.nombreRemitente,
     remitente_nombre: raw.remitenteName,
     nombre_servicio:  raw.nombreServicio,
-    monto:            parseFloat(raw.monto),
+    monto:            Number.parseFloat(raw.monto),
     tipo:             TIPO_BACKEND_A_FRONTEND[raw.tipo] ?? TipoMoneda.Soles,
     estado:           ESTADO_BACKEND_A_FRONTEND[raw.estado] ?? EstadoCot.Pendiente,
     observacion:      raw.observacion,

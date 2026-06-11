@@ -108,7 +108,7 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
             title="Imprimir"
             className="p-2 rounded-lg text-gray-400 hover:text-gray-600
               hover:bg-gray-50 transition-colors"
-            onClick={() => window.print()}
+            onClick={() => globalThis.print()}
           >
             <Printer size={15} />
           </button>

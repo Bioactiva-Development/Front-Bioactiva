@@ -124,6 +124,20 @@ async function syncLeadEstadoFromCotizacion(cotizacion: Cotizacion) {
   await leadsService.updateEstado(cotizacion.id_lead, leadState)
 }
 
+// Mapea el estado destino al endpoint de transición correspondiente.
+function endpointForEstado(id: number, targetEstado: EstadoCot): string {
+  if (targetEstado === EstadoCot.Enviada) return ENDPOINTS.cotizaciones.send(id)
+  if (targetEstado === EstadoCot.Aceptada) return ENDPOINTS.cotizaciones.accept(id)
+  return ENDPOINTS.cotizaciones.reject(id)
+}
+
+// Versión mock equivalente a endpointForEstado.
+function mockTransitionForEstado(id: number, targetEstado: EstadoCot): Promise<Cotizacion> {
+  if (targetEstado === EstadoCot.Enviada) return mockEnviarCotizacion(id)
+  if (targetEstado === EstadoCot.Aceptada) return mockAceptarCotizacion(id)
+  return mockRechazarCotizacion(id)
+}
+
 async function applyCotizacionEstado(
   cotizacion: Cotizacion,
   targetEstado?: EstadoCot
@@ -132,12 +146,7 @@ async function applyCotizacionEstado(
 
   if (targetEstado === EstadoCot.Pendiente) return cotizacion
 
-  const endpoint =
-    targetEstado === EstadoCot.Enviada
-      ? ENDPOINTS.cotizaciones.send(cotizacion.id)
-      : targetEstado === EstadoCot.Aceptada
-        ? ENDPOINTS.cotizaciones.accept(cotizacion.id)
-        : ENDPOINTS.cotizaciones.reject(cotizacion.id)
+  const endpoint = endpointForEstado(cotizacion.id, targetEstado)
 
   const response = await apiClient.patch<CotizacionDtoOut>(endpoint)
   return fromCotizacionDto(response.data)
@@ -150,19 +159,9 @@ async function transitionCotizacionEstado(
   let cotizacion: Cotizacion
 
   if (USE_MOCK) {
-    cotizacion =
-      targetEstado === EstadoCot.Enviada
-        ? await mockEnviarCotizacion(id)
-        : targetEstado === EstadoCot.Aceptada
-          ? await mockAceptarCotizacion(id)
-          : await mockRechazarCotizacion(id)
+    cotizacion = await mockTransitionForEstado(id, targetEstado)
   } else {
-    const endpoint =
-      targetEstado === EstadoCot.Enviada
-        ? ENDPOINTS.cotizaciones.send(id)
-        : targetEstado === EstadoCot.Aceptada
-          ? ENDPOINTS.cotizaciones.accept(id)
-          : ENDPOINTS.cotizaciones.reject(id)
+    const endpoint = endpointForEstado(id, targetEstado)
 
     const response = await apiClient.patch<CotizacionDtoOut>(endpoint)
     cotizacion = fromCotizacionDto(response.data)

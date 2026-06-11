@@ -391,7 +391,7 @@ export const mockDeleteLead = async (id: number): Promise<void> => {
 
   const index = MOCK_LEADS.findIndex((l) => l.id === id)
   if (index === -1) {
-    throw { status: 404, message: 'Lead no encontrado.' }
+    throw Object.assign(new Error('Lead no encontrado.'), { status: 404 })
   }
 
   MOCK_LEADS.splice(index, 1)
@@ -417,10 +417,10 @@ export const mockCreateActividad = async (
   )
 
   if (hasPendingActivity) {
-    throw {
-      status: 409,
-      message: 'No se puede registrar una nueva actividad mientras exista una actividad pendiente.',
-    }
+    throw Object.assign(
+      new Error('No se puede registrar una nueva actividad mientras exista una actividad pendiente.'),
+      { status: 409 }
+    )
   }
 
   const nueva: Actividad = {
