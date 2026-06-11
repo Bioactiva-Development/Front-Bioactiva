@@ -14,7 +14,14 @@ import {
   FileText,
   Send,
 } from 'lucide-react'
-import { Lead } from '@/types/lead.types'
+import { ActivityAlert, Lead } from '@/types/lead.types'
+
+// Semáforo de actividades (backend: activityAlert).
+const SEMAFORO: Record<ActivityAlert, { color: string; label: string }> = {
+  VERDE:    { color: 'bg-emerald-500', label: 'Actividades al día' },
+  AMARILLO: { color: 'bg-amber-500',   label: 'Actividad pendiente por vencer (≤ 3 días)' },
+  ROJO:     { color: 'bg-red-500',     label: 'Actividad pendiente vencida' },
+}
 
 interface LeadCardProps {
   lead:     Lead
@@ -90,6 +97,13 @@ export function LeadCard({
         <p className="text-sm font-bold text-gray-900 truncate">
           {lead.organizacion_nombre}
         </p>
+        {lead.activity_alert && (
+          <span
+            title={SEMAFORO[lead.activity_alert].label}
+            aria-label={`Semáforo de actividades: ${SEMAFORO[lead.activity_alert].label}`}
+            className={`ml-auto w-2.5 h-2.5 rounded-full shrink-0 ${SEMAFORO[lead.activity_alert].color}`}
+          />
+        )}
       </div>
 
         {lead.contacto_nombre && (

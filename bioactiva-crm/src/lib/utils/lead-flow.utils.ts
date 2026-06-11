@@ -116,12 +116,9 @@ export function validateLeadStateTransition(
     }
   }
 
-  if (targetState === LeadState.Ofertado && !getCotizacionToOfferLead(cotizaciones)) {
-    return {
-      allowed: false,
-      reason: 'Para mover a Ofertado primero registra una cotización asociada al lead.',
-    }
-  }
+  // Prospecto -> Ofertado ya NO exige una cotización previa: al pasar a OFERTADO
+  // el backend genera automáticamente una cotización borrador PENDIENTE
+  // (PR #121). El front solo cambia el estado y luego consume ese borrador.
 
   if (
     (targetState === LeadState.CierreVenta ||

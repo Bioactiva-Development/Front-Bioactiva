@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AlertCircle, Plus } from 'lucide-react'
+import { AlertCircle, FileText, Plus, X } from 'lucide-react'
 import { useMoverLeadPipeline, usePipeline } from '@/hooks/pipeline/useLeads'
 import { KanbanBoard } from '@/components/modules/pipeline/KanbanBoard'
 import { LeadFiltros } from '@/components/modules/pipeline/LeadFiltros'
@@ -18,6 +18,7 @@ export default function PipelinePage() {
   const [filtros, setFiltros]                   = useState<FiltrosType>(FILTROS_INICIALES)
   const [leadSeleccionado, setLeadSeleccionado] = useState<Lead | null>(null)
   const [dragError, setDragError]       = useState<string | null>(null)
+  const [borradorId, setBorradorId]     = useState<number | null>(null)
 
   const { data: pipeline, isLoading, isError } = usePipeline(filtros)
   const { mutateAsync: moverLead, isPending: actualizandoEstado } =
@@ -47,7 +48,11 @@ export default function PipelinePage() {
   const handleMoveLead = async (lead: Lead, estado: LeadState) => {
     try {
       setDragError(null)
-      await moverLead({ lead, estado })
+      setBorradorId(null)
+      const { borrador } = await moverLead({ lead, estado })
+      // Al pasar a OFERTADO el backend generó una cotización borrador: avisamos
+      // y enlazamos a su edición.
+      if (borrador) setBorradorId(borrador.id)
     } catch (err: unknown) {
       setDragError(getErrorMessage(err, 'No se pudo actualizar el estado del lead.'))
     }
@@ -96,6 +101,31 @@ export default function PipelinePage() {
           bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <p>{dragError}</p>
+        </div>
+      )}
+
+      {borradorId && (
+        <div className="flex items-start gap-2 rounded-xl border border-emerald-200
+          bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <FileText size={16} className="mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <p>Se generó una cotización borrador. Complétala.</p>
+            <button
+              type="button"
+              onClick={() => router.push(`/cotizaciones/${borradorId}`)}
+              className="mt-1 text-xs font-bold text-emerald-700 underline underline-offset-2"
+            >
+              Completar cotización
+            </button>
+          </div>
+          <button
+            type="button"
+            aria-label="Cerrar aviso"
+            onClick={() => setBorradorId(null)}
+            className="text-emerald-600 hover:text-emerald-800"
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
 

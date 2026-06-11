@@ -1,4 +1,4 @@
-import { Lead, LeadFiltros, LeadFormData } from '@/types/lead.types'
+import { ActivityAlert, Lead, LeadFiltros, LeadFormData } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
 
 export interface LeadDtoOut {
@@ -22,7 +22,15 @@ export interface LeadDtoOut {
   fechaCierre?: string | null
   fechaCierreEstimada?: string | null
   fecha_cierre?: string | null
+  activityAlert?: string | null
 }
+
+const ACTIVITY_ALERTS = new Set<ActivityAlert>(['VERDE', 'AMARILLO', 'ROJO'])
+
+const toActivityAlert = (value?: string | null): ActivityAlert | undefined =>
+  value && ACTIVITY_ALERTS.has(value as ActivityAlert)
+    ? (value as ActivityAlert)
+    : undefined
 
 export interface LeadsDtoResponse {
   data: LeadDtoOut[]
@@ -95,17 +103,21 @@ export const fromLeadDto = (dto: LeadDtoOut): Lead => ({
   organizacion_nombre: dto.organizationName,
   contacto_nombre: dto.contactName ?? undefined,
   encargado_nombre: dto.encargadoName,
+  activity_alert: toActivityAlert(dto.activityAlert),
 })
 
 export const toBackendLeadState = (estado: LeadState) =>
   LEAD_STATE_DOMAIN_TO_BACKEND[estado]
 
 export const toLeadQueryParams = (filtros?: LeadFiltros) => {
-  const params: Record<string, string | number> = {}
+  const params: Record<string, string | number | boolean> = {}
 
   if (filtros?.estado) params.estado = toBackendLeadState(filtros.estado)
   if (filtros?.id_encargado) params.idEncargado = filtros.id_encargado
   if (filtros?.search) params.search = filtros.search
+  if (filtros?.con_actividades_por_vencer) params.conActividadesPorVencer = true
+  if (filtros?.fecha_desde) params.fechaDesde = filtros.fecha_desde
+  if (filtros?.fecha_hasta) params.fechaHasta = filtros.fecha_hasta
   if (filtros?.page) params.page = filtros.page
   if (filtros?.limit) params.limit = filtros.limit
 

@@ -3,7 +3,7 @@ import {
   CotizacionFiltros,
   CotizacionFormData,
 } from '@/types/cotizacion.types'
-import { EstadoCot } from '@/types/enums'
+import { EstadoCot, TipoMoneda } from '@/types/enums'
 
 export interface CotizacionDtoOut {
   id: number
@@ -71,6 +71,17 @@ const ESTADO_BACKEND_TO_DOMAIN: Record<string, EstadoCot> = {
   RECHAZADA: EstadoCot.Rechazada,
 }
 
+// El backend envía la moneda como string exacto "PEN" | "USD". Se mapea de forma
+// explícita (no por cast) para soportar ambas monedas y no asumir soles. Bug
+// "solo soles": el detalle/listado deben mostrar USD cuando corresponde.
+const TIPO_BACKEND_TO_DOMAIN: Record<string, TipoMoneda> = {
+  PEN: TipoMoneda.Soles,
+  USD: TipoMoneda.Dolares,
+}
+
+const fromBackendTipo = (tipo: string | null | undefined): TipoMoneda =>
+  TIPO_BACKEND_TO_DOMAIN[(tipo ?? '').toUpperCase()] ?? TipoMoneda.Soles
+
 const trimOrUndefined = (value?: string | null): string | undefined => {
   if (value == null) return undefined
   const trimmed = value.trim()
@@ -103,7 +114,7 @@ export const fromCotizacionDto = (dto: CotizacionDtoOut): Cotizacion => ({
   nombre_remitente: dto.nombreRemitente || dto.remitenteName,
   nombre_servicio: dto.nombreServicio,
   monto: Number(dto.monto),
-  tipo: dto.tipo as Cotizacion['tipo'],
+  tipo: fromBackendTipo(dto.tipo),
   estado: ESTADO_BACKEND_TO_DOMAIN[dto.estado] ?? EstadoCot.Pendiente,
   observacion: dto.observacion ?? undefined,
   link_propuesta: dto.linkPropuesta ?? undefined,

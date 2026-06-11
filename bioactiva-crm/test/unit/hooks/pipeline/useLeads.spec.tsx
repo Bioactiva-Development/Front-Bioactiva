@@ -215,7 +215,9 @@ describe('pipeline/useLeads', () => {
     it('updates lead state', async () => {
       const lead = makeLead({ id: 1, estado: LeadState.Prospecto })
       mockGetById.mockResolvedValueOnce(lead)
-      mockGetByLead.mockResolvedValueOnce([makeCotizacion({ estado: EstadoCot.Enviada })])
+      // Al pasar a OFERTADO el front consulta las cotizaciones del lead antes y
+      // después del cambio (para detectar el borrador que crea el backend).
+      mockGetByLead.mockResolvedValue([makeCotizacion({ estado: EstadoCot.Enviada })])
       mockUpdateEstado.mockResolvedValueOnce(makeLead({ id: 1, estado: LeadState.Ofertado }))
 
       const { result } = renderHook(() => useActualizarEstadoLead(), { wrapper })
@@ -225,6 +227,9 @@ describe('pipeline/useLeads', () => {
       })
 
       expect(mockGetById).toHaveBeenCalledWith(1)
+      // Ya no se envía la cotización automáticamente al ofertar (lo hace el backend).
+      expect(mockEnviar).not.toHaveBeenCalled()
+      expect(mockUpdateEstado).toHaveBeenCalledWith(1, LeadState.Ofertado)
     })
   })
 
@@ -245,7 +250,7 @@ describe('pipeline/useLeads', () => {
   describe('useMoverLeadPipeline', () => {
     it('moves lead in pipeline on successful mutation', async () => {
       const lead = makeLead({ id: 1, estado: LeadState.Prospecto })
-      mockGetByLead.mockResolvedValueOnce([makeCotizacion({ estado: EstadoCot.Enviada })])
+      mockGetByLead.mockResolvedValue([makeCotizacion({ estado: EstadoCot.Enviada })])
       mockUpdateEstado.mockResolvedValueOnce(makeLead({ id: 1, estado: LeadState.Ofertado }))
 
       const { result } = renderHook(() => useMoverLeadPipeline(), { wrapper })

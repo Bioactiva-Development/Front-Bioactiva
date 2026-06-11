@@ -36,6 +36,9 @@ const sanitizeFiltros = (filtros: FiltrosType): FiltrosType => ({
   id_encargado: filtros.id_encargado,
   canal_captacion: filtros.canal_captacion,
   solo_alerta: filtros.solo_alerta,
+  con_actividades_por_vencer: filtros.con_actividades_por_vencer,
+  fecha_desde: filtros.fecha_desde,
+  fecha_hasta: filtros.fecha_hasta,
 })
 
 export function LeadFiltros({
@@ -49,12 +52,37 @@ export function LeadFiltros({
 
   const filtrosBasicos = useMemo(() => sanitizeFiltros(filtros), [filtros])
 
+  // Las fechas se controlan localmente para validar (hasta >= desde) antes de
+  // aplicar el filtro y evitar el 400 del backend.
+  const [fechaDesde, setFechaDesde] = useState(filtros.fecha_desde ?? '')
+  const [fechaHasta, setFechaHasta] = useState(filtros.fecha_hasta ?? '')
+
+  // Sincroniza el estado local cuando el padre cambia las fechas (p. ej. al
+  // limpiar filtros), ajustando estado en render en vez de en un efecto.
+  const [fechasPrevias, setFechasPrevias] = useState({
+    desde: filtros.fecha_desde,
+    hasta: filtros.fecha_hasta,
+  })
+  if (
+    fechasPrevias.desde !== filtros.fecha_desde ||
+    fechasPrevias.hasta !== filtros.fecha_hasta
+  ) {
+    setFechasPrevias({ desde: filtros.fecha_desde, hasta: filtros.fecha_hasta })
+    setFechaDesde(filtros.fecha_desde ?? '')
+    setFechaHasta(filtros.fecha_hasta ?? '')
+  }
+
+  const rangoInvalido = !!fechaDesde && !!fechaHasta && fechaHasta < fechaDesde
+
   const hayFiltrosActivos =
     filtrosBasicos.search ||
     filtrosBasicos.estado ||
     filtrosBasicos.id_encargado ||
     filtrosBasicos.canal_captacion ||
-    filtrosBasicos.solo_alerta
+    filtrosBasicos.solo_alerta ||
+    filtrosBasicos.con_actividades_por_vencer ||
+    filtrosBasicos.fecha_desde ||
+    filtrosBasicos.fecha_hasta
 
   useEffect(() => {
     let isMounted = true
@@ -83,6 +111,17 @@ export function LeadFiltros({
 
   const updateFiltros = (next: FiltrosType) => {
     onChange(sanitizeFiltros(next))
+  }
+
+  // Solo aplica el rango cuando es válido (hasta >= desde). Si está incompleto
+  // o vacío, aplica lo que haya; si es inválido, no propaga (se muestra el error).
+  const aplicarFechas = (desde: string, hasta: string) => {
+    if (desde && hasta && hasta < desde) return
+    updateFiltros({
+      ...filtrosBasicos,
+      fecha_desde: desde || undefined,
+      fecha_hasta: hasta || undefined,
+    })
   }
 
   return (
@@ -195,6 +234,53 @@ export function LeadFiltros({
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label htmlFor="lflt-desde" className="text-xs text-gray-400 font-medium">
+                Creados desde
+              </label>
+              <input
+                id="lflt-desde"
+                type="date"
+                value={fechaDesde}
+                max={fechaHasta || undefined}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setFechaDesde(v)
+                  aplicarFechas(v, fechaHasta)
+                }}
+                className="w-full px-3 py-2 rounded-xl border border-gray-200
+                  bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
+                  cursor-pointer"
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="lflt-hasta" className="text-xs text-gray-400 font-medium">
+                Creados hasta
+              </label>
+              <input
+                id="lflt-hasta"
+                type="date"
+                value={fechaHasta}
+                min={fechaDesde || undefined}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setFechaHasta(v)
+                  aplicarFechas(fechaDesde, v)
+                }}
+                className={`w-full px-3 py-2 rounded-xl border bg-white text-sm
+                  text-gray-700 outline-none cursor-pointer
+                  ${rangoInvalido ? 'border-red-400' : 'border-gray-200 focus:border-emerald-400'}`}
+              />
+            </div>
+          </div>
+
+          {rangoInvalido && (
+            <p className="text-xs text-red-500">
+              La fecha &quot;hasta&quot; debe ser igual o posterior a la fecha &quot;desde&quot;.
+            </p>
+          )}
+
           <div className="flex items-center gap-3 flex-wrap">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -208,6 +294,20 @@ export function LeadFiltros({
                   focus:ring-emerald-500"
               />
               <span className="text-sm text-gray-600">Solo con alerta activa</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={filtrosBasicos.con_actividades_por_vencer ?? false}
+                onChange={(e) => updateFiltros({
+                  ...filtrosBasicos,
+                  con_actividades_por_vencer: e.target.checked || undefined,
+                })}
+                className="w-4 h-4 rounded border-gray-300 text-emerald-600
+                  focus:ring-emerald-500"
+              />
+              <span className="text-sm text-gray-600">Con actividades por vencer o vencidas</span>
             </label>
 
             {hayFiltrosActivos && (

@@ -44,6 +44,36 @@ describe('cotizaciones.mapper', () => {
     })
   })
 
+  it('maps the USD currency type (bug "solo soles": debe soportar ambas monedas)', () => {
+    const base = {
+      id: 9,
+      fechaCot: '2026-06-02T10:00:00.000Z',
+      dirigido: 'Dr. Martinez',
+      cliente: 'TechCorp SA',
+      producto: 'Licencia Pro',
+      nombreRemitente: 'Juan Perez',
+      nombreServicio: 'Desarrollo',
+      monto: '5000.00',
+      estado: 'PENDIENTE',
+      observacion: null,
+      linkPropuesta: null,
+      idLead: 10,
+      leadServicioInteres: 'Consultoría',
+      leadEstado: 'EN_PROSPECTO',
+      contactName: 'María Gómez',
+      idRemitente: 7,
+      remitenteName: 'Carlos López',
+      idAuthor: 3,
+      createdAt: '2026-01-15T10:30:00.000Z',
+      updatedAt: '2026-01-15T10:30:00.000Z',
+    }
+
+    expect(fromCotizacionDto({ ...base, tipo: 'USD' }).tipo).toBe(TipoMoneda.Dolares)
+    expect(fromCotizacionDto({ ...base, tipo: 'PEN' }).tipo).toBe(TipoMoneda.Soles)
+    // Tolerante a casing inesperado del backend.
+    expect(fromCotizacionDto({ ...base, tipo: 'usd' }).tipo).toBe(TipoMoneda.Dolares)
+  })
+
   it('maps frontend filters and create payload to backend quotations', () => {
     expect(toCotizacionQueryParams({
       estado: EstadoCot.Aceptada,
