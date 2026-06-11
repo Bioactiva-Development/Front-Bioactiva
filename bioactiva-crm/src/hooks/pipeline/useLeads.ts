@@ -53,7 +53,7 @@ export function useLeads(filtros?: LeadFiltros) {
   })
 }
 
-const LEAD_COLUMN_LIMIT = 10
+const LEAD_COLUMN_LIMIT = 20
 
 export interface PipelineColumn {
   leads: Lead[]

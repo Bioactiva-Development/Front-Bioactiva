@@ -139,10 +139,10 @@ describe('pipeline/useLeads', () => {
 
       await waitFor(() => expect(result.current.prospecto.isLoading).toBe(false))
 
-      expect(mockGetLeadsColumn).toHaveBeenCalledWith(LeadState.Prospecto, undefined, 1, 10)
-      expect(mockGetLeadsColumn).toHaveBeenCalledWith(LeadState.Ofertado, undefined, 1, 10)
-      expect(mockGetLeadsColumn).toHaveBeenCalledWith(LeadState.CierreVenta, undefined, 1, 10)
-      expect(mockGetLeadsColumn).toHaveBeenCalledWith(LeadState.CierreSinVenta, undefined, 1, 10)
+      expect(mockGetLeadsColumn).toHaveBeenCalledWith(LeadState.Prospecto, undefined, 1, 20)
+      expect(mockGetLeadsColumn).toHaveBeenCalledWith(LeadState.Ofertado, undefined, 1, 20)
+      expect(mockGetLeadsColumn).toHaveBeenCalledWith(LeadState.CierreVenta, undefined, 1, 20)
+      expect(mockGetLeadsColumn).toHaveBeenCalledWith(LeadState.CierreSinVenta, undefined, 1, 20)
 
       expect(result.current.prospecto.total).toBe(1)
       expect(result.current.prospecto.leads).toHaveLength(1)
