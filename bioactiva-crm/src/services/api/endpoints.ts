@@ -90,20 +90,17 @@ export const ENDPOINTS = {
     },
 
     notificaciones: {
-        // El backend NestJS aún no expone el módulo `notifications` (marcado
-        // "Pendiente" en la doc de endpoints). Cuando lo haga, lo más probable
-        // es que use `/notifications` en inglés siguiendo la convención de
-        // `/organizations` y `/auth`. Mantenemos `/notificaciones` por ahora
-        // como contrato esperado; ajustar cuando el backend confirme.
-        list:         '/notificaciones',
-        detail:       (id: number) => `/notificaciones/${id}`,
-        cancel:       (id: number) => `/notificaciones/${id}/cancel`,
-        centro:       '/notificaciones/centro',
-        leer:         (id: number) => `/notificaciones/${id}/leer`,
-        leerTodas:    '/notificaciones/leer-todas',
-        programada:   (id: number) => `/notificaciones/programadas/${id}`,
-        recordatorio: '/notificaciones/recordatorio',
-        seguimiento:  '/notificaciones/seguimiento',
+        // Contrato documentado en Mintlify:
+        // - /api/notifications/overview (programadas: reminders/follow-ups)
+        // - /api/notifications/in-app   (campanita)
+        // No existen endpoints "centro" ni "leer-todas": el centro se compone
+        // en cliente y marcar todas se resuelve con PATCH individuales.
+        list:      '/notifications',                                  // GET ?estado=PROGRAMADA|VENCIDA&idLead&idResponsable
+        cancel:    (id: number) => `/notifications/${id}`,            // DELETE (409 si VENCIDA)
+        reminders: '/notifications/reminders',                        // POST
+        followUps: '/notifications/follow-ups',                       // POST
+        inApp:     '/notifications/in-app',                           // GET
+        inAppRead: (id: number) => `/notifications/in-app/${id}/read`, // PATCH
     },
 
     plantillas: {

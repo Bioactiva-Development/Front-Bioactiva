@@ -266,7 +266,7 @@ export function LeadDetalle({
       ...notificaciones.map((notificacion) => ({
         id: `notificacion-${notificacion.id}`,
         fecha: notificacion.created_at,
-        tipo: `${notificacion.tipo}`,
+        tipo: 'Notificación',
         titulo: notificacion.titulo,
         detalle: notificacion.mensaje,
       })),
@@ -275,9 +275,9 @@ export function LeadDetalle({
         .map((notificacion) => ({
           id: `notificacion-programada-${notificacion.id}`,
           fecha: notificacion.created_at,
-          tipo: `${notificacion.tipo} programado`,
-          titulo: notificacion.asunto,
-          detalle: `${notificacion.actividad_nombre ?? 'Actividad'} - envío ${formatFecha(notificacion.fecha_envio)}`,
+          tipo: `${notificacion.tipo === 'RECORDATORIO' ? 'Recordatorio' : 'Seguimiento'} programado`,
+          titulo: notificacion.asunto_interno,
+          detalle: `${notificacion.actividad_nombre ?? 'Actividad'} - envío ${formatFecha(notificacion.fecha_envio_interno)}`,
         })),
       {
         id: `lead-${lead.id}-state`,

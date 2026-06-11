@@ -55,9 +55,11 @@ export enum TamanoEmpresa {
     Grande = 'Grande',
 }
 
+// Valores alineados al contrato in-app del backend
+// (https://bioactiva.mintlify.app/api/notifications/in-app)
 export enum EstadoNotif {
-    NoLeida = 'No Leida',
-    Leida = 'Leida',
+    NoLeida = 'NO_LEIDA',
+    Leida = 'LEIDA',
 }
 
 export enum TokenPurpose {

@@ -95,7 +95,8 @@ export function NotificacionProgramadaItem({
       minute: '2-digit',
     })
 
-  const esProgramada = notificacion.estado === 'Programada'
+  const esProgramada = notificacion.estado === 'PROGRAMADA'
+  const destinatario = notificacion.destinatario ?? notificacion.correo_cliente
 
   return (
     <div className="flex items-start gap-3 p-4 rounded-xl border border-gray-100
@@ -106,7 +107,7 @@ export function NotificacionProgramadaItem({
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-800 truncate">
-          {notificacion.asunto}
+          {notificacion.asunto_interno}
         </p>
         {notificacion.lead_org && (
           <p className="text-xs text-gray-500 mt-0.5">
@@ -114,11 +115,13 @@ export function NotificacionProgramadaItem({
           </p>
         )}
         <p className="text-xs text-gray-400 mt-1">
-          Programada: {formatFecha(notificacion.fecha_envio)}
+          Programada: {formatFecha(notificacion.fecha_envio_interno)}
         </p>
-        <p className="text-xs text-gray-400">
-          Para: {notificacion.destinatario}
-        </p>
+        {destinatario && (
+          <p className="text-xs text-gray-400">
+            Para: {destinatario}
+          </p>
+        )}
       </div>
 
       {esProgramada && (

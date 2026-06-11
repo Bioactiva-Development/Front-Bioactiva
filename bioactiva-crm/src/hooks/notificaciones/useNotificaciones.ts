@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { notificacionesService } from '@/services/modules/notificaciones.service'
-import { NotificacionProgramada } from '@/types/notificacion.types'
+import {
+  CrearRecordatorioInput,
+  CrearSeguimientoInput,
+} from '@/types/notificacion.types'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 
 // --- HOOK CENTRO ---
-// Mientras el módulo `notifications` del backend siga "Pendiente", el service
-// retorna un centro vacío en 404 sin propagar error. Usamos `retry: false`
-// para evitar 3 reintentos consecutivos por cada poll, y `refetchOnWindowFocus`
-// se mantiene desactivado para reducir tráfico cuando el módulo no aporta data.
+// El centro se compone en cliente (GET /notifications + GET /notifications/in-app).
+// `retry: false` evita triplicar requests en errores 4xx del contrato (p. ej. 409).
 export function useCentroNotificaciones() {
   return useQuery({
     queryKey: ['notificaciones', 'centro'],
@@ -86,7 +87,7 @@ export function useCrearRecordatorio() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: Partial<NotificacionProgramada>) =>
+    mutationFn: (data: CrearRecordatorioInput) =>
       notificacionesService.createRecordatorio(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
@@ -101,7 +102,7 @@ export function useCrearSeguimiento() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: Partial<NotificacionProgramada>) =>
+    mutationFn: (data: CrearSeguimientoInput) =>
       notificacionesService.createSeguimiento(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notificaciones'] })

@@ -62,9 +62,8 @@ export function NotificacionFiltros({
             className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-emerald-400 transition-colors"
           >
             <option value="">Todos los tipos</option>
-            <option value="Recordatorio">Recordatorio</option>
-            <option value="Seguimiento">Seguimiento</option>
-            <option value="Alerta">Alerta</option>
+            <option value="RECORDATORIO">Recordatorio</option>
+            <option value="SEGUIMIENTO">Seguimiento</option>
           </select>
         </div>
 
@@ -79,8 +78,8 @@ export function NotificacionFiltros({
             className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-emerald-400 transition-colors"
           >
             <option value="">Todos los estados</option>
-            <option value="No Leida">No leída</option>
-            <option value="Leida">Leída</option>
+            <option value={EstadoNotif.NoLeida}>No leída</option>
+            <option value={EstadoNotif.Leida}>Leída</option>
           </select>
         </div>
       </div>

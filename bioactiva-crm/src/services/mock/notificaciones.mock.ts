@@ -1,29 +1,21 @@
 import { EstadoNotif } from '@/types/enums'
 import {
+  CentroNotificaciones,
+  CrearRecordatorioInput,
+  CrearSeguimientoInput,
   Notificacion,
   NotificacionProgramada,
-  CentroNotificaciones,
+  NotificacionProgramadaFiltros,
 } from '@/types/notificacion.types'
-
-type MockNotificacionProgramadaPayload = Partial<NotificacionProgramada> & {
-  lead_codigo?: string
-  lead_org?: string
-  actividad_nombre?: string
-  fecha_envio_externo?: string
-  asunto_externo?: string
-  cuerpo_externo?: string
-  correo_cliente?: string
-}
+import { toFechaEnvioIso } from '@/services/modules/notificaciones.mapper'
 
 const MOCK_NOTIFICACIONES: Notificacion[] = [
   {
     id:           1,
-    id_usuario:   1,
     id_actividad: 2,
     id_lead:      1,
     titulo:       'Actividad vencida en LEAD-2025-003',
     mensaje:      'La actividad "Reunión de presentación" está pendiente y ha vencido.',
-    tipo:         'Alerta',
     estado:       EstadoNotif.NoLeida,
     created_at:   new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
     lead_codigo:  'LEAD-2025-003',
@@ -31,28 +23,24 @@ const MOCK_NOTIFICACIONES: Notificacion[] = [
   },
   {
     id:           2,
-    id_usuario:   1,
     id_actividad: 4,
     id_lead:      4,
     titulo:       'Actividad vencida en LEAD-2025-008',
     mensaje:      'La actividad "Seguimiento post-propuesta" está pendiente y ha vencido.',
-    tipo:         'Alerta',
     estado:       EstadoNotif.NoLeida,
     created_at:   new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
     lead_codigo:  'LEAD-2025-008',
     lead_org:     'Altomayo',
   },
   {
-    id:           3,
-    id_usuario:   1,
-    id_lead:      3,
-    titulo:       'Actividad vencida en LEAD-2025-005',
-    mensaje:      'El lead lleva más de 30 días sin cambio de estado.',
-    tipo:         'Alerta',
-    estado:       EstadoNotif.Leida,
-    created_at:   new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
-    lead_codigo:  'LEAD-2025-005',
-    lead_org:     'Inversiones Pisco S.A.',
+    id:          3,
+    id_lead:     3,
+    titulo:      'Lead sin movimiento',
+    mensaje:     'El lead lleva más de 30 días sin cambio de estado.',
+    estado:      EstadoNotif.Leida,
+    created_at:  new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+    lead_codigo: 'LEAD-2025-005',
+    lead_org:    'Inversiones Pisco S.A.',
   },
 ]
 
@@ -60,6 +48,31 @@ const MOCK_PROGRAMADAS: NotificacionProgramada[] = []
 
 const delay = (ms: number = 400) =>
   new Promise((resolve) => setTimeout(resolve, ms))
+
+/** Replica la regla del backend: una sola PROGRAMADA por actividad (409). */
+const assertSinProgramadaActiva = (actividadId: number) => {
+  const existe = MOCK_PROGRAMADAS.some(
+    (p) => p.id_actividad === actividadId && p.estado === 'PROGRAMADA'
+  )
+  if (existe) {
+    throw Object.assign(
+      new Error('Si desea registrar una nueva notificación, debe eliminar la que está asociada actualmente.'),
+      { status: 409 }
+    )
+  }
+}
+
+export const mockGetProgramadas = async (
+  filtros?: NotificacionProgramadaFiltros
+): Promise<NotificacionProgramada[]> => {
+  await delay()
+  return MOCK_PROGRAMADAS.filter((p) => {
+    if (filtros?.estado && p.estado !== filtros.estado) return false
+    if (filtros?.id_lead != null && p.id_lead !== filtros.id_lead) return false
+    if (filtros?.id_responsable != null && p.id_responsable !== filtros.id_responsable) return false
+    return true
+  })
+}
 
 export const mockGetCentro = async (): Promise<CentroNotificaciones> => {
   await delay()
@@ -69,7 +82,7 @@ export const mockGetCentro = async (): Promise<CentroNotificaciones> => {
   ).length
 
   return {
-    programadas: MOCK_PROGRAMADAS,
+    programadas: MOCK_PROGRAMADAS.filter((p) => p.estado === 'PROGRAMADA'),
     vencidas:    MOCK_NOTIFICACIONES,
     sinLeer,
   }
@@ -112,8 +125,11 @@ export const mockCancelarProgramada = async (id: number): Promise<void> => {
   }
 
   const notif = MOCK_PROGRAMADAS[index]
-  if (notif.estado !== 'Programada') {
-    throw Object.assign(new Error('La notificación no puede cancelarse porque ya fue ejecutada.'), { status: 400 })
+  if (notif.estado !== 'PROGRAMADA') {
+    throw Object.assign(
+      new Error('La notificación no puede cancelarse porque ya fue ejecutada.'),
+      { status: 409 }
+    )
   }
 
   MOCK_PROGRAMADAS.splice(index, 1)
@@ -128,7 +144,7 @@ export const mockCancelarPendientesPorActividad = async (
     const programada = MOCK_PROGRAMADAS[index]
     if (
       programada.id_actividad === actividadId &&
-      programada.estado === 'Programada'
+      programada.estado === 'PROGRAMADA'
     ) {
       MOCK_PROGRAMADAS.splice(index, 1)
     }
@@ -136,24 +152,30 @@ export const mockCancelarPendientesPorActividad = async (
 }
 
 export const mockCreateRecordatorio = async (
-  data: MockNotificacionProgramadaPayload
+  data: CrearRecordatorioInput
 ): Promise<NotificacionProgramada> => {
   await delay()
+  assertSinProgramadaActiva(data.id_actividad)
 
   const nueva: NotificacionProgramada = {
-    id:               Date.now(),
-    id_actividad:     data.id_actividad!,
-    id_lead:          data.id_lead!,
-    tipo:             'Recordatorio',
-    fecha_envio:      data.fecha_envio!,
-    asunto:           data.asunto!,
-    cuerpo:           data.cuerpo!,
-    destinatario:     data.destinatario ?? 'Responsable',
-    estado:           'Programada',
-    created_at:       new Date().toISOString(),
-    lead_codigo:      data.lead_codigo,
-    lead_org:         data.lead_org,
-    actividad_nombre: data.actividad_nombre,
+    id:                  Date.now(),
+    tipo:                'RECORDATORIO',
+    estado:              'PROGRAMADA',
+    id_actividad:        data.id_actividad,
+    id_lead:             data.id_lead ?? 0,
+    id_responsable:      0,
+    asunto_interno:      data.asunto,
+    fecha_envio_interno: toFechaEnvioIso(data.fecha_envio, data.hora_envio),
+    enviado_interno:     false,
+    correo_cliente:      null,
+    asunto_externo:      null,
+    fecha_envio_externo: null,
+    enviado_externo:     false,
+    created_at:          new Date().toISOString(),
+    lead_codigo:         data.lead_codigo,
+    lead_org:            data.lead_org,
+    actividad_nombre:    data.actividad_nombre,
+    destinatario:        data.destinatario,
   }
 
   MOCK_PROGRAMADAS.push(nueva)
@@ -161,24 +183,30 @@ export const mockCreateRecordatorio = async (
 }
 
 export const mockCreateSeguimiento = async (
-  data: MockNotificacionProgramadaPayload
+  data: CrearSeguimientoInput
 ): Promise<NotificacionProgramada> => {
   await delay()
+  assertSinProgramadaActiva(data.id_actividad)
 
   const nueva: NotificacionProgramada = {
-    id:               Date.now(),
-    id_actividad:     data.id_actividad!,
-    id_lead:          data.id_lead!,
-    tipo:             'Seguimiento',
-    fecha_envio:      data.fecha_envio_externo ?? data.fecha_envio! ?? '',
-    asunto:           data.asunto_externo ?? data.asunto! ?? '',
-    cuerpo:           data.cuerpo_externo ?? data.cuerpo! ?? '',
-    destinatario:     data.destinatario ?? data.correo_cliente ?? 'Cliente',
-    estado:           'Programada',
-    created_at:       new Date().toISOString(),
-    lead_codigo:      data.lead_codigo,
-    lead_org:         data.lead_org,
-    actividad_nombre: data.actividad_nombre,
+    id:                  Date.now(),
+    tipo:                'SEGUIMIENTO',
+    estado:              'PROGRAMADA',
+    id_actividad:        data.id_actividad,
+    id_lead:             data.id_lead ?? 0,
+    id_responsable:      0,
+    asunto_interno:      data.asunto_interno,
+    fecha_envio_interno: toFechaEnvioIso(data.fecha_envio_interno, data.hora_envio_interno),
+    enviado_interno:     false,
+    correo_cliente:      data.correo_cliente,
+    asunto_externo:      data.asunto_externo,
+    fecha_envio_externo: toFechaEnvioIso(data.fecha_envio_externo, data.hora_envio_externo),
+    enviado_externo:     false,
+    created_at:          new Date().toISOString(),
+    lead_codigo:         data.lead_codigo,
+    lead_org:            data.lead_org,
+    actividad_nombre:    data.actividad_nombre,
+    destinatario:        data.destinatario ?? data.correo_cliente,
   }
 
   MOCK_PROGRAMADAS.push(nueva)
