@@ -198,14 +198,11 @@ describe('modules/contactos/ContactoForm', () => {
       ).toBeInTheDocument()
     })
 
-    it('shows estado_correo select with Activo/Inactivo options', () => {
-      expect(screen.getByLabelText('Estado del contacto')).toBeInTheDocument()
-      expect(screen.getByText('Activo')).toBeInTheDocument()
-      expect(screen.getByText('Inactivo')).toBeInTheDocument()
-    })
-
-    it('shows warning about inactive contacts', () => {
-      expect(screen.getByText('Un contacto inactivo no puede asociarse a nuevos leads.')).toBeInTheDocument()
+    it('does not render an estado_correo field (lo gestiona el backend)', () => {
+      expect(screen.queryByLabelText('Estado del contacto')).not.toBeInTheDocument()
+      expect(
+        screen.queryByText('Un contacto inactivo no puede asociarse a nuevos leads.')
+      ).not.toBeInTheDocument()
     })
   })
 
