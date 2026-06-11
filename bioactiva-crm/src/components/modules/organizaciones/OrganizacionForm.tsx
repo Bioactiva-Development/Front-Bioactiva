@@ -93,9 +93,6 @@ export function OrganizacionForm({
     }`
   const readOnlyClass = 'bg-gray-50 text-gray-500 cursor-default focus:border-gray-200'
   const autocompletadoBloqueado = !!sunatData && !esEdicion
-  const selectOverrideClass = autocompletadoBloqueado
-    ? `${readOnlyClass} pointer-events-none appearance-none`
-    : ''
 
   const codigoClienteHint = codigoBloqueado
     ? <p className="text-xs text-gray-400">Generado a partir del nombre comercial y el RUC de SUNAT.</p>
@@ -252,9 +249,7 @@ export function OrganizacionForm({
             <select
               id="of-tipo"
               {...register('tipo')}
-              aria-disabled={autocompletadoBloqueado}
-              tabIndex={autocompletadoBloqueado ? -1 : undefined}
-              className={`${inputClass(!!errors.tipo)} ${selectOverrideClass}`}
+              className={inputClass(!!errors.tipo)}
             >
               <option value="">Seleccionar...</option>
               {Object.values(TipoEmpresa).map((t) => (
@@ -273,9 +268,7 @@ export function OrganizacionForm({
             <select
               id="of-tamano"
               {...register('tamano')}
-              aria-disabled={autocompletadoBloqueado}
-              tabIndex={autocompletadoBloqueado ? -1 : undefined}
-              className={`${inputClass(!!errors.tamano)} ${selectOverrideClass}`}
+              className={inputClass(!!errors.tamano)}
             >
               <option value="">Seleccionar...</option>
               {Object.values(TamanoEmpresa).map((t) => (
@@ -295,9 +288,7 @@ export function OrganizacionForm({
           <select
             id="of-sector"
             {...register('sector')}
-            aria-disabled={autocompletadoBloqueado}
-            tabIndex={autocompletadoBloqueado ? -1 : undefined}
-            className={`${inputClass(!!errors.sector)} ${selectOverrideClass}`}
+            className={inputClass(!!errors.sector)}
           >
             <option value="">Seleccionar...</option>
             {Object.values(Sector).map((s) => (
