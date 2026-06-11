@@ -6,6 +6,7 @@ const mockGetPipeline = jest.fn()
 const mockGetAll = jest.fn()
 const mockGetByContacto = jest.fn()
 const mockGetById = jest.fn()
+const mockGetLeadsColumn = jest.fn()
 const mockCreate = jest.fn()
 const mockUpdate = jest.fn()
 const mockUpdateEstado = jest.fn()
@@ -17,6 +18,7 @@ jest.mock('@/services/modules/leads.service', () => ({
     getAll: mockGetAll,
     getByContacto: mockGetByContacto,
     getById: mockGetById,
+    getLeadsColumn: mockGetLeadsColumn,
     create: mockCreate,
     update: mockUpdate,
     updateEstado: mockUpdateEstado,
@@ -43,6 +45,7 @@ jest.mock('@/lib/constants/queryKeys', () => ({
     leads: {
       pipeline: (filters?: unknown) => ['leads', 'pipeline', filters],
       list: (filters?: unknown) => ['leads', 'list', filters],
+      column: (estado: string, filters?: unknown) => ['leads', 'column', estado, filters],
       byContacto: (id: number) => ['leads', 'contacto', id],
       detail: (id: number) => ['leads', id],
     },
@@ -57,6 +60,7 @@ jest.mock('@/lib/utils/error.utils', () => ({
 import { LeadState, EstadoCot } from '@/types/enums'
 import {
   usePipeline,
+  usePipelineColumns,
   useLeads,
   useLeadsByContacto,
   useLead,
@@ -122,6 +126,28 @@ describe('pipeline/useLeads', () => {
       renderHook(() => usePipeline(filtros), { wrapper })
 
       await waitFor(() => expect(mockGetPipeline).toHaveBeenCalledWith(filtros))
+    })
+  })
+
+  describe('usePipelineColumns', () => {
+    it('fetches one paginated page per estado and exposes total/cargarMas', async () => {
+      mockGetLeadsColumn.mockImplementation((estado: LeadState) =>
+        Promise.resolve({ data: [makeLead({ estado })], page: 1, limit: 10, total: 1, totalPages: 1 })
+      )
+
+      const { result } = renderHook(() => usePipelineColumns(), { wrapper })
+
+      await waitFor(() => expect(result.current.prospecto.isLoading).toBe(false))
+
+      expect(mockGetLeadsColumn).toHaveBeenCalledWith(LeadState.Prospecto, undefined, 1, 20)
+      expect(mockGetLeadsColumn).toHaveBeenCalledWith(LeadState.Ofertado, undefined, 1, 20)
+      expect(mockGetLeadsColumn).toHaveBeenCalledWith(LeadState.CierreVenta, undefined, 1, 20)
+      expect(mockGetLeadsColumn).toHaveBeenCalledWith(LeadState.CierreSinVenta, undefined, 1, 20)
+
+      expect(result.current.prospecto.total).toBe(1)
+      expect(result.current.prospecto.leads).toHaveLength(1)
+      expect(result.current.prospecto.hasMore).toBe(false)
+      expect(typeof result.current.prospecto.cargarMas).toBe('function')
     })
   })
 
@@ -215,7 +241,9 @@ describe('pipeline/useLeads', () => {
     it('updates lead state', async () => {
       const lead = makeLead({ id: 1, estado: LeadState.Prospecto })
       mockGetById.mockResolvedValueOnce(lead)
-      mockGetByLead.mockResolvedValueOnce([makeCotizacion({ estado: EstadoCot.Enviada })])
+      // Al pasar a OFERTADO el front consulta las cotizaciones del lead antes y
+      // después del cambio (para detectar el borrador que crea el backend).
+      mockGetByLead.mockResolvedValue([makeCotizacion({ estado: EstadoCot.Enviada })])
       mockUpdateEstado.mockResolvedValueOnce(makeLead({ id: 1, estado: LeadState.Ofertado }))
 
       const { result } = renderHook(() => useActualizarEstadoLead(), { wrapper })
@@ -225,6 +253,9 @@ describe('pipeline/useLeads', () => {
       })
 
       expect(mockGetById).toHaveBeenCalledWith(1)
+      // Ya no se envía la cotización automáticamente al ofertar (lo hace el backend).
+      expect(mockEnviar).not.toHaveBeenCalled()
+      expect(mockUpdateEstado).toHaveBeenCalledWith(1, LeadState.Ofertado)
     })
   })
 
@@ -245,7 +276,7 @@ describe('pipeline/useLeads', () => {
   describe('useMoverLeadPipeline', () => {
     it('moves lead in pipeline on successful mutation', async () => {
       const lead = makeLead({ id: 1, estado: LeadState.Prospecto })
-      mockGetByLead.mockResolvedValueOnce([makeCotizacion({ estado: EstadoCot.Enviada })])
+      mockGetByLead.mockResolvedValue([makeCotizacion({ estado: EstadoCot.Enviada })])
       mockUpdateEstado.mockResolvedValueOnce(makeLead({ id: 1, estado: LeadState.Ofertado }))
 
       const { result } = renderHook(() => useMoverLeadPipeline(), { wrapper })

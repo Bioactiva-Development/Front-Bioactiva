@@ -51,7 +51,6 @@ export function ContactoForm({
           telefono:       contacto.telefono ?? '',
           comentarios:    contacto.comentarios ?? '',
           idOrganizacion: contacto.idOrganizacion,
-          estado_correo:  contacto.estado_correo ?? 'VIGENTE',
         }
       : {
           idOrganizacion: orgIdInicial ?? '',
@@ -66,6 +65,13 @@ export function ContactoForm({
       : 'border-gray-200 focus:border-emerald-400 bg-white'
     }`
 
+  // El backend responde 404 si la organización destino no existe o está
+  // desactivada (PATCH /contacts/:id). Mostramos ese error en el campo de
+  // organización en vez del bloque general.
+  const ORG_DESTINO_ERROR = /organizaci[oó]n.*(no encontrada|desactivada)/i
+  const orgError    = error && ORG_DESTINO_ERROR.test(error) ? error : null
+  const errorGeneral = orgError ? null : error
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-4">
@@ -77,9 +83,7 @@ export function ContactoForm({
           <select
             id="cf-org"
             {...register('idOrganizacion')}
-            disabled={esEdicion}
-            className={`${inputClass(!!errors.idOrganizacion)}
-              ${esEdicion ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+            className={`${inputClass(!!errors.idOrganizacion || !!orgError)} cursor-pointer`}
           >
             <option value="">Seleccionar organización...</option>
             {organizaciones.map((org) => (
@@ -88,12 +92,15 @@ export function ContactoForm({
               </option>
             ))}
           </select>
-          {errors.idOrganizacion && (
-            <p className="text-red-500 text-xs">{errors.idOrganizacion.message}</p>
+          {(errors.idOrganizacion || orgError) && (
+            <p className="text-red-500 text-xs">
+              {errors.idOrganizacion?.message ?? orgError}
+            </p>
           )}
-          {esEdicion && (
+          {esEdicion && !errors.idOrganizacion && !orgError && (
             <p className="text-xs text-gray-400">
-              La organización no puede modificarse una vez creado el contacto.
+              Cambiar la organización moverá el contacto a la organización seleccionada.
+              Solo se listan organizaciones vigentes.
             </p>
           )}
         </div>
@@ -229,32 +236,10 @@ export function ContactoForm({
           )}
         </div>
 
-        {esEdicion && (
-          <div className="space-y-1.5 pt-2 border-t border-gray-100">
-            <label htmlFor="cf-estado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Estado del contacto
-            </label>
-            <select
-              id="cf-estado"
-              {...register('estado_correo')}
-              className={`${inputClass(!!errors.estado_correo)} cursor-pointer`}
-            >
-              <option value="VIGENTE">Activo</option>
-              <option value="VENCIDO">Inactivo</option>
-            </select>
-            {errors.estado_correo && (
-              <p className="text-red-500 text-xs">{errors.estado_correo.message}</p>
-            )}
-            <p className="text-xs text-amber-600">
-              Un contacto inactivo no puede asociarse a nuevos leads.
-            </p>
-          </div>
-        )}
-
-        {error && (
+        {errorGeneral && (
           <div className="bg-red-50 border border-red-200 text-red-700
             text-sm rounded-xl px-4 py-3">
-            {error}
+            {errorGeneral}
           </div>
         )}
 

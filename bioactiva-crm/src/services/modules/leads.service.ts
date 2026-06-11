@@ -15,6 +15,7 @@ import {
   LeadFiltros,
   LeadsResponse,
   LeadFormData,
+  PaginatedLeads,
   PipelineData,
 } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
@@ -30,6 +31,8 @@ import {
 import { isLeadStaleWithoutProgress } from '@/lib/utils/activity-flow.utils'
 
 const PAGE_SIZE_PIPELINE = 100
+// Tamaño de página por columna del pipeline ("cargar más"). Igual al default del backend.
+const COLUMN_PAGE_SIZE = 10
 
 type RawLeadsResponse = LeadDtoOut[] | LeadsDtoResponse
 type LeadLocalFields = Pick<Lead, 'fecha_cierre'>
@@ -177,6 +180,44 @@ export const leadsService = {
     ]
 
     return buildPipeline(applyClientFilters(leads, filtros))
+  },
+
+  // Trae una página de leads de UNA columna (un estado) para el patrón
+  // "cargar más" por columna. Filtrado y paginación 100% server-side.
+  getLeadsColumn: async (
+    estado: LeadState,
+    filtros: LeadFiltros | undefined,
+    page: number,
+    limit = COLUMN_PAGE_SIZE
+  ): Promise<PaginatedLeads> => {
+    const conEstado: LeadFiltros = { ...filtros, estado, page, limit }
+
+    if (USE_MOCK) {
+      const todos = await mockGetLeads({ ...filtros, estado })
+      const filtrados = todos.data.filter((lead) => lead.estado === estado)
+      const total = filtrados.length
+      const start = (page - 1) * limit
+      return {
+        data: filtrados.slice(start, start + limit),
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      }
+    }
+
+    const response = await apiClient.get<RawLeadsResponse>(ENDPOINTS.leads.list, {
+      params: toLeadQueryParams(conEstado),
+    })
+    const normalized = normalizeLeadsResponse(response.data, conEstado)
+    const effectiveLimit = normalized.limit || limit
+    return {
+      data: normalized.data,
+      page: normalized.page,
+      limit: effectiveLimit,
+      total: normalized.total,
+      totalPages: Math.max(1, Math.ceil(normalized.total / effectiveLimit)),
+    }
   },
 
   getByContacto: async (idContacto: number): Promise<Lead[]> => {

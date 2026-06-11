@@ -137,6 +137,7 @@ export function LeadDetalle({
   const [mostrarForm, setMostrarForm]   = useState(initialAction === 'actividad')
   const [errorActividad, setErrorActividad] = useState<string | null>(null)
   const [estadoError, setEstadoError]   = useState<string | null>(null)
+  const [borradorCotId, setBorradorCotId] = useState<number | null>(null)
   const [actividadBloqueada, setActividadBloqueada] = useState<string | null>(null)
   const [notificacionMode, setNotificacionMode] = useState<
     'recordatorio' | 'seguimiento' | null
@@ -195,9 +196,18 @@ export function LeadDetalle({
 
     try {
       setEstadoError(null)
-      await actualizarEstado({ id: lead.id, estado })
+      setBorradorCotId(null)
+      const { borrador } = await actualizarEstado({ id: lead.id, estado })
+      // OFERTADO: el backend generó la cotización borrador automáticamente.
+      if (borrador) setBorradorCotId(borrador.id)
     } catch (err: unknown) {
-      setEstadoError(getErrorMessage(err, 'No se pudo cambiar el estado del lead.'))
+      // 409: el lead tiene una actividad pendiente que debe resolverse antes.
+      const status = (err as { status?: number })?.status
+      setEstadoError(
+        status === 409
+          ? 'El lead tiene una actividad pendiente. Complétala o cancélala (en la pestaña Actividades) antes de cambiar el estado.'
+          : getErrorMessage(err, 'No se pudo cambiar el estado del lead.')
+      )
     }
   }
 
@@ -386,6 +396,24 @@ export function LeadDetalle({
                     underline-offset-2"
                 >
                   Crear cotización para este lead
+                </button>
+              </div>
+            </div>
+          )}
+          {borradorCotId && (
+            <div className="mt-3 flex items-start gap-2 rounded-xl
+              border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm
+              text-emerald-800">
+              <FileText size={16} className="mt-0.5 shrink-0" />
+              <div>
+                <p>Se generó una cotización borrador. Complétala.</p>
+                <button
+                  type="button"
+                  onClick={() => router.push(ROUTES.cotizacion(borradorCotId))}
+                  className="mt-1 text-xs font-bold text-emerald-700 underline
+                    underline-offset-2"
+                >
+                  Completar cotización
                 </button>
               </div>
             </div>

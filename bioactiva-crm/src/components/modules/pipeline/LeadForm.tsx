@@ -49,8 +49,7 @@ const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
 
 function getLeadFormDefaults(
   lead?: Lead,
-  estadoInicial?: LeadState,
-  usuario?: { id?: number; correo?: string } | null
+  estadoInicial?: LeadState
 ): Partial<LeadFormValues> {
   if (lead) {
     return {
@@ -69,9 +68,9 @@ function getLeadFormDefaults(
   }
 
   return {
-    estado:          estadoInicial ?? LeadState.Prospecto,
-    id_encargado:    usuario?.id ?? 1,
-    encargado_correo: usuario?.correo ?? '',
+    estado:           estadoInicial ?? LeadState.Prospecto,
+    id_encargado:     undefined,
+    encargado_correo: '',
   }
 }
 
@@ -99,7 +98,7 @@ export function LeadForm({
     formState: { errors },
   } = useForm<LeadFormValues>({
     resolver: zodResolver(leadSchema),
-    defaultValues: getLeadFormDefaults(lead, estadoInicial, usuario),
+    defaultValues: getLeadFormDefaults(lead, estadoInicial),
   })
 
   const orgSeleccionada   = useWatch({ control, name: 'id_org' })
@@ -192,8 +191,8 @@ export function LeadForm({
   }, [usuarioActualOption])
 
   useEffect(() => {
-    reset(getLeadFormDefaults(lead, estadoInicial, usuario))
-  }, [estadoInicial, lead, reset, usuario])
+    reset(getLeadFormDefaults(lead, estadoInicial))
+  }, [estadoInicial, lead, reset])
 
   useEffect(() => {
     if (!esEdicion || orgSeleccionada) return
@@ -230,34 +229,11 @@ export function LeadForm({
     )
     if (responsable) {
       setValue('encargado_correo', responsable.correo)
+      return
     }
+
+    setValue('encargado_correo', '')
   }, [encargadoSelected, responsablesDisponibles, setValue])
-
-  useEffect(() => {
-    if (esEdicion || responsablesDisponibles.length === 0) return
-
-    const selected = Number(encargadoSelected)
-    const selectedExists = responsablesDisponibles.some(
-      (responsable) => responsable.id === selected
-    )
-
-    if (selected && selectedExists) return
-
-    const fallback =
-      usuarioActualOption &&
-      responsablesDisponibles.some((responsable) => responsable.id === usuarioActualOption.id)
-        ? usuarioActualOption
-        : responsablesDisponibles[0]
-
-    setValue('id_encargado', fallback.id)
-    setValue('encargado_correo', fallback.correo)
-  }, [
-    encargadoSelected,
-    esEdicion,
-    responsablesDisponibles,
-    setValue,
-    usuarioActualOption,
-  ])
 
   useEffect(() => {
     if (!esEdicion) {
@@ -472,10 +448,12 @@ export function LeadForm({
             </label>
             <select
               id="ldf-encargado"
-              {...register('id_encargado', { valueAsNumber: true })}
+              {...register('id_encargado', {
+                setValueAs: (value) => value === '' ? 0 : Number(value),
+              })}
               className={`${inputClass(!!errors.id_encargado)} cursor-pointer`}
             >
-              <option value="">Seleccionar...</option>
+              <option value="">Seleccionar Encargado</option>
               {responsablesDisponibles.map((r) => (
                 <option key={r.id} value={r.id}>{r.nombre}</option>
               ))}
@@ -492,9 +470,11 @@ export function LeadForm({
             <input
               id="ldf-encargado-correo"
               type="email"
-              placeholder="correo@bioactiva.pe"
+              placeholder="Se completa al seleccionar encargado"
+              readOnly
+              aria-readonly="true"
               {...register('encargado_correo')}
-              className={inputClass(!!errors.encargado_correo)}
+              className={`${inputClass(!!errors.encargado_correo)} bg-gray-50`}
             />
           </div>
         </div>
