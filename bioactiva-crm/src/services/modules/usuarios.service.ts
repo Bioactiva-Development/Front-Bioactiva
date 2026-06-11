@@ -146,6 +146,14 @@ export const usuariosService = {
         return response.data
     },
 
+    // Mantis #333 — cambio de rol por ADMINISTRADOR vía PATCH /users/:id/role.
+    // Body { rol: 'ADMINISTRADOR' | 'TRABAJADOR' }. El backend devuelve 409 si un
+    // admin intenta cambiar su propio rol, 403 si no es admin y 404 si no existe.
+    cambiarRol: async (id: number, rol: RolUsuario): Promise<void> => {
+        if (USE_MOCK) { mockEditarUsuario({ id, rol, nombre_completo: '', correo: '' }); return }
+        await apiClient.patch(ENDPOINTS.usuarios.role(id), { rol: ROL_TO_BACKEND[rol] })
+    },
+
     cambiarPassword: async (data: CambiarPasswordRequest): Promise<{ message: string }> => {
         if (USE_MOCK) return mockCambiarPassword(data)
         const response = await apiClient.patch<{ message: string }>(

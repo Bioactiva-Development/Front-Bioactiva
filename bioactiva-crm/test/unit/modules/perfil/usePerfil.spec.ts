@@ -1,26 +1,34 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 
-const mockSetSession = jest.fn()
+const mockSetUsuario = jest.fn()
 const mockGetEstado = jest.fn()
 const mockGetMicrosoftAuthUrl = jest.fn()
 const mockDisconnectMicrosoft = jest.fn()
+const mockGetProfile = jest.fn()
+const mockUpdateProfile = jest.fn()
+const mockChangePassword = jest.fn()
+
+const MOCK_USUARIO = {
+  id: 1, nombres: 'Admin', apellidos: '', correo: 'admin@bioactiva.pe',
+  rol: 'Administrador', estado: 'Activo', created_at: '', updated_at: '',
+}
 
 jest.mock('@/store/auth.store', () => ({
   useAuthStore: Object.assign(
     (selector?: (s: Record<string, unknown>) => unknown) =>
       typeof selector === 'function'
-        ? selector({
-            usuario: { id: 1, nombres: 'Admin', apellidos: '', correo: 'admin@bioactiva.pe', rol: 'Administrador', estado: 'Activo' },
-            accessToken: 'mock-token',
-            setSession: mockSetSession,
-          })
-        : {
-            usuario: { id: 1, nombres: 'Admin', apellidos: '', correo: 'admin@bioactiva.pe', rol: 'Administrador', estado: 'Activo' },
-            accessToken: 'mock-token',
-            setSession: mockSetSession,
-          },
+        ? selector({ usuario: MOCK_USUARIO, setUsuario: mockSetUsuario })
+        : { usuario: MOCK_USUARIO, setUsuario: mockSetUsuario },
     { getState: () => ({ usuario: { id: 1 } }), setState: jest.fn() }
   ),
+}))
+
+jest.mock('@/services/modules/perfil.service', () => ({
+  perfilService: {
+    getProfile: () => mockGetProfile(),
+    updateProfile: (data: unknown) => mockUpdateProfile(data),
+    changePassword: (data: unknown) => mockChangePassword(data),
+  },
 }))
 
 jest.mock('@/services/modules/integraciones.service', () => ({
@@ -42,6 +50,11 @@ describe('perfil/usePerfil', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockGetEstado.mockResolvedValue(defaultIntegraciones)
+    mockGetProfile.mockResolvedValue(MOCK_USUARIO)
+    mockUpdateProfile.mockImplementation(async ({ nombres, apellidos }: { nombres: string; apellidos: string }) => ({
+      ...MOCK_USUARIO, nombres, apellidos,
+    }))
+    mockChangePassword.mockResolvedValue(undefined)
   })
 
   it('loads integraciones on mount', async () => {
@@ -66,55 +79,78 @@ describe('perfil/usePerfil', () => {
     })
   })
 
-  describe('actualizarNombre', () => {
-    it('updates name and sets success message', async () => {
-      jest.useFakeTimers()
+  describe('actualizarPerfil', () => {
+    it('sends nombres and apellidos separately via PATCH /profile', async () => {
+      const { result } = renderHook(() => usePerfil())
+
+      let success: boolean
+      await act(async () => {
+        success = await result.current.actualizarPerfil('Admin', 'User')
+      })
+
+      expect(success!).toBe(true)
+      expect(mockUpdateProfile).toHaveBeenCalledWith({ nombres: 'Admin', apellidos: 'User' })
+      expect(mockSetUsuario).toHaveBeenCalledWith(
+        expect.objectContaining({ nombres: 'Admin', apellidos: 'User' }),
+      )
+      expect(result.current.successPerfil).toBe('Perfil actualizado correctamente.')
+    })
+
+    it('omits empty apellidos from the payload', async () => {
+      const { result } = renderHook(() => usePerfil())
+
+      await act(async () => {
+        await result.current.actualizarPerfil('Admin', '')
+      })
+
+      expect(mockUpdateProfile).toHaveBeenCalledWith({ nombres: 'Admin' })
+    })
+
+    it('surfaces the backend message on failure', async () => {
+      mockUpdateProfile.mockRejectedValueOnce(new Error('Ningún campo enviado'))
 
       const { result } = renderHook(() => usePerfil())
 
       let success: boolean
       await act(async () => {
-        success = await result.current.actualizarNombre('Admin User')
+        success = await result.current.actualizarPerfil('Admin', 'User')
       })
 
-      expect(success!).toBe(true)
-      expect(mockSetSession).toHaveBeenCalledWith(
-        'mock-token',
-        expect.objectContaining({ nombres: 'Admin', apellidos: 'User' }),
-      )
-      expect(result.current.successPerfil).toBe('Perfil actualizado correctamente.')
-
-      act(() => { jest.advanceTimersByTime(3000) })
-      expect(result.current.successPerfil).toBeNull()
-
-      jest.useRealTimers()
+      expect(success!).toBe(false)
+      expect(result.current.errorPerfil).toBe('Ningún campo enviado')
     })
   })
 
   describe('cambiarPassword', () => {
-    it('sets success message after delay', async () => {
-      jest.useFakeTimers()
-
+    it('sends current and new password to PATCH /profile/password', async () => {
       const { result } = renderHook(() => usePerfil())
 
-      let success: boolean | undefined
-      let promise: Promise<boolean | undefined>
-
-      act(() => {
-        promise = result.current.cambiarPassword('NewPass1!')
-      })
-
-      act(() => { jest.advanceTimersByTime(600) })
-
+      let success: boolean
       await act(async () => {
-        success = await promise!
+        success = await result.current.cambiarPassword('OldPass1!', 'NewPass12!')
       })
 
       expect(success!).toBe(true)
+      expect(mockChangePassword).toHaveBeenCalledWith({
+        currentPassword: 'OldPass1!',
+        newPassword: 'NewPass12!',
+      })
       expect(result.current.successPassword).toBe('Contraseña actualizada correctamente.')
       expect(result.current.isLoadingPassword).toBe(false)
+    })
 
-      jest.useRealTimers()
+    it('shows the backend error when the current password is wrong', async () => {
+      mockChangePassword.mockRejectedValueOnce(new Error('La contraseña actual es incorrecta'))
+
+      const { result } = renderHook(() => usePerfil())
+
+      let success: boolean
+      await act(async () => {
+        success = await result.current.cambiarPassword('bad', 'NewPass12!')
+      })
+
+      expect(success!).toBe(false)
+      expect(result.current.errorPassword).toBe('La contraseña actual es incorrecta')
     })
   })
 
@@ -128,7 +164,7 @@ describe('perfil/usePerfil', () => {
     })
 
     it('redirects to Microsoft auth URL', async () => {
-      mockGetMicrosoftAuthUrl.mockResolvedValueOnce({ authUrl: 'https://login.microsoftonline.com/auth' })
+      mockGetMicrosoftAuthUrl.mockResolvedValueOnce({ url: 'https://login.microsoftonline.com/auth' })
 
       const { result } = renderHook(() => usePerfil())
 

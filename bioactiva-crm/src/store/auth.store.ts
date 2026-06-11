@@ -10,6 +10,7 @@ interface AuthStore extends AuthState {
 
     setSession: (accessToken: string, usuario: Usuario, expiresIn?: number) => void
     updateToken: (accessToken: string, expiresIn?: number) => void
+    setUsuario: (usuario: Usuario) => void
     clearSession: () => void
     setLoading: (isLoading: boolean) => void
 
@@ -51,6 +52,15 @@ export const useAuthStore = create<AuthStore>()(
                     accessToken,
                     tokenExpiresAt: expiresIn ? Date.now() + expiresIn * 1000 : null,
                 })
+            },
+
+            // Actualiza solo los datos del usuario (Mi perfil, Mantis #333) sin
+            // tocar el access token ni su expiración.
+            setUsuario: (usuario) => {
+                if (globalThis.window !== undefined) {
+                    localStorage.setItem(USER_KEY, JSON.stringify(usuario))
+                }
+                set({ usuario })
             },
 
             clearSession: () => {
