@@ -282,19 +282,42 @@ export function LeadFiltros({
           )}
 
           <div className="flex items-center gap-3 flex-wrap">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filtrosBasicos.con_actividades_por_vencer ?? false}
-                onChange={(e) => updateFiltros({
-                  ...filtrosBasicos,
-                  con_actividades_por_vencer: e.target.checked || undefined,
-                })}
-                className="w-4 h-4 rounded border-gray-300 text-emerald-600
-                  focus:ring-emerald-500"
-              />
-              <span className="text-sm text-gray-600">Solo por vencer</span>
-            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">
+                Semáforo
+              </span>
+              <div className="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => updateFiltros({
+                    ...filtrosBasicos,
+                    con_actividades_por_vencer: undefined,
+                  })}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                    ${!filtrosBasicos.con_actividades_por_vencer
+                      ? 'bg-white text-gray-700 shadow-sm'
+                      : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                  Todas
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateFiltros({
+                    ...filtrosBasicos,
+                    con_actividades_por_vencer: true,
+                  })}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm
+                    font-semibold transition-colors
+                    ${filtrosBasicos.con_actividades_por_vencer
+                      ? 'bg-white text-amber-700 shadow-sm'
+                      : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span className="w-2 h-2 rounded-full bg-red-500" />
+                  Por vencer o vencidas
+                </button>
+              </div>
+            </div>
 
             {hayFiltrosActivos && (
               <button
