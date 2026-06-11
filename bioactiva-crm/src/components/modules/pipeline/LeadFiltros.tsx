@@ -6,6 +6,7 @@ import { LeadFiltros as FiltrosType } from '@/types/lead.types'
 import { EstadoUsuario, LeadState } from '@/types/enums'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { UsuarioListItem } from '@/types/usuario.types'
+import { useOrganizaciones } from '@/hooks/organizaciones/useOrganizaciones'
 
 interface LeadFiltrosProps {
   filtros:   FiltrosType
@@ -19,23 +20,19 @@ interface ResponsableOption {
   nombre: string
 }
 
-const CANALES = [
-  'Web / Redes sociales',
-  'Referido',
-  'Prospección directa',
-]
-
 const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
   id: usuario.id,
   nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
 })
 
+// Filtros server-side soportados por GET /leads (sin canal/solo_alerta, que eran
+// client-side). estado, encargado, organización, búsqueda, rango de fechas y el
+// toggle de "por vencer/vencidas" se mandan al backend.
 const sanitizeFiltros = (filtros: FiltrosType): FiltrosType => ({
   search: filtros.search,
   estado: filtros.estado,
   id_encargado: filtros.id_encargado,
-  canal_captacion: filtros.canal_captacion,
-  solo_alerta: filtros.solo_alerta,
+  id_org: filtros.id_org,
   con_actividades_por_vencer: filtros.con_actividades_por_vencer,
   fecha_desde: filtros.fecha_desde,
   fecha_hasta: filtros.fecha_hasta,
@@ -49,6 +46,9 @@ export function LeadFiltros({
 }: LeadFiltrosProps) {
   const [abierto, setAbierto] = useState(true)
   const [responsables, setResponsables] = useState<ResponsableOption[]>([])
+
+  const { data: orgsData } = useOrganizaciones({ limit: 100 })
+  const organizaciones = orgsData?.data ?? []
 
   const filtrosBasicos = useMemo(() => sanitizeFiltros(filtros), [filtros])
 
@@ -78,8 +78,7 @@ export function LeadFiltros({
     filtrosBasicos.search ||
     filtrosBasicos.estado ||
     filtrosBasicos.id_encargado ||
-    filtrosBasicos.canal_captacion ||
-    filtrosBasicos.solo_alerta ||
+    filtrosBasicos.id_org ||
     filtrosBasicos.con_actividades_por_vencer ||
     filtrosBasicos.fecha_desde ||
     filtrosBasicos.fecha_hasta
@@ -215,20 +214,21 @@ export function LeadFiltros({
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="lflt-canal" className="text-xs text-gray-400 font-medium">Canal</label>
+              <label htmlFor="lflt-org" className="text-xs text-gray-400 font-medium">Organización</label>
               <select
-                value={filtrosBasicos.canal_captacion ?? ''}
+                id="lflt-org"
+                value={filtrosBasicos.id_org ?? ''}
                 onChange={(e) => updateFiltros({
                   ...filtrosBasicos,
-                  canal_captacion: e.target.value || undefined,
+                  id_org: e.target.value || undefined,
                 })}
                 className="w-full px-3 py-2 rounded-xl border border-gray-200
                   bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
                   cursor-pointer"
               >
-                <option value="">Todos los canales</option>
-                {CANALES.map((canal) => (
-                  <option key={canal} value={canal}>{canal}</option>
+                <option value="">Todas las organizaciones</option>
+                {organizaciones.map((org) => (
+                  <option key={org.id} value={org.id}>{org.nombre}</option>
                 ))}
               </select>
             </div>
@@ -285,20 +285,6 @@ export function LeadFiltros({
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={filtrosBasicos.solo_alerta ?? false}
-                onChange={(e) => updateFiltros({
-                  ...filtrosBasicos,
-                  solo_alerta: e.target.checked || undefined,
-                })}
-                className="w-4 h-4 rounded border-gray-300 text-emerald-600
-                  focus:ring-emerald-500"
-              />
-              <span className="text-sm text-gray-600">Solo con alerta activa</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
                 checked={filtrosBasicos.con_actividades_por_vencer ?? false}
                 onChange={(e) => updateFiltros({
                   ...filtrosBasicos,
@@ -307,7 +293,7 @@ export function LeadFiltros({
                 className="w-4 h-4 rounded border-gray-300 text-emerald-600
                   focus:ring-emerald-500"
               />
-              <span className="text-sm text-gray-600">Con actividades por vencer o vencidas</span>
+              <span className="text-sm text-gray-600">Solo por vencer</span>
             </label>
 
             {hayFiltrosActivos && (

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useMemo, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { AlertCircle, FileText, Plus, X } from 'lucide-react'
-import { useMoverLeadPipeline, usePipeline } from '@/hooks/pipeline/useLeads'
+import { useMoverLeadPipeline, usePipelineColumns } from '@/hooks/pipeline/useLeads'
 import { KanbanBoard } from '@/components/modules/pipeline/KanbanBoard'
 import { LeadFiltros } from '@/components/modules/pipeline/LeadFiltros'
 import { LeadDrawer } from '@/components/modules/pipeline/LeadDrawer'
@@ -11,20 +11,87 @@ import { LeadFiltros as FiltrosType, Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 
-const FILTROS_INICIALES: FiltrosType = {}
+// Los filtros viven en la URL (camelCase del contrato) para que sean compartibles.
+function filtrosFromParams(sp: URLSearchParams): FiltrosType {
+  const filtros: FiltrosType = {}
 
-export default function PipelinePage() {
-  const router  = useRouter()
-  const [filtros, setFiltros]                   = useState<FiltrosType>(FILTROS_INICIALES)
+  const estado = sp.get('estado')
+  if (estado && (Object.values(LeadState) as string[]).includes(estado)) {
+    filtros.estado = estado as LeadState
+  }
+
+  const idEncargado = sp.get('idEncargado')
+  if (idEncargado) filtros.id_encargado = Number(idEncargado)
+
+  const idOrg = sp.get('idOrg')
+  if (idOrg) filtros.id_org = idOrg
+
+  const search = sp.get('search')
+  if (search) filtros.search = search
+
+  const fechaDesde = sp.get('fechaDesde')
+  if (fechaDesde) filtros.fecha_desde = fechaDesde
+
+  const fechaHasta = sp.get('fechaHasta')
+  if (fechaHasta) filtros.fecha_hasta = fechaHasta
+
+  if (sp.get('conActividadesPorVencer') === 'true') {
+    filtros.con_actividades_por_vencer = true
+  }
+
+  return filtros
+}
+
+function paramsFromFiltros(filtros: FiltrosType): string {
+  const sp = new URLSearchParams()
+  if (filtros.estado) sp.set('estado', filtros.estado)
+  if (filtros.id_encargado) sp.set('idEncargado', String(filtros.id_encargado))
+  if (filtros.id_org) sp.set('idOrg', filtros.id_org)
+  if (filtros.search) sp.set('search', filtros.search)
+  if (filtros.fecha_desde) sp.set('fechaDesde', filtros.fecha_desde)
+  if (filtros.fecha_hasta) sp.set('fechaHasta', filtros.fecha_hasta)
+  if (filtros.con_actividades_por_vencer) sp.set('conActividadesPorVencer', 'true')
+  return sp.toString()
+}
+
+function PipelineContent() {
+  const router       = useRouter()
+  const searchParams = useSearchParams()
+  const spString     = searchParams.toString()
+  const filtros      = useMemo(() => filtrosFromParams(new URLSearchParams(spString)), [spString])
+
   const [leadSeleccionado, setLeadSeleccionado] = useState<Lead | null>(null)
-  const [dragError, setDragError]       = useState<string | null>(null)
-  const [borradorId, setBorradorId]     = useState<number | null>(null)
+  const [dragError, setDragError]   = useState<string | null>(null)
+  const [borradorId, setBorradorId] = useState<number | null>(null)
 
-  const { data: pipeline, isLoading, isError } = usePipeline(filtros)
+  const columnas = usePipelineColumns(filtros)
   const { mutateAsync: moverLead, isPending: actualizandoEstado } =
     useMoverLeadPipeline()
 
-  const handleLimpiarFiltros = () => setFiltros(FILTROS_INICIALES)
+  const total =
+    columnas.prospecto.total +
+    columnas.ofertado.total +
+    columnas.cierreVenta.total +
+    columnas.cierreSinVenta.total
+
+  const isLoading =
+    columnas.prospecto.isLoading ||
+    columnas.ofertado.isLoading ||
+    columnas.cierreVenta.isLoading ||
+    columnas.cierreSinVenta.isLoading
+
+  const isError =
+    columnas.prospecto.isError &&
+    columnas.ofertado.isError &&
+    columnas.cierreVenta.isError &&
+    columnas.cierreSinVenta.isError
+
+  const handleFiltrosChange = (next: FiltrosType) => {
+    const query = paramsFromFiltros(next)
+    router.replace(query ? `/pipeline?${query}` : '/pipeline', { scroll: false })
+  }
+
+  const handleLimpiarFiltros = () => router.replace('/pipeline', { scroll: false })
 
   const handleQuickAction = (
     lead: Lead,
@@ -50,20 +117,11 @@ export default function PipelinePage() {
       setDragError(null)
       setBorradorId(null)
       const { borrador } = await moverLead({ lead, estado })
-      // Al pasar a OFERTADO el backend generó una cotización borrador: avisamos
-      // y enlazamos a su edición.
       if (borrador) setBorradorId(borrador.id)
     } catch (err: unknown) {
       setDragError(getErrorMessage(err, 'No se pudo actualizar el estado del lead.'))
     }
   }
-
-  const total = pipeline
-    ? pipeline.prospecto.length +
-      pipeline.ofertado.length +
-      pipeline.cierreVenta.length +
-      pipeline.cierreSinVenta.length
-    : 0
 
   return (
     <div className="space-y-6">
@@ -91,7 +149,7 @@ export default function PipelinePage() {
       {/* Filtros */}
       <LeadFiltros
         filtros={filtros}
-        onChange={setFiltros}
+        onChange={handleFiltrosChange}
         onLimpiar={handleLimpiarFiltros}
         total={total}
       />
@@ -129,16 +187,8 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* Loading */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-16">
-          <div className="w-8 h-8 border-2 border-emerald-600
-            border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-
-      {/* Error */}
-      {isError && !isLoading && (
+      {/* Error global (las 4 columnas fallaron) */}
+      {isError && (
         <div className="flex items-center justify-center py-16">
           <p className="text-sm text-red-500">
             Error al cargar el pipeline. Intente nuevamente.
@@ -146,20 +196,20 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* Kanban — se muestra incluso si hay filtros activos sin resultados */}
-      {!isLoading && !isError && pipeline && (
+      {/* Tablero — cada columna gestiona su propia carga/paginación */}
+      {!isError && (
         <KanbanBoard
-          pipeline={pipeline}
+          columnas={columnas}
           onClickLead={setLeadSeleccionado}
           onQuickAction={handleQuickAction}
           onMoveLead={handleMoveLead}
         />
       )}
 
-      {actualizandoEstado && (
+      {(actualizandoEstado || isLoading) && (
         <div className="fixed bottom-4 right-4 rounded-xl bg-emerald-700
           px-4 py-3 text-sm font-semibold text-white shadow-lg">
-          Actualizando estado...
+          {actualizandoEstado ? 'Actualizando estado...' : 'Cargando pipeline...'}
         </div>
       )}
 
@@ -171,5 +221,13 @@ export default function PipelinePage() {
         />
       )}
     </div>
+  )
+}
+
+export default function PipelinePage() {
+  return (
+    <Suspense fallback={null}>
+      <PipelineContent />
+    </Suspense>
   )
 }

@@ -36,6 +36,7 @@ export interface LeadFiltros {
   search?: string
   estado?: LeadState
   id_encargado?: number
+  id_org?: string
   canal_captacion?: string
   solo_alerta?: boolean
   // Solo leads con semáforo AMARILLO o ROJO (actividades por vencer o vencidas).
@@ -45,6 +46,15 @@ export interface LeadFiltros {
   fecha_hasta?: string
   page?: number
   limit?: number
+}
+
+// Página de leads de una columna del pipeline (GET /leads paginado por estado).
+export interface PaginatedLeads<T = Lead> {
+  data: T[]
+  page: number
+  limit: number
+  total: number
+  totalPages: number
 }
 
 export interface LeadsResponse {

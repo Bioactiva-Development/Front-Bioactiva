@@ -75,15 +75,18 @@ describe('leads.mapper', () => {
     expect(fromLeadDto(base).activity_alert).toBeUndefined()
   })
 
-  it('maps the new lead list filters (semáforo + rango de fechas)', () => {
+  it('maps the new lead list filters (organización, semáforo y rango de fechas)', () => {
     expect(toLeadQueryParams({
+      id_org: 'org-uuid-1',
       con_actividades_por_vencer: true,
       fecha_desde: '2022-01-01',
       fecha_hasta: '2026-06-11',
       page: 1,
       limit: 10,
     })).toEqual({
-      conActividadesPorVencer: true,
+      idOrg: 'org-uuid-1',
+      // El backend lo parsea como string.
+      conActividadesPorVencer: 'true',
       fechaDesde: '2022-01-01',
       fechaHasta: '2026-06-11',
       page: 1,

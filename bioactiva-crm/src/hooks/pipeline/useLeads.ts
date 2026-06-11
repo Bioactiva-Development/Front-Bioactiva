@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from '@tanstack/react-query'
 import { leadsService } from '@/services/modules/leads.service'
 import { cotizacionesService } from '@/services/modules/cotizaciones.service'
 import { QUERY_KEYS } from '@/lib/constants/queryKeys'
@@ -46,6 +51,51 @@ export function useLeads(filtros?: LeadFiltros) {
     queryFn:  () => leadsService.getAll(filtros),
     staleTime: 1000 * 60 * 2,
   })
+}
+
+const LEAD_COLUMN_LIMIT = 10
+
+export interface PipelineColumn {
+  leads: Lead[]
+  total: number
+  isLoading: boolean
+  isError: boolean
+  hasMore: boolean
+  loadingMore: boolean
+  cargarMas: () => void
+}
+
+// Una columna del pipeline (un estado) con paginación incremental ("cargar más").
+function useLeadColumn(estado: LeadState, filtros?: LeadFiltros): PipelineColumn {
+  const query = useInfiniteQuery({
+    queryKey: QUERY_KEYS.leads.column(estado, filtros),
+    queryFn: ({ pageParam }) =>
+      leadsService.getLeadsColumn(estado, filtros, pageParam, LEAD_COLUMN_LIMIT),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    staleTime: 1000 * 60 * 2,
+  })
+
+  return {
+    leads: query.data?.pages.flatMap((page) => page.data) ?? [],
+    total: query.data?.pages[0]?.total ?? 0,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    hasMore: query.hasNextPage,
+    loadingMore: query.isFetchingNextPage,
+    cargarMas: () => { void query.fetchNextPage() },
+  }
+}
+
+// Pipeline como 4 columnas independientes (una query paginada por estado).
+export function usePipelineColumns(filtros?: LeadFiltros) {
+  return {
+    prospecto:      useLeadColumn(LeadState.Prospecto, filtros),
+    ofertado:       useLeadColumn(LeadState.Ofertado, filtros),
+    cierreVenta:    useLeadColumn(LeadState.CierreVenta, filtros),
+    cierreSinVenta: useLeadColumn(LeadState.CierreSinVenta, filtros),
+  }
 }
 
 export function useLeadsByContacto(idContacto: number) {

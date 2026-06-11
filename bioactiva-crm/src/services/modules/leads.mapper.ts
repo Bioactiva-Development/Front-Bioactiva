@@ -114,8 +114,10 @@ export const toLeadQueryParams = (filtros?: LeadFiltros) => {
 
   if (filtros?.estado) params.estado = toBackendLeadState(filtros.estado)
   if (filtros?.id_encargado) params.idEncargado = filtros.id_encargado
+  if (filtros?.id_org) params.idOrg = filtros.id_org
   if (filtros?.search) params.search = filtros.search
-  if (filtros?.con_actividades_por_vencer) params.conActividadesPorVencer = true
+  // El backend parsea el flag como string; se serializa 'true' y se omite si no.
+  if (filtros?.con_actividades_por_vencer) params.conActividadesPorVencer = 'true'
   if (filtros?.fecha_desde) params.fechaDesde = filtros.fecha_desde
   if (filtros?.fecha_hasta) params.fechaHasta = filtros.fecha_hasta
   if (filtros?.page) params.page = filtros.page

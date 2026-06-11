@@ -1,20 +1,26 @@
 'use client'
 
 import { useDroppable } from '@dnd-kit/core'
+import { Loader2 } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
 import { LeadCard } from '@/components/modules/pipeline/LeadCard'
 
 interface KanbanColumnProps {
-  titulo:    string
-  estado:    LeadState
-  leads:     Lead[]
-  color:     string
+  titulo:      string
+  estado:      LeadState
+  leads:       Lead[]
+  color:       string
+  total:       number
+  isLoading?:  boolean
+  hasMore?:    boolean
+  loadingMore?: boolean
   onClickLead: (lead: Lead) => void
   onQuickAction?: (
     lead: Lead,
     action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
   ) => void
+  onCargarMas?: () => void
 }
 
 export function KanbanColumn({
@@ -22,8 +28,13 @@ export function KanbanColumn({
   estado,
   leads,
   color,
+  total,
+  isLoading = false,
+  hasMore = false,
+  loadingMore = false,
   onClickLead,
   onQuickAction,
+  onCargarMas,
 }: KanbanColumnProps) {
   const { isOver, setNodeRef } = useDroppable({
     id: `column-${estado}`,
@@ -45,12 +56,16 @@ export function KanbanColumn({
         </span>
         <span className="text-xs font-bold text-gray-400 bg-gray-100
           px-2 py-0.5 rounded-full">
-          {leads.length}
+          {total}
         </span>
       </div>
 
       <div className="flex flex-col gap-3 flex-1 min-h-40">
-        {leads.length === 0 ? (
+        {isLoading && leads.length === 0 ? (
+          <div className="flex items-center justify-center py-12 text-gray-300">
+            <Loader2 size={18} className="animate-spin" />
+          </div>
+        ) : leads.length === 0 ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-sm text-gray-300 italic">Sin leads</p>
           </div>
@@ -63,6 +78,22 @@ export function KanbanColumn({
               onQuickAction={onQuickAction}
             />
           ))
+        )}
+
+        {hasMore && (
+          <button
+            type="button"
+            onClick={onCargarMas}
+            disabled={loadingMore}
+            className="mt-1 flex items-center justify-center gap-2 rounded-xl border
+              border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-500
+              hover:text-emerald-600 hover:border-emerald-200 transition-colors
+              disabled:opacity-60"
+          >
+            {loadingMore
+              ? <Loader2 size={14} className="animate-spin" />
+              : `Cargar más (${leads.length} de ${total})`}
+          </button>
         )}
       </div>
     </div>

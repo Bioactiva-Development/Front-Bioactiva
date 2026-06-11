@@ -69,6 +69,46 @@ describe('leads/leads.service (API mode)', () => {
     })
   })
 
+  describe('getLeadsColumn', () => {
+    it('fetches a paginated page for one estado and computes the meta', async () => {
+      getMock.mockResolvedValueOnce({
+        data: { data: [rawLead], meta: { page: 1, limit: 10, total: 23, totalPages: 3 } },
+      })
+
+      const result = await leadsService.getLeadsColumn(LeadState.Prospecto, undefined, 1)
+
+      expect(getMock).toHaveBeenCalledWith('/leads', {
+        params: { estado: 'EN_PROSPECTO', page: 1, limit: 10 },
+      })
+      expect(result.data).toHaveLength(1)
+      expect(result.total).toBe(23)
+      expect(result.totalPages).toBe(3)
+      expect(result.data[0].estado).toBe(LeadState.Prospecto)
+    })
+
+    it('forwards filters together with the estado of the column', async () => {
+      getMock.mockResolvedValueOnce({
+        data: { data: [], meta: { page: 2, limit: 10, total: 0, totalPages: 1 } },
+      })
+
+      await leadsService.getLeadsColumn(
+        LeadState.Ofertado,
+        { id_encargado: 3, con_actividades_por_vencer: true },
+        2
+      )
+
+      expect(getMock).toHaveBeenCalledWith('/leads', {
+        params: {
+          estado: 'OFERTADO',
+          idEncargado: 3,
+          conActividadesPorVencer: 'true',
+          page: 2,
+          limit: 10,
+        },
+      })
+    })
+  })
+
   describe('getById', () => {
     it('fetches single lead by id', async () => {
       getMock.mockResolvedValueOnce({ data: rawLead })
