@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { useForm, UseFormSetValue } from 'react-hook-form'
+import { useEffect, useState } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, X } from 'lucide-react'
 
@@ -13,50 +13,34 @@ import {
 import { TipoEmpresa, TamanoEmpresa, Sector } from '@/types/enums'
 import { Organizacion, SunatRucResult } from '@/types/organizacion.types'
 import { generarCodigoCliente, formatSector } from '@/lib/utils/organizacion.utils'
+import { ROUTES } from '@/lib/constants/routes'
 
 interface OrganizacionFormProps {
   organizacion?: Organizacion
-  datosSunat?:   SunatRucResult | null
   onSubmit:      (data: OrganizacionFormValues) => Promise<void>
   isLoading:     boolean
   error?:        string | null
+  sunatData?:    SunatRucResult | null
 }
 
-const MAX_ACTIVIDAD_ECONOMICA = 200
-
-function applyDatosSunat(
-  datos: SunatRucResult,
-  setValue: UseFormSetValue<OrganizacionFormValues>,
-  setSunatAplicado: (v: boolean) => void,
-): void {
-  setValue('ruc', datos.ruc, { shouldValidate: true })
-  setValue('nombre', datos.nombre, { shouldValidate: true })
-  const nombreComercial = datos.nombreCompleto || datos.nombre
-  setValue('nombre_comercial', nombreComercial, { shouldValidate: true })
-  if (datos.tipo)        setValue('tipo', datos.tipo, { shouldValidate: true })
-  if (datos.tamano)      setValue('tamano', datos.tamano, { shouldValidate: true })
-  if (datos.sector)      setValue('sector', datos.sector, { shouldValidate: true })
-  if (datos.ubicacion)   setValue('ubicacion', datos.ubicacion, { shouldValidate: true })
-  if (datos.actividades) setValue('actividad_economica', datos.actividades.slice(0, MAX_ACTIVIDAD_ECONOMICA), { shouldValidate: true })
-  setValue('codigo_cliente', generarCodigoCliente(nombreComercial, datos.ruc), { shouldValidate: true })
-  setSunatAplicado(true)
-}
+type BusquedaTab = 'ruc' | 'razon'
 
 export function OrganizacionForm({
   organizacion,
-  datosSunat,
   onSubmit,
   isLoading,
   error,
+  sunatData,
 }: Readonly<OrganizacionFormProps>) {
-  const router                          = useRouter()
-  const esEdicion                       = !!organizacion
-  const [sunatAplicado, setSunatAplicado] = useState(false)
+  const router                        = useRouter()
+  const esEdicion                     = !!organizacion
+  const [busquedaTab, setBusquedaTab] = useState<BusquedaTab>('ruc')
 
   const {
     register,
     handleSubmit,
     setValue,
+    control,
     formState: { errors },
   } = useForm<OrganizacionFormValues>({
     resolver: zodResolver(organizacionSchema),
@@ -78,12 +62,27 @@ export function OrganizacionForm({
       : undefined,
   })
 
-  useEffect(() => {
-    if (!datosSunat) return
-    applyDatosSunat(datosSunat, setValue, setSunatAplicado)
-  }, [datosSunat, setValue])
+  const rucValue = useWatch({ control, name: 'ruc' })
 
-  const codigoBloqueado = esEdicion || sunatAplicado
+  useEffect(() => {
+    if (!sunatData) return
+
+    setBusquedaTab('ruc')
+    setValue('ruc',    sunatData.ruc)
+    setValue('nombre', sunatData.nombre)
+    if (sunatData.nombreCompleto) setValue('nombre_comercial',    sunatData.nombreCompleto)
+    if (sunatData.ubicacion)      setValue('ubicacion',           sunatData.ubicacion)
+    if (sunatData.actividades)    setValue('actividad_economica', sunatData.actividades)
+    // El código de cliente se autogenera con el patrón
+    // [iniciales del nombre comercial]-[últimos 3 dígitos del RUC].
+    const nombreComercial = sunatData.nombreCompleto || sunatData.nombre
+    setValue('codigo_cliente', generarCodigoCliente(nombreComercial, sunatData.ruc))
+  }, [sunatData, setValue])
+
+  // El código de cliente solo es editable en registro manual o cuando la
+  // búsqueda SUNAT no arrojó datos. Si proviene de SUNAT (o es edición), queda
+  // bloqueado y se gestiona automáticamente.
+  const codigoBloqueado = esEdicion || !!sunatData
 
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
@@ -93,17 +92,16 @@ export function OrganizacionForm({
       : 'border-gray-200 focus:border-emerald-400 bg-white'
     }`
   const readOnlyClass = 'bg-gray-50 text-gray-500 cursor-default focus:border-gray-200'
-  const autocompletadoBloqueado = sunatAplicado && !esEdicion
+  const autocompletadoBloqueado = !!sunatData && !esEdicion
   const selectOverrideClass = autocompletadoBloqueado
     ? `${readOnlyClass} pointer-events-none appearance-none`
     : ''
 
-  let codigoClienteHint: React.ReactElement | null = null
-  if (codigoBloqueado) {
-    codigoClienteHint = <p className="text-xs text-gray-400">Generado a partir del nombre comercial y el RUC de SUNAT.</p>
-  } else if (errors.codigo_cliente) {
-    codigoClienteHint = <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
-  }
+  const codigoClienteHint = codigoBloqueado
+    ? <p className="text-xs text-gray-400">Generado a partir del nombre comercial y el RUC de SUNAT.</p>
+    : errors.codigo_cliente
+      ? <p className="text-red-500 text-xs">{errors.codigo_cliente.message}</p>
+      : null
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -131,25 +129,72 @@ export function OrganizacionForm({
           {codigoClienteHint}
         </div>
 
-        <div className="space-y-1.5">
-          <label htmlFor="of-ruc" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            RUC{' '}
-            {sunatAplicado
-              ? <span className="text-gray-400 normal-case font-normal">— completado desde SUNAT</span>
-              : <span className="text-gray-400 normal-case font-normal">Opcional</span>}
-          </label>
-          <input
-            id="of-ruc"
-            type="text"
-            placeholder="Ej: 20123456789"
-            readOnly={sunatAplicado}
-            {...register('ruc')}
-            className={sunatAplicado
-              ? `w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-500 cursor-not-allowed`
-              : inputClass(!!errors.ruc)}
-          />
-          {errors.ruc && <p className="text-red-500 text-xs">{errors.ruc.message}</p>}
-        </div>
+        {!esEdicion && (
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setBusquedaTab('ruc')
+                  setValue('ruc', '')
+                }}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors
+                  ${busquedaTab === 'ruc'
+                    ? 'bg-emerald-700 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                Por RUC
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setBusquedaTab('razon')
+                  setValue('ruc', '')
+                }}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors
+                  ${busquedaTab === 'razon'
+                    ? 'bg-emerald-700 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                Por Razón Social
+              </button>
+            </div>
+
+            {busquedaTab === 'ruc' && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="of-ruc" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    RUC
+                  </label>
+                  <span className={`text-xs font-medium
+                    ${(rucValue?.length ?? 0) === 11 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                    {rucValue?.length ?? 0}/11
+                  </span>
+                </div>
+                <input
+                  id="of-ruc"
+                  type="text"
+                  placeholder="Ingresa RUC (11 dígitos)..."
+                  maxLength={11}
+                  {...register('ruc')}
+                  onChange={(e) => {
+                    const val = e.target.value.replaceAll(/\D/g, '').slice(0, 11)
+                    setValue('ruc', val)
+                  }}
+                  className={inputClass(!!errors.ruc)}
+                />
+                <p className="text-xs text-gray-400">
+                  11 dígitos → datos se completan automáticamente desde SUNAT.
+                </p>
+                {errors.ruc && (
+                  <p className="text-red-500 text-xs">{errors.ruc.message}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="space-y-1.5">
           <label htmlFor="of-nombre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -275,9 +320,6 @@ export function OrganizacionForm({
             {...register('ubicacion')}
             className={inputClass(!!errors.ubicacion)}
           />
-          {errors.ubicacion && (
-            <p className="text-red-500 text-xs">{errors.ubicacion.message}</p>
-          )}
         </div>
 
         <div className="space-y-1.5">
@@ -294,9 +336,6 @@ export function OrganizacionForm({
             {...register('actividad_economica')}
             className={inputClass(!!errors.actividad_economica)}
           />
-          {errors.actividad_economica && (
-            <p className="text-red-500 text-xs">{errors.actividad_economica.message}</p>
-          )}
         </div>
 
         <div className="space-y-1.5">
@@ -310,9 +349,6 @@ export function OrganizacionForm({
             {...register('linkedin')}
             className={inputClass(!!errors.linkedin)}
           />
-          {errors.linkedin && (
-            <p className="text-red-500 text-xs">{errors.linkedin.message}</p>
-          )}
         </div>
 
         <div className="space-y-1.5">
@@ -326,9 +362,6 @@ export function OrganizacionForm({
             {...register('alianzas_estrategicas')}
             className={inputClass(!!errors.alianzas_estrategicas)}
           />
-          {errors.alianzas_estrategicas && (
-            <p className="text-red-500 text-xs">{errors.alianzas_estrategicas.message}</p>
-          )}
         </div>
 
 
