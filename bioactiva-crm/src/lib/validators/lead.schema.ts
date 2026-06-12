@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { LeadState } from '@/types/enums'
+import { isLeadDateInPast } from '@/lib/utils/lead-date.utils'
 
 export const leadSchema = z.object({
   estado: z.enum(LeadState),
@@ -56,5 +57,13 @@ export const leadSchema = z.object({
     .or(z.literal('')),
 
 })
+
+export const createLeadSchema = leadSchema.refine(
+  (data) => !isLeadDateInPast(data.fecha_cierre),
+  {
+    message: 'No se permite establecer fechas pasadas',
+    path: ['fecha_cierre'],
+  }
+)
 
 export type LeadFormValues = z.infer<typeof leadSchema>

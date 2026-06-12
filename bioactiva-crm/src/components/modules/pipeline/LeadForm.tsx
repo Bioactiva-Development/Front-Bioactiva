@@ -5,7 +5,11 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { leadSchema, LeadFormValues } from '@/lib/validators/lead.schema'
+import {
+  createLeadSchema,
+  leadSchema,
+  LeadFormValues,
+} from '@/lib/validators/lead.schema'
 import { Lead } from '@/types/lead.types'
 import { ROUTES } from '@/lib/constants/routes'
 import { useOrganizaciones } from '@/hooks/organizaciones/useOrganizaciones'
@@ -14,7 +18,10 @@ import { useAuthStore } from '@/store'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { EstadoUsuario, LeadState } from '@/types/enums'
 import { UsuarioListItem } from '@/types/usuario.types'
-import { toLeadDateInputValue } from '@/lib/utils/lead-date.utils'
+import {
+  getLocalTodayDateInputValue,
+  toLeadDateInputValue,
+} from '@/lib/utils/lead-date.utils'
 
 interface LeadFormProps {
   lead?:      Lead
@@ -88,6 +95,7 @@ export function LeadForm({
   const [errorLocal, setErrorLocal] = useState<string | null>(null)
   const [responsables, setResponsables] = useState<ResponsableOption[]>([])
   const [canalOtroActivo, setCanalOtroActivo] = useState(false)
+  const minFechaCierre = useMemo(() => getLocalTodayDateInputValue(), [])
 
   const {
     register,
@@ -97,7 +105,7 @@ export function LeadForm({
     control,
     formState: { errors },
   } = useForm<LeadFormValues>({
-    resolver: zodResolver(leadSchema),
+    resolver: zodResolver(esEdicion ? leadSchema : createLeadSchema),
     defaultValues: getLeadFormDefaults(lead, estadoInicial),
   })
 
@@ -530,19 +538,23 @@ export function LeadForm({
               <p className="text-red-500 text-xs">{errors.canal_captacion.message}</p>
             )}
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label htmlFor="ldf-fecha-cierre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Fecha de cierre
+              Fecha de cierre estimada
             </label>
             <input
               id="ldf-fecha-cierre"
               type="date"
+              min={esEdicion ? undefined : minFechaCierre}
               {...register('fecha_cierre')}
               className={inputClass(!!errors.fecha_cierre)}
             />
+            {errors.fecha_cierre && (
+              <p className="text-red-500 text-xs">
+                {errors.fecha_cierre.message}
+              </p>
+            )}
           </div>
         </div>
 

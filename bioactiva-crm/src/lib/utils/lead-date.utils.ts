@@ -10,6 +10,13 @@ function toLocalDateOnly(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
 
+export function getLocalTodayDateInputValue(date = new Date()) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export function parseLeadDateOnly(fecha: string) {
   const match = DATE_PREFIX_PATTERN.exec(fecha)
   if (match) {
@@ -18,6 +25,15 @@ export function parseLeadDateOnly(fecha: string) {
   }
 
   return new Date(fecha)
+}
+
+export function isLeadDateInPast(fecha?: string, today = new Date()) {
+  if (!fecha) return false
+
+  const date = parseLeadDateOnly(fecha)
+  if (Number.isNaN(date.getTime())) return false
+
+  return toLocalDateOnly(date).getTime() < toLocalDateOnly(today).getTime()
 }
 
 export function toLeadDateInputValue(fecha?: string | null) {
