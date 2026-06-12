@@ -6,10 +6,11 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts'
 import {
-  Target, Percent, Clock, Timer,
-  Activity, DollarSign, TrendingUp, Calendar,
-  RefreshCw
+  Target, Percent, Clock, Timer, Activity,
+  DollarSign, TrendingUp, Calendar,
+  RefreshCw, ChevronDown, ChevronUp, Filter
 } from 'lucide-react'
+
 import { useLeads } from '@/hooks/pipeline/useLeads'
 import { useCotizaciones } from '@/hooks/cotizaciones/useCotizaciones'
 import { useDashboardMetrics } from '@/hooks/dashboard/useDashboardMetrics'
@@ -61,16 +62,16 @@ const isWithinPeriod = (isoDate: string | undefined, start: Date, end: Date) => 
 
 function KpiCard({ label, valor, descripcion, icono, iconoBg, extra }: Readonly<KpiCardProps>) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-3">
+    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-3 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-default">
       <div className="flex items-start justify-between">
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide leading-tight">
+        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider leading-tight">
           {label}
         </p>
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconoBg}`}>
           {icono}
         </div>
       </div>
-      <p className="text-3xl font-bold text-gray-900">{valor}</p>
+      <p className="text-3xl font-extrabold text-gray-900 tabular-nums">{valor}</p>
       <p className="text-xs text-gray-400">{descripcion}</p>
       {extra}
     </div>
@@ -129,6 +130,7 @@ export default function DashboardPage() {
   const [anioActivo, setAnioActivo]       = useState('2026')
   const [fechaInicio, setFechaInicio]     = useState('2026-01-01')
   const [fechaFin, setFechaFin]           = useState('2027-01-01')
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
   const { data: leadsResponse, isLoading: cargandoLeads, isError: errorLeads } =
     useLeads({ page: 1, limit: DASHBOARD_FETCH_LIMIT })
   const {
@@ -209,112 +211,122 @@ export default function DashboardPage() {
   }, [cotizacionesResponse?.data, rangoFechas])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
-              <Activity size={24} className="text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">
-                BioActiva CRM
-              </p>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Dashboard comercial
-              </h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-            Activo · {hoy}
-          </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Dashboard comercial</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Métricas del periodo seleccionado</p>
         </div>
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+          Activo · {hoy}
+        </div>
+      </div>
 
-        <div className="mt-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Calendar size={16} className="text-emerald-600" />
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">
-                Periodo de análisis
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">Año</span>
-              <select
-                value={anioActivo}
-                onChange={(e) => handleAnio(e.target.value)}
-                className="text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none
-                  focus:border-emerald-400 text-gray-700"
-              >
-                {ANIOS.map((a) => (
-                  <option key={a} value={a}>{a}</option>
-                ))}
-              </select>
-            </div>
+      <div className="bg-gray-50/80 rounded-xl border border-gray-100">
+        <button
+          onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
+          className="w-full flex items-center justify-between px-4 py-3 cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <Filter size={14} className="text-gray-400" />
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Filtros</span>
+            <span className="text-xs text-gray-400">
+              · {periodos.find(p => p.key === periodoActivo)?.label ?? 'AÑO COMPLETO'} {anioActivo}
+            </span>
           </div>
+          {filtrosAbiertos
+            ? <ChevronUp size={14} className="text-gray-400" />
+            : <ChevronDown size={14} className="text-gray-400" />
+          }
+        </button>
 
-          <div className="grid grid-cols-5 gap-2">
-            {periodos.map((p) => (
-              <button
-                key={p.key}
-                onClick={() => handlePeriodo(p.key)}
-                className={`
-                  rounded-xl p-3 text-left transition-all
-                  ${periodoActivo === p.key
-                    ? 'bg-emerald-700 text-white shadow-md shadow-emerald-200'
-                    : 'bg-gray-50 hover:bg-emerald-50 text-gray-600 hover:text-emerald-700'
-                  }
-                `}
-              >
-                <p className={`text-xs font-bold uppercase tracking-wide
-                  ${periodoActivo === p.key ? 'text-emerald-100' : 'text-gray-400'}`}>
-                  {p.label}
+        {filtrosAbiertos && (
+          <div className="px-4 pb-4 space-y-3 border-t border-gray-100">
+            <div className="flex items-center justify-between pt-3">
+              <div className="flex items-center gap-2">
+                <Calendar size={14} className="text-gray-400" />
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                  Periodo de análisis
                 </p>
-                <p className={`text-sm font-semibold mt-0.5
-                  ${periodoActivo === p.key ? 'text-white' : 'text-gray-600'}`}>
-                  {p.sub}
-                </p>
-              </button>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_260px_auto] gap-4 items-end">
-            <div className="space-y-1">
-              <label htmlFor="dash-fecha-inicio" className="text-xs text-gray-500">Fecha inicio</label>
-              <input
-                id="dash-fecha-inicio"
-                type="date"
-                value={fechaInicio}
-                onChange={(e) => setFechaInicio(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm
-                  outline-none focus:border-emerald-400 text-gray-700"
-              />
-            </div>
-            <div className="flex items-end gap-3">
-              <div className="flex-1 space-y-1">
-                <label htmlFor="dash-fecha-fin" className="text-xs text-gray-500">Fecha fin</label>
-                <input
-                  id="dash-fecha-fin"
-                  type="date"
-                  value={fechaFin}
-                  onChange={(e) => setFechaFin(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm
-                    outline-none focus:border-emerald-400 text-gray-700"
-                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-gray-400">Año</span>
+                <select
+                  value={anioActivo}
+                  onChange={(e) => handleAnio(e.target.value)}
+                  className="text-xs border border-gray-100 rounded-md px-2 py-1 outline-none
+                    focus:border-emerald-300 text-gray-600 bg-white cursor-pointer"
+                >
+                  {ANIOS.map((a) => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
               </div>
             </div>
-            <button
-              onClick={handleReiniciar}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-200
-                text-emerald-600 hover:bg-emerald-50 text-sm font-medium transition-colors shrink-0"
-            >
-              <RefreshCw size={14} />
-              Reiniciar
-            </button>
+
+            <div className="grid grid-cols-5 gap-1.5">
+              {periodos.map((p) => (
+                <button
+                  key={p.key}
+                  onClick={() => handlePeriodo(p.key)}
+                  className={`
+                    rounded-lg py-2 px-2.5 text-left transition-all cursor-pointer
+                    ${periodoActivo === p.key
+                      ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-100'
+                      : 'bg-white border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50/50 text-gray-500 hover:text-emerald-600'
+                    }
+                  `}
+                >
+                  <p className={`text-[10px] font-semibold uppercase tracking-wide
+                    ${periodoActivo === p.key ? 'text-emerald-100' : 'text-gray-400'}`}>
+                    {p.label}
+                  </p>
+                  <p className={`text-xs font-medium mt-0.5
+                    ${periodoActivo === p.key ? 'text-white' : 'text-gray-500'}`}>
+                    {p.sub}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+              <div className="space-y-1">
+                <label htmlFor="dash-fecha-inicio" className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">Fecha inicio</label>
+                <input
+                  id="dash-fecha-inicio"
+                  type="date"
+                  value={fechaInicio}
+                  onChange={(e) => setFechaInicio(e.target.value)}
+                  className="w-full border border-gray-100 rounded-lg px-3 py-2 text-sm
+                    outline-none focus:border-emerald-300 text-gray-600 bg-white"
+                />
+              </div>
+              <div className="flex items-end gap-3">
+                <div className="flex-1 space-y-1">
+                  <label htmlFor="dash-fecha-fin" className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">Fecha fin</label>
+                  <input
+                    id="dash-fecha-fin"
+                    type="date"
+                    value={fechaFin}
+                    onChange={(e) => setFechaFin(e.target.value)}
+                    className="w-full border border-gray-100 rounded-lg px-3 py-2 text-sm
+                      outline-none focus:border-emerald-300 text-gray-600 bg-white"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={handleReiniciar}
+                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-200
+                  text-gray-500 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50/50 text-sm font-medium transition-colors shrink-0 cursor-pointer"
+              >
+                <RefreshCw size={14} />
+                Reiniciar
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {errorMetricas && (
@@ -404,11 +416,11 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-md p-6">
+          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide border-l-4 border-l-emerald-500 pl-3">
             Pipeline por etapa
           </h3>
-          <p className="text-xs text-gray-400 mt-0.5 mb-6">
+          <p className="text-xs text-gray-400 mt-0.5 mb-6 pl-3">
             Cantidad de leads por estado comercial.
           </p>
           {cargandoLeads && (
@@ -456,11 +468,11 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-md p-6">
+          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide border-l-4 border-l-blue-400 pl-3">
             Estado de cotizaciones
           </h3>
-          <p className="text-xs text-gray-400 mt-0.5 mb-6">
+          <p className="text-xs text-gray-400 mt-0.5 mb-6 pl-3">
             Distribución de propuestas del periodo.
           </p>
 

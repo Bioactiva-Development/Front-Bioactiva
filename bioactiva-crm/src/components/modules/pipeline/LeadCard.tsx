@@ -79,6 +79,19 @@ export function LeadCard({
     onQuickAction?.(lead, action)
   }
 
+  // Mientras se arrastra: muestra placeholder fantasma; el visual real lo lleva DragOverlay
+  if (isDragging) {
+    return (
+      <div
+        ref={setNodeRef}
+        {...attributes}
+        {...listeners}
+        style={{ touchAction: 'none' }}
+        className="rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50/30 min-h-30"
+      />
+    )
+  }
+
   return (
     <div
       ref={setNodeRef}
@@ -86,22 +99,19 @@ export function LeadCard({
       {...listeners}
       data-lead-id={lead.id}
       aria-label={`Lead - ${lead.organizacion_nombre}`}
-      style={{
-        transform: CSS.Translate.toString(transform),
-        zIndex: isDragging ? 20 : undefined,
-        touchAction: 'none',
-      }}
+      style={{ touchAction: 'none' }}
       onClick={() => onClick(lead)}
       className={`
-        bg-white rounded-xl border shadow-sm p-4 cursor-pointer
-        hover:shadow-md transition-all space-y-3
-        ${isDragging ? 'opacity-60 ring-2 ring-emerald-300' : ''}
+        bg-white rounded-xl border shadow-sm p-4 space-y-3 group
+        transition duration-150
         ${lead.tiene_alerta
           ? 'border-l-4 border-l-red-400 border-t-gray-100 border-r-gray-100 border-b-gray-100'
-          : 'border-gray-100 hover:border-emerald-200'
+          : 'border-gray-100 hover:border-emerald-200 hover:shadow-lg hover:-translate-y-0.5'
         }
-        ${isDragging ? 'opacity-40' : ''}
-        ${isOverlay ? 'shadow-xl rotate-2 cursor-grabbing' : 'cursor-pointer hover:shadow-md transition-all'}
+        ${isOverlay
+          ? 'shadow-2xl ring-2 ring-emerald-400 ring-offset-2 rotate-1 cursor-grabbing scale-[1.02]'
+          : 'cursor-pointer'
+        }
       `}
     >
       {lead.tiene_alerta && (
@@ -157,13 +167,14 @@ export function LeadCard({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-1 pt-2 border-t border-gray-50">
+      <div className="flex items-center justify-between gap-1 pt-2 border-t border-gray-100
+        opacity-60 group-hover:opacity-100 transition-opacity duration-200">
         <button
           type="button"
           title="Ver detalle"
           onClick={(event) => handleAction(event, 'detalle')}
           className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
-            hover:bg-emerald-50 transition-colors"
+            hover:bg-emerald-50 transition-colors cursor-pointer"
         >
           <ExternalLink size={14} />
         </button>
@@ -172,7 +183,7 @@ export function LeadCard({
           title="Editar lead"
           onClick={(event) => handleAction(event, 'editar')}
           className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
-            hover:bg-emerald-50 transition-colors"
+            hover:bg-emerald-50 transition-colors cursor-pointer"
         >
           <Pencil size={14} />
         </button>
@@ -181,7 +192,7 @@ export function LeadCard({
           title="Registrar actividad"
           onClick={(event) => handleAction(event, 'actividad')}
           className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
-            hover:bg-emerald-50 transition-colors"
+            hover:bg-emerald-50 transition-colors cursor-pointer"
         >
           <MessageSquarePlus size={14} />
         </button>
@@ -190,7 +201,7 @@ export function LeadCard({
           title="Crear cotización"
           onClick={(event) => handleAction(event, 'cotizacion')}
           className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
-            hover:bg-emerald-50 transition-colors"
+            hover:bg-emerald-50 transition-colors cursor-pointer"
         >
           <FileText size={14} />
         </button>
@@ -199,7 +210,7 @@ export function LeadCard({
           title="Programar seguimiento"
           onClick={(event) => handleAction(event, 'seguimiento')}
           className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
-            hover:bg-emerald-50 transition-colors"
+            hover:bg-emerald-50 transition-colors cursor-pointer"
         >
           <Send size={14} />
         </button>

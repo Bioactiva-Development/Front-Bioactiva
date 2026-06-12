@@ -12,7 +12,7 @@ import {
 } from '@/lib/validators/organizacion.schema'
 import { TipoEmpresa, TamanoEmpresa, Sector } from '@/types/enums'
 import { Organizacion, SunatRucResult } from '@/types/organizacion.types'
-import { generarCodigoCliente, formatSector } from '@/lib/utils/organizacion.utils'
+import { generarCodigoCliente, formatSector, formatTamano } from '@/lib/utils/organizacion.utils'
 
 interface OrganizacionFormProps {
   organizacion?: Organizacion
@@ -273,7 +273,7 @@ export function OrganizacionForm({
             >
               <option value="">Seleccionar...</option>
               {Object.values(TamanoEmpresa).map((t) => (
-                <option key={t} value={t}>{t}</option>
+                <option key={t} value={t}>{formatTamano(t)}</option>
               ))}
             </select>
             {errors.tamano && (

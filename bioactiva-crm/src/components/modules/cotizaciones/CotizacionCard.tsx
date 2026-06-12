@@ -53,25 +53,25 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
         ${ESTADO_HOVER_COLORS[cotizacion.estado]}`}
       onClick={handleVerDetalle}
     >
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <p className={`text-sm font-bold ${ESTADO_CODE_COLORS[cotizacion.estado]}`}>
           {cotizacion.codigo}
         </p>
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <p className="text-sm text-gray-500 font-mono">
           {cotizacion.lead_codigo ?? `#${cotizacion.id_lead}`}
         </p>
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <p className="text-sm text-gray-600">
           {cotizacion.periodo ?? '—'}
         </p>
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <p className="text-sm font-semibold text-gray-800">
           {cotizacion.dirigido}
         </p>
@@ -82,19 +82,19 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
         )}
       </td>
 
-      <td className="px-4 py-4 max-w-xs">
+      <td className="px-4 py-3 max-w-xs">
         <p className="text-sm text-gray-700 truncate">
           {cotizacion.nombre_servicio}
         </p>
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <p className="text-sm font-bold text-gray-900">
           {formatMonto(cotizacion.monto, cotizacion.tipo)}
         </p>
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg
           text-xs font-bold uppercase tracking-wide
           ${ESTADO_COLORS[cotizacion.estado]}`}>
@@ -102,7 +102,7 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
         </span>
       </td>
 
-      <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-1">
           <button
             title="Imprimir"

@@ -1,14 +1,18 @@
 'use client'
 
+import { useState } from 'react'
 import {
   DndContext,
   DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
   PointerSensor,
   pointerWithin,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
 import { KanbanColumn } from '@/components/modules/pipeline/KanbanColumn'
+import { LeadCard } from '@/components/modules/pipeline/LeadCard'
 import { Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
 import { PipelineColumn } from '@/hooks/pipeline/useLeads'
@@ -44,16 +48,23 @@ export function KanbanBoard({
   onQuickAction,
   onMoveLead,
 }: KanbanBoardProps) {
+  const [activeLead, setActiveLead] = useState<Lead | null>(null)
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
+      activationConstraint: { distance: 4 },
     })
   )
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const lead = event.active.data.current?.lead as Lead | undefined
+    if (lead) setActiveLead(lead)
+  }
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveLead(null)
     const lead = event.active.data.current?.lead as Lead | undefined
     const estado = event.over?.data.current?.estado as LeadState | undefined
-
     if (!lead || !estado || lead.estado === estado) return
     onMoveLead(lead, estado)
   }
@@ -62,6 +73,7 @@ export function KanbanBoard({
     <DndContext
       sensors={sensors}
       collisionDetection={pointerWithin}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-4 overflow-x-auto pb-4">
@@ -86,6 +98,17 @@ export function KanbanBoard({
           )
         })}
       </div>
+
+      {/* Renderiza el card en el body — siempre por encima de todo */}
+      <DragOverlay dropAnimation={null}>
+        {activeLead ? (
+          <LeadCard
+            lead={activeLead}
+            onClick={() => {}}
+            isOverlay
+          />
+        ) : null}
+      </DragOverlay>
     </DndContext>
   )
 }

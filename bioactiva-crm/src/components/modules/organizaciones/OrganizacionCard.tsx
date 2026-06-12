@@ -29,7 +29,7 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
       className="border-b border-gray-50 hover:bg-emerald-50/30 transition-colors cursor-pointer"
       onClick={handleVerDetalle}
     >
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center
             justify-center shrink-0">
@@ -46,7 +46,7 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
         </div>
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         {organizacion.ruc ? (
           <span className="text-sm text-gray-600">{organizacion.ruc}</span>
         ) : (
@@ -54,7 +54,7 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
         )}
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <span className="text-sm text-gray-600">
           {formatSector(organizacion.sector)}
           {organizacion.actividad_economica && (
@@ -63,7 +63,7 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
         </span>
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs
           font-bold uppercase tracking-wide
           ${TAMAÑO_COLORS[organizacion.tamano]}`}>
@@ -71,7 +71,7 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
         </span>
       </td>
 
-      <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={handleVerDetalle}
           className="p-2 rounded-lg text-gray-400 hover:text-emerald-600

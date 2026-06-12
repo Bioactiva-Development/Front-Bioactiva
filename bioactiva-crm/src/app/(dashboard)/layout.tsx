@@ -72,14 +72,18 @@ export default function DashboardLayout({
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Sidebar />
+            <div className="print:hidden">
+                <Sidebar />
+            </div>
 
             <div
-                className={`transition-all duration-300 flex flex-col min-h-screen ${sidebarMargin}`}
+                className={`transition-all duration-300 flex flex-col min-h-screen ${sidebarMargin} print:ml-0`}
             >
-                <Navbar />
+                <div className="print:hidden">
+                    <Navbar />
+                </div>
 
-                <main className="flex-1 p-6">
+                <main className="flex-1 p-6 print:p-6">
                     {children}
                 </main>
             </div>

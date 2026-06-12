@@ -1,6 +1,7 @@
-/** Convierte "BANCA_Y_SEGUROS" → "BANCA Y SEGUROS" para mostrar en UI. */
+/** Convierte "BANCA_Y_SEGUROS" → "Banca y seguros" para mostrar en UI. */
 export function formatSector(sector: string): string {
-    return sector.replaceAll('_', ' ')
+    const words = sector.replaceAll('_', ' ').toLowerCase().split(' ')
+    return words.map((w, i) => i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w).join(' ')
 }
 
 const TAMANO_LABELS: Record<string, string> = {

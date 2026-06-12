@@ -56,7 +56,7 @@ export function LeadFiltros({
   onLimpiar,
   total,
 }: LeadFiltrosProps) {
-  const [abierto, setAbierto] = useState(true)
+  const [abierto, setAbierto] = useState(false)
   const [responsables, setResponsables] = useState<ResponsableOption[]>([])
 
   const { data: orgsData } = useOrganizaciones({ limit: 100 })
@@ -136,37 +136,39 @@ export function LeadFiltros({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+    <div className="bg-gray-50/80 rounded-xl border border-gray-100">
 
       <button
         onClick={() => setAbierto(!abierto)}
-        className="w-full flex items-center justify-between px-6 py-4"
+        className="w-full flex items-center justify-between px-4 py-3 cursor-pointer"
       >
         <div className="flex items-center gap-2">
-          <Filter size={16} className="text-emerald-600" />
-          <span className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+          <Filter size={14} className="text-gray-400" />
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
             Filtros
           </span>
           {hayFiltrosActivos && (
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          )}
+          {total !== undefined && (
+            <span className="text-xs text-gray-400">
+              · <span className="font-semibold text-emerald-600">{total}</span> leads
+            </span>
           )}
         </div>
         {abierto
-          ? <ChevronUp size={16} className="text-gray-400" />
-          : <ChevronDown size={16} className="text-gray-400" />
+          ? <ChevronUp size={14} className="text-gray-400" />
+          : <ChevronDown size={14} className="text-gray-400" />
         }
       </button>
 
       {abierto && (
-        <div className="px-6 pb-5 space-y-4 border-t border-gray-50">
+        <div className="px-4 pb-4 space-y-3 border-t border-gray-100">
 
-          <div className="pt-4">
-            <label className="block text-xs text-gray-400 font-medium mb-1">
-              Búsqueda comercial
-            </label>
+          <div className="pt-3">
             <div className="relative">
               <Search
-                size={16}
+                size={14}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               />
               <input
@@ -176,25 +178,25 @@ export function LeadFiltros({
                   ...filtrosBasicos,
                   search: e.target.value || undefined,
                 })}
-                placeholder="Buscar por código, organización, contacto, servicio o responsable"
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200
-                  bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
-                  placeholder:text-gray-400"
+                placeholder="Buscar por código, organización, contacto, servicio o responsable..."
+                className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-100
+                  bg-white text-sm text-gray-700 outline-none focus:border-emerald-300
+                  placeholder:text-gray-300"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div className="space-y-1">
-              <label htmlFor="lflt-estado" className="text-xs text-gray-400 font-medium">Estado</label>
+              <label htmlFor="lflt-estado" className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Estado</label>
               <select
                 value={filtrosBasicos.estado ?? ''}
                 onChange={(e) => updateFiltros({
                   ...filtrosBasicos,
                   estado: e.target.value ? e.target.value as LeadState : undefined,
                 })}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200
-                  bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
+                className="w-full px-3 py-2 rounded-lg border border-gray-100
+                  bg-white text-sm text-gray-600 outline-none focus:border-emerald-300
                   cursor-pointer"
               >
                 <option value="">Todos los estados</option>
@@ -205,15 +207,15 @@ export function LeadFiltros({
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="lflt-encargado" className="text-xs text-gray-400 font-medium">Encargado</label>
+              <label htmlFor="lflt-encargado" className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Encargado</label>
               <select
                 value={filtrosBasicos.id_encargado ?? ''}
                 onChange={(e) => updateFiltros({
                   ...filtrosBasicos,
                   id_encargado: e.target.value ? Number(e.target.value) : undefined,
                 })}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200
-                  bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
+                className="w-full px-3 py-2 rounded-lg border border-gray-100
+                  bg-white text-sm text-gray-600 outline-none focus:border-emerald-300
                   cursor-pointer"
               >
                 <option value="">Todos los encargados</option>
@@ -226,7 +228,7 @@ export function LeadFiltros({
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="lflt-org" className="text-xs text-gray-400 font-medium">Organización</label>
+              <label htmlFor="lflt-org" className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Organización</label>
               <select
                 id="lflt-org"
                 value={filtrosBasicos.id_org ?? ''}
@@ -234,8 +236,8 @@ export function LeadFiltros({
                   ...filtrosBasicos,
                   id_org: e.target.value || undefined,
                 })}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200
-                  bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
+                className="w-full px-3 py-2 rounded-lg border border-gray-100
+                  bg-white text-sm text-gray-600 outline-none focus:border-emerald-300
                   cursor-pointer"
               >
                 <option value="">Todas las organizaciones</option>
@@ -246,9 +248,9 @@ export function LeadFiltros({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div className="space-y-1">
-              <label htmlFor="lflt-desde" className="text-xs text-gray-400 font-medium">
+              <label htmlFor="lflt-desde" className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">
                 Creados desde
               </label>
               <input
@@ -261,13 +263,13 @@ export function LeadFiltros({
                   setFechaDesde(v)
                   aplicarFechas(v, fechaHasta)
                 }}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200
-                  bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
+                className="w-full px-3 py-2 rounded-lg border border-gray-100
+                  bg-white text-sm text-gray-600 outline-none focus:border-emerald-300
                   cursor-pointer"
               />
             </div>
             <div className="space-y-1">
-              <label htmlFor="lflt-hasta" className="text-xs text-gray-400 font-medium">
+              <label htmlFor="lflt-hasta" className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">
                 Creados hasta
               </label>
               <input
@@ -280,9 +282,9 @@ export function LeadFiltros({
                   setFechaHasta(v)
                   aplicarFechas(fechaDesde, v)
                 }}
-                className={`w-full px-3 py-2 rounded-xl border bg-white text-sm
-                  text-gray-700 outline-none cursor-pointer
-                  ${rangoInvalido ? 'border-red-400' : 'border-gray-200 focus:border-emerald-400'}`}
+                className={`w-full px-3 py-2 rounded-lg border bg-white text-sm
+                  text-gray-600 outline-none cursor-pointer
+                  ${rangoInvalido ? 'border-red-400' : 'border-gray-100 focus:border-emerald-300'}`}
               />
             </div>
           </div>
@@ -295,10 +297,10 @@ export function LeadFiltros({
 
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">
+              <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">
                 Semáforo
               </span>
-              <div className="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50 p-0.5">
+              <div className="inline-flex items-center rounded-lg border border-gray-100 bg-white p-0.5">
                 {SEMAFORO_OPCIONES.map((opt) => {
                   const activo = filtrosBasicos.alerta_actividad === opt.value
                   return (
@@ -309,14 +311,14 @@ export function LeadFiltros({
                         ...filtrosBasicos,
                         alerta_actividad: opt.value,
                       })}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm
-                        font-medium transition-colors
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs
+                        font-medium transition-colors cursor-pointer
                         ${activo
-                          ? 'bg-white text-gray-800 shadow-sm'
+                          ? 'bg-emerald-50 text-emerald-700 shadow-sm'
                           : 'text-gray-400 hover:text-gray-600'}`}
                     >
                       {opt.dots.map((dot) => (
-                        <span key={dot} className={`w-2 h-2 rounded-full ${dot}`} />
+                        <span key={dot} className={`w-1.5 h-1.5 rounded-full ${dot}`} />
                       ))}
                       {opt.label}
                     </button>
@@ -328,22 +330,15 @@ export function LeadFiltros({
             {hayFiltrosActivos && (
               <button
                 onClick={onLimpiar}
-                className="ml-auto flex items-center gap-1.5 px-3 py-2
-                  rounded-xl text-sm text-red-500 hover:bg-red-50
-                  border border-red-200 transition-colors"
+                className="ml-auto flex items-center gap-1.5 px-3 py-1.5
+                  rounded-lg text-xs text-red-500 hover:bg-red-50
+                  border border-red-100 transition-colors cursor-pointer"
               >
-                <X size={14} />
+                <X size={12} />
                 Limpiar
               </button>
             )}
           </div>
-
-          {total !== undefined && (
-            <p className="text-sm text-gray-500">
-              Mostrando <span className="font-semibold text-emerald-600">{total}</span>{' '}
-              leads
-            </p>
-          )}
         </div>
       )}
     </div>

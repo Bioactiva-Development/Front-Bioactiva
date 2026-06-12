@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Save } from 'lucide-react'
+import { Loader2, Save, ArrowLeft, Target, Building2, User, MessageSquare, Radio } from 'lucide-react'
+import { formatVocativo } from '@/lib/utils/contacto.utils'
 import { useRouter } from 'next/navigation'
 import {
   createLeadSchema,
@@ -280,321 +281,360 @@ export function LeadForm({
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
-        <div className="space-y-1.5">
-          <label htmlFor="ldf-org" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Organización <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="ldf-org"
-            {...register('id_org')}
-            disabled={esEdicion}
-            className={`${inputClass(!!errors.id_org)} cursor-pointer
-              ${esEdicion ? 'opacity-60 cursor-not-allowed' : ''}`}
-          >
-            <option value="">Buscar organización existente...</option>
-            {includeCurrentOrgOption && (
-              <option value={lead!.id_org}>{lead!.organizacion_nombre}</option>
-            )}
-            {organizaciones.map((org) => (
-              <option key={org.id} value={org.id}>{org.nombre}</option>
-            ))}
-          </select>
-          {errors.id_org && (
-            <p className="text-red-500 text-xs">{errors.id_org.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="ldf-contacto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Contacto{' '}
-            <span className="text-gray-400 normal-case font-normal">
-              (opcional — puedes vincularlo después)
-            </span>
-          </label>
-          <select
-            {...register('id_contacto', {
-              setValueAs: (value) => value ? Number(value) : undefined,
-            })}
-            disabled={!orgSeleccionada}
-            className={`${inputClass(!!errors.id_contacto)} cursor-pointer
-              ${!orgSeleccionada ? 'opacity-60 cursor-not-allowed' : ''}`}
-          >
-            <option value="">
-              {orgSeleccionada
-                ? 'Seleccionar contacto...'
-                : 'Primero selecciona una organización'
+        {/* Header del formulario */}
+        <div className="px-8 py-5 border-b border-gray-100 bg-gray-50/60 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+            <Target size={18} className="text-emerald-700" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-gray-800">
+              {esEdicion ? 'Editar lead' : 'Nueva oportunidad comercial'}
+            </h2>
+            <p className="text-xs text-gray-400">
+              {esEdicion
+                ? 'Actualiza la información del lead'
+                : 'Completa los datos para registrar el lead en el pipeline'
               }
-            </option>
-            {includeCurrentContactOption && (
-              <option value={lead!.id_contacto}>
-                {lead!.contacto_nombre}
-              </option>
-            )}
-            {contactos.filter((c) => c.estado_correo !== 'VENCIDO').map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.vocativo ? `${c.vocativo}. ` : ''}
-                {c.nombres} {c.apellidos}
-                {c.cargo ? ` — ${c.cargo}` : ''}
-              </option>
-            ))}
-          </select>
+            </p>
+          </div>
         </div>
 
+        <div className="p-8 space-y-6">
 
-        {!estadoEditable && <input type="hidden" {...register('estado')} />}
+          {/* Sección: Organización y contacto */}
+          <div className="space-y-4">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
+              <Building2 size={11} className="text-gray-400" />
+              Organización y contacto
+            </p>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Estado del pipeline
-            </label>
-            {estadoEditable ? (
+            <div className="space-y-1.5">
+              <label htmlFor="ldf-org" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Organización <span className="text-red-500">*</span>
+              </label>
               <select
-                {...register('estado')}
-                className={`${inputClass(!!errors.estado)} cursor-pointer`}
+                id="ldf-org"
+                {...register('id_org')}
+                disabled={esEdicion}
+                className={`${inputClass(!!errors.id_org)} cursor-pointer
+                  ${esEdicion ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
-                {Object.values(LeadState).map((estado) => (
-                  <option key={estado} value={estado}>
-                    {estado}
+                <option value="">Seleccionar organización...</option>
+                {includeCurrentOrgOption && (
+                  <option value={lead!.id_org}>{lead!.organizacion_nombre}</option>
+                )}
+                {organizaciones.map((org) => (
+                  <option key={org.id} value={org.id}>{org.nombre}</option>
+                ))}
+              </select>
+              {errors.id_org && (
+                <p className="text-red-500 text-xs">{errors.id_org.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="ldf-contacto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Contacto{' '}
+                <span className="text-gray-400 normal-case font-normal">Opcional</span>
+              </label>
+              <select
+                {...register('id_contacto', {
+                  setValueAs: (value) => value ? Number(value) : undefined,
+                })}
+                disabled={!orgSeleccionada}
+                className={`${inputClass(!!errors.id_contacto)} cursor-pointer
+                  ${!orgSeleccionada ? 'opacity-60 cursor-not-allowed' : ''}`}
+              >
+                <option value="">
+                  {orgSeleccionada
+                    ? 'Seleccionar contacto...'
+                    : 'Primero selecciona una organización'
+                  }
+                </option>
+                {includeCurrentContactOption && (
+                  <option value={lead!.id_contacto}>
+                    {lead!.contacto_nombre}
+                  </option>
+                )}
+                {contactos.filter((c) => c.estado_correo !== 'VENCIDO').map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.vocativo ? `${formatVocativo(c.vocativo)} ` : ''}
+                    {c.nombres} {c.apellidos}
+                    {c.cargo ? ` — ${c.cargo}` : ''}
                   </option>
                 ))}
               </select>
-            ) : (
-              <div className="w-full px-4 py-2.5 rounded-xl border border-gray-200
-                bg-gray-50 text-sm text-gray-600">
-                {estadoActual}
-              </div>
-            )}
-            <p className="text-xs text-gray-400">
-              {estadoEditable
-                ? 'El cambio de estado valida las cotizaciones asociadas al lead.'
-                : esEdicion
-                  ? 'El cambio de estado se gestiona desde el pipeline.'
-                  : 'Todo lead nuevo inicia en prospecto. El cambio de estado se gestiona desde el pipeline.'
-              }
+              <p className="text-xs text-gray-400">Puedes vincularlo después desde el detalle del lead.</p>
+            </div>
+          </div>
+
+          {/* Sección: Información del lead */}
+          <div className="space-y-4">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
+              <Target size={11} className="text-gray-400" />
+              Información del lead
             </p>
-            {errors.estado && (
-              <p className="text-red-500 text-xs">{errors.estado.message}</p>
-            )}
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Fecha de creación
-            </label>
-            <input
-              type="text"
-              value={new Date().toISOString().split('T')[0]}
-              disabled
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200
-                bg-gray-50 text-sm text-gray-400 cursor-not-allowed"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="ldf-servicio" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Servicio de interés <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="ldf-servicio"
-            type="text"
-            placeholder="Ej: Formulación de proyecto Innovasuyu"
-            {...register('servicio_interes')}
-            className={inputClass(!!errors.servicio_interes)}
-          />
-          {errors.servicio_interes && (
-            <p className="text-red-500 text-xs">{errors.servicio_interes.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="ldf-comentarios" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Comentarios
-          </label>
-          <textarea
-            id="ldf-comentarios"
-            rows={3}
-            placeholder="Notas internas del lead..."
-            {...register('comentarios')}
-            className={`${inputClass(!!errors.comentarios)} resize-none`}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="ldf-desafio" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Desafío u oportunidad
-          </label>
-          <textarea
-            id="ldf-desafio"
-            rows={3}
-            placeholder="Problema concreto o necesidad comercial detectada..."
-            {...register('desafio_oportunidad')}
-            className={`${inputClass(!!errors.desafio_oportunidad)} resize-none`}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="ldf-notas-contacto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Notas de contacto
-          </label>
-          <textarea
-            id="ldf-notas-contacto"
-            rows={3}
-            placeholder="Resumen de reuniones, correos o contexto previo..."
-            {...register('notas_contacto')}
-            className={`${inputClass(!!errors.notas_contacto)} resize-none`}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label htmlFor="ldf-encargado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Encargado <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="ldf-encargado"
-              {...register('id_encargado', {
-                setValueAs: (value) => value === '' ? 0 : Number(value),
-              })}
-              className={`${inputClass(!!errors.id_encargado)} cursor-pointer`}
-            >
-              <option value="">Seleccionar Encargado</option>
-              {responsablesDisponibles.map((r) => (
-                <option key={r.id} value={r.id}>{r.nombre}</option>
-              ))}
-            </select>
-            {errors.id_encargado && (
-              <p className="text-red-500 text-xs">{errors.id_encargado.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="ldf-encargado-correo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Correo del encargado
-            </label>
-            <input
-              id="ldf-encargado-correo"
-              type="email"
-              placeholder="Se completa al seleccionar encargado"
-              readOnly
-              aria-readonly="true"
-              {...register('encargado_correo')}
-              className={`${inputClass(!!errors.encargado_correo)} bg-gray-50`}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label htmlFor="ldf-canal" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Canal de captación
-            </label>
-            <select
-              id="ldf-canal"
-              value={valorSelectorCanal}
-              onChange={(event) => {
-                const value = event.target.value
-
-                if (value === CANAL_CAPTACION_OTRO) {
-                  setCanalOtroActivo(true)
-                  if (!canalCaptacion || canalCaptacionEsOpcion) {
-                    setValue('canal_captacion', '', {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
-                  }
-                  return
-                }
-
-                setCanalOtroActivo(false)
-                setValue('canal_captacion', value, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                })
-              }}
-              className={`${inputClass(!!errors.canal_captacion)} cursor-pointer`}
-            >
-              <option value="">Seleccionar canal...</option>
-              {CANALES_CAPTACION.map((canal) => (
-                <option key={canal} value={canal}>
-                  {canal}
-                </option>
-              ))}
-              <option value={CANAL_CAPTACION_OTRO}>Otro</option>
-            </select>
-            {mostrarCanalOtro && (
+            <div className="space-y-1.5">
+              <label htmlFor="ldf-servicio" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Servicio de interés <span className="text-red-500">*</span>
+              </label>
               <input
-                id="ldf-canal-otro"
+                id="ldf-servicio"
                 type="text"
-                placeholder="Especifica el canal de captación..."
-                {...register('canal_captacion')}
-                className={inputClass(!!errors.canal_captacion)}
+                placeholder="Ej: Formulación de proyecto Innovasuyu"
+                {...register('servicio_interes')}
+                className={inputClass(!!errors.servicio_interes)}
               />
-            )}
-            {errors.canal_captacion && (
-              <p className="text-red-500 text-xs">{errors.canal_captacion.message}</p>
-            )}
+              {errors.servicio_interes && (
+                <p className="text-red-500 text-xs">{errors.servicio_interes.message}</p>
+              )}
+            </div>
+
+            {!estadoEditable && <input type="hidden" {...register('estado')} />}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Estado del pipeline
+                </label>
+                {estadoEditable ? (
+                  <select
+                    {...register('estado')}
+                    className={`${inputClass(!!errors.estado)} cursor-pointer`}
+                  >
+                    {Object.values(LeadState).map((estado) => (
+                      <option key={estado} value={estado}>{estado}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="w-full px-4 py-2.5 rounded-xl border border-gray-100
+                    bg-gray-50 text-sm text-gray-500">
+                    {estadoActual}
+                  </div>
+                )}
+                {errors.estado && (
+                  <p className="text-red-500 text-xs">{errors.estado.message}</p>
+                )}
+                <p className="text-xs text-gray-400">
+                  {estadoEditable
+                    ? 'Valida las cotizaciones asociadas al lead.'
+                    : esEdicion
+                      ? 'Gestión desde el pipeline.'
+                      : 'Todo lead nuevo inicia en prospecto.'
+                  }
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Fecha de creación
+                </label>
+                <input
+                  type="text"
+                  value={new Date().toISOString().split('T')[0]}
+                  disabled
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-100
+                    bg-gray-50 text-sm text-gray-400 cursor-not-allowed"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label htmlFor="ldf-canal" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  <Radio size={12} className="text-gray-400" />
+                  Canal de captación
+                </label>
+                <select
+                  id="ldf-canal"
+                  value={valorSelectorCanal}
+                  onChange={(event) => {
+                    const value = event.target.value
+                    if (value === CANAL_CAPTACION_OTRO) {
+                      setCanalOtroActivo(true)
+                      if (!canalCaptacion || canalCaptacionEsOpcion) {
+                        setValue('canal_captacion', '', { shouldDirty: true, shouldValidate: true })
+                      }
+                      return
+                    }
+                    setCanalOtroActivo(false)
+                    setValue('canal_captacion', value, { shouldDirty: true, shouldValidate: true })
+                  }}
+                  className={`${inputClass(!!errors.canal_captacion)} cursor-pointer`}
+                >
+                  <option value="">Seleccionar canal...</option>
+                  {CANALES_CAPTACION.map((canal) => (
+                    <option key={canal} value={canal}>{canal}</option>
+                  ))}
+                  <option value={CANAL_CAPTACION_OTRO}>Otro</option>
+                </select>
+                {mostrarCanalOtro && (
+                  <input
+                    id="ldf-canal-otro"
+                    type="text"
+                    placeholder="Especifica el canal..."
+                    {...register('canal_captacion')}
+                    className={inputClass(!!errors.canal_captacion)}
+                  />
+                )}
+                {errors.canal_captacion && (
+                  <p className="text-red-500 text-xs">{errors.canal_captacion.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="ldf-fecha-cierre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Fecha de cierre estimada
+                </label>
+                <input
+                  id="ldf-fecha-cierre"
+                  type="date"
+                  min={esEdicion ? undefined : minFechaCierre}
+                  {...register('fecha_cierre')}
+                  className={inputClass(!!errors.fecha_cierre)}
+                />
+                {errors.fecha_cierre && (
+                  <p className="text-red-500 text-xs">{errors.fecha_cierre.message}</p>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label htmlFor="ldf-fecha-cierre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Fecha de cierre estimada
-            </label>
-            <input
-              id="ldf-fecha-cierre"
-              type="date"
-              min={esEdicion ? undefined : minFechaCierre}
-              {...register('fecha_cierre')}
-              className={inputClass(!!errors.fecha_cierre)}
-            />
-            {errors.fecha_cierre && (
-              <p className="text-red-500 text-xs">
-                {errors.fecha_cierre.message}
-              </p>
-            )}
+          {/* Sección: Notas y contexto */}
+          <div className="space-y-4">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
+              <MessageSquare size={11} className="text-gray-400" />
+              Notas y contexto
+            </p>
+
+            <div className="space-y-1.5">
+              <label htmlFor="ldf-comentarios" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Comentarios
+              </label>
+              <textarea
+                id="ldf-comentarios"
+                rows={2}
+                placeholder="Notas internas del lead..."
+                {...register('comentarios')}
+                className={`${inputClass(!!errors.comentarios)} resize-none`}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="ldf-desafio" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Desafío u oportunidad
+              </label>
+              <textarea
+                id="ldf-desafio"
+                rows={2}
+                placeholder="Problema concreto o necesidad comercial detectada..."
+                {...register('desafio_oportunidad')}
+                className={`${inputClass(!!errors.desafio_oportunidad)} resize-none`}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="ldf-notas-contacto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Notas de contacto
+              </label>
+              <textarea
+                id="ldf-notas-contacto"
+                rows={2}
+                placeholder="Resumen de reuniones, correos o contexto previo..."
+                {...register('notas_contacto')}
+                className={`${inputClass(!!errors.notas_contacto)} resize-none`}
+              />
+            </div>
           </div>
-        </div>
 
-        {(errorLocal || error) && (
-          <div className="bg-red-50 border border-red-200 text-red-700
-            text-sm rounded-xl px-4 py-3">
-            {errorLocal ?? error}
+          {/* Sección: Responsable */}
+          <div className="space-y-4">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
+              <User size={11} className="text-gray-400" />
+              Responsable
+            </p>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label htmlFor="ldf-encargado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Encargado <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="ldf-encargado"
+                  {...register('id_encargado', {
+                    setValueAs: (value) => value === '' ? 0 : Number(value),
+                  })}
+                  className={`${inputClass(!!errors.id_encargado)} cursor-pointer`}
+                >
+                  <option value="">Seleccionar encargado</option>
+                  {responsablesDisponibles.map((r) => (
+                    <option key={r.id} value={r.id}>{r.nombre}</option>
+                  ))}
+                </select>
+                {errors.id_encargado && (
+                  <p className="text-red-500 text-xs">{errors.id_encargado.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="ldf-encargado-correo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Correo del encargado
+                </label>
+                <input
+                  id="ldf-encargado-correo"
+                  type="email"
+                  placeholder="Se completa automáticamente"
+                  readOnly
+                  aria-readonly="true"
+                  {...register('encargado_correo')}
+                  className={`${inputClass(!!errors.encargado_correo)} bg-gray-50 text-gray-500`}
+                />
+              </div>
+            </div>
           </div>
-        )}
 
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-          <button
-            type="button"
-            onClick={() => router.push(ROUTES.pipeline)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm
-              text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            Cancelar
-          </button>
+          {(errorLocal || error) && (
+            <div className="bg-red-50 border border-red-200 text-red-700
+              text-sm rounded-xl px-4 py-3">
+              {errorLocal ?? error}
+            </div>
+          )}
 
-          <button
-            type="button"
-            onClick={handleSubmit(handleValidSubmit)}
-            disabled={isLoading}
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700
-              disabled:bg-emerald-400 disabled:cursor-not-allowed text-white
-              font-semibold py-2.5 px-6 rounded-xl text-sm transition-colors"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Guardando...
-              </>
-            ) : (
-              <>
-                <Save size={16} />
-                {esEdicion ? 'Guardar cambios' : 'Guardar lead'}
-              </>
-            )}
-          </button>
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => router.push(ROUTES.pipeline)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm
+                text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <ArrowLeft size={16} />
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSubmit(handleValidSubmit)}
+              disabled={isLoading}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700
+                disabled:bg-emerald-400 disabled:cursor-not-allowed text-white
+                font-semibold py-2.5 px-6 rounded-xl text-sm transition-colors"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <Save size={16} />
+                  {esEdicion ? 'Guardar cambios' : 'Guardar lead'}
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

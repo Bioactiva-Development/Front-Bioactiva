@@ -49,19 +49,19 @@ export function ContactoFiltros({
   const hayFiltrosActivos = filtros.search || filtros.idOrganizacion
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Buscador */}
       <div className="relative">
         <Search
-          size={16}
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          size={15}
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
         />
         <input
           type="text"
           value={searchLocal}
           onChange={(e) => setSearchLocal(e.target.value)}
           placeholder="Buscar por nombre, email, cargo, organización..."
-          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200
+          className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200
             bg-white text-gray-900 text-sm outline-none focus:border-emerald-400
             placeholder:text-gray-400 transition-colors"
         />
