@@ -19,6 +19,7 @@ export function LoginForm() {
     const sessionExpired                    = searchParams.get('expired') !== null
     const [showPassword, setShowPassword]   = useState(false)
     const [captchaToken, setCaptchaToken]   = useState<string | null>(null)
+    const [captchaError, setCaptchaError]   = useState<string | null>(null)
     const recaptchaRef                      = useRef<ReCAPTCHA>(null)
 
     const {
@@ -30,8 +31,18 @@ export function LoginForm() {
     })
 
     const onSubmit = async (data: LoginFormValues) => {
-        await login(data, captchaToken)
-        if (error) {
+        // El token de reCAPTCHA es de un solo uso y caduca (~2 min). Validamos que
+        // exista antes de enviar el request; si no, no llamamos al backend.
+        if (!captchaToken) {
+            setCaptchaError('Confirma que no eres un robot.')
+            return
+        }
+        setCaptchaError(null)
+
+        const ok = await login(data, captchaToken)
+        // SIEMPRE reseteamos el widget tras un intento fallido: el token ya fue
+        // consumido y el backend rechazará un reintento con el mismo token.
+        if (!ok) {
             recaptchaRef.current?.reset()
             setCaptchaToken(null)
         }
@@ -128,13 +139,22 @@ export function LoginForm() {
                             )}
                         </div>
 
-                        <div className="flex justify-center">
-                            <ReCAPTCHA
-                                ref={recaptchaRef}
-                                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
-                                onChange={(token) => setCaptchaToken(token)}
-                                onExpired={() => setCaptchaToken(null)}
-                            />
+                        <div className="space-y-1.5">
+                            <div className="flex justify-center">
+                                <ReCAPTCHA
+                                    ref={recaptchaRef}
+                                    sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                                    onChange={(token) => {
+                                        setCaptchaToken(token)
+                                        if (token) setCaptchaError(null)
+                                    }}
+                                    onExpired={() => setCaptchaToken(null)}
+                                    onErrored={() => setCaptchaToken(null)}
+                                />
+                            </div>
+                            {captchaError && (
+                                <p className="text-red-500 text-xs text-center">{captchaError}</p>
+                            )}
                         </div>
 
                         <button

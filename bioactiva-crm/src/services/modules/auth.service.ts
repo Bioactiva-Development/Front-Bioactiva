@@ -40,11 +40,16 @@ const isAppError = (e: unknown): e is AppError =>
     typeof e === 'object' && e !== null
 
 export const authService = {
-    login: async (data: LoginRequest, _captchaToken?: string | null): Promise<LoginResponse> => {
+    login: async (data: LoginRequest, captchaToken?: string | null): Promise<LoginResponse> => {
         if (USE_MOCK) return mockLogin(data)
+        // El backend valida el token de reCAPTCHA v2 (checkbox) contra Google
+        // reCAPTCHA Enterprise. El token viaja en el header `x-recaptcha-token`,
+        // no en el body. Si QA tiene RECAPTCHA_ENABLED=false el backend lo ignora,
+        // pero igual lo enviamos siempre que exista.
         const response = await apiClient.post<LoginResponse>(
             ENDPOINTS.auth.login,
             data,
+            captchaToken ? { headers: { 'x-recaptcha-token': captchaToken } } : undefined,
         )
         return response.data
     },

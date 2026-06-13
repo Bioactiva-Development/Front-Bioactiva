@@ -51,7 +51,7 @@ export function useAuth() {
         setSuccess(null)
     }, [])
 
-    const login = async (data: LoginFormValues, captchaToken?: string | null) => {
+    const login = async (data: LoginFormValues, captchaToken?: string | null): Promise<boolean> => {
         try {
             resetMessages()
             setIsLoading(true)
@@ -78,11 +78,15 @@ export function useAuth() {
 
             setSession(accessToken, usuarioData, accessTokenExpiresIn)
             router.push(ROUTES.dashboard)
+            return true
         } catch (err: unknown) {
             if (globalThis.window !== undefined) {
                 localStorage.removeItem(TOKEN_KEY)
             }
+            // El backend responde 401 con "Token de reCAPTCHA requerido" o
+            // "Verificación de reCAPTCHA fallida"; extractMessage lo muestra tal cual.
             setError(extractMessage(err, 'Error al iniciar sesión. Intente nuevamente.'))
+            return false
         } finally {
             setIsLoading(false)
         }
