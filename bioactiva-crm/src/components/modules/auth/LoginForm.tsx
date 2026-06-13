@@ -31,10 +31,10 @@ export function LoginForm() {
 
     const onSubmit = async (data: LoginFormValues) => {
         await login(data, captchaToken)
-        if (error) {
-            recaptchaRef.current?.reset()
-            setCaptchaToken(null)
-        }
+        // Siempre reset: en éxito el redirect lo descarta; en fallo, el usuario
+        // necesita resolver el captcha de nuevo antes del siguiente intento.
+        recaptchaRef.current?.reset()
+        setCaptchaToken(null)
     }
 
     return (
