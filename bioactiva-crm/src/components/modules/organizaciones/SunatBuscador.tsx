@@ -36,7 +36,7 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
   }
 
   const handleBuscarNombre = async () => {
-    if (inputNombre.trim().length < 3) return
+    if (inputNombre.trim().length < 5) return
     await consultarPorNombre(inputNombre.trim())
   }
 
@@ -246,6 +246,7 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
                 para buscar coincidencias en SUNAT.
               </p>
 
+              <div className="space-y-1.5">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -253,13 +254,16 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
                   onChange={(e) => setInputNombre(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleBuscarNombre()}
                   placeholder="Ej: Altomayo, Backus..."
-                  className="flex-1 px-4 py-3 rounded-xl border-2 border-emerald-200
-                    bg-white text-gray-900 text-sm outline-none focus:border-emerald-400
-                    transition-colors placeholder:text-gray-400"
+                  className={`flex-1 px-4 py-3 rounded-xl border-2 bg-white text-gray-900
+                    text-sm outline-none transition-colors placeholder:text-gray-400
+                    ${inputNombre.length > 0 && inputNombre.trim().length < 5
+                      ? 'border-red-400 focus:border-red-500 text-red-700'
+                      : 'border-emerald-200 focus:border-emerald-400'
+                    }`}
                 />
                 <button
                   onClick={handleBuscarNombre}
-                  disabled={inputNombre.trim().length < 3 || loadingNombre}
+                  disabled={inputNombre.trim().length < 5 || loadingNombre}
                   className="w-12 h-12 rounded-xl bg-emerald-50 hover:bg-emerald-100
                     disabled:opacity-40 disabled:cursor-not-allowed
                     flex items-center justify-center text-emerald-600 transition-colors"
@@ -269,6 +273,12 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
                     : <Search size={18} />
                   }
                 </button>
+              </div>
+              {inputNombre.length > 0 && inputNombre.trim().length < 5 && (
+                <p className="text-xs text-red-500 px-1">
+                  Deben haber mínimo 5 caracteres.
+                </p>
+              )}
               </div>
 
               {resultadosNombre.length > 0 && (
@@ -339,7 +349,7 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
                 <p className="text-xs text-gray-400 mt-1 max-w-xs">
                   {tab === 'ruc'
                     ? 'Busca por un RUC válido de 11 dígitos para ver la ficha SUNAT completa con todos sus datos registrales.'
-                    : 'Ingresa al menos 3 caracteres para buscar coincidencias.'
+                    : 'Ingresa al menos 5 caracteres para buscar coincidencias.'
                   }
                 </p>
               </div>
