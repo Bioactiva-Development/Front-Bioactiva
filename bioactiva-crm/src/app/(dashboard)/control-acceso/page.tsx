@@ -449,27 +449,29 @@ export default function ControlAccesoPage() {
                         </div>
                     )}
 
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-between mt-4">
+                    {totalInvitaciones > 0 && (
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                             <p className="text-sm text-gray-400">
-                                {totalInvitaciones} invitación{totalInvitaciones === 1 ? '' : 'es'} · Página {page} de {totalPages}
+                                Mostrando {((page - 1) * LIMIT) + 1}–{Math.min(page * LIMIT, totalInvitaciones)} de {totalInvitaciones} invitación{totalInvitaciones === 1 ? '' : 'es'}
                             </p>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                    disabled={page === 1}
-                                    className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronLeft size={16} />
-                                </button>
-                                <button
-                                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                                    disabled={page === totalPages}
-                                    className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronRight size={16} />
-                                </button>
-                            </div>
+                            {totalPages > 1 && (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                        disabled={page === 1}
+                                        className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                                        disabled={page === totalPages}
+                                        className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronRight size={16} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
