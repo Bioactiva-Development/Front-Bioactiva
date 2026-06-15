@@ -40,6 +40,11 @@ describe('modules/pipeline/LeadCard', () => {
     expect(screen.getByText('Carlos López')).toBeInTheDocument()
   })
 
+  it('uses a fixed height for every pipeline card', () => {
+    render(<LeadCard lead={baseLead} onClick={jest.fn()} />)
+    expect(screen.getByLabelText('Lead - Altomayo')).toHaveClass('h-56')
+  })
+
   it.each([
     ['ROJO', 'Vencida'],
     ['AMARILLO', 'Por vencer'],
@@ -77,12 +82,16 @@ describe('modules/pipeline/LeadCard', () => {
     ['Editar lead', 'editar'],
     ['Registrar actividad', 'actividad'],
     ['Crear cotización', 'cotizacion'],
-    ['Programar seguimiento', 'seguimiento'],
   ] as const)('emits the "%s" quick action', async (title, action) => {
     const onQuickAction = jest.fn()
     render(<LeadCard lead={baseLead} onClick={jest.fn()} onQuickAction={onQuickAction} />)
     await userEvent.click(screen.getByTitle(title))
     expect(onQuickAction).toHaveBeenCalledWith(baseLead, action)
+  })
+
+  it('does not render the programar seguimiento quick action', () => {
+    render(<LeadCard lead={baseLead} onClick={jest.fn()} onQuickAction={jest.fn()} />)
+    expect(screen.queryByTitle('Programar seguimiento')).not.toBeInTheDocument()
   })
 
   it('renders in overlay mode', () => {

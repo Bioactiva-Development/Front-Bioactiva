@@ -140,7 +140,7 @@ export function LeadFiltros({
 
       <button
         onClick={() => setAbierto(!abierto)}
-        className="w-full flex items-center justify-between px-4 py-3 cursor-pointer"
+        className="w-full flex items-center justify-between px-4 py-2.5 cursor-pointer"
       >
         <div className="flex items-center gap-2">
           <Filter size={14} className="text-gray-400" />
@@ -163,9 +163,9 @@ export function LeadFiltros({
       </button>
 
       {abierto && (
-        <div className="px-4 pb-4 space-y-3 border-t border-gray-100">
+        <div className="px-4 pb-3 space-y-2.5 border-t border-gray-100">
 
-          <div className="pt-3">
+          <div className="pt-2.5">
             <div className="relative">
               <Search
                 size={14}
@@ -179,7 +179,7 @@ export function LeadFiltros({
                   search: e.target.value || undefined,
                 })}
                 placeholder="Buscar por código, organización, contacto, servicio o responsable..."
-                className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-100
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-gray-100
                   bg-white text-sm text-gray-700 outline-none focus:border-emerald-300
                   placeholder:text-gray-300"
               />
@@ -195,7 +195,7 @@ export function LeadFiltros({
                   ...filtrosBasicos,
                   estado: e.target.value ? e.target.value as LeadState : undefined,
                 })}
-                className="w-full px-3 py-2 rounded-lg border border-gray-100
+                className="w-full px-3 py-1.5 rounded-lg border border-gray-100
                   bg-white text-sm text-gray-600 outline-none focus:border-emerald-300
                   cursor-pointer"
               >
@@ -214,7 +214,7 @@ export function LeadFiltros({
                   ...filtrosBasicos,
                   id_encargado: e.target.value ? Number(e.target.value) : undefined,
                 })}
-                className="w-full px-3 py-2 rounded-lg border border-gray-100
+                className="w-full px-3 py-1.5 rounded-lg border border-gray-100
                   bg-white text-sm text-gray-600 outline-none focus:border-emerald-300
                   cursor-pointer"
               >
@@ -236,7 +236,7 @@ export function LeadFiltros({
                   ...filtrosBasicos,
                   id_org: e.target.value || undefined,
                 })}
-                className="w-full px-3 py-2 rounded-lg border border-gray-100
+                className="w-full px-3 py-1.5 rounded-lg border border-gray-100
                   bg-white text-sm text-gray-600 outline-none focus:border-emerald-300
                   cursor-pointer"
               >
@@ -263,7 +263,7 @@ export function LeadFiltros({
                   setFechaDesde(v)
                   aplicarFechas(v, fechaHasta)
                 }}
-                className="w-full px-3 py-2 rounded-lg border border-gray-100
+                className="w-full px-3 py-1.5 rounded-lg border border-gray-100
                   bg-white text-sm text-gray-600 outline-none focus:border-emerald-300
                   cursor-pointer"
               />
@@ -282,7 +282,7 @@ export function LeadFiltros({
                   setFechaHasta(v)
                   aplicarFechas(fechaDesde, v)
                 }}
-                className={`w-full px-3 py-2 rounded-lg border bg-white text-sm
+                className={`w-full px-3 py-1.5 rounded-lg border bg-white text-sm
                   text-gray-600 outline-none cursor-pointer
                   ${rangoInvalido ? 'border-red-400' : 'border-gray-100 focus:border-emerald-300'}`}
               />
