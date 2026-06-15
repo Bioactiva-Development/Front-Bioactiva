@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -10,12 +10,18 @@ import {
 } from 'lucide-react'
 
 import { usePerfil } from '@/hooks/perfil/usePerfil'
+import { PasswordRequirements } from '@/components/modules/auth/PasswordRequirements'
 import { RolUsuario, EstadoUsuario } from '@/types/enums'
 const cambiarPasswordSchema = z.object({
+    currentPassword: z.string().min(1, 'Ingrese su contraseña actual'),
     newPassword: z
         .string()
-        .min(8, 'Mínimo 8 caracteres')
-        .max(72, 'Máximo 72 caracteres'),
+        .min(8, 'La contraseña debe tener al menos 8 caracteres')
+        .max(72, 'Máximo 72 caracteres')
+        .regex(/[A-Z]/, 'Debe contener al menos una letra mayúscula')
+        .regex(/[a-z]/, 'Debe contener al menos una letra minúscula')
+        .regex(/\d/, 'Debe contener al menos un número')
+        .regex(/[^A-Za-z0-9]/, 'Debe contener al menos un carácter especial'),
     confirmPassword: z.string(),
 }).refine((d) => d.newPassword === d.confirmPassword, {
     message: 'Las contraseñas no coinciden',
@@ -92,8 +98,9 @@ export default function PerfilPage() {
         desconectarMicrosoft,
     } = usePerfil()
 
-    const [showPassword, setShowPassword] = useState(false)
-    const [showConfirm, setShowConfirm] = useState(false)
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+    const [showPassword, setShowPassword]               = useState(false)
+    const [showConfirm, setShowConfirm]                 = useState(false)
 
     const perfilForm = useForm<EditarPerfilFormValues>({
         resolver: zodResolver(editarPerfilSchema),
@@ -102,6 +109,8 @@ export default function PerfilPage() {
     const passwordForm = useForm<CambiarPasswordValues>({
         resolver: zodResolver(cambiarPasswordSchema),
     })
+
+    const newPasswordValue = useWatch({ control: passwordForm.control, name: 'newPassword' }) ?? ''
 
     useEffect(() => {
         if (usuario) {
@@ -117,7 +126,7 @@ export default function PerfilPage() {
     }
 
     const onCambiarPassword = async (data: CambiarPasswordValues) => {
-        const ok = await cambiarPassword('', data.newPassword)
+        const ok = await cambiarPassword(data.currentPassword, data.newPassword)
         if (ok) passwordForm.reset()
     }
 
@@ -273,6 +282,29 @@ export default function PerfilPage() {
                     )}
 
                     <form onSubmit={passwordForm.handleSubmit(onCambiarPassword)} className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label htmlFor="prf-current-password" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                Contraseña actual
+                            </label>
+                            <div className="relative">
+                                <input
+                                    id="prf-current-password"
+                                    type={showCurrentPassword ? 'text' : 'password'}
+                                    placeholder="Ingresa tu contraseña actual"
+                                    autoComplete="current-password"
+                                    {...passwordForm.register('currentPassword')}
+                                    className={`${inputClass(!!passwordForm.formState.errors.currentPassword)} pr-11`}
+                                />
+                                <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                                    {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
+                            {passwordForm.formState.errors.currentPassword && (
+                                <p className="text-red-500 text-xs">{passwordForm.formState.errors.currentPassword.message}</p>
+                            )}
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <label htmlFor="prf-password" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -282,7 +314,7 @@ export default function PerfilPage() {
                                     <input
                                         id="prf-password"
                                         type={showPassword ? 'text' : 'password'}
-                                        placeholder="Mínimo 8 caracteres"
+                                        placeholder="Mínimo 8 caracteres con mayús., núm. y símbolo"
                                         autoComplete="new-password"
                                         {...passwordForm.register('newPassword')}
                                         className={`${inputClass(!!passwordForm.formState.errors.newPassword)} pr-11`}
@@ -319,6 +351,8 @@ export default function PerfilPage() {
                                 )}
                             </div>
                         </div>
+
+                        <PasswordRequirements password={newPasswordValue} mode="full" />
 
                         <div className="flex justify-end">
                             <button

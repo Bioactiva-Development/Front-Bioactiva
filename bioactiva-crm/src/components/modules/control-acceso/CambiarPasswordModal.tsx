@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Lock, Eye, EyeOff } from 'lucide-react'
 import { cambiarPasswordSchema, CambiarPasswordFormValues } from '@/lib/validators/usuario.schema'
 import { UsuarioListItem } from '@/types/usuario.types'
 import { ModalShell, ModalHeader, ModalFormField, modalInputCn } from '@/components/ui'
+import { PasswordRequirements } from '@/components/modules/auth/PasswordRequirements'
 
 interface Props {
     usuario: UsuarioListItem
@@ -23,10 +24,13 @@ export function CambiarPasswordModal({ usuario, isLoading, error, onClose, onSub
     const {
         register,
         handleSubmit,
+        control,
         formState: { errors },
     } = useForm<CambiarPasswordFormValues>({
         resolver: zodResolver(cambiarPasswordSchema),
     })
+
+    const passwordValue = useWatch({ control, name: 'password' }) ?? ''
 
     const handleFormSubmit = async (data: CambiarPasswordFormValues) => {
         const ok = await onSubmit(usuario.id, data.password)
@@ -56,7 +60,7 @@ export function CambiarPasswordModal({ usuario, isLoading, error, onClose, onSub
                     <div className="relative">
                         <input
                             type={showPassword ? 'text' : 'password'}
-                            placeholder="Mínimo 6 caracteres"
+                            placeholder="Mínimo 8 caracteres"
                             {...register('password')}
                             className={`${modalInputCn(!!errors.password)} pr-11`}
                         />
@@ -69,6 +73,8 @@ export function CambiarPasswordModal({ usuario, isLoading, error, onClose, onSub
                         </button>
                     </div>
                 </ModalFormField>
+
+                <PasswordRequirements password={passwordValue} mode="full" />
 
                 <ModalFormField label="Confirmar contraseña" error={errors.confirmPassword?.message}>
                     <div className="relative">

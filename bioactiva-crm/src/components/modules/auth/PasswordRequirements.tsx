@@ -8,8 +8,9 @@ const REQUIREMENTS_SIMPLE = [
 ]
 
 const REQUIREMENTS_FULL = [
-    { label: 'Mínimo 8 caracteres',          test: (p: string) => p.length >= 8 },
+    { label: 'Mínimo 8 caracteres',           test: (p: string) => p.length >= 8 },
     { label: 'Al menos una letra mayúscula',  test: (p: string) => /[A-Z]/.test(p) },
+    { label: 'Al menos una letra minúscula',  test: (p: string) => /[a-z]/.test(p) },
     { label: 'Al menos un número',            test: (p: string) => /\d/.test(p) },
     { label: 'Al menos un carácter especial', test: (p: string) => /[^A-Za-z0-9]/.test(p) },
 ]
