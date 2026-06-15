@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, TrendingUp, CheckCircle, Clock, XCircle } from 'lucide-react'
-import { useCotizaciones, useCotizacionKpis } from '@/hooks/cotizaciones/useCotizaciones'
+import { Plus } from 'lucide-react'
+import { useCotizaciones } from '@/hooks/cotizaciones/useCotizaciones'
 import { CotizacionFiltros } from '@/components/modules/cotizaciones/CotizacionFiltros'
 import { CotizacionCard } from '@/components/modules/cotizaciones/CotizacionCard'
 import { CotizacionFiltros as FiltrosType } from '@/types/cotizacion.types'
@@ -19,7 +19,6 @@ export default function CotizacionesPage() {
   const [filtros, setFiltros] = useState<FiltrosType>(FILTROS_INICIALES)
 
   const { data, isLoading, isError }  = useCotizaciones(filtros)
-  const { data: kpis }                = useCotizacionKpis()
 
   const cotizaciones = data?.data  ?? []
   const total        = data?.total ?? 0
@@ -32,9 +31,6 @@ export default function CotizacionesPage() {
   const handlePagina = (pagina: number) => {
     setFiltros((prev) => ({ ...prev, page: pagina }))
   }
-
-  const formatMonto = (monto: number) =>
-    `S/ ${monto.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
 
   return (
     <div className="space-y-3">
@@ -54,67 +50,6 @@ export default function CotizacionesPage() {
           Nueva Cotización
         </button>
       </div>
-
-      {kpis && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5
-            hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-default
-            border-l-4 border-l-emerald-500">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                Total activo
-              </p>
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                <TrendingUp size={15} className="text-emerald-500" />
-              </div>
-            </div>
-            <p className="text-2xl font-extrabold tabular-nums text-emerald-600">
-              {formatMonto(kpis.totalActivo)}
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5
-            hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-default">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                Aceptadas
-              </p>
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                <CheckCircle size={15} className="text-emerald-500" />
-              </div>
-            </div>
-            <p className="text-2xl font-extrabold tabular-nums text-gray-800">{kpis.aceptadas}</p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5
-            hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-default">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                Enviadas
-              </p>
-              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                <Clock size={15} className="text-blue-500" />
-              </div>
-            </div>
-            <p className="text-2xl font-extrabold tabular-nums text-blue-600">{kpis.enviadas}</p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5
-            hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-default">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                Rechazadas
-              </p>
-              <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
-                <XCircle size={15} className="text-red-500" />
-              </div>
-            </div>
-            <p className="text-2xl font-extrabold tabular-nums text-red-600">
-              {kpis.rechazadas}
-            </p>
-          </div>
-        </div>
-      )}
 
       <CotizacionFiltros
         filtros={filtros}
