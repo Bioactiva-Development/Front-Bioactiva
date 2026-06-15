@@ -19,10 +19,7 @@ import { useAuthStore } from '@/store'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { EstadoUsuario, LeadState } from '@/types/enums'
 import { UsuarioListItem } from '@/types/usuario.types'
-import {
-  getLocalTodayDateInputValue,
-  toLeadDateInputValue,
-} from '@/lib/utils/lead-date.utils'
+import { toLeadDateInputValue } from '@/lib/utils/lead-date.utils'
 
 interface LeadFormProps {
   lead?:      Lead
@@ -96,7 +93,6 @@ export function LeadForm({
   const [errorLocal, setErrorLocal] = useState<string | null>(null)
   const [responsables, setResponsables] = useState<ResponsableOption[]>([])
   const [canalOtroActivo, setCanalOtroActivo] = useState(false)
-  const minFechaCierre = useMemo(() => getLocalTodayDateInputValue(), [])
 
   const {
     register,
@@ -442,7 +438,7 @@ export function LeadForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={esEdicion ? 'grid grid-cols-2 gap-4' : 'space-y-4'}>
               <div className="space-y-1.5">
                 <label htmlFor="ldf-canal" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   <Radio size={12} className="text-gray-400" />
@@ -485,21 +481,22 @@ export function LeadForm({
                 )}
               </div>
 
-              <div className="space-y-1.5">
-                <label htmlFor="ldf-fecha-cierre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Fecha de cierre estimada
-                </label>
-                <input
-                  id="ldf-fecha-cierre"
-                  type="date"
-                  min={esEdicion ? undefined : minFechaCierre}
-                  {...register('fecha_cierre')}
-                  className={inputClass(!!errors.fecha_cierre)}
-                />
-                {errors.fecha_cierre && (
-                  <p className="text-red-500 text-xs">{errors.fecha_cierre.message}</p>
-                )}
-              </div>
+              {esEdicion && (
+                <div className="space-y-1.5">
+                  <label htmlFor="ldf-fecha-cierre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Fecha de cierre estimada
+                  </label>
+                  <input
+                    id="ldf-fecha-cierre"
+                    type="date"
+                    {...register('fecha_cierre')}
+                    className={inputClass(!!errors.fecha_cierre)}
+                  />
+                  {errors.fecha_cierre && (
+                    <p className="text-red-500 text-xs">{errors.fecha_cierre.message}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
