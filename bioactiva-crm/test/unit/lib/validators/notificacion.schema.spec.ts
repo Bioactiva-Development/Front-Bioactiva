@@ -1,153 +1,76 @@
-import { recordatorioSchema, seguimientoSchema } from '@/lib/validators/notificacion.schema'
+import {
+  recordatorioSchema,
+  seguimientoSchema,
+} from '@/lib/validators/notificacion.schema'
 
-describe('validators/notificacion.schema', () => {
-  describe('recordatorioSchema', () => {
-    it('accepts valid recordatorio data', () => {
-      const result = recordatorioSchema.parse({
-        id_lead: 10,
-        id_actividad: 5,
-        id_plantilla: 2,
-        fecha_envio: '2026-06-15',
-        hora_envio: '10:00',
-        asunto: 'Recordatorio de seguimiento',
-        cuerpo: 'Estimado, recordatorio para la actividad pendiente.',
-      })
-      expect(result.id_lead).toBe(10)
-      expect(result.asunto).toBe('Recordatorio de seguimiento')
+describe('notificacion schemas', () => {
+  it('accepts a reminder with 1 to 120 minutes', () => {
+    const result = recordatorioSchema.parse({
+      idLead: 10,
+      minutosAntes: 30,
+      idTemplate: 0,
+      asunto: 'Recordatorio',
+      cuerpo: 'Cuerpo',
     })
-
-    it('rejects missing lead', () => {
-      expect(() =>
-        recordatorioSchema.parse({
-          id_actividad: 5,
-          id_plantilla: 2,
-          fecha_envio: '2026-06-15',
-          hora_envio: '10:00',
-          asunto: 'Test',
-          cuerpo: 'Test body',
-        })
-      ).toThrow()
-    })
-
-    it('rejects id_plantilla = 0', () => {
-      expect(() =>
-        recordatorioSchema.parse({
-          id_lead: 10,
-          id_actividad: 5,
-          id_plantilla: 0,
-          fecha_envio: '2026-06-15',
-          hora_envio: '10:00',
-          asunto: 'Test',
-          cuerpo: 'Test body',
-        })
-      ).toThrow()
-    })
-
-    it('rejects empty asunto', () => {
-      expect(() =>
-        recordatorioSchema.parse({
-          id_lead: 10,
-          id_actividad: 5,
-          id_plantilla: 2,
-          fecha_envio: '2026-06-15',
-          hora_envio: '10:00',
-          asunto: '',
-          cuerpo: 'Test body',
-        })
-      ).toThrow('El asunto es obligatorio')
-    })
-
-    it('rejects empty cuerpo', () => {
-      expect(() =>
-        recordatorioSchema.parse({
-          id_lead: 10,
-          id_actividad: 5,
-          id_plantilla: 2,
-          fecha_envio: '2026-06-15',
-          hora_envio: '10:00',
-          asunto: 'Test',
-          cuerpo: '',
-        })
-      ).toThrow('El cuerpo es obligatorio')
-    })
-
-    it('rejects asunto exceeding 255 characters', () => {
-      expect(() =>
-        recordatorioSchema.parse({
-          id_lead: 10,
-          id_actividad: 5,
-          id_plantilla: 2,
-          fecha_envio: '2026-06-15',
-          hora_envio: '10:00',
-          asunto: 'X'.repeat(256),
-          cuerpo: 'Test body',
-        })
-      ).toThrow('Máximo 255 caracteres')
-    })
+    expect(result.idLead).toBe(10)
   })
 
-  describe('seguimientoSchema', () => {
-    const validData = {
-      id_lead: 10,
-      id_actividad: 5,
-      id_plantilla_interno: 2,
-      fecha_envio_interno: '2026-06-15',
-      hora_envio_interno: '10:00',
-      asunto_interno: 'Recordatorio interno',
-      cuerpo_interno: 'Cuerpo interno',
-      id_plantilla_externo: 3,
-      fecha_envio_externo: '2026-06-15',
-      hora_envio_externo: '11:00',
-      asunto_externo: 'Correo al cliente',
-      cuerpo_externo: 'Cuerpo externo',
-      correo_cliente: 'cliente@example.com',
-    }
+  it('rejects reminders outside the documented range', () => {
+    expect(() => recordatorioSchema.parse({
+      idLead: 10,
+      minutosAntes: 121,
+      idTemplate: 0,
+      asunto: 'Recordatorio',
+      cuerpo: 'Cuerpo',
+    })).toThrow('El máximo es 120 minutos')
+  })
 
-    it('accepts valid seguimiento data', () => {
-      const result = seguimientoSchema.parse(validData)
-      expect(result.id_lead).toBe(10)
-      expect(result.correo_cliente).toBe('cliente@example.com')
-    })
+  const instancia = {
+    internal: {
+      fechaEnvio: '2026-06-20T10:00',
+      idTemplate: 0,
+      asunto: 'Interno',
+      cuerpo: 'Preparar',
+    },
+    external: {
+      fechaEnvio: '2026-06-20T11:00',
+      idTemplate: 0,
+      asunto: 'Cliente',
+      cuerpo: 'Seguimiento',
+    },
+  }
 
-    it('rejects invalid email in correo_cliente', () => {
-      expect(() =>
-        seguimientoSchema.parse({
-          ...validData,
-          correo_cliente: 'invalid-email',
-        })
-      ).toThrow('Correo del cliente inválido')
+  it('accepts one to three chronological follow-up instances', () => {
+    const result = seguimientoSchema.parse({
+      idLead: 10,
+      correoCliente: 'cliente@example.com',
+      instancias: [instancia],
     })
+    expect(result.instancias).toHaveLength(1)
+  })
 
-    it('rejects empty correo_cliente', () => {
-      expect(() =>
-        seguimientoSchema.parse({
-          ...validData,
-          correo_cliente: '',
-        })
-      ).toThrow('El correo del cliente es obligatorio')
-    })
+  it('rejects an external email before its internal email', () => {
+    expect(() => seguimientoSchema.parse({
+      idLead: 10,
+      correoCliente: 'cliente@example.com',
+      instancias: [{
+        ...instancia,
+        external: { ...instancia.external, fechaEnvio: '2026-06-20T09:00' },
+      }],
+    })).toThrow('El correo al cliente debe enviarse después del correo interno')
+  })
 
-    it('rejects fecha_envio_externo before fecha_envio_interno via refine', () => {
-      expect(() =>
-        seguimientoSchema.parse({
-          ...validData,
-          fecha_envio_interno: '2026-06-15',
-          hora_envio_interno: '11:00',
-          fecha_envio_externo: '2026-06-15',
-          hora_envio_externo: '10:00',
-        })
-      ).toThrow('El correo al cliente debe programarse después del recordatorio interno')
-    })
-
-    it('accepts same day with interno before externo', () => {
-      const result = seguimientoSchema.parse({
-        ...validData,
-        fecha_envio_interno: '2026-06-15',
-        hora_envio_interno: '09:00',
-        fecha_envio_externo: '2026-06-15',
-        hora_envio_externo: '10:00',
-      })
-      expect(result.hora_envio_interno).toBe('09:00')
-    })
+  it('rejects overlapping instances', () => {
+    expect(() => seguimientoSchema.parse({
+      idLead: 10,
+      correoCliente: 'cliente@example.com',
+      instancias: [
+        instancia,
+        {
+          internal: { ...instancia.internal, fechaEnvio: '2026-06-20T10:30' },
+          external: { ...instancia.external, fechaEnvio: '2026-06-20T12:00' },
+        },
+      ],
+    })).toThrow('Cada instancia debe comenzar después del correo externo anterior')
   })
 })

@@ -93,20 +93,12 @@ export const ENDPOINTS = {
     },
 
     notificaciones: {
-        // El backend NestJS aún no expone el módulo `notifications` (marcado
-        // "Pendiente" en la doc de endpoints). Cuando lo haga, lo más probable
-        // es que use `/notifications` en inglés siguiendo la convención de
-        // `/organizations` y `/auth`. Mantenemos `/notificaciones` por ahora
-        // como contrato esperado; ajustar cuando el backend confirme.
-        list:         '/notificaciones',
-        detail:       (id: number) => `/notificaciones/${id}`,
-        cancel:       (id: number) => `/notificaciones/${id}/cancel`,
-        centro:       '/notificaciones/centro',
-        leer:         (id: number) => `/notificaciones/${id}/leer`,
-        leerTodas:    '/notificaciones/leer-todas',
-        programada:   (id: number) => `/notificaciones/programadas/${id}`,
-        recordatorio: '/notificaciones/recordatorio',
-        seguimiento:  '/notificaciones/seguimiento',
+        list:         '/notifications',
+        cancel:       (id: number) => `/notifications/${id}`,
+        recordatorio: '/notifications/reminders',
+        seguimiento:  '/notifications/follow-ups',
+        inApp:        '/notifications/in-app',
+        readInApp:    (id: number) => `/notifications/in-app/${id}/read`,
     },
 
     plantillas: {

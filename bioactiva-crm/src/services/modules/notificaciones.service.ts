@@ -2,136 +2,89 @@ import { USE_MOCK } from '@/lib/constants/config'
 import { ENDPOINTS } from '@/services/api/endpoints'
 import { apiClient } from '@/services/api/client'
 import {
-  mockGetCentro,
-  mockGetNotificaciones,
-  mockMarcarLeida,
-  mockMarcarTodasLeidas,
   mockCancelarProgramada,
-  mockCancelarPendientesPorActividad,
   mockCreateRecordatorio,
   mockCreateSeguimiento,
+  mockGetInApp,
+  mockGetProgramadas,
+  mockMarcarLeida,
 } from '@/services/mock/notificaciones.mock'
 import {
-  Notificacion,
+  CrearRecordatorioRequest,
+  CrearSeguimientoRequest,
+  FiltrosNotificacionesProgramadas,
+  NotificacionInApp,
   NotificacionProgramada,
-  CentroNotificaciones,
 } from '@/types/notificacion.types'
 
-/**
- * Servicio de notificaciones.
- *
- * NOTA: el módulo `notifications` del backend NestJS está marcado como
- * **Pendiente** en la doc oficial (no hay controlador HTTP visible aún). Hasta
- * que el backend exponga los endpoints, `getCentro` y `getAll` van a recibir
- * 404. Para no ensuciar la UI ni la consola con ese estado transitorio:
- *
- * - `getCentro` retorna un estado vacío seguro cuando recibe 404, en vez de
- *   propagar el error.
- * - El hook `useCentroNotificaciones` debe usar `retry: false` para no
- *   reintentar requests que sabemos que van a fallar mientras se implementa.
- */
-
-const isAppError404 = (err: unknown): boolean => {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    (err as { status?: number }).status === 404
-  )
-}
-
-const CENTRO_VACIO: CentroNotificaciones = {
-  programadas: [],
-  vencidas:    [],
-  sinLeer:     0,
+const toQueryParams = (filtros?: FiltrosNotificacionesProgramadas) => {
+  const params: Record<string, string | number> = {}
+  if (filtros?.estado) params.estado = filtros.estado
+  if (filtros?.idLead) params.idLead = filtros.idLead
+  if (filtros?.idResponsable) params.idResponsable = filtros.idResponsable
+  return params
 }
 
 export const notificacionesService = {
+  getProgramadas: async (
+    filtros?: FiltrosNotificacionesProgramadas
+  ): Promise<NotificacionProgramada[]> => {
+    if (USE_MOCK) return mockGetProgramadas(filtros)
 
-  getCentro: async (): Promise<CentroNotificaciones> => {
-    if (USE_MOCK) return mockGetCentro()
-    try {
-      const response = await apiClient.get<CentroNotificaciones>(
-        ENDPOINTS.notificaciones.centro,
-      )
-      return response.data
-    } catch (err) {
-      // Degradación elegante mientras el backend no exponga el módulo.
-      if (isAppError404(err)) return CENTRO_VACIO
-      throw err
-    }
-  },
-
-  getAll: async (): Promise<Notificacion[]> => {
-    if (USE_MOCK) return mockGetNotificaciones()
-    try {
-      const response = await apiClient.get<Notificacion[]>(
-        ENDPOINTS.notificaciones.list,
-      )
-      return response.data
-    } catch (err) {
-      if (isAppError404(err)) return []
-      throw err
-    }
-  },
-
-  getByLead: async (leadId: number): Promise<Notificacion[]> => {
-    const notificaciones = await notificacionesService.getAll()
-    return notificaciones.filter((notificacion) => notificacion.id_lead === leadId)
-  },
-
-  marcarLeida: async (id: number): Promise<Notificacion> => {
-    if (USE_MOCK) return mockMarcarLeida(id)
-    const response = await apiClient.patch<Notificacion>(
-      ENDPOINTS.notificaciones.leer(id),
+    const response = await apiClient.get<NotificacionProgramada[]>(
+      ENDPOINTS.notificaciones.list,
+      { params: toQueryParams(filtros) }
     )
     return response.data
   },
 
-  marcarTodasLeidas: async (): Promise<void> => {
-    if (USE_MOCK) return mockMarcarTodasLeidas()
-    await apiClient.patch(ENDPOINTS.notificaciones.leerTodas)
+  getInApp: async (): Promise<NotificacionInApp[]> => {
+    if (USE_MOCK) return mockGetInApp()
+
+    const response = await apiClient.get<NotificacionInApp[]>(
+      ENDPOINTS.notificaciones.inApp
+    )
+    return response.data
   },
 
-  cancelarProgramada: async (id: number): Promise<void> => {
+  marcarLeida: async (id: number): Promise<NotificacionInApp> => {
+    if (USE_MOCK) return mockMarcarLeida(id)
+
+    const response = await apiClient.patch<NotificacionInApp>(
+      ENDPOINTS.notificaciones.readInApp(id)
+    )
+    return response.data
+  },
+
+  cancelarProgramada: async (id: number): Promise<NotificacionProgramada> => {
     if (USE_MOCK) return mockCancelarProgramada(id)
-    await apiClient.delete(ENDPOINTS.notificaciones.programada(id))
-  },
 
-  cancelarPendientesPorActividad: async (actividadId: number): Promise<void> => {
-    if (USE_MOCK) return mockCancelarPendientesPorActividad(actividadId)
-
-    const centro = await notificacionesService.getCentro()
-    const pendientes = centro.programadas.filter(
-      (programada) =>
-        programada.id_actividad === actividadId &&
-        programada.estado === 'Programada'
+    const response = await apiClient.delete<NotificacionProgramada>(
+      ENDPOINTS.notificaciones.cancel(id)
     )
-
-    await Promise.all(
-      pendientes.map((programada) =>
-        apiClient.delete(ENDPOINTS.notificaciones.programada(programada.id))
-      )
-    )
+    return response.data
   },
 
   createRecordatorio: async (
-    data: Partial<NotificacionProgramada>,
+    data: CrearRecordatorioRequest
   ): Promise<NotificacionProgramada> => {
     if (USE_MOCK) return mockCreateRecordatorio(data)
+
     const response = await apiClient.post<NotificacionProgramada>(
       ENDPOINTS.notificaciones.recordatorio,
-      data,
+      data
     )
     return response.data
   },
 
   createSeguimiento: async (
-    data: Partial<NotificacionProgramada>,
+    data: CrearSeguimientoRequest
   ): Promise<NotificacionProgramada> => {
     if (USE_MOCK) return mockCreateSeguimiento(data)
+
     const response = await apiClient.post<NotificacionProgramada>(
       ENDPOINTS.notificaciones.seguimiento,
-      data,
+      data
     )
     return response.data
   },

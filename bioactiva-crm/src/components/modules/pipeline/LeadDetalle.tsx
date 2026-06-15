@@ -17,18 +17,14 @@ import { useActividades, useCrearActividad } from '@/hooks/pipeline/useActividad
 import { useActualizarEstadoLead } from '@/hooks/pipeline/useLeads'
 import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
 import {
-  useCentroNotificaciones,
   useCrearRecordatorio,
   useCrearSeguimiento,
-  useNotificacionesPorLead,
+  useNotificacionesInApp,
+  useNotificacionesProgramadas,
 } from '@/hooks/notificaciones/useNotificaciones'
 import { RecordatorioForm } from '@/components/modules/notificaciones/RecordatorioForm'
 import { SeguimientoForm } from '@/components/modules/notificaciones/SeguimientoForm'
 import { ActividadFormValues } from '@/lib/validators/actividad.schema'
-import {
-  RecordatorioFormValues,
-  SeguimientoFormValues,
-} from '@/lib/validators/notificacion.schema'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 import { validateLeadStateTransition } from '@/lib/utils/lead-flow.utils'
 import {
@@ -40,7 +36,10 @@ import {
   isLeadStaleWithoutProgress,
 } from '@/lib/utils/activity-flow.utils'
 import { Actividad } from '@/types/actividad.types'
-import { NotificacionProgramada } from '@/types/notificacion.types'
+import {
+  CrearRecordatorioRequest,
+  CrearSeguimientoRequest,
+} from '@/types/notificacion.types'
 
 interface LeadDetalleProps {
   lead:     Lead
@@ -150,8 +149,9 @@ export function LeadDetalle({
     useActividades(lead.id)
   const { data: cotizaciones = [], isLoading: loadingCotizaciones } =
     useCotizacionesPorLead(lead.id)
-  const { data: notificaciones = [] } = useNotificacionesPorLead(lead.id)
-  const { data: centroNotificaciones } = useCentroNotificaciones()
+  const { data: notificacionesInApp = [] } = useNotificacionesInApp()
+  const { data: notificacionesProgramadas = [] } =
+    useNotificacionesProgramadas({ idLead: lead.id })
 
   const { mutateAsync: crearActividad, isPending: creando } =
     useCrearActividad()
@@ -226,9 +226,7 @@ export function LeadDetalle({
     setErrorNotificacion(null)
   }
 
-  const handleCrearRecordatorio = async (
-    data: RecordatorioFormValues & Partial<NotificacionProgramada>
-  ) => {
+  const handleCrearRecordatorio = async (data: CrearRecordatorioRequest) => {
     try {
       setErrorNotificacion(null)
       await crearRecordatorio(data)
@@ -238,9 +236,7 @@ export function LeadDetalle({
     }
   }
 
-  const handleCrearSeguimiento = async (
-    data: SeguimientoFormValues & Partial<NotificacionProgramada>
-  ) => {
+  const handleCrearSeguimiento = async (data: CrearSeguimientoRequest) => {
     try {
       setErrorNotificacion(null)
       await crearSeguimiento(data)
@@ -273,21 +269,23 @@ export function LeadDetalle({
         titulo: cotizacion.codigo,
         detalle: `${cotizacion.nombre_servicio} - ${formatMonto(cotizacion.monto, cotizacion.tipo)}`,
       })),
-      ...notificaciones.map((notificacion) => ({
+      ...notificacionesInApp
+        .filter((notificacion) => notificacion.idLead === lead.id)
+        .map((notificacion) => ({
         id: `notificacion-${notificacion.id}`,
-        fecha: notificacion.created_at,
-        tipo: `${notificacion.tipo}`,
+        fecha: notificacion.createdAt,
+        tipo: 'Alerta',
         titulo: notificacion.titulo,
         detalle: notificacion.mensaje,
       })),
-      ...(centroNotificaciones?.programadas ?? [])
-        .filter((notificacion) => notificacion.id_lead === lead.id)
-        .map((notificacion) => ({
+      ...notificacionesProgramadas.map((notificacion) => ({
           id: `notificacion-programada-${notificacion.id}`,
-          fecha: notificacion.created_at,
+          fecha: notificacion.createdAt,
           tipo: `${notificacion.tipo} programado`,
-          titulo: notificacion.asunto,
-          detalle: `${notificacion.actividad_nombre ?? 'Actividad'} - envío ${formatFecha(notificacion.fecha_envio)}`,
+          titulo:
+            notificacion.asuntoInterno ??
+            `Seguimiento de ${notificacion.instancias?.length ?? 0} instancia(s)`,
+          detalle: `Actividad ${notificacion.idActividad} - estado ${notificacion.estado}`,
         })),
       {
         id: `lead-${lead.id}-state`,
@@ -301,7 +299,13 @@ export function LeadDetalle({
     return eventos.sort(
       (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
     )
-  }, [actividades, centroNotificaciones?.programadas, cotizaciones, lead, notificaciones])
+  }, [
+    actividades,
+    cotizaciones,
+    lead,
+    notificacionesInApp,
+    notificacionesProgramadas,
+  ])
 
   return (
     <div className="space-y-6">
@@ -613,7 +617,6 @@ export function LeadDetalle({
               {notificacionMode === 'recordatorio' ? (
                 <RecordatorioForm
                   leadIdInicial={lead.id}
-                  actividadIdInicial={actividadNotificacion.id}
                   onSubmit={handleCrearRecordatorio}
                   onCancel={cerrarProgramacion}
                   isLoading={creandoRecordatorio}
@@ -622,7 +625,6 @@ export function LeadDetalle({
               ) : (
                 <SeguimientoForm
                   leadIdInicial={lead.id}
-                  actividadIdInicial={actividadNotificacion.id}
                   onSubmit={handleCrearSeguimiento}
                   onCancel={cerrarProgramacion}
                   isLoading={creandoSeguimiento}

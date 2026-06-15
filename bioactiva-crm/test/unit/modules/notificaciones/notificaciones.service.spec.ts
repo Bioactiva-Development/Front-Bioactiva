@@ -11,156 +11,94 @@ jest.mock('@/services/api/client', () => ({
 
 import { notificacionesService } from '@/services/modules/notificaciones.service'
 
-describe('notificaciones/notificaciones.service (API mode)', () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
+const scheduled = {
+  id: 1,
+  tipo: 'RECORDATORIO',
+  estado: 'PROGRAMADA',
+  idActividad: 5,
+  idLead: 10,
+  idResponsable: 3,
+  asuntoInterno: 'Recordatorio',
+  fechaEnvioInterno: '2026-06-20T10:00:00.000Z',
+  enviadoInterno: false,
+  correoCliente: null,
+  instancias: null,
+  createdAt: '2026-06-15T10:00:00.000Z',
+}
+
+describe('notificaciones/notificaciones.service', () => {
+  beforeEach(() => jest.clearAllMocks())
+
+  it('lists scheduled notifications with backend filters', async () => {
+    getMock.mockResolvedValueOnce({ data: [scheduled] })
+    const result = await notificacionesService.getProgramadas({
+      estado: 'PROGRAMADA',
+      idResponsable: 3,
+    })
+
+    expect(getMock).toHaveBeenCalledWith('/notifications', {
+      params: { estado: 'PROGRAMADA', idResponsable: 3 },
+    })
+    expect(result).toEqual([scheduled])
   })
 
-  describe('getCentro', () => {
-    it('fetches centro de notificaciones', async () => {
-      getMock.mockResolvedValueOnce({
-        data: {
-          programadas: [{ id: 1, estado: 'Programada' }],
-          vencidas: [],
-          sinLeer: 1,
+  it('gets in-app notifications', async () => {
+    getMock.mockResolvedValueOnce({ data: [{ id: 4, estado: 'NO_LEIDA' }] })
+    const result = await notificacionesService.getInApp()
+    expect(getMock).toHaveBeenCalledWith('/notifications/in-app')
+    expect(result).toHaveLength(1)
+  })
+
+  it('marks one in-app notification as read', async () => {
+    patchMock.mockResolvedValueOnce({ data: { id: 4, estado: 'LEIDA' } })
+    const result = await notificacionesService.marcarLeida(4)
+    expect(patchMock).toHaveBeenCalledWith('/notifications/in-app/4/read')
+    expect(result.estado).toBe('LEIDA')
+  })
+
+  it('cancels a scheduled notification', async () => {
+    deleteMock.mockResolvedValueOnce({
+      data: { ...scheduled, estado: 'CANCELADA' },
+    })
+    const result = await notificacionesService.cancelarProgramada(1)
+    expect(deleteMock).toHaveBeenCalledWith('/notifications/1')
+    expect(result.estado).toBe('CANCELADA')
+  })
+
+  it('creates a reminder using idLead and minutosAntes', async () => {
+    const payload = {
+      idLead: 10,
+      minutosAntes: 30,
+      idTemplate: null,
+      asunto: 'Recordatorio',
+      cuerpo: 'Cuerpo',
+    }
+    postMock.mockResolvedValueOnce({ data: scheduled })
+    await notificacionesService.createRecordatorio(payload)
+    expect(postMock).toHaveBeenCalledWith('/notifications/reminders', payload)
+  })
+
+  it('creates a follow-up with nested instances', async () => {
+    const payload = {
+      idLead: 10,
+      correoCliente: 'cliente@example.com',
+      instancias: [{
+        internal: {
+          fechaEnvio: '2026-06-20T10:00:00.000Z',
+          idTemplate: null,
+          asunto: 'Interno',
+          cuerpo: 'Preparar',
         },
-      })
-
-      const result = await notificacionesService.getCentro()
-      expect(result.sinLeer).toBe(1)
-      expect(result.programadas).toHaveLength(1)
-    })
-
-    it('returns empty centro on 404', async () => {
-      getMock.mockRejectedValueOnce({ status: 404 })
-
-      const result = await notificacionesService.getCentro()
-      expect(result.programadas).toEqual([])
-      expect(result.vencidas).toEqual([])
-      expect(result.sinLeer).toBe(0)
-    })
-
-    it('re-throws non-404 errors', async () => {
-      getMock.mockRejectedValueOnce({ status: 500 })
-
-      await expect(notificacionesService.getCentro()).rejects.toEqual({ status: 500 })
-    })
-  })
-
-  describe('getAll', () => {
-    it('fetches all notifications', async () => {
-      getMock.mockResolvedValueOnce({
-        data: [
-          { id: 1, titulo: 'Notificación 1', id_lead: 10, estado: 'No Leida' },
-        ],
-      })
-
-      const result = await notificacionesService.getAll()
-      expect(result).toHaveLength(1)
-    })
-
-    it('returns empty array on 404', async () => {
-      getMock.mockRejectedValueOnce({ status: 404 })
-
-      const result = await notificacionesService.getAll()
-      expect(result).toEqual([])
-    })
-
-    it('re-throws non-404 errors', async () => {
-      getMock.mockRejectedValueOnce({ status: 500 })
-
-      await expect(notificacionesService.getAll()).rejects.toEqual({ status: 500 })
-    })
-  })
-
-  describe('getByLead', () => {
-    it('filters notifications by lead id', async () => {
-      getMock.mockResolvedValueOnce({
-        data: [
-          { id: 1, titulo: 'N1', id_lead: 10 },
-          { id: 2, titulo: 'N2', id_lead: 20 },
-        ],
-      })
-
-      const result = await notificacionesService.getByLead(10)
-      expect(result).toHaveLength(1)
-      expect(result[0].id).toBe(1)
-    })
-  })
-
-  describe('marcarLeida', () => {
-    it('patches notification as read', async () => {
-      patchMock.mockResolvedValueOnce({ data: { id: 1, estado: 'Leida' } })
-
-      const result = await notificacionesService.marcarLeida(1)
-      expect(patchMock).toHaveBeenCalledWith('/notificaciones/1/leer')
-      expect(result.estado).toBe('Leida')
-    })
-  })
-
-  describe('marcarTodasLeidas', () => {
-    it('patches all notifications as read', async () => {
-      patchMock.mockResolvedValueOnce({})
-      await notificacionesService.marcarTodasLeidas()
-      expect(patchMock).toHaveBeenCalledWith('/notificaciones/leer-todas')
-    })
-  })
-
-  describe('cancelarProgramada', () => {
-    it('deletes scheduled notification', async () => {
-      deleteMock.mockResolvedValueOnce({})
-      await notificacionesService.cancelarProgramada(1)
-      expect(deleteMock).toHaveBeenCalledWith('/notificaciones/programadas/1')
-    })
-  })
-
-  describe('cancelarPendientesPorActividad', () => {
-    it('cancels all pending notifications for an activity', async () => {
-      getMock.mockResolvedValueOnce({
-        data: {
-          programadas: [
-            { id: 1, id_actividad: 5, estado: 'Programada' },
-            { id: 2, id_actividad: 5, estado: 'Programada' },
-            { id: 3, id_actividad: 10, estado: 'Programada' },
-          ],
-          vencidas: [],
-          sinLeer: 3,
+        external: {
+          fechaEnvio: '2026-06-20T11:00:00.000Z',
+          idTemplate: null,
+          asunto: 'Cliente',
+          cuerpo: 'Seguimiento',
         },
-      })
-      deleteMock.mockResolvedValue({})
-
-      await notificacionesService.cancelarPendientesPorActividad(5)
-      expect(deleteMock).toHaveBeenCalledTimes(2)
-      expect(deleteMock).toHaveBeenCalledWith('/notificaciones/programadas/1')
-      expect(deleteMock).toHaveBeenCalledWith('/notificaciones/programadas/2')
-    })
-  })
-
-  describe('createRecordatorio', () => {
-    it('posts recordatorio', async () => {
-      postMock.mockResolvedValueOnce({ data: { id: 1, asunto: 'Recordatorio' } })
-
-      const result = await notificacionesService.createRecordatorio({
-        asunto: 'Recordatorio', cuerpo: 'Cuerpo',
-      })
-      expect(postMock).toHaveBeenCalledWith('/notificaciones/recordatorio', {
-        asunto: 'Recordatorio', cuerpo: 'Cuerpo',
-      })
-      expect(result.id).toBe(1)
-    })
-  })
-
-  describe('createSeguimiento', () => {
-    it('posts seguimiento', async () => {
-      postMock.mockResolvedValueOnce({ data: { id: 1, asunto: 'Seguimiento' } })
-
-      const result = await notificacionesService.createSeguimiento({
-        asunto: 'Seguimiento', cuerpo: 'Cuerpo',
-      })
-      expect(postMock).toHaveBeenCalledWith('/notificaciones/seguimiento', {
-        asunto: 'Seguimiento', cuerpo: 'Cuerpo',
-      })
-      expect(result.id).toBe(1)
-    })
+      }],
+    }
+    postMock.mockResolvedValueOnce({ data: { ...scheduled, tipo: 'SEGUIMIENTO' } })
+    await notificacionesService.createSeguimiento(payload)
+    expect(postMock).toHaveBeenCalledWith('/notifications/follow-ups', payload)
   })
 })

@@ -16,7 +16,6 @@ import {
   ActividadFormData,
   ComentarioActividad,
 } from '@/types/actividad.types'
-import { notificacionesService } from '@/services/modules/notificaciones.service'
 import {
   ActividadesDtoResponse,
   ActividadDtoOut,
@@ -84,7 +83,6 @@ export const actividadesService = {
           ENDPOINTS.actividades.complete(id)
         )).data)
 
-    await notificacionesService.cancelarPendientesPorActividad(id)
     return actividad
   },
 
@@ -95,7 +93,6 @@ export const actividadesService = {
           ENDPOINTS.actividades.cancel(id)
         )).data)
 
-    await notificacionesService.cancelarPendientesPorActividad(id)
     return actividad
   },
 
