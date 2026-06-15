@@ -30,12 +30,6 @@ export const leadSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  notas_contacto: z
-    .string()
-    .max(1000, 'Máximo 1000 caracteres')
-    .optional()
-    .or(z.literal('')),
-
   id_encargado: z
     .number({ error: 'El encargado es obligatorio' })
     .min(1, 'El encargado es obligatorio'),

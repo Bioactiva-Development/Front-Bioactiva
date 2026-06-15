@@ -63,7 +63,6 @@ function getLeadFormDefaults(
       servicio_interes:        lead.servicio_interes,
       comentarios:             lead.comentarios ?? '',
       desafio_oportunidad:     lead.desafio_oportunidad ?? '',
-      notas_contacto:          lead.notas_contacto ?? '',
       id_encargado:            lead.id_encargado,
       encargado_correo:        lead.encargado_correo ?? '',
       canal_captacion:         lead.canal_captacion ?? '',
@@ -520,19 +519,6 @@ export function LeadForm({
                 placeholder="Problema concreto o necesidad comercial detectada..."
                 {...register('desafio_oportunidad')}
                 className={`${inputClass(!!errors.desafio_oportunidad)} resize-none`}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label htmlFor="ldf-notas-contacto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Notas de contacto
-              </label>
-              <textarea
-                id="ldf-notas-contacto"
-                rows={2}
-                placeholder="Resumen de reuniones, correos o contexto previo..."
-                {...register('notas_contacto')}
-                className={`${inputClass(!!errors.notas_contacto)} resize-none`}
               />
             </div>
           </div>

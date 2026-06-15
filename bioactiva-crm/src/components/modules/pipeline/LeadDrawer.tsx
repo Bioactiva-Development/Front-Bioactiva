@@ -180,17 +180,6 @@ export function LeadDrawer({ lead, onCerrar }: LeadDrawerProps) {
             </div>
           )}
 
-          {lead.notas_contacto && (
-            <div>
-              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">
-                Notas de contacto
-              </p>
-              <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3">
-                {lead.notas_contacto}
-              </p>
-            </div>
-          )}
-
           <div>
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">
               Actividades ({actividades.length})

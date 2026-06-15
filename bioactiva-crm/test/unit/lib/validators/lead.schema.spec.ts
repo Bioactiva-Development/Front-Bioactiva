@@ -22,7 +22,6 @@ describe('validators/lead.schema', () => {
       id_contacto: 4,
       comentarios: 'Cliente interesado',
       desafio_oportunidad: 'Optimizar procesos',
-      notas_contacto: 'Llamar en una semana',
       canal_captacion: 'Referido',
       fecha_cierre: '2026-07-15',
       encargado_correo: 'admin@bioactiva.pe',
@@ -92,7 +91,6 @@ describe('validators/lead.schema', () => {
       estado: LeadState.Prospecto,
       comentarios: '',
       desafio_oportunidad: '',
-      notas_contacto: '',
       canal_captacion: '',
       fecha_cierre: '',
     })
@@ -109,18 +107,6 @@ describe('validators/lead.schema', () => {
         comentarios: 'X'.repeat(501),
       })
     ).toThrow('Máximo 500 caracteres')
-  })
-
-  it('rejects notas_contacto exceeding 1000 characters', () => {
-    expect(() =>
-      leadSchema.parse({
-        id_org: 'org-001',
-        servicio_interes: 'Ley 30309',
-        id_encargado: 3,
-        estado: LeadState.Prospecto,
-        notas_contacto: 'X'.repeat(1001),
-      })
-    ).toThrow('Máximo 1000 caracteres')
   })
 
   it('rejects invalid email in encargado_correo', () => {
