@@ -2,7 +2,6 @@
 
 import type React from 'react'
 import { useDraggable } from '@dnd-kit/core'
-import { CSS } from '@dnd-kit/utilities'
 import {
   AlertTriangle,
   Building2,
@@ -12,7 +11,6 @@ import {
   Pencil,
   MessageSquarePlus,
   FileText,
-  Send,
 } from 'lucide-react'
 import { ActivityAlert, Lead } from '@/types/lead.types'
 
@@ -64,7 +62,6 @@ export function LeadCard({
     attributes,
     listeners,
     setNodeRef,
-    transform,
     isDragging,
   } = useDraggable({
     id: `lead-${lead.id}`,
@@ -87,7 +84,7 @@ export function LeadCard({
         {...attributes}
         {...listeners}
         style={{ touchAction: 'none' }}
-        className="rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50/30 min-h-30"
+        className="h-56 rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50/30"
       />
     )
   }
@@ -102,7 +99,8 @@ export function LeadCard({
       style={{ touchAction: 'none' }}
       onClick={() => onClick(lead)}
       className={`
-        bg-white rounded-xl border shadow-sm p-4 space-y-3 group
+        h-56 overflow-hidden bg-white rounded-xl border shadow-sm p-4
+        flex flex-col gap-2 group
         transition duration-150
         ${lead.tiene_alerta
           ? 'border-l-4 border-l-red-400 border-t-gray-100 border-r-gray-100 border-b-gray-100'
@@ -153,7 +151,7 @@ export function LeadCard({
 
         <div className="flex items-start gap-2">
           <Briefcase size={13} className="text-gray-400 shrink-0 mt-0.5" />
-          <p className="text-sm text-gray-600 line-clamp-2">
+          <p className="text-sm text-gray-600 truncate">
             {lead.servicio_interes}
           </p>
         </div>
@@ -167,7 +165,7 @@ export function LeadCard({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-1 pt-2 border-t border-gray-100
+      <div className="mt-auto flex items-center justify-between gap-1 pt-2 border-t border-gray-100
         opacity-60 group-hover:opacity-100 transition-opacity duration-200">
         <button
           type="button"
@@ -204,15 +202,6 @@ export function LeadCard({
             hover:bg-emerald-50 transition-colors cursor-pointer"
         >
           <FileText size={14} />
-        </button>
-        <button
-          type="button"
-          title="Programar seguimiento"
-          onClick={(event) => handleAction(event, 'seguimiento')}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
-            hover:bg-emerald-50 transition-colors cursor-pointer"
-        >
-          <Send size={14} />
         </button>
       </div>
     </div>
