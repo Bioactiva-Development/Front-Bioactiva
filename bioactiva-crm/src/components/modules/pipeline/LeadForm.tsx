@@ -64,7 +64,6 @@ function getLeadFormDefaults(
       comentarios:             lead.comentarios ?? '',
       desafio_oportunidad:     lead.desafio_oportunidad ?? '',
       id_encargado:            lead.id_encargado,
-      encargado_correo:        lead.encargado_correo ?? '',
       canal_captacion:         lead.canal_captacion ?? '',
       fecha_cierre:            toLeadDateInputValue(lead.fecha_cierre),
     }
@@ -73,7 +72,6 @@ function getLeadFormDefaults(
   return {
     estado:           estadoInicial ?? LeadState.Prospecto,
     id_encargado:     undefined,
-    encargado_correo: '',
   }
 }
 
@@ -217,17 +215,14 @@ export function LeadForm({
     setValue,
   ])
 
-  useEffect(() => {
+  // Mantis #432 — el correo es solo informativo: se deriva del encargado
+  // seleccionado (lista de GET /users/assignable). No es estado del formulario.
+  const correoEncargado = useMemo(() => {
     const responsable = responsablesDisponibles.find(
       (r) => r.id === Number(encargadoSelected)
     )
-    if (responsable) {
-      setValue('encargado_correo', responsable.correo)
-      return
-    }
-
-    setValue('encargado_correo', '')
-  }, [encargadoSelected, responsablesDisponibles, setValue])
+    return responsable?.correo ?? ''
+  }, [encargadoSelected, responsablesDisponibles])
 
   useEffect(() => {
     if (!esEdicion) {
@@ -568,12 +563,14 @@ export function LeadForm({
                 <input
                   id="ldf-encargado-correo"
                   type="email"
-                  placeholder="Se completa automáticamente"
+                  value={correoEncargado}
+                  placeholder="Se completa con el encargado seleccionado"
                   readOnly
                   aria-readonly="true"
-                  {...register('encargado_correo')}
-                  className={`${inputClass(!!errors.encargado_correo)} bg-gray-50 text-gray-500`}
+                  tabIndex={-1}
+                  className={`${inputClass(false)} bg-gray-50 text-gray-500 cursor-default`}
                 />
+                <p className="text-xs text-gray-400">Solo lectura. Corresponde al encargado seleccionado.</p>
               </div>
             </div>
           </div>

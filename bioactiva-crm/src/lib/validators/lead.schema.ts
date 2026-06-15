@@ -34,10 +34,8 @@ export const leadSchema = z.object({
     .number({ error: 'El encargado es obligatorio' })
     .min(1, 'El encargado es obligatorio'),
 
-  encargado_correo: z
-    .email('Ingrese un correo válido')
-    .optional()
-    .or(z.literal('')),
+  // Mantis #432 — el correo del encargado es solo informativo en la UI (read-only,
+  // derivado de GET /users/assignable). No es un campo editable ni se valida/envia.
 
   canal_captacion: z
     .string()
