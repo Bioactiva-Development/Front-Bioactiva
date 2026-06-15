@@ -28,7 +28,13 @@ export const editarUsuarioSchema = z.object({
 
 export const cambiarPasswordSchema = z
     .object({
-        password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+        password: z
+            .string()
+            .min(8, 'La contraseña debe tener al menos 8 caracteres')
+            .regex(/[A-Z]/, 'Debe contener al menos una letra mayúscula')
+            .regex(/[a-z]/, 'Debe contener al menos una letra minúscula')
+            .regex(/\d/, 'Debe contener al menos un número')
+            .regex(/[^A-Za-z0-9]/, 'Debe contener al menos un carácter especial'),
         confirmPassword: z.string().min(1, 'Confirme la contraseña'),
     })
     .refine((d) => d.password === d.confirmPassword, {
@@ -44,7 +50,11 @@ export const cambiarPasswordPerfilSchema = z
         newPassword: z
             .string()
             .min(8, 'La nueva contraseña debe tener al menos 8 caracteres')
-            .max(72, 'La nueva contraseña no puede superar los 72 caracteres'),
+            .max(72, 'La nueva contraseña no puede superar los 72 caracteres')
+            .regex(/[A-Z]/, 'Debe contener al menos una letra mayúscula')
+            .regex(/[a-z]/, 'Debe contener al menos una letra minúscula')
+            .regex(/\d/, 'Debe contener al menos un número')
+            .regex(/[^A-Za-z0-9]/, 'Debe contener al menos un carácter especial'),
         confirmPassword: z.string().min(1, 'Confirme la nueva contraseña'),
     })
     .refine((d) => d.newPassword === d.confirmPassword, {
