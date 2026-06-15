@@ -2,6 +2,7 @@ import { RolUsuario, EstadoToken, EstadoUsuario } from '@/types/enums'
 import {
     UsuarioListItem,
     UsuariosResponse,
+    AssignableUsuario,
     UsuarioFilters,
     EditarUsuarioRequest,
     CambiarPasswordRequest,
@@ -41,6 +42,13 @@ export function mockGetUsuarios(filters?: UsuarioFilters): UsuariosResponse {
     // `activos` refleja el total de cuentas activas, no solo las filtradas.
     const activos = mockUsuarios.filter(u => u.estado === EstadoUsuario.Activo).length
     return { usuarios: result, total: result.length, activos }
+}
+
+// Mantis #434 — GET /users/assignable: todos los habilitados, sin filtro por rol.
+export function mockGetAssignables(): AssignableUsuario[] {
+    return mockUsuarios
+        .filter(u => u.estado === EstadoUsuario.Activo)
+        .map(({ id, nombres, apellidos, correo, rol }) => ({ id, nombres, apellidos, correo, rol }))
 }
 
 export function mockEditarUsuario(data: EditarUsuarioRequest): UsuarioListItem {

@@ -13,6 +13,10 @@ export const ENDPOINTS = {
     usuarios: {
         // GET /users — implementado en backend (doc-endpoint.md, módulo `users`).
         list: '/users',
+        // Mantis #434 — GET /users/assignable. Lista todos los usuarios habilitados
+        // sin restriccion por rol; fuente del selector de Encargado en leads.
+        // No usar `list` aqui: GET /users esta filtrado por rol.
+        assignable: '/users/assignable',
         // Endpoints marcados como "Pendiente" en el backend; se alinean a la
         // convención documentada (`/users/:id`) para cuando se expongan por HTTP.
         detail: (id: number) => `/users/${id}`,

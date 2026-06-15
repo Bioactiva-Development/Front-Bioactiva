@@ -15,10 +15,9 @@ import { Lead } from '@/types/lead.types'
 import { ROUTES } from '@/lib/constants/routes'
 import { useOrganizaciones } from '@/hooks/organizaciones/useOrganizaciones'
 import { useContactosPorOrganizacion } from '@/hooks/contactos/useContactos'
-import { useAuthStore } from '@/store'
 import { usuariosService } from '@/services/modules/usuarios.service'
-import { EstadoUsuario, LeadState } from '@/types/enums'
-import { UsuarioListItem } from '@/types/usuario.types'
+import { LeadState } from '@/types/enums'
+import { AssignableUsuario } from '@/types/usuario.types'
 import { toLeadDateInputValue } from '@/lib/utils/lead-date.utils'
 
 interface LeadFormProps {
@@ -46,7 +45,7 @@ const CANALES_CAPTACION = [
 
 const CANAL_CAPTACION_OTRO = '__otro__'
 
-const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
+const toResponsableOption = (usuario: AssignableUsuario): ResponsableOption => ({
   id: usuario.id,
   nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
   correo: usuario.correo,
@@ -89,9 +88,10 @@ export function LeadForm({
 }: Readonly<LeadFormProps>) {
   const router    = useRouter()
   const esEdicion = !!lead
-  const { usuario } = useAuthStore()
   const [errorLocal, setErrorLocal] = useState<string | null>(null)
   const [responsables, setResponsables] = useState<ResponsableOption[]>([])
+  const [responsablesLoading, setResponsablesLoading] = useState(false)
+  const [responsablesError, setResponsablesError] = useState<string | null>(null)
   const [canalOtroActivo, setCanalOtroActivo] = useState(false)
 
   const {
@@ -137,23 +137,11 @@ export function LeadForm({
     lead.contacto_nombre &&
     !contactos.some((contacto) => contacto.id === lead.id_contacto)
   )
-  const usuarioActualOption = useMemo<ResponsableOption | null>(() => {
-    if (!usuario) return null
-    return {
-      id: usuario.id,
-      nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
-      correo: usuario.correo,
-    }
-  }, [usuario])
+  // Mantis #434 — el selector lista TODOS los usuarios habilitados (sin sesgo al
+  // usuario logueado). En edicion, si el encargado actual quedo deshabilitado y no
+  // viene en la lista, se inyecta como opcion para no perder el valor seleccionado.
   const responsablesDisponibles = useMemo(() => {
     const options = [...responsables]
-
-    if (
-      usuarioActualOption &&
-      !options.some((responsable) => responsable.id === usuarioActualOption.id)
-    ) {
-      options.unshift(usuarioActualOption)
-    }
 
     if (
       lead?.id_encargado &&
@@ -168,23 +156,25 @@ export function LeadForm({
     }
 
     return options
-  }, [lead, responsables, usuarioActualOption])
+  }, [lead, responsables])
 
   useEffect(() => {
     let isMounted = true
 
     async function cargarResponsables() {
+      setResponsablesLoading(true)
+      setResponsablesError(null)
       try {
-        const response = await usuariosService.getUsuarios({
-          estado: EstadoUsuario.Activo,
-          limit: 100,
-        })
+        const data = await usuariosService.getAssignables()
 
         if (!isMounted) return
-        setResponsables(response.usuarios.map(toResponsableOption))
+        setResponsables(data.map(toResponsableOption))
       } catch {
         if (!isMounted) return
-        setResponsables(usuarioActualOption ? [usuarioActualOption] : [])
+        setResponsables([])
+        setResponsablesError('No se pudieron cargar los encargados. Intenta nuevamente.')
+      } finally {
+        if (isMounted) setResponsablesLoading(false)
       }
     }
 
@@ -193,7 +183,7 @@ export function LeadForm({
     return () => {
       isMounted = false
     }
-  }, [usuarioActualOption])
+  }, [])
 
   useEffect(() => {
     reset(getLeadFormDefaults(lead, estadoInicial))
@@ -561,16 +551,25 @@ export function LeadForm({
                 </label>
                 <select
                   id="ldf-encargado"
+                  disabled={responsablesLoading}
                   {...register('id_encargado', {
                     setValueAs: (value) => value === '' ? 0 : Number(value),
                   })}
-                  className={`${inputClass(!!errors.id_encargado)} cursor-pointer`}
+                  className={`${inputClass(!!errors.id_encargado)} cursor-pointer
+                    ${responsablesLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
-                  <option value="">Seleccionar encargado</option>
+                  <option value="">
+                    {responsablesLoading ? 'Cargando encargados...' : 'Seleccionar encargado'}
+                  </option>
                   {responsablesDisponibles.map((r) => (
-                    <option key={r.id} value={r.id}>{r.nombre}</option>
+                    <option key={r.id} value={r.id}>
+                      {r.nombre}{r.correo ? ` — ${r.correo}` : ''}
+                    </option>
                   ))}
                 </select>
+                {responsablesError && (
+                  <p className="text-red-500 text-xs">{responsablesError}</p>
+                )}
                 {errors.id_encargado && (
                   <p className="text-red-500 text-xs">{errors.id_encargado.message}</p>
                 )}
