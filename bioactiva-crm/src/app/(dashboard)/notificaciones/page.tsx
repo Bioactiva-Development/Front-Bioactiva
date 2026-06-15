@@ -182,7 +182,9 @@ export default function NotificacionesPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="font-semibold text-gray-900">Bandeja personal</h2>
-                  <p className="text-xs text-gray-500">Alertas generadas por el sistema.</p>
+                  <p className="text-xs text-gray-500">
+                    Incluye alertas automaticas para leads abiertos con 30+ dias sin cambio.
+                  </p>
                 </div>
                 <Bell size={20} className="text-emerald-600" />
               </div>

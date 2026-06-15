@@ -36,6 +36,10 @@ export function NotificacionAlerta({
   const router = useRouter()
   const { mutateAsync: marcarLeida } = useMarcarLeida()
   const esNoLeida = notificacion.estado === 'NO_LEIDA'
+  const esLeadSinMovimiento =
+    notificacion.idLead !== null &&
+    notificacion.idActividad === null &&
+    /lead sin movimiento/i.test(notificacion.titulo)
   const [tiempo] = useState(() => formatTiempo(notificacion.createdAt, Date.now()))
 
   const handleClick = async () => {
@@ -64,6 +68,11 @@ export function NotificacionAlerta({
         }`}>
           {notificacion.titulo}
         </span>
+        {esLeadSinMovimiento && (
+          <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+            Alerta automatica 30+ dias
+          </span>
+        )}
         <span className="mt-1 block text-xs text-gray-500">{notificacion.mensaje}</span>
         <span className="mt-1 block text-xs text-gray-400">{tiempo}</span>
       </span>
