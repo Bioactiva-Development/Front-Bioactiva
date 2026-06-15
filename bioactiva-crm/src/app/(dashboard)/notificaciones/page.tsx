@@ -256,21 +256,28 @@ export default function NotificacionesPage() {
           </span>
           <div>
             <h2 className="text-sm font-bold text-gray-900">Integración Microsoft</h2>
-            <p className="text-xs text-gray-500">Outlook y Teams para actividades del CRM.</p>
+            <p className="text-xs text-gray-500">
+              Conecta Microsoft para crear eventos Outlook/Teams desde actividades tipo reunion.
+            </p>
           </div>
         </div>
         <div className="space-y-4 px-6 py-5">
-          {integracionInfo && (
+            {integracionInfo && (
             <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               <AlertCircle size={16} className="mt-0.5 shrink-0" /> {integracionInfo}
             </div>
+          )}
+          {integraciones?.outlook.cuenta && (
+            <p className="text-sm text-gray-600">
+              Cuenta conectada: <span className="font-semibold">{integraciones.outlook.cuenta}</span>
+            </p>
           )}
           <button
             type="button"
             onClick={
               integraciones?.teams.conectado || integraciones?.outlook.conectado
                 ? desconectarMicrosoft
-                : conectarMicrosoft
+                : () => conectarMicrosoft('/notificaciones')
             }
             disabled={isLoadingIntegracion}
             className="inline-flex items-center gap-2 rounded-xl bg-[#0078D4] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"

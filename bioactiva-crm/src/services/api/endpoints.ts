@@ -78,6 +78,7 @@ export const ENDPOINTS = {
         update: (id: number) => `/activities/${id}`,
         complete: (id: number) => `/activities/${id}/complete`,
         cancel: (id: number) => `/activities/${id}/cancel`,
+        calendarEvent: (id: number) => `/activities/${id}/calendar-event`,
         delete: (id: number) => `/activities/${id}`,
     },
 

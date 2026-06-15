@@ -88,11 +88,11 @@ export function usePerfil() {
         }
     }, [])
 
-    const conectarMicrosoft = useCallback(async () => {
+    const conectarMicrosoft = useCallback(async (returnTo = '/perfil') => {
         try {
             setIsLoadingIntegracion(true)
             setIntegracionInfo(null)
-            const { url } = await integracionesService.getMicrosoftAuthUrl()
+            const { url } = await integracionesService.getMicrosoftAuthUrl(returnTo)
             globalThis.location.href = url
         } catch (err: unknown) {
             setIntegracionInfo(extractMessage(err, 'Error al obtener la URL de autorización.'))

@@ -90,6 +90,24 @@ describe('actividades/actividades.service (API mode)', () => {
     })
   })
 
+  describe('createCalendarEvent', () => {
+    it('creates an Outlook/Teams event on demand', async () => {
+      postMock.mockResolvedValueOnce({
+        data: {
+          ...rawActividad,
+          tipo: 'REUNION',
+          outlookEventId: 'AAMkAGI2',
+          teamsMeetingUrl: 'https://teams.microsoft.com/l/meetup-join/abc',
+        },
+      })
+
+      const result = await actividadesService.createCalendarEvent(12)
+      expect(postMock).toHaveBeenCalledWith('/activities/12/calendar-event')
+      expect(result.outlook_event_id).toBe('AAMkAGI2')
+      expect(result.teamsMeetingUrl).toContain('teams.microsoft.com')
+    })
+  })
+
   describe('complete', () => {
     it('completes activity without chaining unsupported notification calls', async () => {
       patchMock.mockResolvedValueOnce({ data: { ...rawActividad, estado: 'REALIZADA' } })

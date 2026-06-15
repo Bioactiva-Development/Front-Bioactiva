@@ -7,15 +7,17 @@ import {
   ChevronDown, ChevronUp, Send,
   AlertTriangle,
   Bell,
+  CalendarPlus,
+  ExternalLink,
 } from 'lucide-react'
 import { Actividad } from '@/types/actividad.types'
 import { TipoActividad, EstadoActividad } from '@/types/enums'
 import {
   useCompletarActividad,
-  useCancelarActividad,
   useEliminarActividad,
   useComentarios,
   useCrearComentario,
+  useCrearEventoCalendario,
 } from '@/hooks/pipeline/useActividades'
 
 interface ActividadHistorialProps {
@@ -86,10 +88,10 @@ function ActividadItem({
 
   const { mutateAsync: completar, isPending: completando } =
     useCompletarActividad(leadId)
-  const { mutateAsync: cancelar, isPending: cancelando } =
-    useCancelarActividad(leadId)
   const { mutateAsync: eliminar, isPending: eliminando } =
     useEliminarActividad(leadId)
+  const { mutateAsync: crearEvento, isPending: creandoEvento } =
+    useCrearEventoCalendario(leadId)
   const { data: comentarios = [] } = useComentarios(
     expandido ? actividad.id : 0
   )
@@ -99,6 +101,10 @@ function ActividadItem({
   const esPendiente = actividad.estado === EstadoActividad.Pendiente
   const esTerminal  = actividad.estado === EstadoActividad.Completada ||
                       actividad.estado === EstadoActividad.Cancelada
+  const puedeCrearEvento =
+    esPendiente &&
+    actividad.tipo === TipoActividad.Reunion &&
+    !actividad.outlook_event_id
 
   const formatFecha = (fecha: string) =>
     new Date(fecha).toLocaleDateString('es-PE', {
@@ -153,6 +159,18 @@ function ActividadItem({
               >
                 <Bell size={14} />
               </button>
+              {puedeCrearEvento && (
+                <button
+                  type="button"
+                  onClick={() => crearEvento(actividad.id)}
+                  disabled={creandoEvento}
+                  title="Crear evento Outlook/Teams"
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600
+                    hover:bg-blue-50 transition-colors disabled:opacity-40"
+                >
+                  <CalendarPlus size={14} />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => onProgramarSeguimiento?.(actividad)}
@@ -216,6 +234,24 @@ function ActividadItem({
           <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
             {actividad.notas}
           </p>
+        )}
+
+        {actividad.outlook_event_id && (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border
+            border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+            <CalendarPlus size={13} />
+            <span className="font-semibold">Evento Outlook creado</span>
+            {actividad.teamsMeetingUrl && (
+              <a
+                href={actividad.teamsMeetingUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 font-semibold underline underline-offset-2"
+              >
+                Abrir Teams <ExternalLink size={12} />
+              </a>
+            )}
+          </div>
         )}
 
         {mostrandoCierre && (

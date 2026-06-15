@@ -2,8 +2,8 @@ import { IntegracionesResponse, IntegracionAuthUrlResponse } from '@/types/integ
 
 export function mockGetIntegraciones(): IntegracionesResponse {
     return {
-        teams: { tipo: 'microsoft_teams', conectado: false },
-        outlook: { tipo: 'microsoft_outlook', conectado: false },
+        teams: { tipo: 'microsoft_teams', conectado: false, cuenta: undefined },
+        outlook: { tipo: 'microsoft_outlook', conectado: false, cuenta: undefined },
     }
 }
 

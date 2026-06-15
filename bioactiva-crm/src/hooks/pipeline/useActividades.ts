@@ -90,6 +90,23 @@ export function useCancelarActividad(leadId: number) {
   })
 }
 
+export function useCrearEventoCalendario(leadId: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => actividadesService.createCalendarEvent(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.actividades.byLead(leadId),
+      })
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
 export function useEliminarActividad(leadId: number) {
   const queryClient = useQueryClient()
 
