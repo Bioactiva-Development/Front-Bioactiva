@@ -49,6 +49,39 @@ describe('notificacion schemas', () => {
     expect(result.instancias).toHaveLength(1)
   })
 
+  it('rejects more than three follow-up instances', () => {
+    expect(() => seguimientoSchema.parse({
+      idLead: 10,
+      correoCliente: 'cliente@example.com',
+      instancias: [
+        instancia,
+        {
+          internal: { ...instancia.internal, fechaEnvio: '2026-06-20T12:00' },
+          external: { ...instancia.external, fechaEnvio: '2026-06-20T13:00' },
+        },
+        {
+          internal: { ...instancia.internal, fechaEnvio: '2026-06-20T14:00' },
+          external: { ...instancia.external, fechaEnvio: '2026-06-20T15:00' },
+        },
+        {
+          internal: { ...instancia.internal, fechaEnvio: '2026-06-20T16:00' },
+          external: { ...instancia.external, fechaEnvio: '2026-06-20T17:00' },
+        },
+      ],
+    })).toThrow('Solo se permiten hasta 3 instancias')
+  })
+
+  it('rejects invalid follow-up dates before checking sequence order', () => {
+    expect(() => seguimientoSchema.parse({
+      idLead: 10,
+      correoCliente: 'cliente@example.com',
+      instancias: [{
+        ...instancia,
+        internal: { ...instancia.internal, fechaEnvio: 'no-es-fecha' },
+      }],
+    })).toThrow('La fecha y hora no es válida')
+  })
+
   it('rejects an external email before its internal email', () => {
     expect(() => seguimientoSchema.parse({
       idLead: 10,

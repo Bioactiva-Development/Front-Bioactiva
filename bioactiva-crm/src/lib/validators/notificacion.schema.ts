@@ -5,6 +5,16 @@ const templateIdSchema = z
   .int()
   .nonnegative('La plantilla seleccionada no es válida')
 
+const fechaEnvioSchema = z
+  .string()
+  .min(1, 'La fecha y hora son obligatorias')
+  .refine(
+    (value) => Number.isFinite(new Date(value).getTime()),
+    'La fecha y hora no es válida'
+  )
+
+const getTime = (value: string) => new Date(value).getTime()
+
 export const recordatorioSchema = z.object({
   idLead: z
     .number({ error: 'El lead es obligatorio' })
@@ -27,7 +37,7 @@ export const recordatorioSchema = z.object({
 export type RecordatorioFormValues = z.infer<typeof recordatorioSchema>
 
 const mensajeSeguimientoSchema = z.object({
-  fechaEnvio: z.string().min(1, 'La fecha y hora son obligatorias'),
+  fechaEnvio: fechaEnvioSchema,
   idTemplate: templateIdSchema,
   asunto: z
     .string()
@@ -43,9 +53,14 @@ const instanciaSeguimientoSchema = z
     external: mensajeSeguimientoSchema,
   })
   .refine(
-    ({ internal, external }) =>
-      new Date(external.fechaEnvio).getTime() >
-      new Date(internal.fechaEnvio).getTime(),
+    ({ internal, external }) => {
+      const internalTime = getTime(internal.fechaEnvio)
+      const externalTime = getTime(external.fechaEnvio)
+      if (!Number.isFinite(internalTime) || !Number.isFinite(externalTime)) {
+        return true
+      }
+      return externalTime > internalTime
+    },
     {
       message: 'El correo al cliente debe enviarse después del correo interno',
       path: ['external', 'fechaEnvio'],
@@ -70,9 +85,16 @@ export const seguimientoSchema = z
     for (let index = 0; index < instancias.length - 1; index += 1) {
       const actual = instancias[index]
       const siguiente = instancias[index + 1]
+      const actualExternalTime = getTime(actual.external.fechaEnvio)
+      const siguienteInternalTime = getTime(siguiente.internal.fechaEnvio)
       if (
-        new Date(actual.external.fechaEnvio).getTime() >=
-        new Date(siguiente.internal.fechaEnvio).getTime()
+        !Number.isFinite(actualExternalTime) ||
+        !Number.isFinite(siguienteInternalTime)
+      ) {
+        continue
+      }
+      if (
+        actualExternalTime >= siguienteInternalTime
       ) {
         ctx.addIssue({
           code: 'custom',

@@ -3,15 +3,17 @@
 import { useEffect, useMemo } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Plus, Save, Trash2 } from 'lucide-react'
+import { AlertCircle, CalendarClock, Loader2, Plus, Save, Trash2 } from 'lucide-react'
 import { useContacto } from '@/hooks/contactos/useContactos'
 import { usePlantillasActivas } from '@/hooks/plantillas/usePlantillas'
 import { useLeads } from '@/hooks/pipeline/useLeads'
+import { useActividades } from '@/hooks/pipeline/useActividades'
 import {
   seguimientoSchema,
   SeguimientoFormValues,
 } from '@/lib/validators/notificacion.schema'
 import { CrearSeguimientoRequest } from '@/types/notificacion.types'
+import { EstadoActividad } from '@/types/enums'
 
 interface SeguimientoFormProps {
   onSubmit: (data: CrearSeguimientoRequest) => Promise<void>
@@ -25,6 +27,8 @@ const nuevaInstancia = () => ({
   internal: { fechaEnvio: '', idTemplate: 0, asunto: '', cuerpo: '' },
   external: { fechaEnvio: '', idTemplate: 0, asunto: '', cuerpo: '' },
 })
+
+const targets = ['internal', 'external'] as const
 
 export function SeguimientoForm({
   onSubmit,
@@ -43,6 +47,8 @@ export function SeguimientoForm({
     handleSubmit,
     control,
     setValue,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<SeguimientoFormValues>({
     resolver: zodResolver(seguimientoSchema),
@@ -59,7 +65,20 @@ export function SeguimientoForm({
   })
   const selectedLeadId = useWatch({ control, name: 'idLead' })
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId)
+  const { data: actividades = [], isLoading: cargandoActividades } =
+    useActividades(selectedLeadId || 0)
   const { data: contacto } = useContacto(selectedLead?.id_contacto ?? 0)
+
+  const actividadActiva = useMemo(
+    () =>
+      actividades
+        .filter((actividad) => actividad.estado === EstadoActividad.Pendiente)
+        .sort(
+          (a, b) =>
+            new Date(a.fecha_fin).getTime() - new Date(b.fecha_fin).getTime()
+        )[0],
+    [actividades]
+  )
 
   const correosContacto = useMemo(
     () =>
@@ -69,6 +88,17 @@ export function SeguimientoForm({
     [contacto?.correo, contacto?.correo2]
   )
   const correoPrincipal = correosContacto[0] ?? ''
+  const sinActividadActiva =
+    Boolean(selectedLeadId) && !cargandoActividades && !actividadActiva
+
+  const formatFecha = (fecha: string) =>
+    new Date(fecha).toLocaleDateString('es-PE', {
+      day:    '2-digit',
+      month:  'short',
+      year:   'numeric',
+      hour:   '2-digit',
+      minute: '2-digit',
+    })
 
   useEffect(() => {
     if (leadIdInicial) setValue('idLead', leadIdInicial)
@@ -89,6 +119,36 @@ export function SeguimientoForm({
     setValue(`instancias.${index}.${target}.cuerpo`, template.cuerpo)
   }
 
+  const validateActividadWindow = (values: SeguimientoFormValues) => {
+    clearErrors('instancias')
+
+    const actividadFin = actividadActiva
+      ? new Date(actividadActiva.fecha_fin).getTime()
+      : undefined
+    let isValid = true
+
+    values.instancias.forEach((instancia, index) => {
+      targets.forEach((target) => {
+        const fechaEnvio = instancia[target].fechaEnvio
+        const fechaEnvioTime = new Date(fechaEnvio).getTime()
+        const field = `instancias.${index}.${target}.fechaEnvio` as const
+
+        if (!Number.isFinite(fechaEnvioTime)) return
+
+        if (actividadFin !== undefined && fechaEnvioTime >= actividadFin) {
+          setError(field, {
+            type: 'validate',
+            message:
+              'Debe enviarse antes de la fecha fin de la actividad activa',
+          })
+          isValid = false
+        }
+      })
+    })
+
+    return isValid
+  }
+
   const inputClass = (hasError: boolean) =>
     `w-full rounded-xl border px-3 py-2.5 text-sm text-gray-900 outline-none ${
       hasError
@@ -97,6 +157,8 @@ export function SeguimientoForm({
     }`
 
   const submit = async (values: SeguimientoFormValues) => {
+    if (!validateActividadWindow(values)) return
+
     await onSubmit({
       idLead: values.idLead,
       correoCliente: values.correoCliente,
@@ -175,9 +237,40 @@ export function SeguimientoForm({
 
         {selectedLead && (
           <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
-            Los correos internos se asociarán al encargado actual:
-            <strong> {selectedLead.encargado_nombre ?? 'Sin nombre'}</strong>.
-            Si cambia el encargado, el backend debe reasignar las programaciones existentes.
+            <div className="flex items-start gap-3">
+              <CalendarClock size={18} className="mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <p>
+                  El seguimiento se programa con <strong>idLead</strong>. El
+                  backend resolverá la actividad activa y el encargado al
+                  guardar.
+                </p>
+                <p>
+                  Encargado actual:
+                  <strong> {selectedLead.encargado_nombre ?? 'Sin nombre'}</strong>.
+                </p>
+                {cargandoActividades && (
+                  <p className="text-emerald-700">Buscando actividad activa...</p>
+                )}
+                {actividadActiva && (
+                  <p>
+                    Actividad activa:
+                    <strong> {actividadActiva.nombre_actividad}</strong> · fin:
+                    <strong> {formatFecha(actividadActiva.fecha_fin)}</strong>.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {sinActividadActiva && (
+          <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            <AlertCircle size={17} className="mt-0.5 shrink-0" />
+            <p>
+              Este lead no tiene una actividad pendiente activa. El backend
+              requiere una actividad activa para asociar el seguimiento.
+            </p>
           </div>
         )}
 
@@ -199,8 +292,13 @@ export function SeguimientoForm({
                   )}
                 </div>
 
-                {(['internal', 'external'] as const).map((target) => {
-                  const label = target === 'internal' ? 'Correo interno' : 'Correo al cliente'
+                {targets.map((target) => {
+                  const label = target === 'internal'
+                    ? 'Recordatorio interno al encargado'
+                    : 'Correo externo al cliente'
+                  const templateLabel = target === 'internal'
+                    ? 'Plantilla para recordatorio interno'
+                    : 'Plantilla para correo externo'
                   const targetErrors = instanceErrors?.[target]
                   return (
                     <div key={target} className="mb-5 grid gap-4 border-b border-gray-100 pb-5 last:mb-0 last:border-0 last:pb-0">
@@ -220,7 +318,7 @@ export function SeguimientoForm({
                           )}
                         </div>
                         <div>
-                          <label className="text-xs font-semibold text-gray-500">Plantilla opcional</label>
+                          <label className="text-xs font-semibold text-gray-500">{templateLabel}</label>
                           <select
                             {...register(`instancias.${index}.${target}.idTemplate`, {
                               valueAsNumber: true,
@@ -228,12 +326,18 @@ export function SeguimientoForm({
                                 applyTemplate(index, target, Number(event.target.value)),
                             })}
                             className={inputClass(false)}
+                            disabled={plantillasQuery.isLoading}
                           >
-                            <option value={0}>Sin plantilla</option>
+                            <option value={0}>
+                              {plantillasQuery.isLoading ? 'Cargando plantillas...' : 'Sin plantilla'}
+                            </option>
                             {plantillas.map((plantilla) => (
                               <option key={plantilla.id} value={plantilla.id}>{plantilla.nombre}</option>
                             ))}
                           </select>
+                          <p className="mt-1 text-[11px] text-gray-400">
+                            Copia asunto y cuerpo; puedes editarlos antes de programar.
+                          </p>
                         </div>
                       </div>
                       <input
@@ -265,6 +369,13 @@ export function SeguimientoForm({
           </button>
         )}
 
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-xs text-blue-800">
+          Las fechas deben estar en orden, no solaparse y quedar antes del fin
+          de la actividad activa. El backend aplica horario laboral
+          [09:00-18:00) y puede mover envíos fuera de horario a las 09:00.
+          La integración Microsoft no se invoca desde este seguimiento.
+        </div>
+
         {error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
@@ -277,7 +388,12 @@ export function SeguimientoForm({
           </button>
           <button
             type="submit"
-            disabled={isLoading || correosContacto.length === 0}
+            disabled={
+              isLoading ||
+              cargandoActividades ||
+              sinActividadActiva ||
+              correosContacto.length === 0
+            }
             className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
             {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
