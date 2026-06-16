@@ -8,6 +8,7 @@ import { useContacto } from '@/hooks/contactos/useContactos'
 import { usePlantillasActivas } from '@/hooks/plantillas/usePlantillas'
 import { useLeads } from '@/hooks/pipeline/useLeads'
 import { useActividades } from '@/hooks/pipeline/useActividades'
+import { useNotificacionesProgramadas } from '@/hooks/notificaciones/useNotificaciones'
 import {
   seguimientoSchema,
   SeguimientoFormValues,
@@ -69,6 +70,13 @@ export function SeguimientoForm({
   const { data: actividades = [], isLoading: cargandoActividades } =
     useActividades(selectedLeadId || 0)
   const { data: contacto } = useContacto(selectedLead?.id_contacto ?? 0)
+  const {
+    data: notificacionesProgramadas = [],
+    isLoading: cargandoNotificaciones,
+  } = useNotificacionesProgramadas(
+    { estado: 'PROGRAMADA', idLead: selectedLeadId },
+    { enabled: Boolean(selectedLeadId) }
+  )
 
   const actividadActiva = useMemo(
     () =>
@@ -89,6 +97,20 @@ export function SeguimientoForm({
   const tieneMultiplesCorreos = correosContacto.length > 1
   const sinActividadActiva =
     Boolean(selectedLeadId) && !cargandoActividades && !actividadActiva
+  const notificacionProgramadaExistente = useMemo(
+    () =>
+      notificacionesProgramadas.find(
+        (notificacion) =>
+          notificacion.estado === 'PROGRAMADA' &&
+          notificacion.idLead === selectedLeadId &&
+          (!actividadActiva || notificacion.idActividad === actividadActiva.id)
+      ),
+    [actividadActiva, notificacionesProgramadas, selectedLeadId]
+  )
+  const tipoNotificacionExistente =
+    notificacionProgramadaExistente?.tipo === 'SEGUIMIENTO'
+      ? 'seguimiento'
+      : 'recordatorio'
 
   const formatFecha = (fecha: string) =>
     new Date(fecha).toLocaleDateString('es-PE', {
@@ -156,6 +178,7 @@ export function SeguimientoForm({
     }`
 
   const submit = async (values: SeguimientoFormValues) => {
+    if (notificacionProgramadaExistente) return
     if (!validateActividadWindow(values)) return
 
     await onSubmit({
@@ -286,6 +309,17 @@ export function SeguimientoForm({
           </div>
         )}
 
+        {notificacionProgramadaExistente && (
+          <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            <AlertCircle size={17} className="mt-0.5 shrink-0" />
+            <p>
+              Ya existe un {tipoNotificacionExistente} programado para la
+              actividad activa de este lead. Cancélalo antes de crear una
+              secuencia de seguimiento.
+            </p>
+          </div>
+        )}
+
         <div className="space-y-4">
           {fields.map((field, index) => {
             const instanceErrors = errors.instancias?.[index]
@@ -403,7 +437,9 @@ export function SeguimientoForm({
             disabled={
               isLoading ||
               cargandoActividades ||
+              cargandoNotificaciones ||
               sinActividadActiva ||
+              Boolean(notificacionProgramadaExistente) ||
               correosContacto.length === 0
             }
             className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"

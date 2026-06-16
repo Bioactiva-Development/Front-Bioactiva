@@ -226,12 +226,14 @@ export default function PlantillasPage() {
           />
           <div className="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
             <h3 id="dialog-title-plantilla" className="text-lg font-bold text-gray-900">
-              Eliminar plantilla
+              Eliminar o desactivar plantilla
             </h3>
             <p className="text-sm text-gray-600">
               ¿Estás seguro de eliminar{' '}
               <span className="font-semibold">{confirmEliminar.nombre}</span>?
-              Esta acción no se puede deshacer.
+              Si ya fue usada en notificaciones o seguimientos anteriores, el
+              backend impedirá eliminarla físicamente y solo podrás
+              desactivarla.
             </p>
 
             {errorEliminar && (

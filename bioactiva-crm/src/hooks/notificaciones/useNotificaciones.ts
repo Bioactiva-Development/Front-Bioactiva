@@ -10,11 +10,13 @@ import {
 } from '@/types/notificacion.types'
 
 export function useNotificacionesProgramadas(
-  filtros?: FiltrosNotificacionesProgramadas
+  filtros?: FiltrosNotificacionesProgramadas,
+  options?: { enabled?: boolean }
 ) {
   return useQuery({
     queryKey: QUERY_KEYS.notificaciones.scheduled(filtros),
     queryFn: () => notificacionesService.getProgramadas(filtros),
+    enabled: options?.enabled ?? true,
     staleTime: 1000 * 60,
   })
 }

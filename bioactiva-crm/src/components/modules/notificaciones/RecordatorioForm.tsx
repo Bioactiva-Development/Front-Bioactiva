@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Info, Loader2, Save } from 'lucide-react'
+import { AlertCircle, Info, Loader2, Save } from 'lucide-react'
 import { usePlantillasActivas } from '@/hooks/plantillas/usePlantillas'
 import { useLeads } from '@/hooks/pipeline/useLeads'
 import { useActividades } from '@/hooks/pipeline/useActividades'
+import { useNotificacionesProgramadas } from '@/hooks/notificaciones/useNotificaciones'
 import {
   recordatorioSchema,
   RecordatorioFormValues,
@@ -53,9 +54,30 @@ export function RecordatorioForm({
   const selectedLeadId = useWatch({ control, name: 'idLead' })
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId)
   const { data: actividades = [] } = useActividades(selectedLeadId)
+  const {
+    data: notificacionesProgramadas = [],
+    isLoading: cargandoNotificaciones,
+  } = useNotificacionesProgramadas(
+    { estado: 'PROGRAMADA', idLead: selectedLeadId },
+    { enabled: Boolean(selectedLeadId) }
+  )
   const actividadActiva = actividades.find(
     (actividad) => actividad.estado === EstadoActividad.Pendiente
   )
+  const notificacionProgramadaExistente = useMemo(
+    () =>
+      notificacionesProgramadas.find(
+        (notificacion) =>
+          notificacion.estado === 'PROGRAMADA' &&
+          notificacion.idLead === selectedLeadId &&
+          (!actividadActiva || notificacion.idActividad === actividadActiva.id)
+      ),
+    [actividadActiva, notificacionesProgramadas, selectedLeadId]
+  )
+  const tipoNotificacionExistente =
+    notificacionProgramadaExistente?.tipo === 'SEGUIMIENTO'
+      ? 'seguimiento'
+      : 'recordatorio'
 
   const plantillas = plantillasActivas.data ?? []
 
@@ -79,6 +101,8 @@ export function RecordatorioForm({
       }`
 
   const submit = async (values: RecordatorioFormValues) => {
+    if (notificacionProgramadaExistente) return
+
     await onSubmit({
       idLead: values.idLead,
       minutosAntes: values.minutosAntes,
@@ -161,6 +185,17 @@ export function RecordatorioForm({
           </div>
         )}
 
+        {notificacionProgramadaExistente && (
+          <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            <AlertCircle size={17} className="mt-0.5 shrink-0" />
+            <p>
+              Ya existe un {tipoNotificacionExistente} programado para la
+              actividad activa de este lead. Cancélalo antes de crear una nueva
+              notificación.
+            </p>
+          </div>
+        )}
+
         <div className="space-y-1.5">
           <label htmlFor="rec-template" className="text-xs font-semibold uppercase text-gray-500">
             Plantilla opcional
@@ -235,7 +270,11 @@ export function RecordatorioForm({
           </button>
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={
+              isLoading ||
+              cargandoNotificaciones ||
+              Boolean(notificacionProgramadaExistente)
+            }
             className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
             {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}

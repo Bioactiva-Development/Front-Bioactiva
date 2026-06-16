@@ -50,6 +50,15 @@ describe('notificaciones hooks', () => {
     expect(getProgramadas).toHaveBeenCalledWith(filtros)
   })
 
+  it('does not load scheduled notifications while disabled', () => {
+    const filtros = { estado: 'PROGRAMADA' as const, idLead: 0 }
+    renderHook(
+      () => useNotificacionesProgramadas(filtros, { enabled: false }),
+      { wrapper }
+    )
+    expect(getProgramadas).not.toHaveBeenCalled()
+  })
+
   it('loads the in-app inbox', async () => {
     getInApp.mockResolvedValueOnce([{ id: 2, estado: 'NO_LEIDA' }])
     const { result } = renderHook(() => useNotificacionesInApp(), { wrapper })
