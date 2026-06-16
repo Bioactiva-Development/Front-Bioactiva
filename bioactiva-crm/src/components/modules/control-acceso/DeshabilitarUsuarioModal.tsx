@@ -8,11 +8,12 @@ import { ModalShell, ModalHeader } from '@/components/ui'
 interface Props {
     usuario: UsuarioListItem
     isLoading: boolean
+    error?: string | null
     onClose: () => void
     onConfirm: () => Promise<boolean>
 }
 
-export function DeshabilitarUsuarioModal({ usuario, isLoading, onClose, onConfirm }: Readonly<Props>) {
+export function DeshabilitarUsuarioModal({ usuario, isLoading, error, onClose, onConfirm }: Readonly<Props>) {
     const nombreCompleto = [usuario.nombres, usuario.apellidos].filter(Boolean).join(' ')
     const esActivo = usuario.estado === EstadoUsuario.Activo
 
@@ -40,6 +41,12 @@ export function DeshabilitarUsuarioModal({ usuario, isLoading, onClose, onConfir
                         <>¿Deseas habilitar nuevamente a <span className="font-semibold text-gray-900">{nombreCompleto}</span>? El usuario podrá volver a iniciar sesión.</>
                     )}
                 </p>
+
+                {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+                        {error}
+                    </div>
+                )}
 
                 <div className="flex items-center justify-end gap-3">
                     <button

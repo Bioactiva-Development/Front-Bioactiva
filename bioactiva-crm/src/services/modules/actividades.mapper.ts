@@ -39,14 +39,13 @@ export interface ActividadCreateDto {
   fechaInicio: string
   fechaFin: string
   tipo: string
-  idResponsable: number
   notas?: string
 }
 
 export type ActividadUpdateDto = Partial<
   Pick<
     ActividadCreateDto,
-    'nombreActividad' | 'fechaInicio' | 'fechaFin' | 'idResponsable' | 'notas'
+    'nombreActividad' | 'fechaInicio' | 'fechaFin' | 'notas'
   >
 >
 
@@ -129,7 +128,6 @@ export const toCreateActividadDto = (
     fechaInicio: toIsoDateTime(data.fecha_inicio),
     fechaFin: toIsoDateTime(data.fecha_fin),
     tipo: TIPO_DOMAIN_TO_BACKEND[data.tipo],
-    idResponsable: data.id_responsable,
   }
 
   const notas = trimOrUndefined(data.notas)
@@ -151,9 +149,6 @@ export const toUpdateActividadDto = (
   }
   if (data.fecha_fin !== undefined) {
     dto.fechaFin = toIsoDateTime(data.fecha_fin)
-  }
-  if (data.id_responsable !== undefined) {
-    dto.idResponsable = data.id_responsable
   }
 
   const notas = trimOrUndefined(data.notas)

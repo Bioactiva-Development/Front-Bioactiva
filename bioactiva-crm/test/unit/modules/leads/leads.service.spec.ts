@@ -18,7 +18,6 @@ const rawLead = {
   servicioInteres: 'Ley 30309',
   comentarios: null,
   desafioOportunidad: 'Optimizar I+D+i',
-  notasContacto: null,
   canalCaptacion: 'Referido',
   idOrg: '123e4567-e89b-12d3-a456-426614174000',
   organizationName: 'Altomayo',
