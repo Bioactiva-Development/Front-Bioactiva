@@ -135,6 +135,7 @@ describe('pipeline/useActividades', () => {
   describe('useCompletarActividad', () => {
     it('completes activity with notes', async () => {
       mockComplete.mockResolvedValueOnce({ ok: true })
+      const invalidateSpy = jest.spyOn(QueryClient.prototype, 'invalidateQueries')
 
       const { result } = renderHook(() => useCompletarActividad(42), { wrapper })
 
@@ -143,6 +144,8 @@ describe('pipeline/useActividades', () => {
       })
 
       expect(mockComplete).toHaveBeenCalledWith(1, 'Done')
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['notificaciones'] })
+      invalidateSpy.mockRestore()
     })
 
     it('completes activity without notes', async () => {
@@ -161,6 +164,7 @@ describe('pipeline/useActividades', () => {
   describe('useCancelarActividad', () => {
     it('cancels activity by id', async () => {
       mockCancel.mockResolvedValueOnce({ ok: true })
+      const invalidateSpy = jest.spyOn(QueryClient.prototype, 'invalidateQueries')
 
       const { result } = renderHook(() => useCancelarActividad(42), { wrapper })
 
@@ -169,6 +173,8 @@ describe('pipeline/useActividades', () => {
       })
 
       expect(mockCancel).toHaveBeenCalledWith(1)
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['notificaciones'] })
+      invalidateSpy.mockRestore()
     })
   })
 

@@ -30,6 +30,18 @@ const formatTiempo = (fecha: string, ahora: number) => {
   return 'Hace un momento'
 }
 
+function EstadoEnvioBadge({ enviado }: Readonly<{ enviado: boolean }>) {
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+      enviado
+        ? 'bg-emerald-100 text-emerald-700'
+        : 'bg-amber-100 text-amber-700'
+    }`}>
+      {enviado ? 'Enviado' : 'Pendiente'}
+    </span>
+  )
+}
+
 export function NotificacionAlerta({
   notificacion,
 }: Readonly<{ notificacion: NotificacionInApp }>) {
@@ -124,22 +136,47 @@ export function NotificacionProgramadaItem({
           </p>
 
           {notificacion.tipo === 'RECORDATORIO' && notificacion.fechaEnvioInterno && (
+            <div className="mt-2 space-y-1 text-xs text-gray-500">
+              <p>
+                Envío interno: {formatFecha(notificacion.fechaEnvioInterno)}
+                {' '}
+                <EstadoEnvioBadge enviado={notificacion.enviadoInterno} />
+              </p>
+              {!notificacion.enviadoInterno && (
+                <p className="text-gray-400">
+                  Si la actividad se marca como completada antes del envío, el
+                  backend cancelará este recordatorio pendiente.
+                </p>
+              )}
+            </div>
+          )}
+
+          {notificacion.tipo === 'SEGUIMIENTO' && (
             <p className="mt-2 text-xs text-gray-400">
-              Envío interno: {formatFecha(notificacion.fechaEnvioInterno)}
+              Si la actividad se completa antes de un paso programado, el
+              backend cancelará los pasos pendientes. El correo externo se
+              enviará solo si la actividad sigue pendiente en su fecha
+              programada.
             </p>
           )}
 
           {notificacion.instancias?.map((instancia) => (
             <div key={instancia.id} className="mt-3 rounded-xl bg-gray-50 p-3 text-xs">
               <p className="font-semibold text-gray-700">Instancia {instancia.orden}</p>
-              <p className="mt-1 text-gray-500">
-                Interno: {formatFecha(instancia.fechaEnvioInterno)}
-                {instancia.enviadoInterno ? ' · enviado' : ' · pendiente'}
-              </p>
-              <p className="mt-1 text-gray-500">
-                Cliente: {formatFecha(instancia.fechaEnvioExterno)}
-                {instancia.enviadoExterno ? ' · enviado' : ' · pendiente'}
-              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-gray-500">
+                <span>Interno: {formatFecha(instancia.fechaEnvioInterno)}</span>
+                <EstadoEnvioBadge enviado={instancia.enviadoInterno} />
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-gray-500">
+                <span>Cliente: {formatFecha(instancia.fechaEnvioExterno)}</span>
+                <EstadoEnvioBadge enviado={instancia.enviadoExterno} />
+              </div>
+              {!instancia.enviadoExterno && (
+                <p className="mt-1 text-gray-400">
+                  Se enviará al cliente si el encargado no completa la
+                  actividad antes de esta fecha.
+                </p>
+              )}
             </div>
           ))}
 
