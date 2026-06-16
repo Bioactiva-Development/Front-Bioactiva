@@ -82,6 +82,9 @@ export const ENDPOINTS = {
         update: (id: number) => `/activities/${id}`,
         complete: (id: number) => `/activities/${id}/complete`,
         cancel: (id: number) => `/activities/${id}/cancel`,
+        // Mantis #407 — edicion del comentario (campo `notas`) de la actividad.
+        // Body { notas: string } (1-1000). Reemplaza el valor; sin historial.
+        notes: (id: number) => `/activities/${id}/notes`,
         delete: (id: number) => `/activities/${id}`,
     },
 

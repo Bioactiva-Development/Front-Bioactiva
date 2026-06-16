@@ -10,6 +10,7 @@ const mockCancel = jest.fn()
 const mockDelete = jest.fn()
 const mockGetComentarios = jest.fn()
 const mockCreateComentario = jest.fn()
+const mockUpdateNotas = jest.fn()
 
 jest.mock('@/services/modules/actividades.service', () => ({
   actividadesService: {
@@ -19,6 +20,7 @@ jest.mock('@/services/modules/actividades.service', () => ({
     complete: mockComplete,
     cancel: mockCancel,
     delete: mockDelete,
+    updateNotas: mockUpdateNotas,
     getComentarios: mockGetComentarios,
     createComentario: mockCreateComentario,
   },
@@ -58,6 +60,7 @@ import {
   useCompletarActividad,
   useCancelarActividad,
   useEliminarActividad,
+  useEditarNotasActividad,
   useComentarios,
   useCrearComentario,
 } from '@/hooks/pipeline/useActividades'
@@ -176,6 +179,20 @@ describe('pipeline/useActividades', () => {
       })
 
       expect(mockDelete).toHaveBeenCalledWith(3)
+    })
+  })
+
+  describe('useEditarNotasActividad', () => {
+    it('updates the activity notes via the dedicated service method', async () => {
+      mockUpdateNotas.mockResolvedValueOnce({ id: 7, notas: 'Comentario editado' })
+
+      const { result } = renderHook(() => useEditarNotasActividad(42), { wrapper })
+
+      await act(async () => {
+        await result.current.mutateAsync({ id: 7, notas: 'Comentario editado' })
+      })
+
+      expect(mockUpdateNotas).toHaveBeenCalledWith(7, 'Comentario editado')
     })
   })
 

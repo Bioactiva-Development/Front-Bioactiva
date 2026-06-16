@@ -118,6 +118,16 @@ describe('actividades/actividades.service (API mode)', () => {
     })
   })
 
+  describe('updateNotas', () => {
+    it('patches the dedicated notes endpoint and returns mapped actividad', async () => {
+      patchMock.mockResolvedValueOnce({ data: { ...rawActividad, notas: 'Comentario editado' } })
+
+      const result = await actividadesService.updateNotas(12, 'Comentario editado')
+      expect(patchMock).toHaveBeenCalledWith('/activities/12/notes', { notas: 'Comentario editado' })
+      expect(result.notas).toBe('Comentario editado')
+    })
+  })
+
   describe('cancel', () => {
     it('cancels activity and cancels notifications', async () => {
       patchMock.mockResolvedValueOnce({ data: { ...rawActividad, estado: 'CANCELADA' } });
