@@ -106,6 +106,23 @@ export function NotificacionProgramadaItem({
 }: Readonly<ProgramadaItemProps>) {
   const { mutateAsync: cancelar, isPending } = useCancelarProgramada()
   const esProgramada = notificacion.estado === 'PROGRAMADA'
+  const [confirmandoCancelacion, setConfirmandoCancelacion] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
+
+  const handleCancelar = async () => {
+    try {
+      setCancelError(null)
+      await cancelar(notificacion.id)
+      setConfirmandoCancelacion(false)
+    } catch (err: unknown) {
+      const status = (err as { status?: number })?.status
+      setCancelError(
+        status === 409
+          ? 'La notificación ya no puede cancelarse porque no está programada.'
+          : 'No se pudo cancelar la notificación. Intente nuevamente.'
+      )
+    }
+  }
 
   return (
     <article className="rounded-2xl border border-gray-100 bg-white p-4">
@@ -148,6 +165,12 @@ export function NotificacionProgramadaItem({
                   backend cancelará este recordatorio pendiente.
                 </p>
               )}
+              {esProgramada && (
+                <p className="text-gray-400">
+                  También puedes cancelarlo manualmente antes de su ejecución.
+                  Al cancelarse, desaparece de esta lista y no se envía.
+                </p>
+              )}
             </div>
           )}
 
@@ -156,7 +179,8 @@ export function NotificacionProgramadaItem({
               Si la actividad se completa antes de un paso programado, el
               backend cancelará los pasos pendientes. El correo externo se
               enviará solo si la actividad sigue pendiente en su fecha
-              programada.
+              programada. También puedes cancelar la notificación completa antes
+              de su ejecución; al cancelarse, no se envía ni queda en esta lista.
             </p>
           )}
 
@@ -188,17 +212,54 @@ export function NotificacionProgramadaItem({
         </div>
 
         {esProgramada && (
-          <button
-            type="button"
-            onClick={() => cancelar(notificacion.id)}
-            disabled={isPending}
-            title="Cancelar notificación"
-            className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
-          >
-            <X size={14} />
-          </button>
+          <div className="shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setCancelError(null)
+                setConfirmandoCancelacion(true)
+              }}
+              disabled={isPending}
+              title="Cancelar notificación"
+              className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
+            >
+              <X size={14} />
+            </button>
+          </div>
         )}
       </div>
+
+      {confirmandoCancelacion && (
+        <div className="mt-3 rounded-xl border border-red-100 bg-red-50 p-3 text-xs text-red-700">
+          <p className="font-semibold">Cancelar notificación programada</p>
+          <p className="mt-1">
+            Se anularán los envíos pendientes. La notificación cancelada no se
+            mostrará en programadas ni como ejecutada en el historial.
+          </p>
+          {cancelError && <p className="mt-2 font-semibold">{cancelError}</p>}
+          <div className="mt-3 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmandoCancelacion(false)
+                setCancelError(null)
+              }}
+              disabled={isPending}
+              className="rounded-lg px-3 py-1.5 font-semibold text-gray-500 hover:bg-white"
+            >
+              Volver
+            </button>
+            <button
+              type="button"
+              onClick={handleCancelar}
+              disabled={isPending}
+              className="rounded-lg bg-red-600 px-3 py-1.5 font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              {isPending ? 'Cancelando...' : 'Confirmar cancelación'}
+            </button>
+          </div>
+        </div>
+      )}
     </article>
   )
 }

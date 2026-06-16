@@ -6,6 +6,7 @@ import {
   CrearRecordatorioRequest,
   CrearSeguimientoRequest,
   FiltrosNotificacionesProgramadas,
+  NotificacionProgramada,
 } from '@/types/notificacion.types'
 
 export function useNotificacionesProgramadas(
@@ -49,12 +50,35 @@ export function useCancelarProgramada() {
 
   return useMutation({
     mutationFn: (id: number) => notificacionesService.cancelarProgramada(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({
+        queryKey: ['notificaciones', 'scheduled'],
+      })
+
+      const previousScheduledQueries =
+        queryClient.getQueriesData<NotificacionProgramada[]>({
+          queryKey: ['notificaciones', 'scheduled'],
+        })
+
+      previousScheduledQueries.forEach(([queryKey, notificaciones]) => {
+        if (!notificaciones) return
+        queryClient.setQueryData(
+          queryKey,
+          notificaciones.filter((notificacion) => notificacion.id !== id)
+        )
+      })
+
+      return { previousScheduledQueries }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['notificaciones', 'scheduled'],
       })
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, _id, context) => {
+      context?.previousScheduledQueries.forEach(([queryKey, notificaciones]) => {
+        queryClient.setQueryData(queryKey, notificaciones)
+      })
       console.error(getErrorMessage(err))
     },
   })
