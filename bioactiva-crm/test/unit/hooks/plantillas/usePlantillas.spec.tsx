@@ -46,6 +46,7 @@ import {
   useEliminarPlantilla,
   useDesactivarPlantilla,
 } from '@/hooks/plantillas/usePlantillas'
+import type { PlantillaFormData } from '@/types/plantilla.types'
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
@@ -109,14 +110,19 @@ describe('plantillas/usePlantillas', () => {
   describe('useCrearPlantilla', () => {
     it('creates template and invalidates queries', async () => {
       mockCreate.mockResolvedValueOnce({ id: 1 })
+      const payload: PlantillaFormData = {
+        nombre: 'Nueva',
+        asunto: 'Asunto',
+        cuerpo: '<p>Hola</p>',
+      }
 
       const { result } = renderHook(() => useCrearPlantilla(), { wrapper })
 
       await act(async () => {
-        await result.current.mutateAsync({ nombre: 'Nueva', contenido: '<p>Hola</p>' } as any)
+        await result.current.mutateAsync(payload)
       })
 
-      expect(mockCreate).toHaveBeenCalledWith({ nombre: 'Nueva', contenido: '<p>Hola</p>' })
+      expect(mockCreate).toHaveBeenCalledWith(payload)
     })
 
     it('logs error on failure', async () => {
@@ -126,7 +132,13 @@ describe('plantillas/usePlantillas', () => {
       const { result } = renderHook(() => useCrearPlantilla(), { wrapper })
 
       await act(async () => {
-        try { await result.current.mutateAsync({} as any) } catch { /* expected */ }
+        try {
+          await result.current.mutateAsync({
+            nombre: '',
+            asunto: '',
+            cuerpo: '',
+          })
+        } catch { /* expected */ }
       })
 
       await waitFor(() => expect(consoleSpy).toHaveBeenCalledWith('Error al crear'))

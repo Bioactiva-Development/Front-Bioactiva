@@ -53,8 +53,18 @@ export default function PlantillasPage() {
       setConfirmEliminar(null)
     } catch (err: unknown) {
       const msg = getErrorMessage(err, 'No se pudo eliminar la plantilla.')
-      const esEnUso = msg.toLowerCase().includes('asociada a una notificación')
-      setErrorEliminar(msg)
+      const status = (err as { status?: number })?.status
+      const normalized = msg.toLowerCase()
+      const esEnUso =
+        status === 409 ||
+        normalized.includes('asociada a una notificación') ||
+        normalized.includes('asociada a una notificacion') ||
+        normalized.includes('asociada')
+      setErrorEliminar(
+        esEnUso
+          ? 'No se puede eliminar la plantilla porque está asociada a notificaciones históricas. Desactívala para ocultarla del selector.'
+          : msg
+      )
       setOfrecerDesactivar(esEnUso)
     }
   }
@@ -233,6 +243,11 @@ export default function PlantillasPage() {
 
             {ofrecerDesactivar ? (
               <div className="flex flex-col gap-2">
+                <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  Las notificaciones existentes conservan su propia copia de
+                  asunto y cuerpo. Desactivar la plantilla solo la oculta del
+                  selector para nuevas programaciones.
+                </p>
                 <button
                   onClick={handleDesactivar}
                   disabled={desactivando}

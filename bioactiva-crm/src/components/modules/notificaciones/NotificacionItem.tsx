@@ -110,6 +110,13 @@ export function NotificacionProgramadaItem({
   const [cancelError, setCancelError] = useState<string | null>(null)
 
   const handleCancelar = async () => {
+    if (!esProgramada) {
+      setCancelError(
+        'La notificación ya no puede cancelarse porque está vencida o ya fue ejecutada.'
+      )
+      return
+    }
+
     try {
       setCancelError(null)
       await cancelar(notificacion.id)
@@ -118,7 +125,7 @@ export function NotificacionProgramadaItem({
       const status = (err as { status?: number })?.status
       setCancelError(
         status === 409
-          ? 'La notificación ya no puede cancelarse porque no está programada.'
+          ? 'La notificación ya no puede cancelarse porque está vencida o ya fue ejecutada.'
           : 'No se pudo cancelar la notificación. Intente nuevamente.'
       )
     }
@@ -252,7 +259,7 @@ export function NotificacionProgramadaItem({
             <button
               type="button"
               onClick={handleCancelar}
-              disabled={isPending}
+              disabled={isPending || !esProgramada}
               className="rounded-lg bg-red-600 px-3 py-1.5 font-semibold text-white hover:bg-red-700 disabled:opacity-50"
             >
               {isPending ? 'Cancelando...' : 'Confirmar cancelación'}

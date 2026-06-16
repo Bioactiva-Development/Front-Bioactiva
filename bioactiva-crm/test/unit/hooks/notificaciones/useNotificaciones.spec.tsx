@@ -96,6 +96,34 @@ describe('notificaciones hooks', () => {
     ])
   })
 
+  it('restores cached scheduled notifications when cancellation is rejected', async () => {
+    cancelarProgramada.mockRejectedValueOnce(
+      Object.assign(new Error('Conflict'), { status: 409 })
+    )
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+    const scheduledKey = ['notificaciones', 'scheduled', { estado: 'PROGRAMADA' }]
+    const scheduled = [
+      { id: 1, estado: 'PROGRAMADA' },
+      { id: 2, estado: 'PROGRAMADA' },
+    ]
+    client.setQueryData(scheduledKey, scheduled)
+
+    const localWrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(() => useCancelarProgramada(), {
+      wrapper: localWrapper,
+    })
+
+    await act(async () => {
+      try { await result.current.mutateAsync(1) } catch { /* expected */ }
+    })
+
+    expect(client.getQueryData(scheduledKey)).toEqual(scheduled)
+  })
+
   it('creates reminders and follow-ups', async () => {
     createRecordatorio.mockResolvedValueOnce({ id: 1 })
     createSeguimiento.mockResolvedValueOnce({ id: 2 })
