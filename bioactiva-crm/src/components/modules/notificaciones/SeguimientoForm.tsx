@@ -14,6 +14,7 @@ import {
 } from '@/lib/validators/notificacion.schema'
 import { CrearSeguimientoRequest } from '@/types/notificacion.types'
 import { EstadoActividad } from '@/types/enums'
+import { getContactoEmailOptions } from '@/lib/utils/contacto-email.utils'
 
 interface SeguimientoFormProps {
   onSubmit: (data: CrearSeguimientoRequest) => Promise<void>
@@ -81,13 +82,11 @@ export function SeguimientoForm({
   )
 
   const correosContacto = useMemo(
-    () =>
-      [contacto?.correo, contacto?.correo2].filter(
-        (correo): correo is string => Boolean(correo)
-      ),
-    [contacto?.correo, contacto?.correo2]
+    () => getContactoEmailOptions(contacto),
+    [contacto]
   )
-  const correoPrincipal = correosContacto[0] ?? ''
+  const correoPrincipal = correosContacto[0]?.value ?? ''
+  const tieneMultiplesCorreos = correosContacto.length > 1
   const sinActividadActiva =
     Boolean(selectedLeadId) && !cargandoActividades && !actividadActiva
 
@@ -226,9 +225,22 @@ export function SeguimientoForm({
                 {correosContacto.length ? 'Selecciona un correo' : 'El lead no tiene contacto con correo'}
               </option>
               {correosContacto.map((correo) => (
-                <option key={correo} value={correo}>{correo}</option>
+                <option key={correo.value} value={correo.value}>
+                  {correo.label} · {correo.value}
+                </option>
               ))}
             </select>
+            {tieneMultiplesCorreos && (
+              <p className="text-xs text-gray-400">
+                El contacto tiene más de un correo. Selecciona el destinatario
+                que recibirá todas las instancias externas.
+              </p>
+            )}
+            {correosContacto.length === 1 && (
+              <p className="text-xs text-gray-400">
+                Se usará el único correo vigente registrado para el contacto.
+              </p>
+            )}
             {errors.correoCliente && (
               <p className="text-xs text-red-500">{errors.correoCliente.message}</p>
             )}

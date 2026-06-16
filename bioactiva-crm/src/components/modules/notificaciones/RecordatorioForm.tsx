@@ -51,7 +51,6 @@ export function RecordatorioForm({
   })
 
   const selectedLeadId = useWatch({ control, name: 'idLead' })
-  const selectedTemplateId = useWatch({ control, name: 'idTemplate' })
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId)
   const { data: actividades = [] } = useActividades(selectedLeadId)
   const actividadActiva = actividades.find(
@@ -59,19 +58,17 @@ export function RecordatorioForm({
   )
 
   const plantillas = plantillasActivas.data ?? []
-  const selectedTemplate = plantillas.find(
-    (plantilla) => plantilla.id === selectedTemplateId
-  )
 
   useEffect(() => {
     if (leadIdInicial) setValue('idLead', leadIdInicial)
   }, [leadIdInicial, setValue])
 
-  useEffect(() => {
-    if (!selectedTemplate) return
-    setValue('asunto', selectedTemplate.asunto)
-    setValue('cuerpo', selectedTemplate.cuerpo)
-  }, [selectedTemplate, setValue])
+  const applyTemplate = (templateId: number) => {
+    const template = plantillas.find((item) => item.id === templateId)
+    if (!template) return
+    setValue('asunto', template.asunto)
+    setValue('cuerpo', template.cuerpo)
+  }
 
   const inputClass = (hasError: boolean) =>
     `w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 outline-none
@@ -170,16 +167,26 @@ export function RecordatorioForm({
           </label>
           <select
             id="rec-template"
-            {...register('idTemplate', { valueAsNumber: true })}
+            {...register('idTemplate', {
+              valueAsNumber: true,
+              onChange: (event) => applyTemplate(Number(event.target.value)),
+            })}
             className={inputClass(!!errors.idTemplate)}
+            disabled={plantillasActivas.isLoading}
           >
-            <option value={0}>Sin plantilla</option>
+            <option value={0}>
+              {plantillasActivas.isLoading ? 'Cargando plantillas...' : 'Sin plantilla'}
+            </option>
             {plantillas.map((plantilla) => (
               <option key={plantilla.id} value={plantilla.id}>
                 {plantilla.nombre}
               </option>
             ))}
           </select>
+          <p className="text-xs text-gray-400">
+            La plantilla solo precarga asunto y cuerpo; puedes editarlos sin
+            modificar la plantilla original.
+          </p>
         </div>
 
         <div className="space-y-1.5">
