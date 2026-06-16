@@ -4,48 +4,39 @@ import { PipelineColumn } from '@/hooks/pipeline/useLeads'
 import { Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
 
-// Capturamos el handler onDragEnd para probar la lógica de mover sin un drag real.
-const mockDnd: { onDragEnd?: (event: unknown) => void } = {}
+// Capturamos el handler onDrop para probar la lógica de mover sin un drag real.
+let capturedOnDrop: ((args: unknown) => void) | undefined
 
-jest.mock('@dnd-kit/core', () => ({
-  DndContext: ({ children, onDragEnd }: { children: React.ReactNode; onDragEnd: (e: unknown) => void }) => {
-    mockDnd.onDragEnd = onDragEnd
-    return <div>{children}</div>
-  },
-  PointerSensor: jest.fn(),
-  pointerWithin: jest.fn(),
-  useSensor: jest.fn(),
-  useSensors: () => [],
-  useDroppable: () => ({ isOver: false, setNodeRef: jest.fn() }),
-  useDraggable: () => ({
-    attributes: {},
-    listeners: {},
-    setNodeRef: jest.fn(),
-    transform: null,
-    isDragging: false,
+jest.mock('@atlaskit/pragmatic-drag-and-drop/element/adapter', () => ({
+  draggable:             jest.fn(() => jest.fn()),
+  dropTargetForElements: jest.fn(() => jest.fn()),
+  monitorForElements:    jest.fn((opts: { onDrop?: (args: unknown) => void }) => {
+    capturedOnDrop = opts.onDrop
+    return jest.fn()
   }),
 }))
-jest.mock('@dnd-kit/utilities', () => ({ CSS: { Translate: { toString: () => '' } } }))
 jest.mock('lucide-react', () => new Proxy({}, { get: () => () => null }))
 
 const col = (total: number): PipelineColumn => ({
-  leads: [],
+  leads:      [],
   total,
-  isLoading: false,
-  isError: false,
-  hasMore: false,
+  isLoading:  false,
+  isError:    false,
+  hasMore:    false,
   loadingMore: false,
-  cargarMas: jest.fn(),
+  cargarMas:  jest.fn(),
 })
 
 const columnas: PipelineColumns = {
-  prospecto: col(2),
-  ofertado: col(1),
-  cierreVenta: col(0),
+  prospecto:      col(2),
+  ofertado:       col(1),
+  cierreVenta:    col(0),
   cierreSinVenta: col(0),
 }
 
 describe('modules/pipeline/KanbanBoard', () => {
+  beforeEach(() => { capturedOnDrop = undefined })
+
   it('renders the four pipeline columns in order', () => {
     render(
       <KanbanBoard
@@ -54,7 +45,6 @@ describe('modules/pipeline/KanbanBoard', () => {
         onMoveLead={jest.fn()}
       />
     )
-
     const titulos = ['En prospecto', 'Ofertado', 'Cierre con venta', 'Cierre sin venta']
     titulos.forEach((t) => expect(screen.getByText(t)).toBeInTheDocument())
   })
@@ -64,9 +54,9 @@ describe('modules/pipeline/KanbanBoard', () => {
     render(<KanbanBoard columnas={columnas} onClickLead={jest.fn()} onMoveLead={onMoveLead} />)
 
     const lead = { id: 1, estado: LeadState.Prospecto } as Lead
-    mockDnd.onDragEnd?.({
-      active: { data: { current: { lead } } },
-      over: { data: { current: { estado: LeadState.Ofertado } } },
+    capturedOnDrop?.({
+      source:   { data: { lead } },
+      location: { current: { dropTargets: [{ data: { estado: LeadState.Ofertado } }] } },
     })
 
     expect(onMoveLead).toHaveBeenCalledWith(lead, LeadState.Ofertado)
@@ -77,9 +67,22 @@ describe('modules/pipeline/KanbanBoard', () => {
     render(<KanbanBoard columnas={columnas} onClickLead={jest.fn()} onMoveLead={onMoveLead} />)
 
     const lead = { id: 1, estado: LeadState.Prospecto } as Lead
-    mockDnd.onDragEnd?.({
-      active: { data: { current: { lead } } },
-      over: { data: { current: { estado: LeadState.Prospecto } } },
+    capturedOnDrop?.({
+      source:   { data: { lead } },
+      location: { current: { dropTargets: [{ data: { estado: LeadState.Prospecto } }] } },
+    })
+
+    expect(onMoveLead).not.toHaveBeenCalled()
+  })
+
+  it('ignores a drop with no drop target', () => {
+    const onMoveLead = jest.fn()
+    render(<KanbanBoard columnas={columnas} onClickLead={jest.fn()} onMoveLead={onMoveLead} />)
+
+    const lead = { id: 1, estado: LeadState.Prospecto } as Lead
+    capturedOnDrop?.({
+      source:   { data: { lead } },
+      location: { current: { dropTargets: [] } },
     })
 
     expect(onMoveLead).not.toHaveBeenCalled()

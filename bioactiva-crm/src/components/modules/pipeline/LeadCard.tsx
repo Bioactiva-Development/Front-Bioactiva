@@ -1,50 +1,41 @@
 'use client'
 
-import type React from 'react'
-import { useDraggable } from '@dnd-kit/core'
-import {
-  AlertTriangle,
-  Building2,
-  User,
-  Briefcase,
-  ExternalLink,
-  Pencil,
-  MessageSquarePlus,
-  FileText,
-} from 'lucide-react'
-import { ActivityAlert, Lead } from '@/types/lead.types'
+import { useEffect, useRef, useState } from 'react'
+import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+import { AlertTriangle, Clock, ExternalLink, FileMinus, User } from 'lucide-react'
+import { Lead } from '@/types/lead.types'
+import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
+import { Cotizacion } from '@/types/cotizacion.types'
+import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
 
-// Semáforo de actividades (backend: activityAlert). El color/label se pinta tal
-// cual llega del backend; el front NO recalcula el nivel.
-const SEMAFORO: Record<ActivityAlert, {
-  dot: string
-  pill: string
-  label: string
-  descripcion: string
-}> = {
-  VERDE: {
-    dot: 'bg-emerald-500',
-    pill: 'bg-emerald-50 text-emerald-700',
-    label: 'Al día',
-    descripcion: 'Sin actividades pendientes por vencer ni vencidas',
-  },
-  AMARILLO: {
-    dot: 'bg-amber-500',
-    pill: 'bg-amber-50 text-amber-700',
-    label: 'Por vencer',
-    descripcion: 'Actividad pendiente próxima a vencer (≤ 3 días)',
-  },
-  ROJO: {
-    dot: 'bg-red-500',
-    pill: 'bg-red-50 text-red-700',
-    label: 'Vencida',
-    descripcion: 'Actividad pendiente vencida',
-  },
+const AVATAR_COLORS = [
+  'bg-emerald-500', 'bg-blue-500',  'bg-violet-500',
+  'bg-amber-500',   'bg-rose-500',  'bg-cyan-500',
+  'bg-indigo-500',  'bg-teal-500',  'bg-orange-500',
+]
+
+function avatarColor(name: string): string {
+  let h = 0
+  for (const c of name) h = c.charCodeAt(0) + ((h << 5) - h)
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
+}
+
+function initials(name: string): string {
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
+}
+
+function cotizacionActiva(cots: Cotizacion[]): Cotizacion | null {
+  return cots.find((c) => c.estado !== EstadoCot.Rechazada) ?? null
+}
+
+function formatMonto(monto: number, tipo: TipoMoneda): string {
+  const simbolo = tipo === TipoMoneda.Soles ? 'S/' : 'US$'
+  return `${simbolo} ${monto.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
 }
 
 interface LeadCardProps {
-  lead:     Lead
-  onClick:  (lead: Lead) => void
+  lead: Lead
+  onClick: (lead: Lead) => void
   isOverlay?: boolean
   onQuickAction?: (
     lead: Lead,
@@ -58,152 +49,150 @@ export function LeadCard({
   isOverlay = false,
   onQuickAction,
 }: LeadCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    isDragging,
-  } = useDraggable({
-    id: `lead-${lead.id}`,
-    data: { lead },
-  })
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
-  const handleAction = (
-    event: React.MouseEvent<HTMLButtonElement>,
-    action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
-  ) => {
-    event.stopPropagation()
-    onQuickAction?.(lead, action)
-  }
+  const { data: cotizaciones = [] } = useCotizacionesPorLead(lead.id)
+  const cot = cotizacionActiva(cotizaciones)
 
-  // Mientras se arrastra: muestra placeholder fantasma; el visual real lo lleva DragOverlay
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el || isOverlay) return
+    return draggable({
+      element: el,
+      getInitialData: () => ({ lead }),
+      onDragStart: () => setIsDragging(true),
+      onDrop:      () => setIsDragging(false),
+    })
+  }, [lead, isOverlay])
+
   if (isDragging) {
     return (
-      <div
-        ref={setNodeRef}
-        {...attributes}
-        {...listeners}
-        style={{ touchAction: 'none' }}
-        className="h-56 rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50/30"
-      />
+      <div className="h-40 rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50/30" />
     )
   }
 
+  // Badge de alerta superior: ROJO > tiene_alerta > AMARILLO
+  let alertBadge: React.ReactNode = null
+  if (lead.activity_alert === 'ROJO') {
+    alertBadge = (
+      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5
+        bg-red-100 text-red-600 text-[10px] font-bold uppercase tracking-wide shrink-0">
+        <AlertTriangle size={10} className="shrink-0" />
+        Vencida
+      </span>
+    )
+  } else if (lead.tiene_alerta) {
+    alertBadge = (
+      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5
+        bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wide shrink-0">
+        <Clock size={10} className="shrink-0" />
+        {lead.alerta_motivo ?? '+30 días'}
+      </span>
+    )
+  } else if (lead.activity_alert === 'AMARILLO') {
+    alertBadge = (
+      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5
+        bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wide shrink-0">
+        <Clock size={10} className="shrink-0" />
+        Por vencer
+      </span>
+    )
+  }
+
+  const externalLinkBtn = (
+    <button
+      type="button"
+      title="Ver detalle completo"
+      onClick={(e) => { e.stopPropagation(); onQuickAction?.(lead, 'detalle') }}
+      className="text-gray-300 hover:text-emerald-600 transition-colors
+        p-0.5 rounded cursor-pointer shrink-0"
+    >
+      <ExternalLink size={13} />
+    </button>
+  )
+
+  const encargado = lead.encargado_nombre
+
   return (
     <div
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
+      ref={cardRef}
       data-lead-id={lead.id}
       aria-label={`Lead - ${lead.organizacion_nombre}`}
-      style={{ touchAction: 'none' }}
       onClick={() => onClick(lead)}
       className={`
-        h-56 overflow-hidden bg-white rounded-xl border shadow-sm p-4
-        flex flex-col gap-2 group
-        transition duration-150
-        ${lead.tiene_alerta
-          ? 'border-l-4 border-l-red-400 border-t-gray-100 border-r-gray-100 border-b-gray-100'
-          : 'border-gray-100 hover:border-emerald-200 hover:shadow-lg hover:-translate-y-0.5'
-        }
+        bg-white rounded-xl border border-gray-200 shadow p-4
+        flex flex-col gap-3 cursor-pointer select-none transition duration-150
+        hover:border-emerald-200 hover:shadow-md hover:-translate-y-0.5
         ${isOverlay
-          ? 'shadow-2xl ring-2 ring-emerald-400 ring-offset-2 rotate-1 cursor-grabbing scale-[1.02]'
-          : 'cursor-pointer'
-        }
+          ? 'shadow-2xl ring-2 ring-emerald-300 ring-offset-2 rotate-1 scale-[1.02]'
+          : ''}
       `}
     >
-      {lead.tiene_alerta && (
-        <div className="flex items-center gap-1.5 text-red-500">
-          <AlertTriangle size={13} />
-          <span className="text-xs font-bold uppercase tracking-wide">
-            {lead.alerta_motivo ?? 'Alerta activa'}
-          </span>
+      {/* Fila alerta — solo cuando hay badge; lleva el link a su derecha */}
+      {alertBadge && (
+        <div className="flex items-center justify-between gap-2">
+          {alertBadge}
+          {externalLinkBtn}
         </div>
       )}
 
-      <div className="flex items-center gap-2">
-        <Building2 size={14} className="text-emerald-600 shrink-0" />
-        <p className="text-sm font-bold text-gray-900 truncate">
-          {lead.organizacion_nombre}
-        </p>
-        {lead.activity_alert && (
-          <span
-            title={SEMAFORO[lead.activity_alert].descripcion}
-            aria-label={`Semáforo de actividades: ${SEMAFORO[lead.activity_alert].descripcion}`}
-            className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5
-              text-[10px] font-bold uppercase tracking-wide shrink-0
-              ${SEMAFORO[lead.activity_alert].pill}`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${SEMAFORO[lead.activity_alert].dot}`} />
-            {SEMAFORO[lead.activity_alert].label}
-          </span>
-        )}
-      </div>
-
-        {lead.contacto_nombre && (
-          <div className="flex items-center gap-2">
-            <User size={13} className="text-gray-400 shrink-0" />
-            <p className="text-sm text-gray-600 truncate">
-              {lead.contacto_nombre}
-            </p>
-          </div>
-        )}
-
-        <div className="flex items-start gap-2">
-          <Briefcase size={13} className="text-gray-400 shrink-0 mt-0.5" />
-          <p className="text-sm text-gray-600 truncate">
+      {/* Nombre org + servicio; link a la derecha cuando no hay fila de alerta */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-gray-900 leading-snug">
+            {lead.organizacion_nombre}
+          </p>
+          <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">
             {lead.servicio_interes}
           </p>
         </div>
+        {!alertBadge && externalLinkBtn}
+      </div>
 
-      {lead.encargado_nombre && (
-        <div className="pt-2 border-t border-gray-50">
-          <span className="inline-flex items-center px-2.5 py-1 rounded-lg
-            bg-gray-100 text-xs text-gray-600 font-medium">
-            {lead.encargado_nombre}
+      {/* Monto de cotización o badge "Por cotizar" */}
+      {cot ? (
+        <span className="text-sm font-bold text-emerald-600 tabular-nums">
+          {formatMonto(cot.monto, cot.tipo)}
+        </span>
+      ) : lead.estado === LeadState.Prospecto ? (
+        <span className="inline-flex items-center gap-1.5 rounded-lg
+          bg-gray-100 text-gray-500 text-xs font-medium px-2.5 py-1 self-start">
+          <FileMinus size={12} className="shrink-0" />
+          Por cotizar
+        </span>
+      ) : null}
+
+      {/* Contacto — encima del separador */}
+      {lead.contacto_nombre && (
+        <div className="flex items-center gap-1.5">
+          <User size={12} className="text-gray-300 shrink-0" />
+          <span className="text-xs text-gray-600 truncate flex-1 min-w-0">
+            {lead.contacto_nombre}
           </span>
+          <span className="text-xs text-gray-400 shrink-0">· Contacto</span>
         </div>
       )}
 
-      <div className="mt-auto flex items-center justify-between gap-1 pt-2 border-t border-gray-100
-        opacity-60 group-hover:opacity-100 transition-opacity duration-200">
-        <button
-          type="button"
-          title="Ver detalle"
-          onClick={(event) => handleAction(event, 'detalle')}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
-            hover:bg-emerald-50 transition-colors cursor-pointer"
-        >
-          <ExternalLink size={14} />
-        </button>
-        <button
-          type="button"
-          title="Editar lead"
-          onClick={(event) => handleAction(event, 'editar')}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
-            hover:bg-emerald-50 transition-colors cursor-pointer"
-        >
-          <Pencil size={14} />
-        </button>
-        <button
-          type="button"
-          title="Registrar actividad"
-          onClick={(event) => handleAction(event, 'actividad')}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
-            hover:bg-emerald-50 transition-colors cursor-pointer"
-        >
-          <MessageSquarePlus size={14} />
-        </button>
-        <button
-          type="button"
-          title="Crear cotización"
-          onClick={(event) => handleAction(event, 'cotizacion')}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
-            hover:bg-emerald-50 transition-colors cursor-pointer"
-        >
-          <FileText size={14} />
-        </button>
-      </div>
+      {/* Separador a sangría completa */}
+      <div className="-mx-4 border-t border-gray-100" />
+
+      {/* Encargado — debajo del separador */}
+      {encargado && (
+        <div className="flex items-center gap-2">
+          <div
+            title={encargado}
+            className={`w-7 h-7 rounded-full flex items-center justify-center
+              text-white text-[10px] font-bold shrink-0 ${avatarColor(encargado)}`}
+          >
+            {initials(encargado)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-gray-800 truncate">{encargado}</p>
+            <p className="text-[10px] text-gray-400">Encargado</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

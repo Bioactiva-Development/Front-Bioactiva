@@ -4,17 +4,11 @@ import { KanbanColumn } from '@/components/modules/pipeline/KanbanColumn'
 import { Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
 
-jest.mock('@dnd-kit/core', () => ({
-  useDroppable: () => ({ isOver: false, setNodeRef: jest.fn() }),
-  useDraggable: () => ({
-    attributes: {},
-    listeners: {},
-    setNodeRef: jest.fn(),
-    transform: null,
-    isDragging: false,
-  }),
+jest.mock('@atlaskit/pragmatic-drag-and-drop/element/adapter', () => ({
+  draggable:             jest.fn(() => jest.fn()),
+  dropTargetForElements: jest.fn(() => jest.fn()),
+  monitorForElements:    jest.fn(() => jest.fn()),
 }))
-jest.mock('@dnd-kit/utilities', () => ({ CSS: { Translate: { toString: () => '' } } }))
 jest.mock('lucide-react', () => new Proxy({}, { get: () => () => null }))
 
 const makeLead = (id: number): Lead => ({
@@ -31,9 +25,10 @@ const makeLead = (id: number): Lead => ({
 })
 
 const baseProps = {
-  titulo: 'En prospecto',
-  estado: LeadState.Prospecto,
-  color: 'bg-gray-400',
+  titulo:      'En prospecto',
+  estado:      LeadState.Prospecto,
+  color:       'bg-gray-400',
+  overClasses: 'bg-gray-50 border-gray-300 ring-gray-200',
   onClickLead: jest.fn(),
 }
 

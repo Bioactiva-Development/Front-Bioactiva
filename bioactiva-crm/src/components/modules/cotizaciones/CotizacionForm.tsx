@@ -169,7 +169,7 @@ export function CotizacionForm({
       )
 
       if (leadRemitenteExists) {
-        setValue('id_remitente', leadAutocompletado.id_encargado, { shouldValidate: true })
+        setValue('id_remitente', leadAutocompletado.id_encargado)
         return
       }
     }
@@ -189,7 +189,7 @@ export function CotizacionForm({
         ? usuarioActualOption
         : remitentesDisponibles[0]
 
-    setValue('id_remitente', fallback.id, { shouldValidate: true })
+    setValue('id_remitente', fallback.id)
   }, [
     esEdicion,
     leadAutocompletado,
@@ -202,20 +202,12 @@ export function CotizacionForm({
   useEffect(() => {
     if (!leadAutocompletado || esEdicion) return
 
-    setValue('id_lead', leadAutocompletado.id, { shouldValidate: true })
-    setValue('fecha_cot', getTodayLocalDate(), { shouldValidate: true })
-    setValue('dirigido', leadAutocompletado.contacto_nombre ?? '', {
-      shouldValidate: true,
-    })
-    setValue('cliente', leadAutocompletado.organizacion_nombre ?? '', {
-      shouldValidate: true,
-    })
-    setValue('id_remitente', leadAutocompletado.id_encargado, {
-      shouldValidate: true,
-    })
-    setValue('nombre_servicio', leadAutocompletado.servicio_interes ?? '', {
-      shouldValidate: true,
-    })
+    setValue('id_lead', leadAutocompletado.id)
+    setValue('fecha_cot', getTodayLocalDate())
+    setValue('dirigido', leadAutocompletado.contacto_nombre ?? '')
+    setValue('cliente', leadAutocompletado.organizacion_nombre ?? '')
+    setValue('id_remitente', leadAutocompletado.id_encargado)
+    setValue('nombre_servicio', leadAutocompletado.servicio_interes ?? '')
   }, [esEdicion, leadAutocompletado, setValue])
 
   const inputClass = (hasError: boolean) =>

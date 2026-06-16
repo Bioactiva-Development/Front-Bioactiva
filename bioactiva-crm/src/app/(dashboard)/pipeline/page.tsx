@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { AlertCircle, FileText, Plus, X } from 'lucide-react'
+import { AlertCircle, Plus } from 'lucide-react'
 import { useMoverLeadPipeline, usePipelineColumns } from '@/hooks/pipeline/useLeads'
 import { KanbanBoard } from '@/components/modules/pipeline/KanbanBoard'
 import { LeadFiltros } from '@/components/modules/pipeline/LeadFiltros'
@@ -62,8 +62,7 @@ function PipelineContent() {
   const filtros      = useMemo(() => filtrosFromParams(new URLSearchParams(spString)), [spString])
 
   const [leadSeleccionado, setLeadSeleccionado] = useState<Lead | null>(null)
-  const [dragError, setDragError]   = useState<string | null>(null)
-  const [borradorId, setBorradorId] = useState<number | null>(null)
+  const [dragError, setDragError] = useState<string | null>(null)
 
   const columnas = usePipelineColumns(filtros)
   const { mutateAsync: moverLead, isPending: actualizandoEstado } =
@@ -116,9 +115,7 @@ function PipelineContent() {
   const handleMoveLead = async (lead: Lead, estado: LeadState) => {
     try {
       setDragError(null)
-      setBorradorId(null)
-      const { borrador } = await moverLead({ lead, estado })
-      if (borrador) setBorradorId(borrador.id)
+      await moverLead({ lead, estado })
     } catch (err: unknown) {
       // 409: el lead tiene una actividad pendiente y debe resolverse antes.
       const status = (err as { status?: number })?.status
@@ -166,31 +163,6 @@ function PipelineContent() {
           bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <p>{dragError}</p>
-        </div>
-      )}
-
-      {borradorId && (
-        <div className="flex items-start gap-2 rounded-xl border border-emerald-200
-          bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          <FileText size={16} className="mt-0.5 shrink-0" />
-          <div className="flex-1">
-            <p>Se generó una cotización borrador. Complétala.</p>
-            <button
-              type="button"
-              onClick={() => router.push(`/cotizaciones/${borradorId}`)}
-              className="mt-1 text-xs font-bold text-emerald-700 underline underline-offset-2"
-            >
-              Completar cotización
-            </button>
-          </div>
-          <button
-            type="button"
-            aria-label="Cerrar aviso"
-            onClick={() => setBorradorId(null)}
-            className="text-emerald-600 hover:text-emerald-800"
-          >
-            <X size={16} />
-          </button>
         </div>
       )}
 
