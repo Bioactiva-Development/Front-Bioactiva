@@ -136,15 +136,15 @@ export function LeadFiltros({
   }
 
   return (
-    <div className="bg-gray-50/80 rounded-xl border border-gray-100">
+    <div className={`rounded-xl border transition-colors ${abierto ? 'bg-white border-gray-200' : 'bg-white border-gray-200 hover:border-gray-300'}`}>
 
       <button
         onClick={() => setAbierto(!abierto)}
         className="w-full flex items-center justify-between px-4 py-2.5 cursor-pointer"
       >
         <div className="flex items-center gap-2">
-          <Filter size={14} className="text-gray-400" />
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+          <Filter size={14} className={hayFiltrosActivos ? 'text-emerald-500' : 'text-gray-400'} />
+          <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
             Filtros
           </span>
           {hayFiltrosActivos && (

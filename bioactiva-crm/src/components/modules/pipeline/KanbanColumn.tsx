@@ -1,21 +1,26 @@
 'use client'
 
-import { useDroppable } from '@dnd-kit/core'
+import { useEffect, useRef, useState } from 'react'
+import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import { Loader2 } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
 import { LeadCard } from '@/components/modules/pipeline/LeadCard'
 
 interface KanbanColumnProps {
-  titulo:      string
-  estado:      LeadState
-  leads:       Lead[]
-  color:       string
-  total:       number
-  isLoading?:  boolean
-  hasMore?:    boolean
+  titulo:       string
+  estado:       LeadState
+  leads:        Lead[]
+  color:        string
+  /** Clases Tailwind aplicadas al contenedor cuando hay un lead encima */
+  overClasses:  string
+  /** Color sutil para los bordes laterales (left/right) */
+  sideBorder?:  string
+  total:        number
+  isLoading?:   boolean
+  hasMore?:     boolean
   loadingMore?: boolean
-  onClickLead: (lead: Lead) => void
+  onClickLead:  (lead: Lead) => void
   onQuickAction?: (
     lead: Lead,
     action: 'detalle' | 'editar' | 'actividad' | 'cotizacion' | 'seguimiento'
@@ -28,28 +33,46 @@ export function KanbanColumn({
   estado,
   leads,
   color,
+  overClasses,
+  sideBorder  = '',
   total,
-  isLoading = false,
-  hasMore = false,
+  isLoading   = false,
+  hasMore     = false,
   loadingMore = false,
   onClickLead,
   onQuickAction,
   onCargarMas,
 }: KanbanColumnProps) {
-  const { isOver, setNodeRef } = useDroppable({
-    id: `column-${estado}`,
-    data: { estado },
-  })
+  const columnRef         = useRef<HTMLDivElement>(null)
+  const [isOver, setIsOver] = useState(false)
+
+  useEffect(() => {
+    const el = columnRef.current
+    if (!el) return
+    return dropTargetForElements({
+      element: el,
+      getData:     () => ({ estado }),
+      onDragEnter: () => setIsOver(true),
+      onDragLeave: () => setIsOver(false),
+      onDrop:      () => setIsOver(false),
+    })
+  }, [estado])
 
   return (
     <div
-      ref={setNodeRef}
+      ref={columnRef}
       data-column-state={estado}
-      className={`flex flex-col min-w-72 flex-1 rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden transition-all
-        ${isOver ? 'ring-2 ring-emerald-200 border-emerald-100' : ''}`}
+      className={`
+        flex flex-col min-w-72 flex-1 rounded-2xl border shadow-sm overflow-hidden
+        transition-all duration-150
+        ${isOver
+          ? `${overClasses} ring-2`
+          : `bg-white border-gray-100 ${sideBorder}`
+        }
+      `}
     >
-      {/* Franja de color según estado */}
-      <div className={`h-1.5 shrink-0 ${color}`} />
+      {/* Franja de color según estado — más gruesa cuando hay lead encima */}
+      <div className={`shrink-0 ${color} transition-all duration-150 ${isOver ? 'h-2' : 'h-1.5'}`} />
 
       <div className="flex flex-col flex-1 p-4">
         <div className="flex items-center gap-2 mb-4">
