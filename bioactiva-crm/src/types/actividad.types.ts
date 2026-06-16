@@ -32,7 +32,6 @@ export interface ComentarioActividad {
 
 export interface ActividadFormData {
   id_lead:          number
-  id_responsable:   number
   nombre_actividad: string
   fecha_inicio:     string
   fecha_fin:        string

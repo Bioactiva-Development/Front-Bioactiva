@@ -95,7 +95,6 @@ export function mapActividadFormToBackend(
     fechaInicio:      data.fecha_inicio,
     fechaFin:         data.fecha_fin,
     tipo:             mapTipoToBackend(data.tipo),
-    idResponsable:    data.id_responsable,
     notas:            data.notas,
     syncWithMicrosoft:  false,
     createTeamsMeeting: false,
@@ -110,6 +109,5 @@ export function mapActividadUpdateToBackend(
   if (data.fecha_inicio     !== undefined) out.fechaInicio     = data.fecha_inicio
   if (data.fecha_fin        !== undefined) out.fechaFin        = data.fecha_fin
   if (data.notas            !== undefined) out.notas           = data.notas
-  if (data.id_responsable   !== undefined) out.idResponsable   = data.id_responsable
   return out
 }

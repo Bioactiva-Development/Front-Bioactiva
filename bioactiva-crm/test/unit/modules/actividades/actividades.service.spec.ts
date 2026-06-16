@@ -75,7 +75,7 @@ describe('actividades/actividades.service (API mode)', () => {
       postMock.mockResolvedValueOnce({ data: rawActividad })
 
       const result = await actividadesService.create({
-        id_lead: 10, id_responsable: 3, nombre_actividad: 'Discovery call',
+        id_lead: 10, nombre_actividad: 'Discovery call',
         tipo: TipoActividad.Llamada, estado: EstadoActividad.Pendiente,
         fecha_inicio: '2026-06-10T14:00', fecha_fin: '2026-06-10T15:00',
       })

@@ -425,7 +425,7 @@ export const mockCreateActividad = async (
   const nueva: Actividad = {
     id:                     Date.now(),
     id_lead:                data.id_lead!,
-    id_responsable:         data.id_responsable!,
+    id_responsable:         data.id_responsable ?? 0,
     nombre_actividad:       data.nombre_actividad!,
     fecha_inicio:           data.fecha_inicio!,
     fecha_fin:              data.fecha_fin!,
