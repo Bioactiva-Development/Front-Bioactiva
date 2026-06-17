@@ -275,7 +275,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
               {periodos.map((p) => (
                 <button
                   key={p.key}
@@ -362,7 +362,7 @@ export default function DashboardPage() {
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em]">
           Lo más importante
         </p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard compact accentBorder="border-t-emerald-200"
             label="Leads generados"
             valor={kpiValor(String(metrics?.totalLeads ?? 0))}
@@ -396,10 +396,9 @@ export default function DashboardPage() {
 
       {/* Gráficos — altura calculada para llenar el viewport exacto:
            100svh - navbar(56) - main-top-padding(24) - contenido-sobre-charts(≈288) - gap(12) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3"
-        style={{ height: 'calc(100svh - 380px)' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
 
-        <div className="bg-white rounded-2xl border border-gray-100 border-t-2 border-t-emerald-200 border-b-2 border-b-emerald-200 p-4 flex flex-col h-full">
+        <div className="bg-white rounded-2xl border border-gray-100 border-t-2 border-t-emerald-200 border-b-2 border-b-emerald-200 p-4 flex flex-col h-64 sm:h-72 lg:h-80">
           <SectionLabel accent="bg-emerald-500">Pipeline por etapa</SectionLabel>
           <p className="text-xs text-gray-400 mt-0.5 mb-3 pl-2.75">
             Cantidad de leads por estado comercial.
@@ -417,8 +416,25 @@ export default function DashboardPage() {
             )}
             {!cargandoLeads && !errorLeads && (
               <ResponsiveContainer width="100%" height="100%" minHeight={0}>
-                <BarChart data={pipelineData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="estado" tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                <BarChart data={pipelineData} margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
+                  <XAxis
+                    dataKey="estado"
+                    tick={{ fontSize: 10, fill: '#9ca3af' }}
+                    axisLine={false}
+                    tickLine={false}
+                    angle={-20}
+                    textAnchor="end"
+                    height={52}
+                    tickFormatter={(v: string) => {
+                      const map: Record<string, string> = {
+                        'En prospecto':     'Prosp.',
+                        'Ofertado':         'Ofert.',
+                        'Cierre con venta': 'C/Venta',
+                        'Cierre sin venta': 'S/Venta',
+                      }
+                      return map[v] ?? v
+                    }}
+                  />
                   <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '12px' }} />
                   <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
@@ -432,7 +448,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 border-t-2 border-t-blue-200 border-b-2 border-b-blue-200 p-4 flex flex-col h-full">
+        <div className="bg-white rounded-2xl border border-gray-100 border-t-2 border-t-blue-200 border-b-2 border-b-blue-200 p-4 flex flex-col h-64 sm:h-72 lg:h-80">
           <SectionLabel accent="bg-blue-400">Estado de cotizaciones</SectionLabel>
           <p className="text-xs text-gray-400 mt-0.5 mb-3 pl-2.75">
             Distribución de propuestas del periodo.
@@ -457,7 +473,7 @@ export default function DashboardPage() {
               <ResponsiveContainer width="100%" height="100%" minHeight={0}>
                 <PieChart>
                   <Pie data={cotizacionesData} cx="50%" cy="50%"
-                    innerRadius={52} outerRadius={78} paddingAngle={3} dataKey="value">
+                    innerRadius="30%" outerRadius="50%" paddingAngle={3} dataKey="value">
                     {cotizacionesData.map((entry) => (
                       <Cell key={entry.name} fill={entry.color} />
                     ))}
@@ -477,7 +493,7 @@ export default function DashboardPage() {
       {/* Conversión y eficiencia */}
       <div className="space-y-2">
         <SectionLabel accent="bg-blue-500">Conversión y eficiencia</SectionLabel>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard compact accentBorder="border-t-blue-200"
             label="Tasa de conversión"
             valor={kpiValor(formatPercent(metrics?.conversionRate))}

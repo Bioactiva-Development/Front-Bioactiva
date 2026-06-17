@@ -23,6 +23,7 @@ export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
       className="border-b border-gray-50 hover:bg-emerald-50/30 transition-colors cursor-pointer"
       onClick={handleVerDetalle}
     >
+      {/* Contacto — siempre visible; muestra org + estado debajo en móvil */}
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center
@@ -39,18 +40,35 @@ export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
                 {contacto.cargo}
               </p>
             )}
+            <div className="sm:hidden mt-1 space-y-1">
+              {contacto.organizacion_nombre && (
+                <p className="text-xs text-gray-500 flex items-center gap-1">
+                  <Building2 size={11} className="text-gray-400 shrink-0" />
+                  {contacto.organizacion_nombre}
+                </p>
+              )}
+              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide
+                ${contacto.estado_correo === 'VENCIDO'
+                  ? 'bg-red-50 text-red-600'
+                  : 'bg-emerald-50 text-emerald-700'
+                }`}>
+                {contacto.estado_correo === 'VENCIDO' ? 'Inactivo' : 'Activo'}
+              </span>
+            </div>
           </div>
         </div>
       </td>
 
-      <td className="px-4 py-3">
+      {/* Organización — oculta en móvil, visible en sm+ */}
+      <td className="hidden sm:table-cell px-4 py-3">
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Building2 size={13} className="text-gray-400 shrink-0" />
           {contacto.organizacion_nombre ?? '—'}
         </div>
       </td>
 
-      <td className="px-4 py-3">
+      {/* Comunicación — oculta en móvil y tablet, visible en md+ */}
+      <td className="hidden md:table-cell px-4 py-3">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Mail size={13} className="text-emerald-500 shrink-0" />
@@ -63,7 +81,8 @@ export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
         </div>
       </td>
 
-      <td className="px-4 py-3">
+      {/* Estado — oculto en móvil y tablet, visible en md+ */}
+      <td className="hidden md:table-cell px-4 py-3">
         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide
           ${contacto.estado_correo === 'VENCIDO'
             ? 'bg-red-50 text-red-600'

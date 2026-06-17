@@ -29,6 +29,7 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
       className="border-b border-gray-50 hover:bg-emerald-50/30 transition-colors cursor-pointer"
       onClick={handleVerDetalle}
     >
+      {/* Organización — siempre visible; muestra RUC debajo en móvil */}
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center
@@ -42,11 +43,16 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
             {organizacion.sub_area && (
               <p className="text-xs text-gray-400">{organizacion.sub_area}</p>
             )}
+            {/* RUC visible solo en móvil (la columna RUC está oculta) */}
+            <p className="text-xs text-gray-400 sm:hidden">
+              {organizacion.ruc ?? 'Sin RUC'}
+            </p>
           </div>
         </div>
       </td>
 
-      <td className="px-4 py-3">
+      {/* RUC — oculto en móvil, visible en sm+ */}
+      <td className="hidden sm:table-cell px-4 py-3">
         {organizacion.ruc ? (
           <span className="text-sm text-gray-600">{organizacion.ruc}</span>
         ) : (
@@ -54,7 +60,8 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
         )}
       </td>
 
-      <td className="px-4 py-3">
+      {/* Sector — oculto en móvil y tablet, visible en md+ */}
+      <td className="hidden md:table-cell px-4 py-3">
         <span className="text-sm text-gray-600">
           {formatSector(organizacion.sector)}
           {organizacion.actividad_economica && (
@@ -63,7 +70,8 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
         </span>
       </td>
 
-      <td className="px-4 py-3">
+      {/* Tamaño — oculto en móvil y tablet, visible en md+ */}
+      <td className="hidden md:table-cell px-4 py-3">
         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs
           font-bold uppercase tracking-wide
           ${TAMAÑO_COLORS[organizacion.tamano]}`}>
@@ -71,6 +79,7 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
         </span>
       </td>
 
+      {/* Acciones — siempre visible */}
       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={handleVerDetalle}

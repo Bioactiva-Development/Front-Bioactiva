@@ -35,16 +35,16 @@ export default function CotizacionesPage() {
   return (
     <div className="space-y-3">
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Cotizaciones</h1>
           <p className="text-sm text-gray-400 mt-0.5">Gestión de propuestas comerciales</p>
         </div>
         <button
           onClick={() => router.push(ROUTES.pipeline)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
             bg-emerald-600 hover:bg-emerald-700 text-white
-            text-sm font-semibold transition-colors"
+            text-sm font-semibold transition-colors w-full sm:w-auto"
         >
           <Plus size={16} />
           Nueva Cotización
@@ -84,28 +84,29 @@ export default function CotizacionesPage() {
         )}
 
         {!isLoading && !isError && cotizaciones.length > 0 && (
+          <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-emerald-700 text-white">
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
                   # Cotización
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
                   ID Lead
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
                   Período
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
                   Contacto
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
                   Nombre del servicio
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
                   Monto
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
                   Estado
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
@@ -122,6 +123,7 @@ export default function CotizacionesPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
 
         {!isLoading && total > 0 && (
