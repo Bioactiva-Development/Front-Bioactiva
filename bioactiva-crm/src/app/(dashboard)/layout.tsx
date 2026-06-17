@@ -27,7 +27,7 @@ export default function DashboardLayout({
 }>) {
     const router = useRouter()
     const { isAuthenticated, usuario, accessToken, setSession, clearSession, _hasHydrated } = useAuthStore()
-    const { sidebarCollapsed, sidebarOpen } = useUIStore()
+    const { sidebarCollapsed } = useUIStore()
 
     useProactiveRefresh()
 
@@ -65,10 +65,7 @@ export default function DashboardLayout({
     if (!_hasHydrated) return null
     if (!isAuthenticated || !accessToken) return null
 
-    let sidebarMargin = 'ml-0'
-    if (sidebarOpen) {
-        sidebarMargin = sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-52'
-    }
+    const sidebarMargin = sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-52'
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -83,7 +80,7 @@ export default function DashboardLayout({
                     <Navbar />
                 </div>
 
-                <main className="flex-1 p-6 print:p-6">
+                <main className="flex-1 p-4 sm:p-6 print:p-6">
                     {children}
                 </main>
             </div>

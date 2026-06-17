@@ -2,14 +2,79 @@
 
 import { Suspense, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { AlertCircle, Plus } from 'lucide-react'
+import { AlertCircle, AlertTriangle, Clock, Loader2, Plus, User } from 'lucide-react'
 import { useMoverLeadPipeline, usePipelineColumns } from '@/hooks/pipeline/useLeads'
+import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
 import { KanbanBoard } from '@/components/modules/pipeline/KanbanBoard'
 import { LeadFiltros } from '@/components/modules/pipeline/LeadFiltros'
 import { LeadDrawer } from '@/components/modules/pipeline/LeadDrawer'
 import { LeadFiltros as FiltrosType, Lead } from '@/types/lead.types'
-import { LeadState } from '@/types/enums'
+import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
 import { getErrorMessage } from '@/lib/utils/error.utils'
+
+const COLUMNAS_MOVIL = [
+  { key: 'prospecto'      as const, label: 'Prospecto', activeClass: 'bg-gray-700 text-white' },
+  { key: 'ofertado'       as const, label: 'Ofertado',  activeClass: 'bg-amber-500 text-white' },
+  { key: 'cierreVenta'    as const, label: 'C. Venta',  activeClass: 'bg-emerald-600 text-white' },
+  { key: 'cierreSinVenta' as const, label: 'Sin Venta', activeClass: 'bg-red-500 text-white' },
+]
+
+function formatMonto(monto: number, tipo: TipoMoneda): string {
+  return `${tipo === TipoMoneda.Soles ? 'S/' : 'US$'} ${monto.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
+}
+
+function LeadListItem({ lead, onClick }: { lead: Lead; onClick: (lead: Lead) => void }) {
+  const { data: cotizaciones = [] } = useCotizacionesPorLead(lead.id)
+  const cot = cotizaciones.find((c) => c.estado !== EstadoCot.Rechazada) ?? null
+
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(lead)}
+      className="w-full bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-left
+        hover:border-emerald-200 hover:shadow-md transition-all active:scale-[0.99]"
+    >
+      {lead.activity_alert === 'ROJO' && (
+        <div className="mb-2">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase
+            px-2 py-0.5 rounded-full bg-red-100 text-red-600">
+            <AlertTriangle size={9} /> Actividad vencida
+          </span>
+        </div>
+      )}
+      {lead.activity_alert !== 'ROJO' && lead.tiene_alerta && (
+        <div className="mb-2">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase
+            px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+            <Clock size={9} /> {lead.alerta_motivo ?? '+30 días sin avance'}
+          </span>
+        </div>
+      )}
+
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-gray-900 truncate">{lead.organizacion_nombre}</p>
+          {lead.servicio_interes && (
+            <p className="text-xs text-gray-400 mt-0.5 truncate">{lead.servicio_interes}</p>
+          )}
+        </div>
+        <div className="text-right shrink-0">
+          {cot
+            ? <p className="text-sm font-bold text-emerald-600">{formatMonto(cot.monto, cot.tipo)}</p>
+            : <p className="text-xs text-gray-300">Sin cotización</p>
+          }
+        </div>
+      </div>
+
+      {lead.encargado_nombre && (
+        <div className="mt-2 flex items-center gap-1.5">
+          <User size={11} className="text-gray-300 shrink-0" />
+          <p className="text-xs text-gray-500 truncate">{lead.encargado_nombre}</p>
+        </div>
+      )}
+    </button>
+  )
+}
 
 // Los filtros viven en la URL (camelCase del contrato) para que sean compartibles.
 function filtrosFromParams(sp: URLSearchParams): FiltrosType {
@@ -63,6 +128,7 @@ function PipelineContent() {
 
   const [leadSeleccionado, setLeadSeleccionado] = useState<Lead | null>(null)
   const [dragError, setDragError] = useState<string | null>(null)
+  const [tabMovil, setTabMovil] = useState<'prospecto' | 'ofertado' | 'cierreVenta' | 'cierreSinVenta'>('prospecto')
 
   const columnas = usePipelineColumns(filtros)
   const { mutateAsync: moverLead, isPending: actualizandoEstado } =
@@ -175,14 +241,73 @@ function PipelineContent() {
         </div>
       )}
 
-      {/* Tablero — cada columna gestiona su propia carga/paginación */}
+      {/* ── MÓVIL: tabs + lista ── */}
       {!isError && (
-        <KanbanBoard
-          columnas={columnas}
-          onClickLead={setLeadSeleccionado}
-          onQuickAction={handleQuickAction}
-          onMoveLead={handleMoveLead}
-        />
+        <div className="lg:hidden space-y-3">
+          <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
+            {COLUMNAS_MOVIL.map((col) => {
+              const isActive = tabMovil === col.key
+              const count = columnas[col.key].total
+              return (
+                <button
+                  key={col.key}
+                  onClick={() => setTabMovil(col.key)}
+                  className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors
+                    ${isActive ? col.activeClass : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  {col.label}
+                  {count > 0 && (
+                    <span className={`ml-1 ${isActive ? 'opacity-75' : 'text-gray-400'}`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="space-y-2">
+            {columnas[tabMovil].isLoading && columnas[tabMovil].leads.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 size={20} className="animate-spin text-gray-300" />
+              </div>
+            ) : columnas[tabMovil].leads.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <p className="text-sm text-gray-400 italic">Sin leads en esta etapa</p>
+              </div>
+            ) : (
+              columnas[tabMovil].leads.map((lead) => (
+                <LeadListItem key={lead.id} lead={lead} onClick={setLeadSeleccionado} />
+              ))
+            )}
+          </div>
+
+          {columnas[tabMovil].hasMore && (
+            <button
+              type="button"
+              onClick={columnas[tabMovil].cargarMas}
+              disabled={columnas[tabMovil].loadingMore}
+              className="w-full py-3 text-sm font-semibold text-emerald-600
+                bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors disabled:opacity-60"
+            >
+              {columnas[tabMovil].loadingMore
+                ? 'Cargando...'
+                : `Ver más (${columnas[tabMovil].leads.length} de ${columnas[tabMovil].total})`}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── DESKTOP: kanban con drag & drop ── */}
+      {!isError && (
+        <div className="hidden lg:block">
+          <KanbanBoard
+            columnas={columnas}
+            onClickLead={setLeadSeleccionado}
+            onQuickAction={handleQuickAction}
+            onMoveLead={handleMoveLead}
+          />
+        </div>
       )}
 
       {(actualizandoEstado || isLoading) && (
@@ -197,6 +322,7 @@ function PipelineContent() {
         <LeadDrawer
           lead={leadSeleccionado}
           onCerrar={() => setLeadSeleccionado(null)}
+          onMoverLead={handleMoveLead}
         />
       )}
     </div>

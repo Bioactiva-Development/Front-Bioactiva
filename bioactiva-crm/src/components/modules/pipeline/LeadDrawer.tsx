@@ -22,9 +22,33 @@ import {
 } from '@/lib/utils/lead-date.utils'
 
 interface LeadDrawerProps {
-  lead:     Lead
-  onCerrar: () => void
+  lead:         Lead
+  onCerrar:     () => void
+  onMoverLead?: (lead: Lead, estado: LeadState) => void
 }
+
+const ETAPAS_PIPELINE = [
+  {
+    estado:      LeadState.Prospecto,
+    label:       'En prospecto',
+    buttonClass: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+  },
+  {
+    estado:      LeadState.Ofertado,
+    label:       'Ofertado',
+    buttonClass: 'bg-amber-50 text-amber-700 hover:bg-amber-100',
+  },
+  {
+    estado:      LeadState.CierreVenta,
+    label:       'Cierre con venta',
+    buttonClass: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
+  },
+  {
+    estado:      LeadState.CierreSinVenta,
+    label:       'Cierre sin venta',
+    buttonClass: 'bg-red-50 text-red-600 hover:bg-red-100',
+  },
+]
 
 const ESTADO_COLORS: Record<LeadState, string> = {
   [LeadState.Prospecto]:      'bg-gray-700 text-white',
@@ -54,7 +78,7 @@ function formatMonto(monto: number, tipo: TipoMoneda) {
   })}`
 }
 
-export function LeadDrawer({ lead, onCerrar }: LeadDrawerProps) {
+export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
   const router = useRouter()
   const { data: actividades = [] } = useActividades(lead.id)
   const { data: cotizaciones = [] } = useCotizacionesPorLead(lead.id)
@@ -337,6 +361,32 @@ export function LeadDrawer({ lead, onCerrar }: LeadDrawerProps) {
             </div>
           </div>
         </div>
+
+        {/* Cambiar etapa — solo en móvil */}
+        {onMoverLead && (
+          <div className="lg:hidden px-6 py-4 border-t border-gray-100 space-y-3">
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
+              Cambiar etapa
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {ETAPAS_PIPELINE
+                .filter((etapa) => etapa.estado !== lead.estado)
+                .map((etapa) => (
+                  <button
+                    key={etapa.estado}
+                    type="button"
+                    onClick={() => {
+                      onCerrar()
+                      onMoverLead(lead, etapa.estado)
+                    }}
+                    className={`py-2.5 rounded-xl text-xs font-semibold transition-colors ${etapa.buttonClass}`}
+                  >
+                    {etapa.label}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
 
         <div className="p-4 border-t border-gray-100">
           <button

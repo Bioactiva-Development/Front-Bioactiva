@@ -99,19 +99,20 @@ export default function ContactosPage() {
         )}
 
         {!isLoading && !isError && contactos.length > 0 && (
+          <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-emerald-700 text-white">
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
                   Contacto
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
                   Organización
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
                   Comunicación
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
                   Estado
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
@@ -125,6 +126,7 @@ export default function ContactosPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
 
         {!isLoading && total > 0 && (

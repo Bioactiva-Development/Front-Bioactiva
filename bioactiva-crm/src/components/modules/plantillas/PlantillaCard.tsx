@@ -30,6 +30,7 @@ export function PlantillaCard({
   return (
     <tr className="border-b border-gray-50 hover:bg-emerald-50/30 transition-colors">
 
+      {/* Plantilla — siempre visible; muestra estado + fecha debajo en móvil */}
       <td className="px-4 py-3">
         <div>
           <button
@@ -41,10 +42,21 @@ export function PlantillaCard({
             {plantilla.nombre}
           </button>
           <p className="text-xs text-gray-400 mt-0.5">{asuntoPreview}</p>
+          <div className="sm:hidden mt-1.5 flex items-center gap-2 flex-wrap">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide
+              ${plantilla.activo
+                ? 'bg-emerald-50 text-emerald-700'
+                : 'bg-gray-100 text-gray-500'
+              }`}>
+              {plantilla.activo ? 'Activa' : 'Inactiva'}
+            </span>
+            <span className="text-xs text-gray-400">{formatFecha(plantilla.createdAt)}</span>
+          </div>
         </div>
       </td>
 
-      <td className="px-4 py-3">
+      {/* Estado — oculto en móvil, visible en sm+ */}
+      <td className="hidden sm:table-cell px-4 py-3">
         <span className={`inline-flex items-center px-2.5 py-1
           rounded-lg text-xs font-bold uppercase tracking-wide
           ${plantilla.activo
@@ -55,7 +67,8 @@ export function PlantillaCard({
         </span>
       </td>
 
-      <td className="px-4 py-3">
+      {/* Creada — oculta en móvil, visible en sm+ */}
+      <td className="hidden sm:table-cell px-4 py-3">
         <p className="text-sm text-gray-500">{formatFecha(plantilla.createdAt)}</p>
       </td>
 
