@@ -11,6 +11,9 @@ import {
     FiltrosLead,
     FiltrosCotizacion,
     RegistroPreview,
+    ValidateImportResult,
+    CommitImportResult,
+    ImportJobStatus,
 } from '@/types/datos.types'
 
 // ─── Datos mock por entidad ────────────────────────────────────────────────
@@ -53,12 +56,8 @@ const COT_COLUMNAS = ['cliente', 'nombre_servicio', 'monto', 'moneda', 'estado',
 
 // ─── Filtrado ──────────────────────────────────────────────────────────────
 
-function filtrarOrganizaciones(busqueda: string, f: FiltrosOrganizacion): RegistroPreview[] {
+function filtrarOrganizaciones(_busqueda: string, f: FiltrosOrganizacion): RegistroPreview[] {
     return MOCK_ORG.filter(org => {
-        if (busqueda) {
-            const q = busqueda.toLowerCase()
-            if (!String(org.nombre).toLowerCase().includes(q) && !String(org.ruc).includes(q)) return false
-        }
         if (f.sector && org.sector !== f.sector) return false
         if (f.tipo && org.tipo !== f.tipo) return false
         if (f.tamano && org.tamano !== f.tamano) return false
@@ -66,35 +65,22 @@ function filtrarOrganizaciones(busqueda: string, f: FiltrosOrganizacion): Regist
     })
 }
 
-function filtrarContactos(busqueda: string, f: FiltrosContacto): RegistroPreview[] {
+function filtrarContactos(_busqueda: string, f: FiltrosContacto): RegistroPreview[] {
     return MOCK_CONTACTOS.filter(c => {
-        if (busqueda) {
-            const q = busqueda.toLowerCase()
-            const fullName = `${c.nombres} ${c.apellidos}`.toLowerCase()
-            if (!fullName.includes(q) && !String(c.correo).toLowerCase().includes(q)) return false
-        }
         if (f.organizacion && !String(c.organizacion).toLowerCase().includes(f.organizacion.toLowerCase())) return false
         return true
     })
 }
 
-function filtrarLeads(busqueda: string, f: FiltrosLead): RegistroPreview[] {
+function filtrarLeads(_busqueda: string, f: FiltrosLead): RegistroPreview[] {
     return MOCK_LEADS.filter(l => {
-        if (busqueda) {
-            const q = busqueda.toLowerCase()
-            if (!String(l.organizacion).toLowerCase().includes(q) && !String(l.servicio_interes).toLowerCase().includes(q)) return false
-        }
         if (f.estado && l.estado !== f.estado) return false
         return true
     })
 }
 
-function filtrarCotizaciones(busqueda: string, f: FiltrosCotizacion): RegistroPreview[] {
+function filtrarCotizaciones(_busqueda: string, f: FiltrosCotizacion): RegistroPreview[] {
     return MOCK_COTIZACIONES.filter(c => {
-        if (busqueda) {
-            const q = busqueda.toLowerCase()
-            if (!String(c.cliente).toLowerCase().includes(q) && !String(c.nombre_servicio).toLowerCase().includes(q)) return false
-        }
         if (f.estado && c.estado !== f.estado) return false
         return true
     })
@@ -202,6 +188,39 @@ const MOCK_PREVIEWS: Record<EntidadExportable, ImportPreviewResult> = {
         filasValidas: 1,
         filasConError: 1,
     },
+}
+
+export function mockValidateImport(): ValidateImportResult {
+    return {
+        valid: true,
+        errors: [],
+        warnings: [
+            { sheet: 'Contactos', row: 2, message: 'Correo duplicado, será omitido' },
+        ],
+        parsedCounts: { organizaciones: 3, contactos: 4, leads: 2, cotizaciones: 1 },
+    }
+}
+
+export function mockCommitImport(): CommitImportResult {
+    return { jobId: `mock-job-${Date.now()}` }
+}
+
+export function mockConsultarJob(jobId: string): ImportJobStatus {
+    return {
+        id: jobId,
+        state: 'completed',
+        progress: 100,
+        result: {
+            valid: true,
+            validation: mockValidateImport(),
+            summary: {
+                inserted: { organizaciones: 3, contactos: 3, leads: 2, actividades: 1, cotizaciones: 1 },
+                skipped: [{ sheet: 'Contactos', row: 2, message: 'Correo ya existe' }],
+                warnings: [],
+            },
+        },
+        failedReason: null,
+    }
 }
 
 export function mockPreviewImport(entidad: EntidadExportable): ImportPreviewResult {

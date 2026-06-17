@@ -30,30 +30,27 @@ const DEFAULT_FILTROS: Record<EntidadExportable, FiltrosEspecificos> = {
 
 export function ExportarForm() {
     const [entidad, setEntidad] = useState<EntidadExportable>('organizaciones')
-    const [busqueda, setBusqueda] = useState('')
     const [filtros, setFiltros] = useState<FiltrosEspecificos>(DEFAULT_FILTROS.organizaciones)
 
     const { isLoading, error, conteo, clearError, exportar, actualizarConteo } = useDatos()
 
     const getFiltrosActuales = useCallback((): FiltrosExportacion => ({
         entidad,
-        busqueda,
+        busqueda: '',
         filtros,
-    }), [entidad, busqueda, filtros])
+    }), [entidad, filtros])
 
     useEffect(() => {
         actualizarConteo(getFiltrosActuales())
-    }, [entidad, busqueda, filtros, actualizarConteo, getFiltrosActuales])
+    }, [entidad, filtros, actualizarConteo, getFiltrosActuales])
 
     const handleEntidadChange = useCallback((nueva: EntidadExportable) => {
         setEntidad(nueva)
-        setBusqueda('')
         setFiltros(DEFAULT_FILTROS[nueva])
         clearError()
     }, [clearError])
 
     const handleLimpiarFiltros = useCallback(() => {
-        setBusqueda('')
         setFiltros(DEFAULT_FILTROS[entidad])
         clearError()
     }, [entidad, clearError])
@@ -62,19 +59,12 @@ export function ExportarForm() {
         await exportar(getFiltrosActuales())
     }, [exportar, getFiltrosActuales])
 
-    const hayFiltrosActivos =
-        busqueda.trim() !== '' ||
-        Object.values(filtros).some(v => v !== '')
+    const hayFiltrosActivos = Object.values(filtros).some(v => v !== '')
 
     const orgFiltros = filtros as FiltrosOrganizacion
     const contactoFiltros = filtros as FiltrosContacto
     const leadFiltros = filtros as FiltrosLead
     const cotFiltros = filtros as FiltrosCotizacion
-
-    let searchPlaceholder = 'Cliente, servicio...'
-    if (entidad === 'organizaciones') searchPlaceholder = 'Nombre, RUC...'
-    else if (entidad === 'contactos') searchPlaceholder = 'Nombre, correo...'
-    else if (entidad === 'leads') searchPlaceholder = 'Organización, servicio...'
 
     return (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -83,26 +73,28 @@ export function ExportarForm() {
                 <div>
                     <h3 className="text-base font-bold text-gray-800">Exportación masiva</h3>
                     <p className="text-sm text-gray-500 mt-0.5">
-                        Exporta un CSV filtrado de los datos del CRM
+                        Exporta un archivo Excel (.xlsx) con los datos filtrados del CRM
                     </p>
                 </div>
                 <button
                     onClick={handleExportar}
-                    disabled={isLoading || (conteo?.total ?? 0) === 0}
+                    disabled={isLoading || (conteo !== null && conteo.total === 0)}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-[#1C7E3C] text-[#1C7E3C] text-sm font-semibold hover:bg-[#F1FFEC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                 >
                     {isLoading ? (
                         <><Loader2 size={16} className="animate-spin" />Exportando...</>
                     ) : (
-                        <><Download size={16} />Exportar CSV filtrado</>
+                        <><Download size={16} />Exportar Excel (.xlsx)</>
                     )}
                 </button>
             </div>
 
             {/* Filtros */}
             <div className="p-6 space-y-5">
-                {/* Fila 1: Entidad + Búsqueda */}
+
+                {/* Fila principal: entidad + filtro único en la misma fila */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Selector de entidad */}
                     <div className="space-y-1.5">
                         <label htmlFor="exp-entidad" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                             Qué exportar
@@ -119,34 +111,67 @@ export function ExportarForm() {
                         </select>
                     </div>
 
-                    <div className="space-y-1.5">
-                        <label htmlFor="exp-busqueda" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                            Buscar
-                        </label>
-                        <div className="relative">
-                            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                id="exp-busqueda"
-                                type="text"
-                                value={busqueda}
-                                onChange={e => setBusqueda(e.target.value)}
-                                placeholder={searchPlaceholder}
-                                className="w-full pl-9 pr-9 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
-                            />
-                            {busqueda && (
-                                <button
-                                    onClick={() => setBusqueda('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    aria-label="Limpiar búsqueda"
-                                >
-                                    <X size={14} />
-                                </button>
-                            )}
+                    {/* Contactos: Organización asociada */}
+                    {entidad === 'contactos' && (
+                        <div className="space-y-1.5">
+                            <label htmlFor="exp-contacto-org" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Organización asociada</label>
+                            <div className="relative">
+                                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    id="exp-contacto-org"
+                                    type="text"
+                                    value={contactoFiltros.organizacion}
+                                    onChange={e => setFiltros({ organizacion: e.target.value })}
+                                    placeholder="Nombre de la organización..."
+                                    className="w-full pl-9 pr-9 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
+                                />
+                                {contactoFiltros.organizacion && (
+                                    <button
+                                        onClick={() => setFiltros({ organizacion: '' })}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                        aria-label="Limpiar organización"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
+
+                    {/* Leads: Estado */}
+                    {entidad === 'leads' && (
+                        <div className="space-y-1.5">
+                            <label htmlFor="exp-lead-estado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</label>
+                            <select
+                                id="exp-lead-estado"
+                                value={leadFiltros.estado}
+                                onChange={e => setFiltros({ estado: e.target.value as LeadState | '' })}
+                                className="w-full px-3 py-2.5 text-sm text-gray-800 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
+                            >
+                                <option value="">Todos</option>
+                                {Object.values(LeadState).map(v => <option key={v} value={v}>{v}</option>)}
+                            </select>
+                        </div>
+                    )}
+
+                    {/* Cotizaciones: Estado */}
+                    {entidad === 'cotizaciones' && (
+                        <div className="space-y-1.5">
+                            <label htmlFor="exp-cot-estado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</label>
+                            <select
+                                id="exp-cot-estado"
+                                value={cotFiltros.estado}
+                                onChange={e => setFiltros({ estado: e.target.value as EstadoCot | '' })}
+                                className="w-full px-3 py-2.5 text-sm text-gray-800 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
+                            >
+                                <option value="">Todos</option>
+                                {Object.values(EstadoCot).map(v => <option key={v} value={v}>{v}</option>)}
+                            </select>
+                        </div>
+                    )}
                 </div>
 
-                {/* Fila 2: Filtros específicos por entidad */}
+                {/* Organizaciones: Sector · Tipo · Tamaño (fila extra debajo) */}
                 {entidad === 'organizaciones' && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="space-y-1.5">
@@ -185,53 +210,6 @@ export function ExportarForm() {
                                 {Object.values(TamanoEmpresa).map(v => <option key={v} value={v}>{v}</option>)}
                             </select>
                         </div>
-                    </div>
-                )}
-
-                {entidad === 'contactos' && (
-                    <div className="space-y-1.5">
-                        <label htmlFor="exp-org" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Organización asociada</label>
-                        <div className="relative">
-                            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                id="exp-org"
-                                type="text"
-                                value={contactoFiltros.organizacion}
-                                onChange={e => setFiltros({ organizacion: e.target.value })}
-                                placeholder="Nombre de la organización..."
-                                className="w-full sm:w-80 pl-9 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
-                            />
-                        </div>
-                    </div>
-                )}
-
-                {entidad === 'leads' && (
-                    <div className="space-y-1.5">
-                        <label htmlFor="exp-lead-estado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</label>
-                        <select
-                            id="exp-lead-estado"
-                            value={leadFiltros.estado}
-                            onChange={e => setFiltros({ estado: e.target.value as LeadState | '' })}
-                            className="w-full sm:w-64 px-3 py-2.5 text-sm text-gray-800 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
-                        >
-                            <option value="">Todos</option>
-                            {Object.values(LeadState).map(v => <option key={v} value={v}>{v}</option>)}
-                        </select>
-                    </div>
-                )}
-
-                {entidad === 'cotizaciones' && (
-                    <div className="space-y-1.5">
-                        <label htmlFor="exp-cot-estado" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</label>
-                        <select
-                            id="exp-cot-estado"
-                            value={cotFiltros.estado}
-                            onChange={e => setFiltros({ estado: e.target.value as EstadoCot | '' })}
-                            className="w-full sm:w-64 px-3 py-2.5 text-sm text-gray-800 bg-white border-2 border-gray-200 rounded-xl outline-none focus:border-[#1C7E3C] transition-colors"
-                        >
-                            <option value="">Todos</option>
-                            {Object.values(EstadoCot).map(v => <option key={v} value={v}>{v}</option>)}
-                        </select>
                     </div>
                 )}
 

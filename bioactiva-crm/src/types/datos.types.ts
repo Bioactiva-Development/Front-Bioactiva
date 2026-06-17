@@ -35,6 +35,58 @@ export interface ConfirmarImportResult {
     mensaje: string
 }
 
+// ─── New async import API ──────────────────────────────────────────────────
+
+export interface ImportIssue {
+    sheet: string
+    row: number
+    message: string
+}
+
+export interface ValidateImportResult {
+    valid: boolean
+    errors: ImportIssue[]
+    warnings: ImportIssue[]
+    parsedCounts: {
+        organizaciones: number
+        contactos: number
+        leads: number
+        cotizaciones: number
+    }
+}
+
+export interface CommitImportResult {
+    jobId: string
+}
+
+export type ImportJobState = 'waiting' | 'active' | 'completed' | 'failed' | 'delayed'
+
+export interface ImportJobSummary {
+    inserted: {
+        organizaciones: number
+        contactos: number
+        leads: number
+        actividades: number
+        cotizaciones: number
+    }
+    skipped: ImportIssue[]
+    warnings: ImportIssue[]
+}
+
+export interface ImportJobResult {
+    valid: boolean
+    validation: ValidateImportResult
+    summary: ImportJobSummary
+}
+
+export interface ImportJobStatus {
+    id: string
+    state: ImportJobState
+    progress: number
+    result: ImportJobResult | null
+    failedReason: string | null
+}
+
 export interface FiltrosOrganizacion {
     sector: Sector | ''
     tipo: TipoEmpresa | ''
