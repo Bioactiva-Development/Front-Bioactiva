@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { KanbanColumn } from '@/components/modules/pipeline/KanbanColumn'
 import { Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
@@ -10,6 +11,13 @@ jest.mock('@atlaskit/pragmatic-drag-and-drop/element/adapter', () => ({
   monitorForElements:    jest.fn(() => jest.fn()),
 }))
 jest.mock('lucide-react', () => new Proxy({}, { get: () => () => null }))
+
+function createWrapper() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  )
+}
 
 const makeLead = (id: number): Lead => ({
   id,
@@ -34,13 +42,13 @@ const baseProps = {
 
 describe('modules/pipeline/KanbanColumn', () => {
   it('shows the total count from meta (not the loaded length)', () => {
-    render(<KanbanColumn {...baseProps} leads={[makeLead(1)]} total={23} />)
+    render(<KanbanColumn {...baseProps} leads={[makeLead(1)]} total={23} />, { wrapper: createWrapper() })
     expect(screen.getByText('En prospecto')).toBeInTheDocument()
     expect(screen.getByText('23')).toBeInTheDocument()
   })
 
   it('renders the empty state', () => {
-    render(<KanbanColumn {...baseProps} leads={[]} total={0} />)
+    render(<KanbanColumn {...baseProps} leads={[]} total={0} />, { wrapper: createWrapper() })
     expect(screen.getByText('Sin leads')).toBeInTheDocument()
   })
 
@@ -53,14 +61,15 @@ describe('modules/pipeline/KanbanColumn', () => {
         total={10}
         hasMore
         onCargarMas={onCargarMas}
-      />
+      />,
+      { wrapper: createWrapper() }
     )
     await userEvent.click(screen.getByRole('button', { name: /Cargar más/i }))
     expect(onCargarMas).toHaveBeenCalled()
   })
 
   it('does not render "Cargar más" when there are no more pages', () => {
-    render(<KanbanColumn {...baseProps} leads={[makeLead(1)]} total={1} hasMore={false} />)
+    render(<KanbanColumn {...baseProps} leads={[makeLead(1)]} total={1} hasMore={false} />, { wrapper: createWrapper() })
     expect(screen.queryByText(/Cargar más/i)).not.toBeInTheDocument()
   })
 })

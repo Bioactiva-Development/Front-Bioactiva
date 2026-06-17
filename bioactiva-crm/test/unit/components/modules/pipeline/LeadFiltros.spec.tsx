@@ -19,8 +19,14 @@ jest.mock('@/services/modules/usuarios.service', () => ({
 describe('modules/pipeline/LeadFiltros', () => {
   beforeEach(() => jest.clearAllMocks())
 
-  it('renders the semáforo segmented options', () => {
+  async function abrirFiltros() {
+    const filtrosBtn = screen.getByText('Filtros')
+    await userEvent.click(filtrosBtn)
+  }
+
+  it('renders the semáforo segmented options', async () => {
     render(<LeadFiltros filtros={{}} onChange={jest.fn()} onLimpiar={jest.fn()} />)
+    await abrirFiltros()
     expect(screen.getByText('Todas')).toBeInTheDocument()
     expect(screen.getByText('Por vencer')).toBeInTheDocument()
     expect(screen.getByText('Vencidas')).toBeInTheDocument()
@@ -30,14 +36,16 @@ describe('modules/pipeline/LeadFiltros', () => {
   it('emits alerta_actividad when a semáforo option is clicked', async () => {
     const onChange = jest.fn()
     render(<LeadFiltros filtros={{}} onChange={onChange} onLimpiar={jest.fn()} />)
+    await abrirFiltros()
     await userEvent.click(screen.getByText('Vencidas'))
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ alerta_actividad: 'VENCIDAS' })
     )
   })
 
-  it('renders organization options from the hook', () => {
+  it('renders organization options from the hook', async () => {
     render(<LeadFiltros filtros={{}} onChange={jest.fn()} onLimpiar={jest.fn()} />)
+    await abrirFiltros()
     expect(screen.getByText('Altomayo')).toBeInTheDocument()
   })
 
@@ -45,6 +53,7 @@ describe('modules/pipeline/LeadFiltros', () => {
     const onChange = jest.fn()
     render(<LeadFiltros filtros={{}} onChange={onChange} onLimpiar={jest.fn()} />)
     await waitFor(() => expect(getUsuarios).toHaveBeenCalled())
+    await abrirFiltros()
 
     const [estadoSelect] = screen.getAllByRole('combobox')
     await userEvent.selectOptions(estadoSelect, LeadState.Ofertado)
@@ -53,8 +62,9 @@ describe('modules/pipeline/LeadFiltros', () => {
     )
   })
 
-  it('shows a validation error when fechaHasta is earlier than fechaDesde', () => {
+  it('shows a validation error when fechaHasta is earlier than fechaDesde', async () => {
     render(<LeadFiltros filtros={{}} onChange={jest.fn()} onLimpiar={jest.fn()} />)
+    await abrirFiltros()
     fireEvent.change(screen.getByLabelText('Creados desde'), {
       target: { value: '2026-06-10' },
     })
@@ -72,6 +82,7 @@ describe('modules/pipeline/LeadFiltros', () => {
   it('emits the search term as it is typed', async () => {
     const onChange = jest.fn()
     render(<LeadFiltros filtros={{}} onChange={onChange} onLimpiar={jest.fn()} />)
+    await abrirFiltros()
     const input = screen.getByPlaceholderText(/Buscar por código/i)
     await userEvent.type(input, 'a')
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ search: 'a' }))
@@ -86,6 +97,7 @@ describe('modules/pipeline/LeadFiltros', () => {
         onLimpiar={onLimpiar}
       />
     )
+    await abrirFiltros()
     await userEvent.click(screen.getByRole('button', { name: /Limpiar/i }))
     expect(onLimpiar).toHaveBeenCalled()
   })

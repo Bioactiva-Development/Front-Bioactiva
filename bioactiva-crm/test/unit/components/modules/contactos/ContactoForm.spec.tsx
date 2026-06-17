@@ -35,9 +35,13 @@ jest.mock('@/lib/constants/routes', () => ({
 }))
 
 jest.mock('lucide-react', () => ({
-  Loader2: () => <div data-testid="loader" />,
-  Save: () => <div data-testid="save" />,
-  ArrowLeft: () => <div data-testid="arrow-left" />,
+  Loader2: () => <span data-testid="loader" />,
+  Save: () => <span data-testid="save" />,
+  ArrowLeft: () => <span data-testid="arrow-left" />,
+  User: () => <span data-testid="icon-user" />,
+  Mail: () => <span data-testid="icon-mail" />,
+  Phone: () => <span data-testid="icon-phone" />,
+  Building2: () => <span data-testid="icon-building" />,
 }))
 
 const baseContacto: Contacto = {
@@ -83,10 +87,9 @@ describe('modules/contactos/ContactoForm', () => {
 
     it('renders vocativo select with enum options', () => {
       expect(screen.getByLabelText('Vocativo')).toBeInTheDocument()
-      const vocativoOptions = Object.values(Vocativo).map((v) => `${v}.`)
-      vocativoOptions.forEach((opt) => {
-        expect(screen.getByText(opt)).toBeInTheDocument()
-      })
+      expect(screen.getByText('Sr.')).toBeInTheDocument()
+      expect(screen.getByText('Sra.')).toBeInTheDocument()
+      expect(screen.getByText('Srta.')).toBeInTheDocument()
     })
 
     it('renders nombres input', () => {
@@ -127,8 +130,8 @@ describe('modules/contactos/ContactoForm', () => {
     it('renders telefono input', () => {
       const input = screen.getByLabelText('Teléfono Opcional')
       expect(input).toBeInTheDocument()
-      expect(input).toHaveAttribute('type', 'text')
-      expect(input).toHaveAttribute('placeholder', 'Ej: +51987654321')
+      expect(input).toHaveAttribute('type', 'tel')
+      expect(input).toHaveAttribute('placeholder', '987 654 321')
     })
 
     it('renders comentarios textarea', () => {

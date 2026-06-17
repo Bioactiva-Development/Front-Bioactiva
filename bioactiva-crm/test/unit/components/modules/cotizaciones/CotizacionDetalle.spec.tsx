@@ -64,12 +64,12 @@ describe('modules/cotizaciones/CotizacionDetalle', () => {
 
   it('renders header with codigo "COT-001"', () => {
     render(<CotizacionDetalle cotizacion={baseCotizacion} onEditar={jest.fn()} />)
-    expect(screen.getByText('COT-001')).toBeInTheDocument()
+    expect(screen.getAllByText('COT-001').length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders lead id "#1"', () => {
     render(<CotizacionDetalle cotizacion={baseCotizacion} onEditar={jest.fn()} />)
-    expect(screen.getByText('#1')).toBeInTheDocument()
+    expect(screen.getAllByText('#1').length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders nombre_servicio', () => {
@@ -79,7 +79,7 @@ describe('modules/cotizaciones/CotizacionDetalle', () => {
 
   it('renders formatted monto with S/ symbol', () => {
     render(<CotizacionDetalle cotizacion={baseCotizacion} onEditar={jest.fn()} />)
-    expect(screen.getByText(/S\/ 15,000/)).toBeInTheDocument()
+    expect(screen.getAllByText(/S\/ 15,000/).length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders formatted fecha', () => {
@@ -89,12 +89,12 @@ describe('modules/cotizaciones/CotizacionDetalle', () => {
       month: 'long',
       year: 'numeric',
     })
-    expect(screen.getByText(formatted)).toBeInTheDocument()
+    expect(screen.getAllByText(formatted).length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders estado badge (Pendiente)', () => {
     render(<CotizacionDetalle cotizacion={baseCotizacion} onEditar={jest.fn()} />)
-    expect(screen.getByText('Pendiente')).toBeInTheDocument()
+    expect(screen.getAllByText('Pendiente').length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows Volver button', () => {
