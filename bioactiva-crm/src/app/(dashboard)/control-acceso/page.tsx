@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-    UserX, UserCheck, UserPlus, Users,
-    Mail, Search, ChevronLeft, ChevronRight, ShieldAlert,
+    UserX, UserCheck, UserPlus,
+    Search, ChevronLeft, ChevronRight, ShieldAlert,
 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { InvitarUsuarioModal } from '@/components/modules/control-acceso/InvitarUsuarioModal'
@@ -51,12 +51,15 @@ function RolBadge({ rol }: Readonly<{ rol: RolUsuario }>) {
     )
 }
 
+// Mantis #474 — el backend devuelve estado crudo ACTIVO | SUSPENDIDO | PENDIENTE
+// (mapeado a EstadoUsuario). El mapeo a etiqueta es SOLO para mostrar; los
+// filtros/peticiones siguen enviando el valor crudo del enum.
 function EstadoBadge({ estado }: Readonly<{ estado: EstadoUsuario }>) {
     if (estado === EstadoUsuario.Activo) {
         return (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500" />{' '}
-                Activo
+                Habilitado
             </span>
         )
     }
@@ -64,7 +67,7 @@ function EstadoBadge({ estado }: Readonly<{ estado: EstadoUsuario }>) {
         return (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500" />{' '}
-                Inactivo
+                Deshabilitado
             </span>
         )
     }
@@ -96,7 +99,7 @@ export default function ControlAccesoPage() {
     const { isAdministrador, usuario: currentUser } = useAuthStore()
 
     const {
-        usuarios, total: totalUsuarios, activos,
+        usuarios,
         isLoading: isLoadingUsuarios, error: errorUsuarios, successMessage,
         cargar, cambiarRol, cambiarPassword, deshabilitar, habilitar, clearMessages,
     } = useUsuarios()
@@ -244,36 +247,6 @@ export default function ControlAccesoPage() {
                     {errorUsuarios}
                 </div>
             )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-[#1C7E3C]/10 flex items-center justify-center shrink-0">
-                        <Users size={20} className="text-[#1C7E3C]" />
-                    </div>
-                    <div>
-                        <p className="text-xs text-gray-500">Total usuarios</p>
-                        <p className="text-2xl font-bold text-gray-900">{totalUsuarios}</p>
-                    </div>
-                </div>
-                <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
-                        <UserCheck size={20} className="text-green-600" />
-                    </div>
-                    <div>
-                        <p className="text-xs text-gray-500">Activos</p>
-                        <p className="text-2xl font-bold text-gray-900">{activos}</p>
-                    </div>
-                </div>
-                <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                        <Mail size={20} className="text-amber-600" />
-                    </div>
-                    <div>
-                        <p className="text-xs text-gray-500">Invitaciones</p>
-                        <p className="text-2xl font-bold text-gray-900">{totalInvitaciones}</p>
-                    </div>
-                </div>
-            </div>
 
             {/* Tabla de usuarios */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-6">
@@ -449,27 +422,29 @@ export default function ControlAccesoPage() {
                         </div>
                     )}
 
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-between mt-4">
+                    {totalInvitaciones > 0 && (
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                             <p className="text-sm text-gray-400">
-                                {totalInvitaciones} invitación{totalInvitaciones === 1 ? '' : 'es'} · Página {page} de {totalPages}
+                                Mostrando {((page - 1) * LIMIT) + 1}–{Math.min(page * LIMIT, totalInvitaciones)} de {totalInvitaciones} invitación{totalInvitaciones === 1 ? '' : 'es'}
                             </p>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                    disabled={page === 1}
-                                    className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronLeft size={16} />
-                                </button>
-                                <button
-                                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                                    disabled={page === totalPages}
-                                    className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronRight size={16} />
-                                </button>
-                            </div>
+                            {totalPages > 1 && (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                        disabled={page === 1}
+                                        className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                                        disabled={page === totalPages}
+                                        className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronRight size={16} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -498,6 +473,7 @@ export default function ControlAccesoPage() {
                 <DeshabilitarUsuarioModal
                     usuario={usuarioSeleccionado}
                     isLoading={isLoadingUsuarios}
+                    error={errorUsuarios}
                     onClose={cerrarModal}
                     onConfirm={handleEstado}
                 />

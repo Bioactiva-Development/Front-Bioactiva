@@ -17,7 +17,6 @@ describe('leads.adapter', () => {
     servicioInteres: 'Ley 30309',
     comentarios: 'Cliente interesado',
     desafioOportunidad: 'Optimizar I+D+i',
-    notasContacto: null,
     canalCaptacion: 'Referido',
     idOrg: '123e4567-e89b-12d3-a456-426614174000',
     organizationName: 'Altomayo',
@@ -45,7 +44,6 @@ describe('leads.adapter', () => {
         servicio_interes: 'Ley 30309',
         comentarios: 'Cliente interesado',
         desafio_oportunidad: 'Optimizar I+D+i',
-        notas_contacto: undefined,
         id_encargado: 3,
         canal_captacion: 'Referido',
         id_author: 1,
@@ -101,7 +99,6 @@ describe('leads.adapter', () => {
         servicio_interes: 'Ley 30309',
         comentarios: 'Cliente interesado',
         desafio_oportunidad: 'Optimizar I+D+i',
-        notas_contacto: 'Llamar en una semana',
         id_encargado: 3,
         canal_captacion: 'Referido',
       }
@@ -114,7 +111,6 @@ describe('leads.adapter', () => {
         servicioInteres: 'Ley 30309',
         comentarios: 'Cliente interesado',
         desafioOportunidad: 'Optimizar I+D+i',
-        notasContacto: 'Llamar en una semana',
         idEncargado: 3,
         canalCaptacion: 'Referido',
       })

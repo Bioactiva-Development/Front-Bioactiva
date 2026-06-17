@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { LeadState } from '@/types/enums'
+import { isLeadDateInPast } from '@/lib/utils/lead-date.utils'
 
 export const leadSchema = z.object({
   estado: z.enum(LeadState),
@@ -29,20 +30,12 @@ export const leadSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  notas_contacto: z
-    .string()
-    .max(1000, 'Máximo 1000 caracteres')
-    .optional()
-    .or(z.literal('')),
-
   id_encargado: z
     .number({ error: 'El encargado es obligatorio' })
     .min(1, 'El encargado es obligatorio'),
 
-  encargado_correo: z
-    .email('Ingrese un correo válido')
-    .optional()
-    .or(z.literal('')),
+  // Mantis #432 — el correo del encargado es solo informativo en la UI (read-only,
+  // derivado de GET /users/assignable). No es un campo editable ni se valida/envia.
 
   canal_captacion: z
     .string()
@@ -56,5 +49,13 @@ export const leadSchema = z.object({
     .or(z.literal('')),
 
 })
+
+export const createLeadSchema = leadSchema.refine(
+  (data) => !isLeadDateInPast(data.fecha_cierre),
+  {
+    message: 'No se permite establecer fechas pasadas',
+    path: ['fecha_cierre'],
+  }
+)
 
 export type LeadFormValues = z.infer<typeof leadSchema>

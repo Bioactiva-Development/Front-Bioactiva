@@ -109,7 +109,7 @@ export function ResetPasswordForm() {
                                 error={errors.password?.message}
                             />
 
-                            <PasswordRequirements password={passwordValue} />
+                            <PasswordRequirements password={passwordValue} mode="full" />
 
                             <PasswordField
                                 label="Confirmar contraseña"

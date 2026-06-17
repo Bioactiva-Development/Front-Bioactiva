@@ -77,8 +77,32 @@ export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionD
   return (
     <div className="space-y-6">
 
-      {/* Header */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      {/* Header de impresión — solo visible al imprimir */}
+      <div className="hidden print:block mb-6">
+        <div className="flex items-start justify-between border-b-2 border-emerald-600 pb-4 mb-4">
+          <div>
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">BioActiva CRM</p>
+            <h1 className="text-2xl font-bold text-emerald-700">
+              {cotizacion.codigo ?? `COT-${cotizacion.id}`}
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">{cotizacion.nombre_servicio}</p>
+          </div>
+          <div className="text-right">
+            <span className="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide border
+              border-gray-300 text-gray-600">
+              {cotizacion.estado}
+            </span>
+            <p className="text-xs text-gray-400 mt-2">
+              Fecha: {new Date(cotizacion.fecha_cot).toLocaleDateString('es-PE', {
+                day: '2-digit', month: 'long', year: 'numeric'
+              })}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Header de pantalla — oculto al imprimir */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 print:hidden">
         <div className="flex items-start justify-between flex-wrap gap-4">
 
           <div className="flex items-center gap-4">
@@ -224,9 +248,9 @@ export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionD
       </div>
 
       {/* Detalle */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 print:grid-cols-2 print:gap-6">
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5 print:shadow-none print:border print:border-gray-200">
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
             Datos de la cotización
           </h3>
@@ -250,7 +274,7 @@ export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionD
         </div>
 
         <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 print:shadow-none print:border print:border-gray-200">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">
               Información económica
             </h3>
@@ -263,7 +287,7 @@ export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionD
           </div>
 
           {cotizacion.observacion && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 print:shadow-none print:border print:border-gray-200">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
                 Observación
               </h3>
@@ -272,7 +296,7 @@ export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionD
           )}
 
           {cotizacion.link_propuesta && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 print:shadow-none print:border print:border-gray-200">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
                 Propuesta
               </h3>

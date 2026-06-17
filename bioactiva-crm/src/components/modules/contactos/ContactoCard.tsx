@@ -1,9 +1,10 @@
 'use client'
 
-import { Mail, Phone, ExternalLink } from 'lucide-react'
+import { Mail, Phone, ExternalLink, Building2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Contacto } from '@/types/contacto.types'
 import { ROUTES } from '@/lib/constants/routes'
+import { formatVocativo } from '@/lib/utils/contacto.utils'
 
 interface ContactoCardProps {
   contacto: Contacto
@@ -22,7 +23,7 @@ export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
       className="border-b border-gray-50 hover:bg-emerald-50/30 transition-colors cursor-pointer"
       onClick={handleVerDetalle}
     >
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center
             justify-center shrink-0">
@@ -30,7 +31,7 @@ export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
           </div>
           <div>
             <p className="text-sm font-semibold text-emerald-700">
-              {contacto.vocativo && `${contacto.vocativo}. `}
+              {contacto.vocativo && `${formatVocativo(contacto.vocativo)} `}
               {contacto.nombres} {contacto.apellidos}
             </p>
             {contacto.cargo && (
@@ -42,16 +43,14 @@ export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
         </div>
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <div className="flex items-center gap-2 text-sm text-gray-600">
-          <div className="w-5 h-5 rounded bg-gray-100 flex items-center justify-center shrink-0">
-            <span className="text-xs text-gray-500">🏢</span>
-          </div>
+          <Building2 size={13} className="text-gray-400 shrink-0" />
           {contacto.organizacion_nombre ?? '—'}
         </div>
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Mail size={13} className="text-emerald-500 shrink-0" />
@@ -64,7 +63,7 @@ export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
         </div>
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide
           ${contacto.estado_correo === 'VENCIDO'
             ? 'bg-red-50 text-red-600'
@@ -74,7 +73,7 @@ export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
         </span>
       </td>
 
-      <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={handleVerDetalle}
           className="p-2 rounded-lg text-gray-400 hover:text-emerald-600

@@ -53,7 +53,6 @@ describe('actividades.mapper', () => {
 
     expect(toCreateActividadDto({
       id_lead: 10,
-      id_responsable: 3,
       nombre_actividad: 'Discovery call',
       fecha_inicio: '2026-06-10T14:00',
       fecha_fin: '2026-06-10T15:00',
@@ -62,7 +61,6 @@ describe('actividades.mapper', () => {
       notas: 'Discuss requirements',
     })).toEqual({
       idLead: 10,
-      idResponsable: 3,
       nombreActividad: 'Discovery call',
       fechaInicio: '2026-06-10T14:00:00.000Z',
       fechaFin: '2026-06-10T15:00:00.000Z',
@@ -73,12 +71,10 @@ describe('actividades.mapper', () => {
     expect(toUpdateActividadDto({
       nombre_actividad: 'Follow-up call',
       fecha_fin: '2026-06-10T16:00',
-      id_responsable: 4,
       estado: EstadoActividad.Completada,
     })).toEqual({
       nombreActividad: 'Follow-up call',
       fechaFin: '2026-06-10T16:00:00.000Z',
-      idResponsable: 4,
     })
   })
 })

@@ -6,9 +6,8 @@ export const actividadSchema = z
     id_lead: z
       .number({ error: 'El lead es obligatorio' }),
 
-    id_responsable: z
-      .number({ error: 'El responsable es obligatorio' })
-      .min(1, 'El responsable es obligatorio'),
+    // Mantis — el responsable lo asigna el backend (encargado del lead);
+    // el form ya no lo captura ni lo envia.
 
     nombre_actividad: z
       .string()

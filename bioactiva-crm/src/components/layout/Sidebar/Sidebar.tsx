@@ -94,7 +94,7 @@ export function Sidebar() {
     <aside
       className={`
         fixed top-0 left-0 h-full z-40 flex flex-col
-        bg-white border-r border-gray-100 shadow-sm
+        bg-white border-r border-gray-100 shadow-lg
         transition-all duration-300
         ${sidebarCollapsed ? 'w-16' : 'w-52'}
       `}

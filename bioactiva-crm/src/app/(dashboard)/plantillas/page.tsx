@@ -73,81 +73,71 @@ export default function PlantillasPage() {
   const activas = todasPlantillas.filter((p) => p.activo).length
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-white border border-gray-100
-            rounded-xl px-1 py-1 shadow-sm">
-            <button className="px-4 py-2 rounded-lg text-sm font-semibold
-              bg-emerald-50 text-emerald-700">
-              Plantillas
-            </button>
-          </div>
-          <button
-            onClick={() => router.push('/plantillas/nueva')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl
-              bg-emerald-600 hover:bg-emerald-700 text-white
-              text-sm font-semibold transition-colors"
-          >
-            <Plus size={16} />
-            Nueva Plantilla
-          </button>
-        </div>
-        <p className="text-sm text-gray-500">
-          <span className="font-semibold text-emerald-600">{activas} activas</span>
-          {' · '}
-          <span>{todasPlantillas.length} total</span>
-        </p>
-      </div>
-
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Plantillas de Correo</h1>
-      </div>
-
-      {/* Filtros */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1">
-            <Search
-              size={16}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              type="text"
-              value={searchLocal}
-              onChange={(e) => setSearchLocal(e.target.value)}
-              placeholder="Buscar por nombre o asunto..."
-              className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200
-                bg-white text-gray-900 text-sm outline-none focus:border-emerald-400
-                placeholder:text-gray-400 transition-colors"
-            />
-            {searchLocal && (
-              <button
-                onClick={() => setSearchLocal('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400
-                  hover:text-gray-600 transition-colors"
-              >
-                <X size={14} />
-              </button>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Plantillas de correo</h1>
+          <p className="text-sm text-gray-400 mt-0.5">
+            <span className="text-emerald-600 font-semibold">{activas}</span> activas
+            {todasPlantillas.length - activas > 0 && (
+              <> · <span className="text-gray-400">{todasPlantillas.length - activas} inactivas</span></>
             )}
-          </div>
-
-          <button
-            onClick={() => setIncludeInactive((v) => !v)}
-            title={includeInactive ? 'Ocultar inactivas' : 'Mostrar inactivas'}
-            className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm
-              font-semibold transition-colors
-              ${includeInactive
-                ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
-              }`}
-          >
-            {includeInactive ? <Eye size={15} /> : <EyeOff size={15} />}
-            {includeInactive ? 'Con inactivas' : 'Solo activas'}
-          </button>
+            {' · '}{todasPlantillas.length} total
+          </p>
         </div>
+        <button
+          onClick={() => router.push('/plantillas/nueva')}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl
+            bg-emerald-600 hover:bg-emerald-700 text-white
+            text-sm font-semibold transition-colors"
+        >
+          <Plus size={16} />
+          Nueva Plantilla
+        </button>
+      </div>
+
+      {/* Filtros inline */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search
+            size={15}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+          <input
+            type="text"
+            value={searchLocal}
+            onChange={(e) => setSearchLocal(e.target.value)}
+            placeholder="Buscar por nombre o asunto..."
+            className="w-full pl-9 pr-9 py-2 rounded-xl border border-gray-200
+              bg-white text-gray-900 text-sm outline-none focus:border-emerald-400
+              placeholder:text-gray-400 transition-colors"
+          />
+          {searchLocal && (
+            <button
+              onClick={() => setSearchLocal('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400
+                hover:text-gray-600 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        <button
+          onClick={() => setIncludeInactive((v) => !v)}
+          title={includeInactive ? 'Ocultar inactivas' : 'Mostrar inactivas'}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm
+            font-semibold transition-colors cursor-pointer shrink-0
+            ${includeInactive
+              ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+              : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+            }`}
+        >
+          {includeInactive ? <Eye size={15} /> : <EyeOff size={15} />}
+          {includeInactive ? 'Con inactivas' : 'Solo activas'}
+        </button>
       </div>
 
       {/* Tabla */}

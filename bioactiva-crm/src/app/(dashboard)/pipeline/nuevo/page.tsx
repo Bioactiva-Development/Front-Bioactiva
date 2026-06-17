@@ -28,7 +28,7 @@ export default function NuevoLeadPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <PageHeader
         titulo="Nuevo Lead"
         descripcion="Registra una nueva oportunidad comercial"

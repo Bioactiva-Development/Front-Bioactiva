@@ -30,7 +30,7 @@ export function PlantillaCard({
   return (
     <tr className="border-b border-gray-50 hover:bg-emerald-50/30 transition-colors">
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <div>
           <button
             type="button"
@@ -44,7 +44,7 @@ export function PlantillaCard({
         </div>
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <span className={`inline-flex items-center px-2.5 py-1
           rounded-lg text-xs font-bold uppercase tracking-wide
           ${plantilla.activo
@@ -55,11 +55,11 @@ export function PlantillaCard({
         </span>
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <p className="text-sm text-gray-500">{formatFecha(plantilla.createdAt)}</p>
       </td>
 
-      <td className="px-4 py-4">
+      <td className="px-4 py-3">
         <div className="flex items-center gap-1">
           <button
             onClick={() => onVer(plantilla)}

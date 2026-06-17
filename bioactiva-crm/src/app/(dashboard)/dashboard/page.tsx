@@ -5,24 +5,34 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts'
+import { Target }        from '@phosphor-icons/react/dist/csr/Target'
+import { Percent }        from '@phosphor-icons/react/dist/csr/Percent'
+import { Clock }          from '@phosphor-icons/react/dist/csr/Clock'
+import { Hourglass }      from '@phosphor-icons/react/dist/csr/Hourglass'
+import { Pulse }          from '@phosphor-icons/react/dist/csr/Pulse'
+import { CurrencyDollar } from '@phosphor-icons/react/dist/csr/CurrencyDollar'
+import { TrendUp }        from '@phosphor-icons/react/dist/csr/TrendUp'
+import { CalendarX }      from '@phosphor-icons/react/dist/csr/CalendarX'
+import { ChartLineUp }    from '@phosphor-icons/react/dist/csr/ChartLineUp'
 import {
-  Target, Percent, Clock, Timer,
-  Activity, DollarSign, TrendingUp, Calendar,
-  RefreshCw
+  RefreshCw, ChevronDown, ChevronUp, Filter, Calendar,
 } from 'lucide-react'
-import { useLeads } from '@/hooks/pipeline/useLeads'
-import { useCotizaciones } from '@/hooks/cotizaciones/useCotizaciones'
-import { useDashboardMetrics } from '@/hooks/dashboard/useDashboardMetrics'
-import { EstadoCot, LeadState } from '@/types/enums'
+
+import { useLeads }              from '@/hooks/pipeline/useLeads'
+import { useCotizaciones }       from '@/hooks/cotizaciones/useCotizaciones'
+import { useDashboardMetrics }   from '@/hooks/dashboard/useDashboardMetrics'
+import { EstadoCot, LeadState }  from '@/types/enums'
 
 
 interface KpiCardProps {
-  label:       string
-  valor:       string | number
-  descripcion: string
-  icono:       React.ReactNode
-  iconoBg:     string
-  extra?:      React.ReactNode
+  label:        string
+  valor:        string | number
+  descripcion:  string
+  icono:        React.ReactNode
+  iconoBg:      string
+  extra?:       React.ReactNode
+  compact?:     boolean
+  accentBorder?: string
 }
 
 interface PeriodoTab {
@@ -31,7 +41,7 @@ interface PeriodoTab {
   sub:    string
 }
 
-const ANIOS = ['2024', '2025', '2026']
+const ANIOS                = ['2024', '2025', '2026']
 const DASHBOARD_FETCH_LIMIT = 500
 
 const PIPELINE_ESTADOS = [
@@ -59,20 +69,44 @@ const isWithinPeriod = (isoDate: string | undefined, start: Date, end: Date) => 
   return time >= start.getTime() && time < end.getTime()
 }
 
-function KpiCard({ label, valor, descripcion, icono, iconoBg, extra }: Readonly<KpiCardProps>) {
+function KpiCard({ label, valor, descripcion, icono, iconoBg, extra, compact = false, accentBorder = 'border-t-gray-200' }: Readonly<KpiCardProps>) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-3">
-      <div className="flex items-start justify-between">
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide leading-tight">
-          {label}
-        </p>
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconoBg}`}>
+    <div className={`group bg-white rounded-2xl border border-gray-100 border-t-2 ${accentBorder} cursor-default
+      hover:shadow-lg hover:-translate-y-1
+      transition-all duration-200 ease-out
+      ${compact ? 'p-3' : 'p-6'}`}>
+      <div className={`flex items-center justify-between ${compact ? 'mb-2' : 'mb-5'}`}>
+        <div className={`rounded-xl flex items-center justify-center shrink-0 ${iconoBg}
+          ${compact ? 'w-7 h-7' : 'w-10 h-10'}`}>
           {icono}
         </div>
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.12em] text-right leading-snug max-w-[58%]">
+          {label}
+        </p>
       </div>
-      <p className="text-3xl font-bold text-gray-900">{valor}</p>
-      <p className="text-xs text-gray-400">{descripcion}</p>
+      <p className={`font-extrabold text-gray-900 tabular-nums leading-none tracking-tight
+        ${compact ? 'text-xl' : 'text-[2.1rem]'}`}>
+        {valor}
+      </p>
+      <p className={`text-xs text-gray-300
+        translate-y-1 opacity-0
+        group-hover:translate-y-0 group-hover:opacity-100 group-hover:text-gray-400
+        transition-all duration-200 ease-out
+        ${compact ? 'mt-1.5' : 'mt-3'}`}>
+        {descripcion}
+      </p>
       {extra}
+    </div>
+  )
+}
+
+function SectionLabel({ children, accent }: Readonly<{ children: string; accent: string }>) {
+  return (
+    <div className="flex items-center gap-2 pt-0">
+      <div className={`w-0.75 h-4.5 rounded-full shrink-0 ${accent}`} />
+      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.15em]">
+        {children}
+      </span>
     </div>
   )
 }
@@ -87,73 +121,50 @@ const getPeriodos = (anio: string): PeriodoTab[] => [
 
 const getPeriodDates = (periodo: string, anio: string) => {
   const year = Number.parseInt(anio)
-
   switch (periodo) {
-    case 'q1':
-      return { inicio: `${year}-01-01`, fin: `${year}-04-01` }
-    case 'q2':
-      return { inicio: `${year}-04-01`, fin: `${year}-07-01` }
-    case 'q3':
-      return { inicio: `${year}-07-01`, fin: `${year}-10-01` }
-    case 'q4':
-      return { inicio: `${year}-10-01`, fin: `${year + 1}-01-01` }
-    default:
-      return { inicio: `${year}-01-01`, fin: `${year + 1}-01-01` }
+    case 'q1': return { inicio: `${year}-01-01`, fin: `${year}-04-01` }
+    case 'q2': return { inicio: `${year}-04-01`, fin: `${year}-07-01` }
+    case 'q3': return { inicio: `${year}-07-01`, fin: `${year}-10-01` }
+    case 'q4': return { inicio: `${year}-10-01`, fin: `${year + 1}-01-01` }
+    default:   return { inicio: `${year}-01-01`, fin: `${year + 1}-01-01` }
   }
 }
 
 const formatCurrency = (value?: number) =>
-  `S/ ${(value ?? 0).toLocaleString('es-PE', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`
+  `S/ ${(value ?? 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 const formatPercent = (value?: number) =>
-  `${(value ?? 0).toLocaleString('es-PE', {
-    maximumFractionDigits: 2,
-  })}%`
+  `${(value ?? 0).toLocaleString('es-PE', { maximumFractionDigits: 2 })}%`
 
 const formatDays = (value?: number) =>
-  `${(value ?? 0).toLocaleString('es-PE', {
-    maximumFractionDigits: 1,
-  })} días`
+  `${(value ?? 0).toLocaleString('es-PE', { maximumFractionDigits: 1 })} días`
 
 const formatAverage = (value?: number) =>
-  (value ?? 0).toLocaleString('es-PE', {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  })
+  (value ?? 0).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 export default function DashboardPage() {
   const [periodoActivo, setPeriodoActivo] = useState('anio')
   const [anioActivo, setAnioActivo]       = useState('2026')
   const [fechaInicio, setFechaInicio]     = useState('2026-01-01')
   const [fechaFin, setFechaFin]           = useState('2027-01-01')
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
+
   const { data: leadsResponse, isLoading: cargandoLeads, isError: errorLeads } =
     useLeads({ page: 1, limit: DASHBOARD_FETCH_LIMIT })
-  const {
-    data: cotizacionesResponse,
-    isLoading: cargandoCotizaciones,
-    isError: errorCotizaciones,
-  } = useCotizaciones({ page: 1, limit: DASHBOARD_FETCH_LIMIT })
+  const { data: cotizacionesResponse, isLoading: cargandoCotizaciones, isError: errorCotizaciones } =
+    useCotizaciones({ page: 1, limit: DASHBOARD_FETCH_LIMIT })
   const dashboardParams = useMemo(() => ({
     startDate: toIsoDateBoundary(fechaInicio),
-    endDate: toIsoDateBoundary(fechaFin),
+    endDate:   toIsoDateBoundary(fechaFin),
   }), [fechaFin, fechaInicio])
-  const {
-    data: metrics,
-    isLoading: cargandoMetricas,
-    isError: errorMetricas,
-  } = useDashboardMetrics(dashboardParams)
+  const { data: metrics, isLoading: cargandoMetricas, isError: errorMetricas } =
+    useDashboardMetrics(dashboardParams)
+
   const kpiValor = (value: string) => cargandoMetricas ? '...' : value
 
-  const hoy = useMemo(() => {
-    return new Date().toLocaleDateString('es-PE', {
-      day:   '2-digit',
-      month: 'short',
-      year:  'numeric',
-    })
-  }, [])
+  const hoy = useMemo(() => new Date().toLocaleDateString('es-PE', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  }), [])
 
   const handlePeriodo = (key: string) => {
     setPeriodoActivo(key)
@@ -186,7 +197,6 @@ export default function DashboardPage() {
     const leadsPeriodo = (leadsResponse?.data ?? []).filter((lead) =>
       isWithinPeriod(lead.created_at, rangoFechas.inicio, rangoFechas.fin)
     )
-
     return PIPELINE_ESTADOS.map(({ estado, color }) => ({
       estado,
       cantidad: leadsPeriodo.filter((lead) => lead.estado === estado).length,
@@ -198,7 +208,6 @@ export default function DashboardPage() {
     const cotizacionesPeriodo = (cotizacionesResponse?.data ?? []).filter((cotizacion) =>
       isWithinPeriod(cotizacion.fecha_cot, rangoFechas.inicio, rangoFechas.fin)
     )
-
     return COTIZACION_ESTADOS
       .map(({ name, color }) => ({
         name,
@@ -209,112 +218,127 @@ export default function DashboardPage() {
   }, [cotizacionesResponse?.data, rangoFechas])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
-              <Activity size={24} className="text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">
-                BioActiva CRM
-              </p>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Dashboard comercial
-              </h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-            Activo · {hoy}
-          </div>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Dashboard comercial</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Métricas del periodo seleccionado</p>
         </div>
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+          Activo · {hoy}
+        </div>
+      </div>
 
-        <div className="mt-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Calendar size={16} className="text-emerald-600" />
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">
-                Periodo de análisis
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">Año</span>
-              <select
-                value={anioActivo}
-                onChange={(e) => handleAnio(e.target.value)}
-                className="text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none
-                  focus:border-emerald-400 text-gray-700"
-              >
-                {ANIOS.map((a) => (
-                  <option key={a} value={a}>{a}</option>
-                ))}
-              </select>
-            </div>
+      {/* Filtros colapsables */}
+      <div className={`rounded-xl border transition-colors ${filtrosAbiertos ? 'bg-white border-gray-200' : 'bg-white border-gray-200 hover:border-gray-300'}`}>
+        <button
+          onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
+          className="w-full flex items-center justify-between px-4 py-3 cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <Filter size={14} className="text-gray-400" />
+            <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Filtros</span>
+            <span className="text-xs text-gray-400">
+              · {periodos.find(p => p.key === periodoActivo)?.label ?? 'AÑO COMPLETO'} {anioActivo}
+            </span>
           </div>
+          {filtrosAbiertos
+            ? <ChevronUp size={14} className="text-gray-400" />
+            : <ChevronDown size={14} className="text-gray-400" />
+          }
+        </button>
 
-          <div className="grid grid-cols-5 gap-2">
-            {periodos.map((p) => (
-              <button
-                key={p.key}
-                onClick={() => handlePeriodo(p.key)}
-                className={`
-                  rounded-xl p-3 text-left transition-all
-                  ${periodoActivo === p.key
-                    ? 'bg-emerald-700 text-white shadow-md shadow-emerald-200'
-                    : 'bg-gray-50 hover:bg-emerald-50 text-gray-600 hover:text-emerald-700'
-                  }
-                `}
-              >
-                <p className={`text-xs font-bold uppercase tracking-wide
-                  ${periodoActivo === p.key ? 'text-emerald-100' : 'text-gray-400'}`}>
-                  {p.label}
+        {filtrosAbiertos && (
+          <div className="px-4 pb-4 space-y-3 border-t border-gray-100">
+            <div className="flex items-center justify-between pt-3">
+              <div className="flex items-center gap-2">
+                <Calendar size={14} className="text-gray-400" />
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                  Periodo de análisis
                 </p>
-                <p className={`text-sm font-semibold mt-0.5
-                  ${periodoActivo === p.key ? 'text-white' : 'text-gray-600'}`}>
-                  {p.sub}
-                </p>
-              </button>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_260px_auto] gap-4 items-end">
-            <div className="space-y-1">
-              <label htmlFor="dash-fecha-inicio" className="text-xs text-gray-500">Fecha inicio</label>
-              <input
-                id="dash-fecha-inicio"
-                type="date"
-                value={fechaInicio}
-                onChange={(e) => setFechaInicio(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm
-                  outline-none focus:border-emerald-400 text-gray-700"
-              />
-            </div>
-            <div className="flex items-end gap-3">
-              <div className="flex-1 space-y-1">
-                <label htmlFor="dash-fecha-fin" className="text-xs text-gray-500">Fecha fin</label>
-                <input
-                  id="dash-fecha-fin"
-                  type="date"
-                  value={fechaFin}
-                  onChange={(e) => setFechaFin(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm
-                    outline-none focus:border-emerald-400 text-gray-700"
-                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-gray-400">Año</span>
+                <select
+                  value={anioActivo}
+                  onChange={(e) => handleAnio(e.target.value)}
+                  className="text-xs border border-gray-100 rounded-md px-2 py-1 outline-none
+                    focus:border-emerald-300 text-gray-600 bg-white cursor-pointer"
+                >
+                  {ANIOS.map((a) => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
               </div>
             </div>
-            <button
-              onClick={handleReiniciar}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-200
-                text-emerald-600 hover:bg-emerald-50 text-sm font-medium transition-colors shrink-0"
-            >
-              <RefreshCw size={14} />
-              Reiniciar
-            </button>
+
+            <div className="grid grid-cols-5 gap-1.5">
+              {periodos.map((p) => (
+                <button
+                  key={p.key}
+                  onClick={() => handlePeriodo(p.key)}
+                  className={`rounded-lg py-2 px-2.5 text-left transition-all cursor-pointer
+                    ${periodoActivo === p.key
+                      ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-100'
+                      : 'bg-white border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50/50 text-gray-500 hover:text-emerald-600'
+                    }`}
+                >
+                  <p className={`text-[10px] font-semibold uppercase tracking-wide
+                    ${periodoActivo === p.key ? 'text-emerald-100' : 'text-gray-400'}`}>
+                    {p.label}
+                  </p>
+                  <p className={`text-xs font-medium mt-0.5
+                    ${periodoActivo === p.key ? 'text-white' : 'text-gray-500'}`}>
+                    {p.sub}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+              <div className="space-y-1">
+                <label htmlFor="dash-fecha-inicio" className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+                  Fecha inicio
+                </label>
+                <input
+                  id="dash-fecha-inicio"
+                  type="date"
+                  value={fechaInicio}
+                  onChange={(e) => setFechaInicio(e.target.value)}
+                  className="w-full border border-gray-100 rounded-lg px-3 py-2 text-sm
+                    outline-none focus:border-emerald-300 text-gray-600 bg-white"
+                />
+              </div>
+              <div className="flex items-end gap-3">
+                <div className="flex-1 space-y-1">
+                  <label htmlFor="dash-fecha-fin" className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+                    Fecha fin
+                  </label>
+                  <input
+                    id="dash-fecha-fin"
+                    type="date"
+                    value={fechaFin}
+                    onChange={(e) => setFechaFin(e.target.value)}
+                    className="w-full border border-gray-100 rounded-lg px-3 py-2 text-sm
+                      outline-none focus:border-emerald-300 text-gray-600 bg-white"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={handleReiniciar}
+                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-200
+                  text-gray-500 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50/50
+                  text-sm font-medium transition-colors shrink-0 cursor-pointer"
+              >
+                <RefreshCw size={14} />
+                Reiniciar
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {errorMetricas && (
@@ -323,187 +347,189 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          label="Leads generados"
-          valor={kpiValor(String(metrics?.totalLeads ?? 0))}
-          descripcion="Registrados en el periodo"
-          iconoBg="bg-gray-100"
-          icono={<Target size={20} className="text-gray-500" />}
-        />
-        <KpiCard
-          label="Tasa de conversión"
-          valor={kpiValor(formatPercent(metrics?.conversionRate))}
-          descripcion="Leads convertidos en venta"
-          iconoBg="bg-blue-50"
-          icono={<Percent size={20} className="text-blue-500" />}
-        />
-        <KpiCard
-          label="Propuesta → Venta"
-          valor={kpiValor(formatPercent(metrics?.proposalToCloseRate))}
-          descripcion="Propuestas que cierran con venta"
-          iconoBg="bg-cyan-50"
-          icono={<Percent size={20} className="text-cyan-600" />}
-        />
-        <KpiCard
-          label="Ticket promedio"
-          valor={kpiValor(formatCurrency(metrics?.averageTicketAmount))}
-          descripcion="Promedio de cierres con venta"
-          iconoBg="bg-emerald-50"
-          icono={<DollarSign size={20} className="text-emerald-500" />}
-        />
+      {/* ─── PRIMERA PANTALLA ─── */}
+
+      {/* Cabecera de sección */}
+      <div className="flex items-center justify-between pt-1">
+        <h2 className="text-base font-bold text-gray-800">Resultados comerciales</h2>
+        <span className="text-[11px] text-gray-400 uppercase tracking-wide">
+          {periodos.find(p => p.key === periodoActivo)?.label} {anioActivo}
+        </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          label="Tiempo promedio de cierre"
-          valor={kpiValor(formatDays(metrics?.avgClosingTimeDays))}
-          descripcion="Desde registro hasta cierre con venta"
-          iconoBg="bg-orange-50"
-          icono={<Clock size={20} className="text-orange-500" />}
-        />
-        <KpiCard
-          label="Tiempo en etapa propuesta"
-          valor={kpiValor(formatDays(metrics?.avgProposalStageDays))}
-          descripcion="Promedio en etapa ofertado"
-          iconoBg="bg-purple-50"
-          icono={<Timer size={20} className="text-purple-500" />}
-        />
-        <KpiCard
-          label="Seguimientos por lead"
-          valor={kpiValor(formatAverage(metrics?.avgActivitiesPerLead))}
-          descripcion="Promedio de actividades registradas"
-          iconoBg="bg-gray-100"
-          icono={<Activity size={20} className="text-gray-500" />}
-        />
-        <KpiCard
-          label="Leads sin avance"
-          valor={kpiValor(formatPercent(metrics?.stalledLeadPercentage))}
-          descripcion="Leads estancados más de 30 días"
-          iconoBg="bg-red-50"
-          icono={<Calendar size={20} className="text-red-500" />}
-        />
+      {/* Lo más importante — 4 KPIs de volumen */}
+      <div className="space-y-1.5">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em]">
+          Lo más importante
+        </p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <KpiCard compact accentBorder="border-t-emerald-200"
+            label="Leads generados"
+            valor={kpiValor(String(metrics?.totalLeads ?? 0))}
+            descripcion="Registrados en el periodo"
+            iconoBg="bg-emerald-50"
+            icono={<Target size={16} weight="duotone" className="text-emerald-500" />}
+          />
+          <KpiCard compact accentBorder="border-t-emerald-200"
+            label="Ticket promedio"
+            valor={kpiValor(formatCurrency(metrics?.averageTicketAmount))}
+            descripcion="Promedio de cierres con venta"
+            iconoBg="bg-emerald-50"
+            icono={<CurrencyDollar size={16} weight="duotone" className="text-emerald-500" />}
+          />
+          <KpiCard compact accentBorder="border-t-cyan-200"
+            label="Monto en pipeline"
+            valor={kpiValor(formatCurrency(metrics?.pipelineTotalAmount))}
+            descripcion="Monto de leads abiertos"
+            iconoBg="bg-cyan-50"
+            icono={<ChartLineUp size={16} weight="duotone" className="text-cyan-600" />}
+          />
+          <KpiCard compact accentBorder="border-t-blue-200"
+            label="Ingresos cerrados"
+            valor={kpiValor(formatCurrency(metrics?.closedRevenue))}
+            descripcion="Cotizaciones cerradas con venta"
+            iconoBg="bg-blue-50"
+            icono={<CurrencyDollar size={16} weight="duotone" className="text-blue-500" />}
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <KpiCard
-          label="Monto en pipeline"
-          valor={kpiValor(formatCurrency(metrics?.pipelineTotalAmount))}
-          descripcion="Monto de leads abiertos"
-          iconoBg="bg-emerald-50"
-          icono={<DollarSign size={20} className="text-emerald-500" />}
-        />
-        <KpiCard
-          label="Ingresos cerrados"
-          valor={kpiValor(formatCurrency(metrics?.closedRevenue))}
-          descripcion="Cotizaciones cerradas con venta"
-          iconoBg="bg-blue-50"
-          icono={<TrendingUp size={20} className="text-blue-500" />}
-        />
-      </div>
+      {/* Gráficos — altura calculada para llenar el viewport exacto:
+           100svh - navbar(56) - main-top-padding(24) - contenido-sobre-charts(≈288) - gap(12) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3"
+        style={{ height: 'calc(100svh - 380px)' }}>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
-            Pipeline por etapa
-          </h3>
-          <p className="text-xs text-gray-400 mt-0.5 mb-6">
+        <div className="bg-white rounded-2xl border border-gray-100 border-t-2 border-t-emerald-200 border-b-2 border-b-emerald-200 p-4 flex flex-col h-full">
+          <SectionLabel accent="bg-emerald-500">Pipeline por etapa</SectionLabel>
+          <p className="text-xs text-gray-400 mt-0.5 mb-3 pl-2.75">
             Cantidad de leads por estado comercial.
           </p>
-          {cargandoLeads && (
-            <div className="h-60 flex items-center justify-center">
-              <p className="text-sm text-gray-400">Cargando pipeline...</p>
-            </div>
-          )}
-          {!cargandoLeads && errorLeads && (
-            <div className="h-60 flex items-center justify-center">
-              <p className="text-sm text-red-500">No se pudo cargar el pipeline.</p>
-            </div>
-          )}
-          {!cargandoLeads && !errorLeads && (
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart
-                data={pipelineData}
-                margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
-              >
-                <XAxis
-                  dataKey="estado"
-                  tick={{ fontSize: 11, fill: '#9ca3af' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: '#9ca3af' }}
-                  axisLine={false}
-                  tickLine={false}
-                  allowDecimals={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: '12px',
-                    border: '1px solid #e5e7eb',
-                    fontSize: '12px',
-                  }}
-                />
-                <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
-                  {pipelineData.map((entry) => (
-                    <Cell key={entry.estado} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+          <div className="flex-1 min-h-0">
+            {cargandoLeads && (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-sm text-gray-400">Cargando...</p>
+              </div>
+            )}
+            {!cargandoLeads && errorLeads && (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-sm text-red-500">No se pudo cargar el pipeline.</p>
+              </div>
+            )}
+            {!cargandoLeads && !errorLeads && (
+              <ResponsiveContainer width="100%" height="100%" minHeight={0}>
+                <BarChart data={pipelineData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <XAxis dataKey="estado" tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '12px' }} />
+                  <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
+                    {pipelineData.map((entry) => (
+                      <Cell key={entry.estado} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
-            Estado de cotizaciones
-          </h3>
-          <p className="text-xs text-gray-400 mt-0.5 mb-6">
+        <div className="bg-white rounded-2xl border border-gray-100 border-t-2 border-t-blue-200 border-b-2 border-b-blue-200 p-4 flex flex-col h-full">
+          <SectionLabel accent="bg-blue-400">Estado de cotizaciones</SectionLabel>
+          <p className="text-xs text-gray-400 mt-0.5 mb-3 pl-2.75">
             Distribución de propuestas del periodo.
           </p>
+          <div className="flex-1 min-h-0">
+            {cargandoCotizaciones && (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-sm text-gray-400">Cargando...</p>
+              </div>
+            )}
+            {!cargandoCotizaciones && errorCotizaciones && (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-sm text-red-500">No se pudieron cargar las cotizaciones.</p>
+              </div>
+            )}
+            {!cargandoCotizaciones && !errorCotizaciones && cotizacionesData.length === 0 && (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-sm text-emerald-600 font-medium">Sin cotizaciones en el periodo.</p>
+              </div>
+            )}
+            {!cargandoCotizaciones && !errorCotizaciones && cotizacionesData.length !== 0 && (
+              <ResponsiveContainer width="100%" height="100%" minHeight={0}>
+                <PieChart>
+                  <Pie data={cotizacionesData} cx="50%" cy="50%"
+                    innerRadius={52} outerRadius={78} paddingAngle={3} dataKey="value">
+                    {cotizacionesData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend iconSize={10} wrapperStyle={{ fontSize: '11px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
 
-          {cargandoCotizaciones && (
-            <div className="h-48 flex items-center justify-center">
-              <p className="text-sm text-gray-400">Cargando cotizaciones...</p>
-            </div>
-          )}
-          {!cargandoCotizaciones && errorCotizaciones && (
-            <div className="h-48 flex items-center justify-center">
-              <p className="text-sm text-red-500">No se pudieron cargar las cotizaciones.</p>
-            </div>
-          )}
-          {!cargandoCotizaciones && !errorCotizaciones && cotizacionesData.length === 0 && (
-            <div className="h-48 flex items-center justify-center">
-              <p className="text-sm text-emerald-600 font-medium">
-                Sin cotizaciones en el periodo seleccionado.
-              </p>
-            </div>
-          )}
-          {!cargandoCotizaciones && !errorCotizaciones && cotizacionesData.length !== 0 && (
-            <ResponsiveContainer width="100%" height={240}>
-              <PieChart>
-                <Pie
-                  data={cotizacionesData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
-                  {cotizacionesData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
+      </div>
+
+      {/* ─── SCROLL ─── */}
+
+      {/* Conversión y eficiencia */}
+      <div className="space-y-2">
+        <SectionLabel accent="bg-blue-500">Conversión y eficiencia</SectionLabel>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <KpiCard compact accentBorder="border-t-blue-200"
+            label="Tasa de conversión"
+            valor={kpiValor(formatPercent(metrics?.conversionRate))}
+            descripcion="Leads convertidos en venta"
+            iconoBg="bg-blue-50"
+            icono={<Percent size={16} weight="duotone" className="text-blue-500" />}
+          />
+          <KpiCard compact accentBorder="border-t-cyan-200"
+            label="Propuesta → Venta"
+            valor={kpiValor(formatPercent(metrics?.proposalToCloseRate))}
+            descripcion="Propuestas que cierran con venta"
+            iconoBg="bg-cyan-50"
+            icono={<TrendUp size={16} weight="duotone" className="text-cyan-600" />}
+          />
+          <KpiCard compact accentBorder="border-t-violet-200"
+            label="Seguimientos / lead"
+            valor={kpiValor(formatAverage(metrics?.avgActivitiesPerLead))}
+            descripcion="Promedio de actividades registradas"
+            iconoBg="bg-violet-50"
+            icono={<Pulse size={16} weight="duotone" className="text-violet-500" />}
+          />
+          <KpiCard compact accentBorder="border-t-red-200"
+            label="Leads sin avance"
+            valor={kpiValor(formatPercent(metrics?.stalledLeadPercentage))}
+            descripcion="Leads estancados más de 30 días"
+            iconoBg="bg-red-50"
+            icono={<CalendarX size={16} weight="duotone" className="text-red-500" />}
+          />
         </div>
       </div>
+
+      {/* Tiempos */}
+      <div className="space-y-2">
+        <SectionLabel accent="bg-orange-400">Tiempos</SectionLabel>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <KpiCard compact accentBorder="border-t-orange-200"
+            label="Tiempo promedio de cierre"
+            valor={kpiValor(formatDays(metrics?.avgClosingTimeDays))}
+            descripcion="Desde registro hasta cierre con venta"
+            iconoBg="bg-orange-50"
+            icono={<Clock size={16} weight="duotone" className="text-orange-500" />}
+          />
+          <KpiCard compact accentBorder="border-t-purple-200"
+            label="Tiempo en etapa propuesta"
+            valor={kpiValor(formatDays(metrics?.avgProposalStageDays))}
+            descripcion="Promedio en etapa ofertado"
+            iconoBg="bg-purple-50"
+            icono={<Hourglass size={16} weight="duotone" className="text-purple-500" />}
+          />
+        </div>
+      </div>
+
     </div>
   )
 }

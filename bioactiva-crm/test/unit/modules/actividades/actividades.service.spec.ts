@@ -75,7 +75,7 @@ describe('actividades/actividades.service (API mode)', () => {
       postMock.mockResolvedValueOnce({ data: rawActividad })
 
       const result = await actividadesService.create({
-        id_lead: 10, id_responsable: 3, nombre_actividad: 'Discovery call',
+        id_lead: 10, nombre_actividad: 'Discovery call',
         tipo: TipoActividad.Llamada, estado: EstadoActividad.Pendiente,
         fecha_inicio: '2026-06-10T14:00', fecha_fin: '2026-06-10T15:00',
       })
@@ -115,6 +115,16 @@ describe('actividades/actividades.service (API mode)', () => {
 
       await actividadesService.complete(12, 'Updated notes')
       expect(patchMock).toHaveBeenCalledWith('/activities/12', { notas: 'Updated notes' })
+    })
+  })
+
+  describe('updateNotas', () => {
+    it('patches the dedicated notes endpoint and returns mapped actividad', async () => {
+      patchMock.mockResolvedValueOnce({ data: { ...rawActividad, notas: 'Comentario editado' } })
+
+      const result = await actividadesService.updateNotas(12, 'Comentario editado')
+      expect(patchMock).toHaveBeenCalledWith('/activities/12/notes', { notas: 'Comentario editado' })
+      expect(result.notas).toBe('Comentario editado')
     })
   })
 

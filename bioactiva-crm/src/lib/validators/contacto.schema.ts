@@ -38,20 +38,13 @@ export const contactoSchema = z.object({
         .optional()
         .or(z.literal('')),
 
-    // Mantis #269 — teléfono internacional opcional. Si se envía debe cumplir
-    // ^\+\d[\d\s]*$ (mismo regex que el backend en POST/PATCH /contacts).
+    // El formulario acepta solo los 9 dígitos locales; el form antepone +51 antes
+    // de enviar al backend (que sigue exigiendo ^\+\d[\d\s]*$).
     telefono: z
         .string()
-        .max(20, 'Máximo 20 caracteres')
+        .regex(/^\d{9}$/, 'Ingresa los 9 dígitos del número (sin +51)')
         .optional()
-        .or(z.literal(''))
-        .refine(
-            (val) => !val || /^\+\d[\d\s]*$/.test(val),
-            {
-                message:
-                    'El teléfono debe tener formato internacional: "+" seguido del código de país y el número, p. ej. +51987654321.',
-            },
-        ),
+        .or(z.literal('')),
 
     comentarios: z
         .string()

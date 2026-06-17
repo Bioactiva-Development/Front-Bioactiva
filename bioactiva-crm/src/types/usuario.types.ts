@@ -17,6 +17,16 @@ export interface UsuariosResponse {
     activos: number
 }
 
+// Mantis #434 — GET /users/assignable. Usuario habilitado asignable como
+// encargado de un lead, sin restriccion por rol.
+export interface AssignableUsuario {
+    id: number
+    nombres: string
+    apellidos: string
+    correo: string
+    rol: RolUsuario
+}
+
 // Filtros aceptados por GET /users (doc-endpoint.md, módulo `users`).
 export interface UsuarioFilters {
     search?: string

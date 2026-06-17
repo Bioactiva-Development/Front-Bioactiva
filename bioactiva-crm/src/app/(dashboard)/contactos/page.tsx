@@ -45,7 +45,7 @@ export default function ContactosPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <PageHeader
         titulo="Directorio de Contactos"
         acciones={
