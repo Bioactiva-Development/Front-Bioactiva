@@ -6,7 +6,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ titulo, descripcion, acciones }: Readonly<PageHeaderProps>) {
     return (
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
             <div>
                 <h1 className="text-xl font-bold text-gray-900">{titulo}</h1>
                 {descripcion && (
@@ -14,7 +14,7 @@ export function PageHeader({ titulo, descripcion, acciones }: Readonly<PageHeade
                 )}
             </div>
             {acciones && (
-                <div className="flex items-center gap-2 shrink-0 ml-4">
+                <div className="flex items-center gap-2 sm:shrink-0 sm:ml-4">
                     {acciones}
                 </div>
             )}

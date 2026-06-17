@@ -238,11 +238,11 @@ export default function PerfilPage() {
                             <p className="text-xs text-gray-400">El correo institucional no se puede modificar.</p>
                         </div>
 
-                        <div className="flex justify-end">
+                        <div className="flex justify-center">
                             <button
                                 type="submit"
                                 disabled={isLoadingPerfil}
-                                className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 disabled:cursor-not-allowed rounded-xl transition-colors"
+                                className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 disabled:cursor-not-allowed rounded-xl transition-colors"
                             >
                                 {isLoadingPerfil ? (
                                     <><Loader2 size={14} className="animate-spin" /> Guardando...</>
@@ -305,7 +305,7 @@ export default function PerfilPage() {
                             )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <label htmlFor="prf-password" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                     Nueva contraseña
@@ -354,11 +354,11 @@ export default function PerfilPage() {
 
                         <PasswordRequirements password={newPasswordValue} mode="full" />
 
-                        <div className="flex justify-end">
+                        <div className="flex justify-center">
                             <button
                                 type="submit"
                                 disabled={isLoadingPassword}
-                                className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 disabled:bg-amber-200 disabled:cursor-not-allowed rounded-xl transition-colors"
+                                className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 disabled:bg-amber-200 disabled:cursor-not-allowed rounded-xl transition-colors"
                             >
                                 {isLoadingPassword ? (
                                     <><Loader2 size={14} className="animate-spin" /> Guardando...</>
@@ -449,12 +449,12 @@ export default function PerfilPage() {
                         </div>
                     </div>
 
-                    <div className="pt-1 flex items-center gap-4 flex-wrap">
+                    <div className="pt-1 flex flex-col items-center gap-3">
                         {microsoftConectado ? (
                             <button
                                 onClick={desconectarMicrosoft}
                                 disabled={isLoadingIntegracion}
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50 rounded-xl transition-colors cursor-pointer"
+                                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50 rounded-xl transition-colors cursor-pointer"
                             >
                                 {isLoadingIntegracion ? <Loader2 size={14} className="animate-spin" /> : null}
                                 Desconectar cuenta de Microsoft
@@ -463,7 +463,7 @@ export default function PerfilPage() {
                             <button
                                 onClick={conectarMicrosoft}
                                 disabled={isLoadingIntegracion}
-                                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#0078D4] hover:bg-[#106EBE] disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-sm cursor-pointer"
+                                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold text-white bg-[#0078D4] hover:bg-[#106EBE] disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-sm cursor-pointer"
                             >
                                 {isLoadingIntegracion ? (
                                     <Loader2 size={16} className="animate-spin" />
@@ -474,7 +474,7 @@ export default function PerfilPage() {
                                 <ExternalLink size={14} className="opacity-70" />
                             </button>
                         )}
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-gray-400 text-center">
                             Un solo inicio de sesión concede acceso a Teams y Outlook.
                         </p>
                     </div>

@@ -204,7 +204,7 @@ export function RecordatorioForm({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label htmlFor="rec-fecha" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Fecha <span className="text-red-500">*</span>
@@ -253,13 +253,14 @@ export function RecordatorioForm({
         </div>
 
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
             <label htmlFor="rec-cuerpo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Cuerpo del mensaje <span className="text-red-500">*</span>
             </label>
             <span className="text-xs text-gray-400 flex items-center gap-1">
               <Info size={12} />
-              El cuerpo se puede personalizar luego de seleccionar plantilla
+              <span className="sm:hidden">Personalizable con plantilla</span>
+              <span className="hidden sm:inline">El cuerpo se puede personalizar luego de seleccionar plantilla</span>
             </span>
           </div>
           <textarea

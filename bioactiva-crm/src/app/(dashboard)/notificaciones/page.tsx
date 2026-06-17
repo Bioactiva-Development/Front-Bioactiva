@@ -141,36 +141,39 @@ export default function NotificacionesPage() {
       )}
 
       {seccion === 'centro' && (
-        <div className="grid gap-4 lg:grid-cols-[1.4fr_0.9fr]">
-          <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
-                <p className="text-xs uppercase tracking-wide text-gray-400">Pendientes</p>
-                <p className="mt-3 text-3xl font-bold text-emerald-700">
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_0.9fr] w-full overflow-hidden">
+          <div className="space-y-4 min-w-0">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div className="rounded-2xl border border-gray-100 bg-white p-3 sm:p-5 shadow-sm">
+                <p className="text-xs uppercase tracking-wide text-gray-400 truncate">Pendientes</p>
+                <p className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-bold text-emerald-700">
                   {centro?.sinLeer ?? 0}
                 </p>
               </div>
-              <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
-                <p className="text-xs uppercase tracking-wide text-gray-400">Programadas</p>
-                <p className="mt-3 text-3xl font-bold text-gray-900">
+              <div className="rounded-2xl border border-gray-100 bg-white p-3 sm:p-5 shadow-sm">
+                <p className="text-xs uppercase tracking-wide text-gray-400 truncate">Programadas</p>
+                <p className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-bold text-gray-900">
                   {centro?.programadas.length ?? 0}
                 </p>
               </div>
-              <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
-                <p className="text-xs uppercase tracking-wide text-gray-400">Vencidas / Enviadas</p>
-                <p className="mt-3 text-3xl font-bold text-gray-900">
+              <div className="rounded-2xl border border-gray-100 bg-white p-3 sm:p-5 shadow-sm">
+                <p className="text-xs uppercase tracking-wide text-gray-400">
+                  <span className="sm:hidden">Vencidas</span>
+                  <span className="hidden sm:inline">Vencidas / Enviadas</span>
+                </p>
+                <p className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-bold text-gray-900">
                   {centro?.vencidas.length ?? 0}
                 </p>
               </div>
             </div>
 
-            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
+            <div className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900">Notificaciones recientes</p>
-                  <p className="text-xs text-gray-500">Todas las alertas y avisos pendientes.</p>
+                  <p className="text-xs text-gray-500 truncate">Todas las alertas y avisos pendientes.</p>
                 </div>
-                <Bell size={20} className="text-emerald-600" />
+                <Bell size={18} className="text-emerald-600 shrink-0" />
               </div>
               <div className="mt-6 space-y-4">
                 {!isCentroLoading && centro?.vencidas.length === 0 && (
@@ -183,14 +186,14 @@ export default function NotificacionesPage() {
             </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
+          <div className="space-y-4 min-w-0">
+            <div className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900">Notificaciones programadas</p>
-                  <p className="text-xs text-gray-500">Tareas que se enviarán próximamente.</p>
+                  <p className="text-xs text-gray-500 truncate">Tareas que se enviarán próximamente.</p>
                 </div>
-                <Clock size={20} className="text-blue-600" />
+                <Clock size={18} className="text-blue-600 shrink-0" />
               </div>
               <div className="mt-6 space-y-4">
                 {!isCentroLoading && centro?.programadas.length === 0 && (
@@ -227,14 +230,14 @@ export default function NotificacionesPage() {
       )}
 
       {/* Integraciones Microsoft */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mt-6">
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
-          <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mt-6 overflow-hidden">
+        <div className="flex items-center gap-3 px-4 sm:px-6 py-4 border-b border-gray-100">
+          <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
             <Plug size={16} className="text-indigo-600" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h2 className="text-sm font-bold text-gray-900">Integraciones Microsoft</h2>
-            <p className="text-xs text-gray-500">Conecta Teams y Outlook para expandir las capacidades del CRM.</p>
+            <p className="text-xs text-gray-500 truncate">Conecta Teams y Outlook para expandir las capacidades del CRM.</p>
           </div>
         </div>
         <div className="px-6 py-5 space-y-4">
