@@ -1,4 +1,4 @@
-import { Sector, TipoEmpresa, TamanoEmpresa, LeadState, EstadoCot, TipoMoneda } from '@/types/enums'
+import { TipoEmpresa, Sector, TamanoEmpresa, LeadState, EstadoCot, TipoMoneda } from '@/types/enums'
 import {
     EntidadExportable,
     ImportPreviewResult,
@@ -6,10 +6,6 @@ import {
     ConfirmarImportResult,
     FiltrosExportacion,
     ConteoExportacion,
-    FiltrosOrganizacion,
-    FiltrosContacto,
-    FiltrosLead,
-    FiltrosCotizacion,
     RegistroPreview,
     ValidateImportResult,
     CommitImportResult,
@@ -56,52 +52,18 @@ const COT_COLUMNAS = ['cliente', 'nombre_servicio', 'monto', 'moneda', 'estado',
 
 // ─── Filtrado ──────────────────────────────────────────────────────────────
 
-function filtrarOrganizaciones(_busqueda: string, f: FiltrosOrganizacion): RegistroPreview[] {
-    return MOCK_ORG.filter(org => {
-        if (f.sector && org.sector !== f.sector) return false
-        if (f.tipo && org.tipo !== f.tipo) return false
-        if (f.tamano && org.tamano !== f.tamano) return false
-        return true
-    })
+const MOCK_DATA: Record<EntidadExportable, RegistroPreview[]> = {
+    organizaciones: MOCK_ORG,
+    contactos: MOCK_CONTACTOS,
+    leads: MOCK_LEADS,
+    cotizaciones: MOCK_COTIZACIONES,
 }
 
-function filtrarContactos(_busqueda: string, f: FiltrosContacto): RegistroPreview[] {
-    return MOCK_CONTACTOS.filter(c => {
-        if (f.organizacion && !String(c.organizacion).toLowerCase().includes(f.organizacion.toLowerCase())) return false
-        return true
-    })
-}
-
-function filtrarLeads(_busqueda: string, f: FiltrosLead): RegistroPreview[] {
-    return MOCK_LEADS.filter(l => {
-        if (f.estado && l.estado !== f.estado) return false
-        return true
-    })
-}
-
-function filtrarCotizaciones(_busqueda: string, f: FiltrosCotizacion): RegistroPreview[] {
-    return MOCK_COTIZACIONES.filter(c => {
-        if (f.estado && c.estado !== f.estado) return false
-        return true
-    })
-}
-
-function filtrarPorEntidad(filtros: FiltrosExportacion): RegistroPreview[] {
-    switch (filtros.entidad) {
-        case 'organizaciones': return filtrarOrganizaciones(filtros.busqueda, filtros.filtros as FiltrosOrganizacion)
-        case 'contactos': return filtrarContactos(filtros.busqueda, filtros.filtros as FiltrosContacto)
-        case 'leads': return filtrarLeads(filtros.busqueda, filtros.filtros as FiltrosLead)
-        case 'cotizaciones': return filtrarCotizaciones(filtros.busqueda, filtros.filtros as FiltrosCotizacion)
-    }
-}
-
-function getColumnas(entidad: EntidadExportable): string[] {
-    switch (entidad) {
-        case 'organizaciones': return ORG_COLUMNAS
-        case 'contactos': return CONTACTO_COLUMNAS
-        case 'leads': return LEAD_COLUMNAS
-        case 'cotizaciones': return COT_COLUMNAS
-    }
+const COLUMNAS: Record<EntidadExportable, string[]> = {
+    organizaciones: ORG_COLUMNAS,
+    contactos: CONTACTO_COLUMNAS,
+    leads: LEAD_COLUMNAS,
+    cotizaciones: COT_COLUMNAS,
 }
 
 const ETIQUETAS: Record<EntidadExportable, string> = {
@@ -114,16 +76,16 @@ const ETIQUETAS: Record<EntidadExportable, string> = {
 // ─── Exports públicos ──────────────────────────────────────────────────────
 
 export function mockContarExportacion(filtros: FiltrosExportacion): ConteoExportacion {
-    const data = filtrarPorEntidad(filtros)
+    const data = MOCK_DATA[filtros.entidad]
     return { total: data.length, label: ETIQUETAS[filtros.entidad] }
 }
 
 export function mockExportar(filtros: FiltrosExportacion): ExportarResult {
-    const data = filtrarPorEntidad(filtros)
+    const data = MOCK_DATA[filtros.entidad]
     const fecha = new Date().toISOString().split('T')[0]
     return {
         data,
-        columnas: getColumnas(filtros.entidad),
+        columnas: COLUMNAS[filtros.entidad],
         filename: `bioactiva_${filtros.entidad}_${fecha}.csv`,
         total: data.length,
     }

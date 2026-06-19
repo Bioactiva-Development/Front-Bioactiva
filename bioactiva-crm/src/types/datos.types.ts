@@ -1,5 +1,3 @@
-import { Sector, TipoEmpresa, TamanoEmpresa, LeadState, EstadoCot } from '@/types/enums'
-
 export type EntidadExportable = 'organizaciones' | 'contactos' | 'leads' | 'cotizaciones'
 
 export type TipoConflicto = 'error' | 'advertencia' | 'duplicado'
@@ -87,34 +85,8 @@ export interface ImportJobStatus {
     failedReason: string | null
 }
 
-export interface FiltrosOrganizacion {
-    sector: Sector | ''
-    tipo: TipoEmpresa | ''
-    tamano: TamanoEmpresa | ''
-}
-
-export interface FiltrosContacto {
-    organizacion: string
-}
-
-export interface FiltrosLead {
-    estado: LeadState | ''
-}
-
-export interface FiltrosCotizacion {
-    estado: EstadoCot | ''
-}
-
-export type FiltrosEspecificos =
-    | FiltrosOrganizacion
-    | FiltrosContacto
-    | FiltrosLead
-    | FiltrosCotizacion
-
 export interface FiltrosExportacion {
     entidad: EntidadExportable
-    busqueda: string
-    filtros: FiltrosEspecificos
 }
 
 export interface ExportarResult {
