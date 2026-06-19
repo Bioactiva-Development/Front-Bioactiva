@@ -16,6 +16,7 @@ import {
 import { CrearSeguimientoRequest } from '@/types/notificacion.types'
 import { EstadoActividad } from '@/types/enums'
 import { getContactoEmailOptions } from '@/lib/utils/contacto-email.utils'
+import { APP_TIME_ZONE, limaInputToUtcISO } from '@/lib/utils/timezone.utils'
 
 interface SeguimientoFormProps {
   onSubmit: (data: CrearSeguimientoRequest) => Promise<void>
@@ -114,11 +115,12 @@ export function SeguimientoForm({
 
   const formatFecha = (fecha: string) =>
     new Date(fecha).toLocaleDateString('es-PE', {
-      day:    '2-digit',
-      month:  'short',
-      year:   'numeric',
-      hour:   '2-digit',
-      minute: '2-digit',
+      timeZone: APP_TIME_ZONE,
+      day:      '2-digit',
+      month:    'short',
+      year:     'numeric',
+      hour:     '2-digit',
+      minute:   '2-digit',
     })
 
   useEffect(() => {
@@ -187,12 +189,12 @@ export function SeguimientoForm({
       instancias: values.instancias.map((instancia) => ({
         internal: {
           ...instancia.internal,
-          fechaEnvio: new Date(instancia.internal.fechaEnvio).toISOString(),
+          fechaEnvio: limaInputToUtcISO(instancia.internal.fechaEnvio),
           idTemplate: instancia.internal.idTemplate || null,
         },
         external: {
           ...instancia.external,
-          fechaEnvio: new Date(instancia.external.fechaEnvio).toISOString(),
+          fechaEnvio: limaInputToUtcISO(instancia.external.fechaEnvio),
           idTemplate: instancia.external.idTemplate || null,
         },
       })),

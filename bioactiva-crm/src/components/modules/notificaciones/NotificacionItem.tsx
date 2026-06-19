@@ -12,9 +12,11 @@ import {
   useCancelarProgramada,
   useMarcarLeida,
 } from '@/hooks/notificaciones/useNotificaciones'
+import { APP_TIME_ZONE } from '@/lib/utils/timezone.utils'
 
 const formatFecha = (fecha: string) =>
   new Date(fecha).toLocaleString('es-PE', {
+    timeZone: APP_TIME_ZONE,
     day: '2-digit',
     month: 'short',
     year: 'numeric',
