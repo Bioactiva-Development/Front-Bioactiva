@@ -18,7 +18,6 @@ export interface Lead {
   servicio_interes: string
   comentarios?: string
   desafio_oportunidad?: string
-  notas_contacto?: string
   id_encargado: number
   canal_captacion?: string
   sector?: string
@@ -84,7 +83,6 @@ export interface LeadFormData {
   servicio_interes: string
   comentarios?: string
   desafio_oportunidad?: string
-  notas_contacto?: string
   id_encargado: number
   encargado_correo?: string
   canal_captacion?: string

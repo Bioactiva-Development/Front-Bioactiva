@@ -535,17 +535,7 @@ export function LeadDetalle({
                   </p>
                 </div>
               )}
-              {lead.notas_contacto && (
-                <div>
-                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">
-                    Historial de contacto
-                  </p>
-                  <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3">
-                    {lead.notas_contacto}
-                  </p>
-                </div>
-              )}
-              {!lead.comentarios && !lead.desafio_oportunidad && !lead.notas_contacto && (
+              {!lead.comentarios && !lead.desafio_oportunidad && (
                 <p className="text-sm text-gray-400 italic">Sin notas registradas.</p>
               )}
             </div>

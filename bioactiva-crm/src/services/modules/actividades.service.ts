@@ -99,6 +99,17 @@ export const actividadesService = {
     return actividad
   },
 
+  // Mantis #407 — edita el comentario (campo `notas`) via endpoint dedicado
+  // PATCH /activities/:id/notes. Reemplaza el valor (ultimo gana, sin historial).
+  updateNotas: async (id: number, notas: string): Promise<Actividad> => {
+    if (USE_MOCK) return mockUpdateActividad(id, { notas })
+    const response = await apiClient.patch<ActividadDtoOut>(
+      ENDPOINTS.actividades.notes(id),
+      { notas }
+    )
+    return fromActividadDto(response.data)
+  },
+
   cancel: async (id: number): Promise<Actividad> => {
     const actividad = USE_MOCK
       ? await mockCancelarActividad(id)

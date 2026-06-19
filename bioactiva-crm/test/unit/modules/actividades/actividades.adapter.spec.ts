@@ -86,7 +86,6 @@ describe('actividades.adapter', () => {
     it('returns correct backend shape', () => {
       const formData: ActividadFormData = {
         id_lead: 10,
-        id_responsable: 3,
         nombre_actividad: 'Discovery call',
         fecha_inicio: '2026-06-10T14:00:00.000Z',
         fecha_fin: '2026-06-10T15:00:00.000Z',
@@ -102,7 +101,6 @@ describe('actividades.adapter', () => {
         fechaInicio: '2026-06-10T14:00:00.000Z',
         fechaFin: '2026-06-10T15:00:00.000Z',
         tipo: 'LLAMADA',
-        idResponsable: 3,
         notas: 'Discuss requirements',
         syncWithMicrosoft: false,
         createTeamsMeeting: false,
@@ -129,7 +127,6 @@ describe('actividades.adapter', () => {
         fecha_inicio: undefined,
         fecha_fin: undefined,
         notas: undefined,
-        id_responsable: undefined,
       })
 
       expect(result).toEqual({

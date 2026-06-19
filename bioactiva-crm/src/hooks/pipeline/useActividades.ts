@@ -128,6 +128,25 @@ export function useEliminarActividad(leadId: number) {
 }
 
 
+// Mantis #407 — edita el comentario (campo `notas`) de la actividad y refresca
+// la lista con la respuesta del backend. Valor unico, sin historial.
+export function useEditarNotasActividad(leadId: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, notas }: { id: number; notas: string }) =>
+      actividadesService.updateNotas(id, notas),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.actividades.byLead(leadId),
+      })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
 export function useComentarios(actividadId: number) {
   return useQuery({
     queryKey: ['comentarios', actividadId],

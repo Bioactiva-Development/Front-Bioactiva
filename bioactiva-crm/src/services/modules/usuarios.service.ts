@@ -3,6 +3,7 @@ import { ENDPOINTS } from '@/services/api/endpoints'
 import { apiClient } from '@/services/api/client'
 import {
     mockGetUsuarios,
+    mockGetAssignables,
     mockEditarUsuario,
     mockCambiarPassword,
     mockDeshabilitarUsuario,
@@ -17,6 +18,7 @@ import { mapRole, mapEstado } from '@/lib/utils/auth.mappers'
 import {
     UsuariosResponse,
     UsuarioListItem,
+    AssignableUsuario,
     UsuarioFilters,
     EditarUsuarioRequest,
     CambiarPasswordRequest,
@@ -138,6 +140,22 @@ export const usuariosService = {
         const total = Number(meta.total ?? usuarios.length)
         const activos = usuarios.filter((u) => u.estado === EstadoUsuario.Activo).length
         return { usuarios, total, activos }
+    },
+
+    // Mantis #434 — GET /users/assignable: usuarios habilitados asignables como
+    // encargado, sin restriccion por rol. No usar getUsuarios (GET /users esta
+    // filtrado por rol y un trabajador solo se veria a si mismo).
+    getAssignables: async (): Promise<AssignableUsuario[]> => {
+        if (USE_MOCK) return mockGetAssignables()
+        const { data } = await apiClient.get(ENDPOINTS.usuarios.assignable)
+        const rows = Array.isArray(data) ? data : (data?.data ?? data?.usuarios ?? [])
+        return rows.map((u: Record<string, unknown>) => ({
+            id: Number(u.id),
+            nombres: strOf(u.nombres),
+            apellidos: strOf(u.apellidos),
+            correo: strOf(u.correo),
+            rol: mapRolUsuario(u.rol ?? u.role),
+        }))
     },
 
     editar: async (data: EditarUsuarioRequest): Promise<UsuarioListItem> => {

@@ -7,7 +7,6 @@ export interface LeadDtoOut {
   servicioInteres: string
   comentarios: string | null
   desafioOportunidad: string | null
-  notasContacto: string | null
   canalCaptacion: string | null
   idOrg: string
   organizationName: string
@@ -49,7 +48,6 @@ export interface LeadCreateDto {
   idContacto?: number
   comentarios?: string
   desafioOportunidad?: string
-  notasContacto?: string
   canalCaptacion?: string
 }
 
@@ -89,7 +87,6 @@ export const fromLeadDto = (dto: LeadDtoOut): Lead => ({
   servicio_interes: dto.servicioInteres,
   comentarios: dto.comentarios ?? undefined,
   desafio_oportunidad: dto.desafioOportunidad ?? undefined,
-  notas_contacto: dto.notasContacto ?? undefined,
   id_encargado: dto.idEncargado,
   canal_captacion: dto.canalCaptacion ?? undefined,
   fecha_cierre:
@@ -141,9 +138,6 @@ export const toCreateLeadDto = (data: LeadFormData): LeadCreateDto => {
   const desafioOportunidad = trimOrUndefined(data.desafio_oportunidad)
   if (desafioOportunidad !== undefined) dto.desafioOportunidad = desafioOportunidad
 
-  const notasContacto = trimOrUndefined(data.notas_contacto)
-  if (notasContacto !== undefined) dto.notasContacto = notasContacto
-
   const canalCaptacion = trimOrUndefined(data.canal_captacion)
   if (canalCaptacion !== undefined) dto.canalCaptacion = canalCaptacion
 
@@ -163,9 +157,6 @@ export const toUpdateLeadDto = (data: Partial<LeadFormData>): LeadUpdateDto => {
 
   const desafioOportunidad = trimOrUndefined(data.desafio_oportunidad)
   if (desafioOportunidad !== undefined) dto.desafioOportunidad = desafioOportunidad
-
-  const notasContacto = trimOrUndefined(data.notas_contacto)
-  if (notasContacto !== undefined) dto.notasContacto = notasContacto
 
   const canalCaptacion = trimOrUndefined(data.canal_captacion)
   if (canalCaptacion !== undefined) dto.canalCaptacion = canalCaptacion

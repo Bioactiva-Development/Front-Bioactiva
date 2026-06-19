@@ -4,16 +4,14 @@ import { LeadCard } from '@/components/modules/pipeline/LeadCard'
 import { Lead } from '@/types/lead.types'
 import { LeadState } from '@/types/enums'
 
-jest.mock('@dnd-kit/core', () => ({
-  useDraggable: () => ({
-    attributes: {},
-    listeners: {},
-    setNodeRef: jest.fn(),
-    transform: null,
-    isDragging: false,
-  }),
+jest.mock('@atlaskit/pragmatic-drag-and-drop/element/adapter', () => ({
+  draggable:             jest.fn(() => jest.fn()),
+  dropTargetForElements: jest.fn(() => jest.fn()),
+  monitorForElements:    jest.fn(() => jest.fn()),
 }))
-jest.mock('@dnd-kit/utilities', () => ({ CSS: { Translate: { toString: () => '' } } }))
+jest.mock('@/hooks/cotizaciones/useCotizaciones', () => ({
+  useCotizacionesPorLead: jest.fn(() => ({ data: [] })),
+}))
 jest.mock('lucide-react', () => new Proxy({}, { get: () => () => null }))
 
 const baseLead: Lead = {
@@ -35,30 +33,46 @@ describe('modules/pipeline/LeadCard', () => {
   it('renders the core lead fields', () => {
     render(<LeadCard lead={baseLead} onClick={jest.fn()} />)
     expect(screen.getByText('Altomayo')).toBeInTheDocument()
-    expect(screen.getByText('María Gómez')).toBeInTheDocument()
     expect(screen.getByText('Consultoría I+D')).toBeInTheDocument()
+    expect(screen.getByText('María Gómez')).toBeInTheDocument()
+    expect(screen.getByText('· Contacto')).toBeInTheDocument()
     expect(screen.getByText('Carlos López')).toBeInTheDocument()
+    expect(screen.getByText('Encargado')).toBeInTheDocument()
   })
 
-  it('uses a fixed height for every pipeline card', () => {
+  it('renders encargado initials in the avatar', () => {
     render(<LeadCard lead={baseLead} onClick={jest.fn()} />)
-    expect(screen.getByLabelText('Lead - Altomayo')).toHaveClass('h-56')
+    expect(screen.getByText('CL')).toBeInTheDocument()
+    expect(screen.getByTitle('Carlos López')).toBeInTheDocument()
+  })
+
+  it('shows "Por cotizar" badge only for EN_PROSPECTO leads', () => {
+    render(<LeadCard lead={baseLead} onClick={jest.fn()} />)
+    expect(screen.getByText('Por cotizar')).toBeInTheDocument()
+  })
+
+  it('does not show "Por cotizar" for non-prospecto leads', () => {
+    render(<LeadCard lead={{ ...baseLead, estado: LeadState.Ofertado }} onClick={jest.fn()} />)
+    expect(screen.queryByText('Por cotizar')).not.toBeInTheDocument()
   })
 
   it.each([
-    ['ROJO', 'Vencida'],
+    ['ROJO',     'Vencida'],
     ['AMARILLO', 'Por vencer'],
-    ['VERDE', 'Al día'],
-  ] as const)('renders the %s activity semáforo with its label', (alert, label) => {
+  ] as const)('renders the %s activity alert badge', (alert, label) => {
     render(<LeadCard lead={{ ...baseLead, activity_alert: alert }} onClick={jest.fn()} />)
     expect(screen.getByText(label)).toBeInTheDocument()
   })
 
-  it('does not render a semáforo when there is no activity_alert', () => {
-    render(<LeadCard lead={baseLead} onClick={jest.fn()} />)
+  it('does not render the VERDE badge (default ok state)', () => {
+    render(<LeadCard lead={{ ...baseLead, activity_alert: 'VERDE' }} onClick={jest.fn()} />)
     expect(screen.queryByText('Al día')).not.toBeInTheDocument()
-    expect(screen.queryByText('Por vencer')).not.toBeInTheDocument()
+  })
+
+  it('does not render an alert badge without activity_alert', () => {
+    render(<LeadCard lead={baseLead} onClick={jest.fn()} />)
     expect(screen.queryByText('Vencida')).not.toBeInTheDocument()
+    expect(screen.queryByText('Por vencer')).not.toBeInTheDocument()
   })
 
   it('calls onClick with the lead when the card is clicked', async () => {
@@ -68,30 +82,13 @@ describe('modules/pipeline/LeadCard', () => {
     expect(onClick).toHaveBeenCalledWith(baseLead)
   })
 
-  it('emits a quick action without bubbling to the card click', async () => {
-    const onClick = jest.fn()
+  it('calls onQuickAction "detalle" without bubbling to card click', async () => {
+    const onClick       = jest.fn()
     const onQuickAction = jest.fn()
     render(<LeadCard lead={baseLead} onClick={onClick} onQuickAction={onQuickAction} />)
-    await userEvent.click(screen.getByTitle('Crear cotización'))
-    expect(onQuickAction).toHaveBeenCalledWith(baseLead, 'cotizacion')
+    await userEvent.click(screen.getByTitle('Ver detalle completo'))
+    expect(onQuickAction).toHaveBeenCalledWith(baseLead, 'detalle')
     expect(onClick).not.toHaveBeenCalled()
-  })
-
-  it.each([
-    ['Ver detalle', 'detalle'],
-    ['Editar lead', 'editar'],
-    ['Registrar actividad', 'actividad'],
-    ['Crear cotización', 'cotizacion'],
-  ] as const)('emits the "%s" quick action', async (title, action) => {
-    const onQuickAction = jest.fn()
-    render(<LeadCard lead={baseLead} onClick={jest.fn()} onQuickAction={onQuickAction} />)
-    await userEvent.click(screen.getByTitle(title))
-    expect(onQuickAction).toHaveBeenCalledWith(baseLead, action)
-  })
-
-  it('does not render the programar seguimiento quick action', () => {
-    render(<LeadCard lead={baseLead} onClick={jest.fn()} onQuickAction={jest.fn()} />)
-    expect(screen.queryByTitle('Programar seguimiento')).not.toBeInTheDocument()
   })
 
   it('renders in overlay mode', () => {
@@ -99,13 +96,13 @@ describe('modules/pipeline/LeadCard', () => {
     expect(screen.getByText('Altomayo')).toBeInTheDocument()
   })
 
-  it('shows the legacy alert when tiene_alerta is set', () => {
+  it('shows the tiene_alerta badge with the alert message', () => {
     render(
       <LeadCard
-        lead={{ ...baseLead, tiene_alerta: true, alerta_motivo: 'Sin seguimiento' }}
+        lead={{ ...baseLead, tiene_alerta: true, alerta_motivo: '+30 días' }}
         onClick={jest.fn()}
       />
     )
-    expect(screen.getByText('Sin seguimiento')).toBeInTheDocument()
+    expect(screen.getByText('+30 días')).toBeInTheDocument()
   })
 })

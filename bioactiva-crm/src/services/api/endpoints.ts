@@ -13,6 +13,10 @@ export const ENDPOINTS = {
     usuarios: {
         // GET /users — implementado en backend (doc-endpoint.md, módulo `users`).
         list: '/users',
+        // Mantis #434 — GET /users/assignable. Lista todos los usuarios habilitados
+        // sin restriccion por rol; fuente del selector de Encargado en leads.
+        // No usar `list` aqui: GET /users esta filtrado por rol.
+        assignable: '/users/assignable',
         // Endpoints marcados como "Pendiente" en el backend; se alinean a la
         // convención documentada (`/users/:id`) para cuando se expongan por HTTP.
         detail: (id: number) => `/users/${id}`,
@@ -79,6 +83,9 @@ export const ENDPOINTS = {
         complete: (id: number) => `/activities/${id}/complete`,
         cancel: (id: number) => `/activities/${id}/cancel`,
         calendarEvent: (id: number) => `/activities/${id}/calendar-event`,
+        // Mantis #407 — edicion del comentario (campo `notas`) de la actividad.
+        // Body { notas: string } (1-1000). Reemplaza el valor; sin historial.
+        notes: (id: number) => `/activities/${id}/notes`,
         delete: (id: number) => `/activities/${id}`,
     },
 
@@ -122,5 +129,18 @@ export const ENDPOINTS = {
         exportar: '/api/datos/exportar',
         contar: '/api/datos/exportar/contar',
         historial: '/api/datos/historial',
+        importXlsx: {
+            template: '/data/import/template',
+            validate: '/data/import/validate',
+            commit:   '/data/import/commit',
+            job:      (id: string) => `/data/import/jobs/${id}`,
+        },
+        exportXlsx: {
+            organizaciones: '/data/export/organizaciones',
+            contactos:      '/data/export/contactos',
+            leads:          '/data/export/leads',
+            cotizaciones:   '/data/export/cotizaciones',
+            all:            '/data/export/all',
+        },
     },
 } as const

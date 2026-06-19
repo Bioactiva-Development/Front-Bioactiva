@@ -13,6 +13,7 @@ const mockDelete = jest.fn()
 const mockGetComentarios = jest.fn()
 const mockCreateComentario = jest.fn()
 const mockCreateCalendarEvent = jest.fn()
+const mockUpdateNotas = jest.fn()
 
 jest.mock('@/services/modules/actividades.service', () => ({
   actividadesService: {
@@ -22,6 +23,7 @@ jest.mock('@/services/modules/actividades.service', () => ({
     complete: mockComplete,
     cancel: mockCancel,
     delete: mockDelete,
+    updateNotas: mockUpdateNotas,
     getComentarios: mockGetComentarios,
     createComentario: mockCreateComentario,
     createCalendarEvent: mockCreateCalendarEvent,
@@ -62,6 +64,7 @@ import {
   useCompletarActividad,
   useCancelarActividad,
   useEliminarActividad,
+  useEditarNotasActividad,
   useComentarios,
   useCrearComentario,
   useCrearEventoCalendario,
@@ -101,7 +104,6 @@ describe('pipeline/useActividades', () => {
       mockCreate.mockResolvedValueOnce({ id: 1 })
       const payload: ActividadFormData = {
         id_lead: 42,
-        id_responsable: 1,
         nombre_actividad: 'Reunión',
         fecha_inicio: '2026-06-15T10:00',
         fecha_fin: '2026-06-15T10:30',
@@ -202,6 +204,20 @@ describe('pipeline/useActividades', () => {
       })
 
       expect(mockDelete).toHaveBeenCalledWith(3)
+    })
+  })
+
+  describe('useEditarNotasActividad', () => {
+    it('updates the activity notes via the dedicated service method', async () => {
+      mockUpdateNotas.mockResolvedValueOnce({ id: 7, notas: 'Comentario editado' })
+
+      const { result } = renderHook(() => useEditarNotasActividad(42), { wrapper })
+
+      await act(async () => {
+        await result.current.mutateAsync({ id: 7, notas: 'Comentario editado' })
+      })
+
+      expect(mockUpdateNotas).toHaveBeenCalledWith(7, 'Comentario editado')
     })
   })
 

@@ -6,19 +6,18 @@ import {
   CheckCircle2, Clock, Trash2, XCircle,
   ChevronDown, ChevronUp, Send,
   AlertTriangle,
-  Bell,
-  CalendarPlus,
-  ExternalLink,
+  Bell, Save, Loader2,
+  CalendarPlus, ExternalLink,
 } from 'lucide-react'
 import { Actividad } from '@/types/actividad.types'
 import { TipoActividad, EstadoActividad } from '@/types/enums'
 import {
   useCompletarActividad,
   useEliminarActividad,
-  useComentarios,
-  useCrearComentario,
+  useEditarNotasActividad,
   useCrearEventoCalendario,
 } from '@/hooks/pipeline/useActividades'
+import { getErrorMessage } from '@/lib/utils/error.utils'
 
 interface ActividadHistorialProps {
   leadId:      number
@@ -82,21 +81,17 @@ function ActividadItem({
   onProgramarSeguimiento?: (actividad: Actividad) => void
 }) {
   const [expandido,    setExpandido]    = useState(false)
-  const [nuevoComment, setNuevoComment] = useState('')
-  const [mostrandoCierre, setMostrandoCierre] = useState(false)
-  const [notaCierre, setNotaCierre] = useState('')
+  const [notasEdit, setNotasEdit] = useState(actividad.notas ?? '')
+  const [notasError, setNotasError] = useState<string | null>(null)
 
   const { mutateAsync: completar, isPending: completando } =
     useCompletarActividad(leadId)
   const { mutateAsync: eliminar, isPending: eliminando } =
     useEliminarActividad(leadId)
+  const { mutateAsync: guardarNotas, isPending: guardandoNotas } =
+    useEditarNotasActividad(leadId)
   const { mutateAsync: crearEvento, isPending: creandoEvento } =
     useCrearEventoCalendario(leadId)
-  const { data: comentarios = [] } = useComentarios(
-    expandido ? actividad.id : 0
-  )
-  const { mutateAsync: crearComentario, isPending: enviando } =
-    useCrearComentario(actividad.id)
 
   const esPendiente = actividad.estado === EstadoActividad.Pendiente
   const esTerminal  = actividad.estado === EstadoActividad.Completada ||
@@ -115,16 +110,32 @@ function ActividadItem({
       minute: '2-digit',
     })
 
-  const handleEnviarComentario = async () => {
-    if (!nuevoComment.trim()) return
-    await crearComentario(nuevoComment.trim())
-    setNuevoComment('')
+  const notasGuardadas = (actividad.notas ?? '').trim()
+  const notasActual = notasEdit.trim()
+  const notasSinCambios = notasActual === notasGuardadas
+  const notasInvalida = notasActual.length < 1 || notasActual.length > 1000
+
+  const handleGuardarNotas = async () => {
+    const texto = notasEdit.trim()
+    if (texto.length < 1) {
+      setNotasError('El comentario es obligatorio (1 a 1000 caracteres).')
+      return
+    }
+    if (texto.length > 1000) {
+      setNotasError('El comentario no puede superar los 1000 caracteres.')
+      return
+    }
+
+    setNotasError(null)
+    try {
+      await guardarNotas({ id: actividad.id, notas: texto })
+    } catch (err) {
+      setNotasError(getErrorMessage(err, 'No se pudo guardar el comentario.'))
+    }
   }
 
   const handleCompletar = async () => {
-    await completar({ id: actividad.id, notas: notaCierre.trim() || undefined })
-    setMostrandoCierre(false)
-    setNotaCierre('')
+    await completar({ id: actividad.id })
   }
 
   return (
@@ -184,7 +195,7 @@ function ActividadItem({
             )}
             {esPendiente && (
               <button
-                onClick={() => setMostrandoCierre((prev) => !prev)}
+                onClick={handleCompletar}
                 disabled={completando}
                 title="Marcar como completada"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
@@ -253,98 +264,51 @@ function ActividadItem({
             )}
           </div>
         )}
-
-        {mostrandoCierre && (
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60
-            p-3 space-y-2">
-            <label className="block text-xs font-semibold text-emerald-700
-              uppercase tracking-wide">
-              Nota de cierre
-            </label>
-            <textarea
-              rows={2}
-              value={notaCierre}
-              onChange={(event) => setNotaCierre(event.target.value)}
-              placeholder="Qué se hizo, resultado o siguiente acuerdo..."
-              className="w-full px-3 py-2 rounded-xl border border-emerald-100
-                bg-white text-sm text-gray-900 outline-none
-                focus:border-emerald-400 placeholder:text-gray-400 resize-none"
-            />
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setMostrandoCierre(false)
-                  setNotaCierre('')
-                }}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold
-                  text-gray-500 hover:bg-white transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleCompletar}
-                disabled={completando}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5
-                  rounded-lg text-xs font-semibold bg-emerald-600
-                  hover:bg-emerald-700 disabled:bg-emerald-300 text-white
-                  transition-colors"
-              >
-                <CheckCircle2 size={13} />
-                Completar actividad
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {expandido && (
-        <div className="border-t border-gray-100 p-4 space-y-3 bg-gray-50/50">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+        <div className="border-t border-gray-100 p-4 space-y-2 bg-gray-50/50">
+          <label
+            htmlFor={`act-notas-${actividad.id}`}
+            className="block text-xs font-bold text-gray-500 uppercase tracking-wide"
+          >
             Comentarios
-          </p>
+          </label>
 
-          {comentarios.length === 0 ? (
-            <p className="text-xs text-gray-400 italic">Sin comentarios aún.</p>
-          ) : (
-            <div className="space-y-2">
-              {comentarios.map((c) => (
-                <div
-                  key={c.id}
-                  className="bg-white rounded-lg border border-gray-100 px-3 py-2"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs font-semibold text-emerald-600">{c.autor}</p>
-                    <p className="text-xs text-gray-400">
-                      {new Date(c.created_at).toLocaleDateString('es-PE')}
-                    </p>
-                  </div>
-                  <p className="text-sm text-gray-700">{c.texto}</p>
-                </div>
-              ))}
-            </div>
+          <textarea
+            id={`act-notas-${actividad.id}`}
+            rows={3}
+            maxLength={1000}
+            value={notasEdit}
+            onChange={(event) => {
+              setNotasEdit(event.target.value)
+              if (notasError) setNotasError(null)
+            }}
+            placeholder="Escribe el comentario de la actividad..."
+            className="w-full px-3 py-2 rounded-xl border border-gray-200
+              bg-white text-sm text-gray-900 outline-none
+              focus:border-emerald-400 placeholder:text-gray-400 resize-none"
+          />
+
+          {notasError && (
+            <p className="text-red-500 text-xs">{notasError}</p>
           )}
 
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={nuevoComment}
-              onChange={(e) => setNuevoComment(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleEnviarComentario()}
-              placeholder="Agregar comentario..."
-              className="flex-1 px-3 py-2 rounded-xl border border-gray-200
-                bg-white text-sm text-gray-900 outline-none
-                focus:border-emerald-400 placeholder:text-gray-400"
-            />
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-gray-400">{notasActual.length}/1000</span>
             <button
-              onClick={handleEnviarComentario}
-              disabled={!nuevoComment.trim() || enviando}
-              className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-700
-                disabled:bg-emerald-300 disabled:cursor-not-allowed
-                text-white transition-colors"
+              type="button"
+              onClick={handleGuardarNotas}
+              disabled={guardandoNotas || notasInvalida || notasSinCambios}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                text-xs font-semibold bg-emerald-600 hover:bg-emerald-700
+                disabled:bg-emerald-300 disabled:cursor-not-allowed text-white
+                transition-colors"
             >
-              <Send size={14} />
+              {guardandoNotas
+                ? <Loader2 size={13} className="animate-spin" />
+                : <Save size={13} />}
+              Guardar comentario
             </button>
           </div>
         </div>

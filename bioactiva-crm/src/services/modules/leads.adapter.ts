@@ -9,7 +9,6 @@ export interface BackendLead {
   servicioInteres:    string
   comentarios:        string | null
   desafioOportunidad: string | null
-  notasContacto:      string | null
   canalCaptacion:     string | null
   idOrg:              string
   organizationName:   string
@@ -67,7 +66,6 @@ export function mapBackendLead(raw: BackendLead): Lead {
     servicio_interes:    raw.servicioInteres,
     comentarios:         raw.comentarios ?? undefined,
     desafio_oportunidad: raw.desafioOportunidad ?? undefined,
-    notas_contacto:      raw.notasContacto ?? undefined,
     id_encargado:        raw.idEncargado,
     canal_captacion:     raw.canalCaptacion ?? undefined,
     id_author:           raw.idAuthor,
@@ -101,7 +99,6 @@ export function mapLeadFormToBackend(
   if (data.servicio_interes  !== undefined) out.servicioInteres     = data.servicio_interes
   if (data.comentarios       !== undefined) out.comentarios         = data.comentarios
   if (data.desafio_oportunidad !== undefined) out.desafioOportunidad = data.desafio_oportunidad
-  if (data.notas_contacto    !== undefined) out.notasContacto       = data.notas_contacto
   if (data.id_encargado      !== undefined) out.idEncargado         = data.id_encargado
   if (data.canal_captacion   !== undefined) out.canalCaptacion      = data.canal_captacion
 
