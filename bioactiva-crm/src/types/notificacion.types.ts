@@ -1,47 +1,75 @@
-import { EstadoNotif } from './enums'
+export type TipoNotificacionProgramada = 'RECORDATORIO' | 'SEGUIMIENTO'
+export type EstadoNotificacionProgramada =
+  | 'PROGRAMADA'
+  | 'VENCIDA'
+  | 'CANCELADA'
 
-export type TipoNotificacion =
-  | 'Recordatorio'
-  | 'Seguimiento'
-  | 'Alerta'
+export type EstadoNotificacionInApp = 'NO_LEIDA' | 'LEIDA'
 
-export interface Notificacion {
+export interface InstanciaSeguimiento {
   id: number
-  id_usuario: number
-  id_actividad?: number
-  id_lead?:number
-  titulo:string
-  mensaje: string
-  tipo: TipoNotificacion
-  estado: EstadoNotif
-  created_at:string
-  lead_codigo?:string
-  lead_org?: string
+  orden: number
+  asuntoInterno: string
+  fechaEnvioInterno: string
+  enviadoInterno: boolean
+  asuntoExterno: string
+  fechaEnvioExterno: string
+  enviadoExterno: boolean
 }
 
 export interface NotificacionProgramada {
   id: number
-  id_actividad: number
-  id_lead: number
-  tipo:TipoNotificacion
-  fecha_envio: string
+  tipo: TipoNotificacionProgramada
+  estado: EstadoNotificacionProgramada
+  idActividad: number
+  idLead: number
+  idResponsable: number
+  asuntoInterno: string | null
+  fechaEnvioInterno: string | null
+  enviadoInterno: boolean
+  correoCliente: string | null
+  instancias: InstanciaSeguimiento[] | null
+  createdAt: string
+}
+
+export interface NotificacionInApp {
+  id: number
+  titulo: string
+  mensaje: string
+  estado: EstadoNotificacionInApp
+  idLead: number | null
+  idActividad: number | null
+  createdAt: string
+}
+
+export interface FiltrosNotificacionesProgramadas {
+  estado?: Extract<EstadoNotificacionProgramada, 'PROGRAMADA' | 'VENCIDA'>
+  idLead?: number
+  idResponsable?: number
+}
+
+export interface CrearRecordatorioRequest {
+  idLead: number
+  minutosAntes: number
+  idTemplate?: number | null
   asunto: string
   cuerpo: string
-  destinatario: string
-  estado: 'Programada' | 'Cancelada' | 'Enviada'
-  created_at:string
-  lead_codigo?:string
-  lead_org?: string
-  actividad_nombre?: string
 }
 
-export interface NotificacionFiltros {
-  estado?: EstadoNotif
-  tipo?:   TipoNotificacion
+export interface MensajeSeguimientoRequest {
+  fechaEnvio: string
+  idTemplate?: number | null
+  asunto: string
+  cuerpo: string
 }
 
-export interface CentroNotificaciones {
-  programadas: NotificacionProgramada[]
-  vencidas:    Notificacion[]
-  sinLeer:     number
+export interface InstanciaSeguimientoRequest {
+  internal: MensajeSeguimientoRequest
+  external: MensajeSeguimientoRequest
+}
+
+export interface CrearSeguimientoRequest {
+  idLead: number
+  correoCliente: string
+  instancias: InstanciaSeguimientoRequest[]
 }

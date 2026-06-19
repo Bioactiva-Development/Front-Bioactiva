@@ -10,7 +10,7 @@ const mockRouterPush = jest.fn()
 
 const mockUseAuthStore = jest.fn()
 const mockUseUIStore = jest.fn()
-const mockUseCentroNotificaciones = jest.fn()
+const mockUseNotificacionesInApp = jest.fn()
 const mockUseRouter = jest.fn()
 
 jest.mock('@/store', () => ({
@@ -23,7 +23,7 @@ jest.mock('@/hooks/auth/useAuth', () => ({
 }))
 
 jest.mock('@/hooks/notificaciones/useNotificaciones', () => ({
-  useCentroNotificaciones: (...args: unknown[]) => mockUseCentroNotificaciones(...args),
+  useNotificacionesInApp: (...args: unknown[]) => mockUseNotificacionesInApp(...args),
 }))
 
 jest.mock('next/navigation', () => ({
@@ -48,7 +48,7 @@ function defaultMocks(overrides: Record<string, unknown> = {}) {
     setNotificacionesPendientes: mockSetNotificacionesPendientes,
     ...overrides,
   })
-  mockUseCentroNotificaciones.mockReturnValue({ data: { sinLeer: 0 }, isLoading: false })
+  mockUseNotificacionesInApp.mockReturnValue({ data: [], isLoading: false })
   mockUseRouter.mockReturnValue({ push: mockRouterPush, replace: jest.fn(), prefetch: jest.fn() })
 }
 
@@ -155,8 +155,11 @@ describe('layout/Navbar', () => {
     }
   })
 
-  it('updates notificacionesPendientes from centroNotificaciones data', () => {
-    mockUseCentroNotificaciones.mockReturnValue({ data: { sinLeer: 5 }, isLoading: false })
+  it('updates notificacionesPendientes from unread in-app data', () => {
+    mockUseNotificacionesInApp.mockReturnValue({
+      data: Array.from({ length: 5 }, (_, id) => ({ id, estado: 'NO_LEIDA' })),
+      isLoading: false,
+    })
     render(<Navbar />)
     expect(mockSetNotificacionesPendientes).toHaveBeenCalledWith(5)
   })

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, ArrowLeft, Info, LayoutTemplate, Code2, Settings } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -39,7 +39,7 @@ export function PlantillaForm({
     handleSubmit,
     setValue,
     getValues,
-    watch,
+    control,
     formState: { errors },
   } = useForm<PlantillaFormValues>({
     resolver: zodResolver(plantillaSchema),
@@ -55,7 +55,7 @@ export function PlantillaForm({
         },
   })
 
-  const activoValue = watch('activo')
+  const activoValue = useWatch({ control, name: 'activo' })
 
   const insertarVariable = (variable: string) => {
     const textarea = cuerpoRef.current

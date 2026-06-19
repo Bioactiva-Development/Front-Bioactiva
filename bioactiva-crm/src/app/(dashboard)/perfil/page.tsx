@@ -461,7 +461,7 @@ export default function PerfilPage() {
                             </button>
                         ) : (
                             <button
-                                onClick={conectarMicrosoft}
+                                onClick={() => conectarMicrosoft('/perfil')}
                                 disabled={isLoadingIntegracion}
                                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold text-white bg-[#0078D4] hover:bg-[#106EBE] disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-sm cursor-pointer"
                             >

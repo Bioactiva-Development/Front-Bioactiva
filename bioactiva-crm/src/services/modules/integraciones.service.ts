@@ -15,9 +15,10 @@ import {
 // Mapea la respuesta compacta del backend { connected: boolean }
 // al formato que usa el componente de perfil.
 function mapStatusToIntegraciones(status: MicrosoftStatusResponse): IntegracionesResponse {
+    const cuenta = status.microsoftEmail ?? undefined
     return {
-        teams:   { tipo: 'microsoft_teams',   conectado: status.connected },
-        outlook: { tipo: 'microsoft_outlook', conectado: status.connected },
+        teams:   { tipo: 'microsoft_teams',   conectado: status.connected, cuenta },
+        outlook: { tipo: 'microsoft_outlook', conectado: status.connected, cuenta },
     }
 }
 
@@ -32,11 +33,14 @@ export const integracionesService = {
         return mapStatusToIntegraciones(response.data)
     },
 
-    // GET /microsoft/connect → { url: "https://login.microsoftonline.com/..." }
-    getMicrosoftAuthUrl: async (): Promise<IntegracionAuthUrlResponse> => {
+    // GET /microsoft/connect?returnTo=/ruta → { url: "https://login.microsoftonline.com/..." }
+    getMicrosoftAuthUrl: async (
+        returnTo = '/perfil'
+    ): Promise<IntegracionAuthUrlResponse> => {
         if (USE_MOCK) return mockGetMicrosoftAuthUrl()
         const response = await apiClient.get<IntegracionAuthUrlResponse>(
-            ENDPOINTS.integraciones.microsoftConnect
+            ENDPOINTS.integraciones.microsoftConnect,
+            { params: { returnTo } }
         )
         return response.data
     },

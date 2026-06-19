@@ -1,6 +1,6 @@
 'use client'
 
-import { Eye, Pencil, Trash2 } from 'lucide-react'
+import { Eye, EyeOff, Pencil, Trash2 } from 'lucide-react'
 import { Plantilla } from '@/types/plantilla.types'
 
 interface PlantillaCardProps {
@@ -92,11 +92,11 @@ export function PlantillaCard({
           </button>
           <button
             onClick={() => onEliminar(plantilla)}
-            title="Eliminar"
+            title={plantilla.activo ? 'Eliminar o desactivar' : 'Eliminar'}
             className="p-2 rounded-lg text-gray-400 hover:text-red-500
               hover:bg-red-50 transition-colors"
           >
-            <Trash2 size={15} />
+            {plantilla.activo ? <Trash2 size={15} /> : <EyeOff size={15} />}
           </button>
         </div>
       </td>

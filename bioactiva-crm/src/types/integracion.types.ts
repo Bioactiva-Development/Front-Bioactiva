@@ -18,4 +18,5 @@ export interface IntegracionAuthUrlResponse {
 
 export interface MicrosoftStatusResponse {
     connected: boolean
+    microsoftEmail: string | null
 }

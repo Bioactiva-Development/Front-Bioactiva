@@ -9,14 +9,7 @@ jest.mock('@/services/api/client', () => ({
   apiClient: { get: getMock, post: postMock, patch: patchMock, delete: deleteMock },
 }))
 
-jest.mock('@/services/modules/notificaciones.service', () => ({
-  notificacionesService: {
-    cancelarPendientesPorActividad: jest.fn(),
-  },
-}))
-
 import { actividadesService } from '@/services/modules/actividades.service'
-import { notificacionesService } from '@/services/modules/notificaciones.service'
 import { EstadoActividad, TipoActividad } from '@/types/enums'
 
 const rawActividad = {
@@ -97,21 +90,36 @@ describe('actividades/actividades.service (API mode)', () => {
     })
   })
 
+  describe('createCalendarEvent', () => {
+    it('creates an Outlook/Teams event on demand', async () => {
+      postMock.mockResolvedValueOnce({
+        data: {
+          ...rawActividad,
+          tipo: 'REUNION',
+          outlookEventId: 'AAMkAGI2',
+          teamsMeetingUrl: 'https://teams.microsoft.com/l/meetup-join/abc',
+        },
+      })
+
+      const result = await actividadesService.createCalendarEvent(12)
+      expect(postMock).toHaveBeenCalledWith('/activities/12/calendar-event')
+      expect(result.outlook_event_id).toBe('AAMkAGI2')
+      expect(result.teamsMeetingUrl).toContain('teams.microsoft.com')
+    })
+  })
+
   describe('complete', () => {
-    it('completes activity and cancels pending notifications', async () => {
-      patchMock.mockResolvedValueOnce({ data: { ...rawActividad, estado: 'REALIZADA' } });
-      (notificacionesService.cancelarPendientesPorActividad as jest.Mock).mockResolvedValueOnce(undefined)
+    it('completes activity without chaining unsupported notification calls', async () => {
+      patchMock.mockResolvedValueOnce({ data: { ...rawActividad, estado: 'REALIZADA' } })
 
       const result = await actividadesService.complete(12)
       expect(patchMock).toHaveBeenCalledWith('/activities/12/complete')
-      expect(notificacionesService.cancelarPendientesPorActividad).toHaveBeenCalledWith(12)
       expect(result.estado).toBe(EstadoActividad.Completada)
     })
 
     it('updates notas before completing when provided', async () => {
       patchMock.mockResolvedValueOnce({ data: { ...rawActividad, notas: 'Updated notes' } })
-      patchMock.mockResolvedValueOnce({ data: { ...rawActividad, notas: 'Updated notes', estado: 'REALIZADA' } });
-      (notificacionesService.cancelarPendientesPorActividad as jest.Mock).mockResolvedValueOnce(undefined)
+      patchMock.mockResolvedValueOnce({ data: { ...rawActividad, notas: 'Updated notes', estado: 'REALIZADA' } })
 
       await actividadesService.complete(12, 'Updated notes')
       expect(patchMock).toHaveBeenCalledWith('/activities/12', { notas: 'Updated notes' })
@@ -129,9 +137,8 @@ describe('actividades/actividades.service (API mode)', () => {
   })
 
   describe('cancel', () => {
-    it('cancels activity and cancels notifications', async () => {
-      patchMock.mockResolvedValueOnce({ data: { ...rawActividad, estado: 'CANCELADA' } });
-      (notificacionesService.cancelarPendientesPorActividad as jest.Mock).mockResolvedValueOnce(undefined)
+    it('cancels activity through its dedicated endpoint', async () => {
+      patchMock.mockResolvedValueOnce({ data: { ...rawActividad, estado: 'CANCELADA' } })
 
       const result = await actividadesService.cancel(12)
       expect(patchMock).toHaveBeenCalledWith('/activities/12/cancel')

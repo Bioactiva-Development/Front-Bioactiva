@@ -206,6 +206,7 @@ export function useCrearLead() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
+      queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
       queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['organizaciones'] })
@@ -222,6 +223,7 @@ export function useActualizarLead(id: number) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
+      queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
       queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['organizaciones'] })

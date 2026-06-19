@@ -1,186 +1,128 @@
-import { EstadoNotif } from '@/types/enums'
 import {
-  Notificacion,
+  CrearRecordatorioRequest,
+  CrearSeguimientoRequest,
+  FiltrosNotificacionesProgramadas,
+  NotificacionInApp,
   NotificacionProgramada,
-  CentroNotificaciones,
 } from '@/types/notificacion.types'
 
-type MockNotificacionProgramadaPayload = Partial<NotificacionProgramada> & {
-  lead_codigo?: string
-  lead_org?: string
-  actividad_nombre?: string
-  fecha_envio_externo?: string
-  asunto_externo?: string
-  cuerpo_externo?: string
-  correo_cliente?: string
-}
-
-const MOCK_NOTIFICACIONES: Notificacion[] = [
+const MOCK_IN_APP: NotificacionInApp[] = [
   {
-    id:           1,
-    id_usuario:   1,
-    id_actividad: 2,
-    id_lead:      1,
-    titulo:       'Actividad vencida en LEAD-2025-003',
-    mensaje:      'La actividad "Reunión de presentación" está pendiente y ha vencido.',
-    tipo:         'Alerta',
-    estado:       EstadoNotif.NoLeida,
-    created_at:   new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    lead_codigo:  'LEAD-2025-003',
-    lead_org:     'Municipalidad de Miraflores',
-  },
-  {
-    id:           2,
-    id_usuario:   1,
-    id_actividad: 4,
-    id_lead:      4,
-    titulo:       'Actividad vencida en LEAD-2025-008',
-    mensaje:      'La actividad "Seguimiento post-propuesta" está pendiente y ha vencido.',
-    tipo:         'Alerta',
-    estado:       EstadoNotif.NoLeida,
-    created_at:   new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    lead_codigo:  'LEAD-2025-008',
-    lead_org:     'Altomayo',
-  },
-  {
-    id:           3,
-    id_usuario:   1,
-    id_lead:      3,
-    titulo:       'Actividad vencida en LEAD-2025-005',
-    mensaje:      'El lead lleva más de 30 días sin cambio de estado.',
-    tipo:         'Alerta',
-    estado:       EstadoNotif.Leida,
-    created_at:   new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
-    lead_codigo:  'LEAD-2025-005',
-    lead_org:     'Inversiones Pisco S.A.',
+    id: 1,
+    titulo: 'Lead sin movimiento',
+    mensaje: 'El lead lleva más de 30 días sin cambio de estado.',
+    estado: 'NO_LEIDA',
+    idLead: 1,
+    idActividad: null,
+    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
   },
 ]
 
 const MOCK_PROGRAMADAS: NotificacionProgramada[] = []
 
-const delay = (ms: number = 400) =>
+const delay = (ms = 200) =>
   new Promise((resolve) => setTimeout(resolve, ms))
 
-export const mockGetCentro = async (): Promise<CentroNotificaciones> => {
+export const mockGetInApp = async (): Promise<NotificacionInApp[]> => {
   await delay()
-
-  const sinLeer = MOCK_NOTIFICACIONES.filter(
-    (n) => n.estado === EstadoNotif.NoLeida
-  ).length
-
-  return {
-    programadas: MOCK_PROGRAMADAS,
-    vencidas:    MOCK_NOTIFICACIONES,
-    sinLeer,
-  }
+  return [...MOCK_IN_APP]
 }
 
-export const mockGetNotificaciones = async (): Promise<Notificacion[]> => {
+export const mockGetProgramadas = async (
+  filtros?: FiltrosNotificacionesProgramadas
+): Promise<NotificacionProgramada[]> => {
   await delay()
-  return MOCK_NOTIFICACIONES
-}
-
-export const mockMarcarLeida = async (id: number): Promise<Notificacion> => {
-  await delay(200)
-
-  const index = MOCK_NOTIFICACIONES.findIndex((n) => n.id === id)
-  if (index === -1) {
-    throw Object.assign(new Error('Notificación no encontrada.'), { status: 404 })
-  }
-
-  MOCK_NOTIFICACIONES[index] = {
-    ...MOCK_NOTIFICACIONES[index],
-    estado: EstadoNotif.Leida,
-  }
-
-  return MOCK_NOTIFICACIONES[index]
-}
-
-export const mockMarcarTodasLeidas = async (): Promise<void> => {
-  await delay(300)
-  MOCK_NOTIFICACIONES.forEach((n) => {
-    n.estado = EstadoNotif.Leida
+  return MOCK_PROGRAMADAS.filter((notificacion) => {
+    if (filtros?.estado && notificacion.estado !== filtros.estado) return false
+    if (filtros?.idLead && notificacion.idLead !== filtros.idLead) return false
+    if (
+      filtros?.idResponsable &&
+      notificacion.idResponsable !== filtros.idResponsable
+    ) return false
+    return true
   })
 }
 
-export const mockCancelarProgramada = async (id: number): Promise<void> => {
+export const mockMarcarLeida = async (
+  id: number
+): Promise<NotificacionInApp> => {
   await delay()
-
-  const index = MOCK_PROGRAMADAS.findIndex((n) => n.id === id)
-  if (index === -1) {
-    throw Object.assign(new Error('Notificación programada no encontrada.'), { status: 404 })
-  }
-
-  const notif = MOCK_PROGRAMADAS[index]
-  if (notif.estado !== 'Programada') {
-    throw Object.assign(new Error('La notificación no puede cancelarse porque ya fue ejecutada.'), { status: 400 })
-  }
-
-  MOCK_PROGRAMADAS.splice(index, 1)
+  const index = MOCK_IN_APP.findIndex((notificacion) => notificacion.id === id)
+  if (index === -1) throw new Error('Notificación no encontrada.')
+  MOCK_IN_APP[index] = { ...MOCK_IN_APP[index], estado: 'LEIDA' }
+  return MOCK_IN_APP[index]
 }
 
-export const mockCancelarPendientesPorActividad = async (
-  actividadId: number
-): Promise<void> => {
+export const mockCancelarProgramada = async (
+  id: number
+): Promise<NotificacionProgramada> => {
   await delay()
-
-  for (let index = MOCK_PROGRAMADAS.length - 1; index >= 0; index -= 1) {
-    const programada = MOCK_PROGRAMADAS[index]
-    if (
-      programada.id_actividad === actividadId &&
-      programada.estado === 'Programada'
-    ) {
-      MOCK_PROGRAMADAS.splice(index, 1)
-    }
+  const index = MOCK_PROGRAMADAS.findIndex(
+    (notificacion) => notificacion.id === id
+  )
+  if (index === -1) throw new Error('Notificación programada no encontrada.')
+  if (MOCK_PROGRAMADAS[index].estado !== 'PROGRAMADA') {
+    throw new Error('La notificación ya no puede cancelarse.')
   }
+  MOCK_PROGRAMADAS[index] = {
+    ...MOCK_PROGRAMADAS[index],
+    estado: 'CANCELADA',
+  }
+  return MOCK_PROGRAMADAS[index]
 }
 
 export const mockCreateRecordatorio = async (
-  data: MockNotificacionProgramadaPayload
+  data: CrearRecordatorioRequest
 ): Promise<NotificacionProgramada> => {
   await delay()
-
+  const fechaEnvio = new Date(
+    Date.now() + Math.max(1, 120 - data.minutosAntes) * 60_000
+  ).toISOString()
   const nueva: NotificacionProgramada = {
-    id:               Date.now(),
-    id_actividad:     data.id_actividad!,
-    id_lead:          data.id_lead!,
-    tipo:             'Recordatorio',
-    fecha_envio:      data.fecha_envio!,
-    asunto:           data.asunto!,
-    cuerpo:           data.cuerpo!,
-    destinatario:     data.destinatario ?? 'Responsable',
-    estado:           'Programada',
-    created_at:       new Date().toISOString(),
-    lead_codigo:      data.lead_codigo,
-    lead_org:         data.lead_org,
-    actividad_nombre: data.actividad_nombre,
+    id: Date.now(),
+    tipo: 'RECORDATORIO',
+    estado: 'PROGRAMADA',
+    idActividad: data.idLead,
+    idLead: data.idLead,
+    idResponsable: 1,
+    asuntoInterno: data.asunto,
+    fechaEnvioInterno: fechaEnvio,
+    enviadoInterno: false,
+    correoCliente: null,
+    instancias: null,
+    createdAt: new Date().toISOString(),
   }
-
   MOCK_PROGRAMADAS.push(nueva)
   return nueva
 }
 
 export const mockCreateSeguimiento = async (
-  data: MockNotificacionProgramadaPayload
+  data: CrearSeguimientoRequest
 ): Promise<NotificacionProgramada> => {
   await delay()
-
   const nueva: NotificacionProgramada = {
-    id:               Date.now(),
-    id_actividad:     data.id_actividad!,
-    id_lead:          data.id_lead!,
-    tipo:             'Seguimiento',
-    fecha_envio:      data.fecha_envio_externo ?? data.fecha_envio! ?? '',
-    asunto:           data.asunto_externo ?? data.asunto! ?? '',
-    cuerpo:           data.cuerpo_externo ?? data.cuerpo! ?? '',
-    destinatario:     data.destinatario ?? data.correo_cliente ?? 'Cliente',
-    estado:           'Programada',
-    created_at:       new Date().toISOString(),
-    lead_codigo:      data.lead_codigo,
-    lead_org:         data.lead_org,
-    actividad_nombre: data.actividad_nombre,
+    id: Date.now(),
+    tipo: 'SEGUIMIENTO',
+    estado: 'PROGRAMADA',
+    idActividad: data.idLead,
+    idLead: data.idLead,
+    idResponsable: 1,
+    asuntoInterno: null,
+    fechaEnvioInterno: null,
+    enviadoInterno: false,
+    correoCliente: data.correoCliente,
+    instancias: data.instancias.map((instancia, index) => ({
+      id: Date.now() + index + 1,
+      orden: index + 1,
+      asuntoInterno: instancia.internal.asunto,
+      fechaEnvioInterno: instancia.internal.fechaEnvio,
+      enviadoInterno: false,
+      asuntoExterno: instancia.external.asunto,
+      fechaEnvioExterno: instancia.external.fechaEnvio,
+      enviadoExterno: false,
+    })),
+    createdAt: new Date().toISOString(),
   }
-
   MOCK_PROGRAMADAS.push(nueva)
   return nueva
 }

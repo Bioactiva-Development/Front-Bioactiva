@@ -13,6 +13,16 @@ export function useActividades(leadId: number) {
   })
 }
 
+const invalidateActividadResolution = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  leadId: number
+) => {
+  queryClient.invalidateQueries({
+    queryKey: QUERY_KEYS.actividades.byLead(leadId),
+  })
+  queryClient.invalidateQueries({ queryKey: ['leads'] })
+  queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
+}
 
 export function useCrearActividad() {
   const queryClient = useQueryClient()
@@ -61,11 +71,7 @@ export function useCompletarActividad(leadId: number) {
     mutationFn: ({ id, notas }: { id: number; notas?: string }) =>
       actividadesService.complete(id, notas),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.actividades.byLead(leadId),
-      })
-      queryClient.invalidateQueries({ queryKey: ['leads'] })
-      queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
+      invalidateActividadResolution(queryClient, leadId)
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
@@ -78,6 +84,20 @@ export function useCancelarActividad(leadId: number) {
 
   return useMutation({
     mutationFn: (id: number) => actividadesService.cancel(id),
+    onSuccess: () => {
+      invalidateActividadResolution(queryClient, leadId)
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
+export function useCrearEventoCalendario(leadId: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => actividadesService.createCalendarEvent(id),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.actividades.byLead(leadId),

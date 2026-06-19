@@ -16,16 +16,22 @@ describe('integraciones/integraciones.service (API mode)', () => {
 
   describe('getEstado', () => {
     it('fetches and maps microsoft status (connected)', async () => {
-      getMock.mockResolvedValueOnce({ data: { connected: true } })
+      getMock.mockResolvedValueOnce({
+        data: {
+          connected: true,
+          microsoftEmail: 'karien.diaz@bioactiva.com',
+        },
+      })
 
       const result = await integracionesService.getEstado()
       expect(getMock).toHaveBeenCalledWith('/microsoft/status')
       expect(result.teams.conectado).toBe(true)
       expect(result.outlook.conectado).toBe(true)
+      expect(result.outlook.cuenta).toBe('karien.diaz@bioactiva.com')
     })
 
     it('fetches and maps microsoft status (disconnected)', async () => {
-      getMock.mockResolvedValueOnce({ data: { connected: false } })
+      getMock.mockResolvedValueOnce({ data: { connected: false, microsoftEmail: null } })
 
       const result = await integracionesService.getEstado()
       expect(result.teams.conectado).toBe(false)
@@ -37,8 +43,10 @@ describe('integraciones/integraciones.service (API mode)', () => {
     it('fetches microsoft auth url', async () => {
       getMock.mockResolvedValueOnce({ data: { url: 'https://login.microsoftonline.com/auth' } })
 
-      const result = await integracionesService.getMicrosoftAuthUrl()
-      expect(getMock).toHaveBeenCalledWith('/microsoft/connect')
+      const result = await integracionesService.getMicrosoftAuthUrl('/notificaciones')
+      expect(getMock).toHaveBeenCalledWith('/microsoft/connect', {
+        params: { returnTo: '/notificaciones' },
+      })
       expect(result.url).toBe('https://login.microsoftonline.com/auth')
     })
   })
