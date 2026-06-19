@@ -136,5 +136,18 @@ export const ENDPOINTS = {
         exportar: '/api/datos/exportar',
         contar: '/api/datos/exportar/contar',
         historial: '/api/datos/historial',
+        importXlsx: {
+            template: '/data/import/template',
+            validate: '/data/import/validate',
+            commit:   '/data/import/commit',
+            job:      (id: string) => `/data/import/jobs/${id}`,
+        },
+        exportXlsx: {
+            organizaciones: '/data/export/organizaciones',
+            contactos:      '/data/export/contactos',
+            leads:          '/data/export/leads',
+            cotizaciones:   '/data/export/cotizaciones',
+            all:            '/data/export/all',
+        },
     },
 } as const
