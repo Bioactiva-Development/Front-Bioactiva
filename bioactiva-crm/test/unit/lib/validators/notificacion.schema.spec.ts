@@ -40,7 +40,7 @@ describe('notificacion schemas', () => {
     },
   }
 
-  it('accepts one to three chronological follow-up instances', () => {
+  it('accepts a single chronological follow-up instance', () => {
     const result = seguimientoSchema.parse({
       idLead: 10,
       correoCliente: 'cliente@example.com',
@@ -49,7 +49,7 @@ describe('notificacion schemas', () => {
     expect(result.instancias).toHaveLength(1)
   })
 
-  it('rejects more than three follow-up instances', () => {
+  it('rejects more than one follow-up instance', () => {
     expect(() => seguimientoSchema.parse({
       idLead: 10,
       correoCliente: 'cliente@example.com',
@@ -59,16 +59,8 @@ describe('notificacion schemas', () => {
           internal: { ...instancia.internal, fechaEnvio: '2026-06-20T12:00' },
           external: { ...instancia.external, fechaEnvio: '2026-06-20T13:00' },
         },
-        {
-          internal: { ...instancia.internal, fechaEnvio: '2026-06-20T14:00' },
-          external: { ...instancia.external, fechaEnvio: '2026-06-20T15:00' },
-        },
-        {
-          internal: { ...instancia.internal, fechaEnvio: '2026-06-20T16:00' },
-          external: { ...instancia.external, fechaEnvio: '2026-06-20T17:00' },
-        },
       ],
-    })).toThrow('Solo se permiten hasta 3 instancias')
+    })).toThrow('El seguimiento debe tener exactamente una instancia')
   })
 
   it('rejects invalid follow-up dates before checking sequence order', () => {
@@ -91,19 +83,5 @@ describe('notificacion schemas', () => {
         external: { ...instancia.external, fechaEnvio: '2026-06-20T09:00' },
       }],
     })).toThrow('El correo al cliente debe enviarse después del correo interno')
-  })
-
-  it('rejects overlapping instances', () => {
-    expect(() => seguimientoSchema.parse({
-      idLead: 10,
-      correoCliente: 'cliente@example.com',
-      instancias: [
-        instancia,
-        {
-          internal: { ...instancia.internal, fechaEnvio: '2026-06-20T10:30' },
-          external: { ...instancia.external, fechaEnvio: '2026-06-20T12:00' },
-        },
-      ],
-    })).toThrow('Cada instancia debe comenzar después del correo externo anterior')
   })
 })

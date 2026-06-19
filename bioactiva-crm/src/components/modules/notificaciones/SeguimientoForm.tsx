@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, CalendarClock, Loader2, Plus, Save, Trash2 } from 'lucide-react'
+import { AlertCircle, CalendarClock, Loader2, Save } from 'lucide-react'
 import { useContacto } from '@/hooks/contactos/useContactos'
 import { usePlantillasActivas } from '@/hooks/plantillas/usePlantillas'
 import { useLeads } from '@/hooks/pipeline/useLeads'
@@ -62,7 +62,7 @@ export function SeguimientoForm({
     },
   })
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields } = useFieldArray({
     control,
     name: 'instancias',
   })
@@ -329,15 +329,6 @@ export function SeguimientoForm({
               <section key={field.id} className="rounded-2xl border border-gray-200 p-5">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900">Instancia {index + 1}</h3>
-                  {fields.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => remove(index)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-red-600"
-                    >
-                      <Trash2 size={14} /> Eliminar
-                    </button>
-                  )}
                 </div>
 
                 {targets.map((target) => {
@@ -407,21 +398,12 @@ export function SeguimientoForm({
           })}
         </div>
 
-        {fields.length < 3 && (
-          <button
-            type="button"
-            onClick={() => append(nuevaInstancia())}
-            className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700"
-          >
-            <Plus size={15} /> Agregar instancia
-          </button>
-        )}
-
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-xs text-blue-800">
-          Las fechas deben estar en orden, no solaparse y quedar antes del fin
-          de la actividad activa. El backend aplica horario laboral
-          [09:00-18:00) y puede mover envíos fuera de horario a las 09:00.
-          La integración Microsoft no se invoca desde este seguimiento.
+          El correo externo al cliente debe programarse después del correo
+          interno y antes del fin de la actividad activa. El backend aplica
+          horario laboral [09:00-18:00) y puede mover envíos fuera de horario a
+          las 09:00. La integración Microsoft no se invoca desde este
+          seguimiento.
         </div>
 
         {error && (

@@ -67,43 +67,19 @@ const instanciaSeguimientoSchema = z
     }
   )
 
-export const seguimientoSchema = z
-  .object({
-    idLead: z
-      .number({ error: 'El lead es obligatorio' })
-      .int()
-      .min(1, 'Debe seleccionar un lead'),
-    correoCliente: z
-      .email('Correo del cliente inválido')
-      .min(1, 'El correo del cliente es obligatorio'),
-    instancias: z
-      .array(instanciaSeguimientoSchema)
-      .min(1, 'Debe agregar al menos una instancia')
-      .max(3, 'Solo se permiten hasta 3 instancias'),
-  })
-  .superRefine(({ instancias }, ctx) => {
-    for (let index = 0; index < instancias.length - 1; index += 1) {
-      const actual = instancias[index]
-      const siguiente = instancias[index + 1]
-      const actualExternalTime = getTime(actual.external.fechaEnvio)
-      const siguienteInternalTime = getTime(siguiente.internal.fechaEnvio)
-      if (
-        !Number.isFinite(actualExternalTime) ||
-        !Number.isFinite(siguienteInternalTime)
-      ) {
-        continue
-      }
-      if (
-        actualExternalTime >= siguienteInternalTime
-      ) {
-        ctx.addIssue({
-          code: 'custom',
-          message:
-            'Cada instancia debe comenzar después del correo externo anterior',
-          path: ['instancias', index + 1, 'internal', 'fechaEnvio'],
-        })
-      }
-    }
-  })
+export const seguimientoSchema = z.object({
+  idLead: z
+    .number({ error: 'El lead es obligatorio' })
+    .int()
+    .min(1, 'Debe seleccionar un lead'),
+  correoCliente: z
+    .email('Correo del cliente inválido')
+    .min(1, 'El correo del cliente es obligatorio'),
+  // El backend (POST /notifications/follow-ups) exige exactamente una
+  // instancia por seguimiento: un correo interno y luego uno externo.
+  instancias: z
+    .array(instanciaSeguimientoSchema)
+    .length(1, 'El seguimiento debe tener exactamente una instancia'),
+})
 
 export type SeguimientoFormValues = z.infer<typeof seguimientoSchema>
