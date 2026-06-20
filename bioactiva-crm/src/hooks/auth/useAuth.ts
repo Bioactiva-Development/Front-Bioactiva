@@ -128,7 +128,7 @@ export function useAuth() {
             resetMessages()
             setIsLoading(true)
             const response = await authService.validateToken(token)
-            return { valid: true, correo: response.correo }
+            return { valid: response.valid, correo: response.correo, message: response.message }
         } catch (err: unknown) {
             return { valid: false, message: extractMessage(err, 'El enlace no es válido o ha expirado.') }
         } finally {
