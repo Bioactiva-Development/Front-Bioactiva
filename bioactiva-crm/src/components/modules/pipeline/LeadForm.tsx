@@ -18,7 +18,6 @@ import { useContactosPorOrganizacion } from '@/hooks/contactos/useContactos'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { LeadState } from '@/types/enums'
 import { AssignableUsuario } from '@/types/usuario.types'
-import { toLeadDateInputValue } from '@/lib/utils/lead-date.utils'
 
 // Secciones a las que se puede posicionar el formulario al abrir en edición.
 export type LeadEditFocus = 'datos' | 'contexto'
@@ -75,7 +74,6 @@ function getLeadFormDefaults(
       desafio_oportunidad:     lead.desafio_oportunidad ?? '',
       id_encargado:            lead.id_encargado,
       canal_captacion:         lead.canal_captacion ?? '',
-      fecha_cierre:            toLeadDateInputValue(lead.fecha_cierre),
     }
   }
 
@@ -456,7 +454,7 @@ export function LeadForm({
               </div>
             </div>
 
-            <div className={esEdicion ? 'grid grid-cols-2 gap-4' : 'space-y-4'}>
+            <div className="space-y-4">
               <div className="space-y-1.5">
                 <label htmlFor="ldf-canal" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   <Radio size={12} className="text-gray-400" />
@@ -498,23 +496,6 @@ export function LeadForm({
                   <p className="text-red-500 text-xs">{errors.canal_captacion.message}</p>
                 )}
               </div>
-
-              {esEdicion && (
-                <div className="space-y-1.5">
-                  <label htmlFor="ldf-fecha-cierre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Fecha de cierre estimada
-                  </label>
-                  <input
-                    id="ldf-fecha-cierre"
-                    type="date"
-                    {...register('fecha_cierre')}
-                    className={inputClass(!!errors.fecha_cierre)}
-                  />
-                  {errors.fecha_cierre && (
-                    <p className="text-red-500 text-xs">{errors.fecha_cierre.message}</p>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 

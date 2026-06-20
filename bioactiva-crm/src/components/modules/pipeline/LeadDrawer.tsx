@@ -12,10 +12,6 @@ import {
 } from '@/types/enums'
 import { useActividades } from '@/hooks/pipeline/useActividades'
 import { ROUTES } from '@/lib/constants/routes'
-import {
-  formatLeadDateOnly,
-  getLeadCloseDateStatus,
-} from '@/lib/utils/lead-date.utils'
 
 interface LeadDrawerProps {
   lead:         Lead
@@ -63,7 +59,6 @@ const TIPO_ICONOS: Record<TipoActividad, string> = {
 export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
   const router = useRouter()
   const { data: actividades = [] } = useActividades(lead.id)
-  const closeDateStatus = getLeadCloseDateStatus(lead.fecha_cierre)
 
   const formatFecha = (fecha: string) =>
     new Date(fecha).toLocaleDateString('es-PE', {
@@ -149,28 +144,6 @@ export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
               <p className="text-sm text-gray-800 font-medium mt-1">
                 {lead.encargado_nombre ?? '—'}
               </p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
-                Fecha cierre estimada
-              </p>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <p className="text-sm text-gray-800 font-medium">
-                  {lead.fecha_cierre
-                    ? formatLeadDateOnly(lead.fecha_cierre, {
-                        day:   '2-digit',
-                        month: 'short',
-                      })
-                    : '—'
-                  }
-                </p>
-                {closeDateStatus && (
-                  <span className={`rounded-full border px-2 py-0.5 text-xs
-                    font-semibold ${closeDateStatus.className}`}>
-                    {closeDateStatus.label}
-                  </span>
-                )}
-              </div>
             </div>
           </div>
 

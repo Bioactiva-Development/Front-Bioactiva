@@ -24,10 +24,7 @@ import { RecordatorioForm } from '@/components/modules/notificaciones/Recordator
 import { SeguimientoForm } from '@/components/modules/notificaciones/SeguimientoForm'
 import { ActividadFormValues } from '@/lib/validators/actividad.schema'
 import { getErrorMessage } from '@/lib/utils/error.utils'
-import {
-  formatLeadDateOnly,
-  getLeadCloseDateStatus,
-} from '@/lib/utils/lead-date.utils'
+import { formatLeadDateOnly } from '@/lib/utils/lead-date.utils'
 import {
   getBlockingPendingActivity,
   isLeadStaleWithoutProgress,
@@ -145,7 +142,6 @@ export function LeadDetalle({
     useCrearRecordatorio()
   const { mutateAsync: crearSeguimiento, isPending: creandoSeguimiento } =
     useCrearSeguimiento()
-  const closeDateStatus = getLeadCloseDateStatus(lead.fecha_cierre)
 
   const pendingActivity = useMemo(
     () => getBlockingPendingActivity(actividades),
@@ -338,21 +334,6 @@ export function LeadDetalle({
                 icono={<Calendar size={14} />}
                 label="Fecha de creación"
                 valor={formatLeadDateOnly(lead.created_at)}
-              />
-              <InfoItem
-                icono={<Calendar size={14} />}
-                label="Fecha de cierre estimada"
-                valor={lead.fecha_cierre && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span>{formatLeadDateOnly(lead.fecha_cierre)}</span>
-                    {closeDateStatus && (
-                      <span className={`rounded-full border px-2 py-0.5 text-xs
-                        font-semibold ${closeDateStatus.className}`}>
-                        {closeDateStatus.label}
-                      </span>
-                    )}
-                  </div>
-                )}
               />
             </div>
           </div>
