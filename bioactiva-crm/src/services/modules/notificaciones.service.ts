@@ -5,6 +5,7 @@ import {
   mockCancelarProgramada,
   mockCreateRecordatorio,
   mockCreateSeguimiento,
+  mockEditarSeguimiento,
   mockGetInApp,
   mockGetProgramadas,
   mockMarcarLeida,
@@ -12,9 +13,11 @@ import {
 import {
   CrearRecordatorioRequest,
   CrearSeguimientoRequest,
+  EditarSeguimientoRequest,
   FiltrosNotificacionesProgramadas,
   NotificacionInApp,
   NotificacionProgramada,
+  NotificacionesPaginadas,
 } from '@/types/notificacion.types'
 
 const toQueryParams = (filtros?: FiltrosNotificacionesProgramadas) => {
@@ -22,16 +25,18 @@ const toQueryParams = (filtros?: FiltrosNotificacionesProgramadas) => {
   if (filtros?.estado) params.estado = filtros.estado
   if (filtros?.idLead) params.idLead = filtros.idLead
   if (filtros?.idResponsable) params.idResponsable = filtros.idResponsable
+  if (filtros?.page) params.page = filtros.page
+  if (filtros?.limit) params.limit = filtros.limit
   return params
 }
 
 export const notificacionesService = {
   getProgramadas: async (
     filtros?: FiltrosNotificacionesProgramadas
-  ): Promise<NotificacionProgramada[]> => {
+  ): Promise<NotificacionesPaginadas> => {
     if (USE_MOCK) return mockGetProgramadas(filtros)
 
-    const response = await apiClient.get<NotificacionProgramada[]>(
+    const response = await apiClient.get<NotificacionesPaginadas>(
       ENDPOINTS.notificaciones.list,
       { params: toQueryParams(filtros) }
     )
@@ -84,6 +89,19 @@ export const notificacionesService = {
 
     const response = await apiClient.post<NotificacionProgramada>(
       ENDPOINTS.notificaciones.seguimiento,
+      data
+    )
+    return response.data
+  },
+
+  editarSeguimiento: async (
+    id: number,
+    data: EditarSeguimientoRequest
+  ): Promise<NotificacionProgramada> => {
+    if (USE_MOCK) return mockEditarSeguimiento(id, data)
+
+    const response = await apiClient.patch<NotificacionProgramada>(
+      ENDPOINTS.notificaciones.editSeguimiento(id),
       data
     )
     return response.data

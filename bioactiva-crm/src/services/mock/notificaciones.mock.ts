@@ -1,9 +1,11 @@
 import {
   CrearRecordatorioRequest,
   CrearSeguimientoRequest,
+  EditarSeguimientoRequest,
   FiltrosNotificacionesProgramadas,
   NotificacionInApp,
   NotificacionProgramada,
+  NotificacionesPaginadas,
 } from '@/types/notificacion.types'
 
 const MOCK_IN_APP: NotificacionInApp[] = [
@@ -30,9 +32,10 @@ export const mockGetInApp = async (): Promise<NotificacionInApp[]> => {
 
 export const mockGetProgramadas = async (
   filtros?: FiltrosNotificacionesProgramadas
-): Promise<NotificacionProgramada[]> => {
+): Promise<NotificacionesPaginadas> => {
   await delay()
-  return MOCK_PROGRAMADAS.filter((notificacion) => {
+  const filtered = MOCK_PROGRAMADAS.filter((notificacion) => {
+    if (notificacion.estado === 'CANCELADA') return false
     if (filtros?.estado && notificacion.estado !== filtros.estado) return false
     if (filtros?.idLead && notificacion.idLead !== filtros.idLead) return false
     if (
@@ -40,7 +43,23 @@ export const mockGetProgramadas = async (
       notificacion.idResponsable !== filtros.idResponsable
     ) return false
     return true
+  }).sort((a, b) => {
+    const fechaA = a.fechaEnvioInterno ?? a.instancias?.[0]?.fechaEnvioInterno
+    const fechaB = b.fechaEnvioInterno ?? b.instancias?.[0]?.fechaEnvioInterno
+    return new Date(fechaA ?? 0).getTime() - new Date(fechaB ?? 0).getTime()
   })
+  const page = filtros?.page ?? 1
+  const limit = filtros?.limit ?? 10
+  const start = (page - 1) * limit
+  return {
+    data: filtered.slice(start, start + limit),
+    meta: {
+      page,
+      limit,
+      total: filtered.length,
+      totalPages: Math.ceil(filtered.length / limit),
+    },
+  }
 }
 
 export const mockMarcarLeida = async (
@@ -125,4 +144,37 @@ export const mockCreateSeguimiento = async (
   }
   MOCK_PROGRAMADAS.push(nueva)
   return nueva
+}
+
+export const mockEditarSeguimiento = async (
+  id: number,
+  data: EditarSeguimientoRequest
+): Promise<NotificacionProgramada> => {
+  await delay()
+  const index = MOCK_PROGRAMADAS.findIndex((item) => item.id === id)
+  const actual = MOCK_PROGRAMADAS[index]
+  const instancia = actual?.instancias?.[0]
+  if (!actual || actual.tipo !== 'SEGUIMIENTO' || !instancia) {
+    throw new Error('Seguimiento no encontrado.')
+  }
+  if (
+    actual.estado !== 'PROGRAMADA' ||
+    instancia.enviadoInterno ||
+    instancia.enviadoExterno
+  ) {
+    throw new Error('El seguimiento ya no puede editarse.')
+  }
+  const actualizado: NotificacionProgramada = {
+    ...actual,
+    correoCliente: data.correoCliente ?? actual.correoCliente,
+    instancias: [{
+      ...instancia,
+      asuntoInterno: data.internal.asunto,
+      fechaEnvioInterno: data.internal.fechaEnvio,
+      asuntoExterno: data.external.asunto,
+      fechaEnvioExterno: data.external.fechaEnvio,
+    }],
+  }
+  MOCK_PROGRAMADAS[index] = actualizado
+  return actualizado
 }

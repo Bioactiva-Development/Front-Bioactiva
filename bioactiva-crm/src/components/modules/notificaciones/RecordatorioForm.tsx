@@ -82,12 +82,14 @@ export function RecordatorioForm({
   const minutosAntes = useWatch({ control, name: 'minutosAntes' })
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId)
   const { data: actividades = [] } = useActividades(selectedLeadId)
-  const {
-    data: notificacionesProgramadas = [],
-    isLoading: cargandoNotificaciones,
-  } = useNotificacionesProgramadas(
-    { estado: 'PROGRAMADA', idLead: selectedLeadId },
+  const { data: notificacionesResponse, isLoading: cargandoNotificaciones } =
+    useNotificacionesProgramadas(
+    { estado: 'PROGRAMADA', idLead: selectedLeadId, page: 1, limit: 10 },
     { enabled: Boolean(selectedLeadId) }
+  )
+  const notificacionesProgramadas = useMemo(
+    () => notificacionesResponse?.data ?? [],
+    [notificacionesResponse?.data]
   )
   const actividadActiva = useMemo(
     () =>

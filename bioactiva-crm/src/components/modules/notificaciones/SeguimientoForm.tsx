@@ -13,13 +13,19 @@ import {
   seguimientoSchema,
   SeguimientoFormValues,
 } from '@/lib/validators/notificacion.schema'
-import { CrearSeguimientoRequest } from '@/types/notificacion.types'
+import {
+  CrearSeguimientoRequest,
+  EditarSeguimientoRequest,
+  NotificacionProgramada,
+} from '@/types/notificacion.types'
 import { EstadoActividad } from '@/types/enums'
 import { getContactoEmailOptions } from '@/lib/utils/contacto-email.utils'
 import { APP_TIME_ZONE, limaInputToUtcISO } from '@/lib/utils/timezone.utils'
 
 interface SeguimientoFormProps {
   onSubmit: (data: CrearSeguimientoRequest) => Promise<void>
+  onEdit?: (id: number, data: EditarSeguimientoRequest) => Promise<void>
+  notificacionInicial?: NotificacionProgramada
   isLoading: boolean
   error?: string | null
   onCancel?: () => void
@@ -48,6 +54,43 @@ const nuevaInstancia = () => ({
   },
 })
 
+const toLimaInputParts = (fecha?: string) => {
+  if (!fecha) return { date: '', time: '', value: '' }
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: APP_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(fecha))
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? ''
+  const date = `${value('year')}-${value('month')}-${value('day')}`
+  const time = `${value('hour')}:${value('minute')}`
+  return { date, time, value: `${date}T${time}` }
+}
+
+const getInstanciaInicial = (notificacion?: NotificacionProgramada) => {
+  const instancia = notificacion?.instancias?.[0]
+  if (!instancia) return nuevaInstancia()
+  return {
+    internal: {
+      fechaEnvio: toLimaInputParts(instancia.fechaEnvioInterno).value,
+      idTemplate: 0,
+      asunto: instancia.asuntoInterno,
+      cuerpo: '',
+    },
+    external: {
+      fechaEnvio: toLimaInputParts(instancia.fechaEnvioExterno).value,
+      idTemplate: 0,
+      asunto: instancia.asuntoExterno,
+      cuerpo: '',
+    },
+  }
+}
+
 const formatFecha = (fecha: string) => {
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone: APP_TIME_ZONE,
@@ -66,19 +109,29 @@ const formatFecha = (fecha: string) => {
 
 export function SeguimientoForm({
   onSubmit,
+  onEdit,
+  notificacionInicial,
   isLoading,
   error,
   onCancel,
   leadIdInicial,
 }: Readonly<SeguimientoFormProps>) {
+  const editando = Boolean(notificacionInicial)
+  const instanciaInicial = getInstanciaInicial(notificacionInicial)
+  const internalInitial = toLimaInputParts(
+    notificacionInicial?.instancias?.[0]?.fechaEnvioInterno
+  )
+  const externalInitial = toLimaInputParts(
+    notificacionInicial?.instancias?.[0]?.fechaEnvioExterno
+  )
   const { data: leadsResponse } = useLeads({ limit: 100 })
   const leads = leadsResponse?.data ?? []
   const plantillasQuery = usePlantillasActivas()
   const plantillas = plantillasQuery.data ?? []
-  const [internalDate, setInternalDate] = useState('')
-  const [internalTime, setInternalTime] = useState('')
-  const [externalDate, setExternalDate] = useState('')
-  const [externalTime, setExternalTime] = useState('')
+  const [internalDate, setInternalDate] = useState(internalInitial.date)
+  const [internalTime, setInternalTime] = useState(internalInitial.time)
+  const [externalDate, setExternalDate] = useState(externalInitial.date)
+  const [externalTime, setExternalTime] = useState(externalInitial.time)
 
   const {
     register,
@@ -91,9 +144,9 @@ export function SeguimientoForm({
   } = useForm<SeguimientoFormValues>({
     resolver: zodResolver(seguimientoSchema),
     defaultValues: {
-      idLead: leadIdInicial ?? 0,
-      correoCliente: '',
-      instancias: [nuevaInstancia()],
+      idLead: notificacionInicial?.idLead ?? leadIdInicial ?? 0,
+      correoCliente: notificacionInicial?.correoCliente ?? '',
+      instancias: [instanciaInicial],
     },
   })
 
@@ -102,12 +155,14 @@ export function SeguimientoForm({
   const { data: actividades = [], isLoading: cargandoActividades } =
     useActividades(selectedLeadId || 0)
   const { data: contacto } = useContacto(selectedLead?.id_contacto ?? 0)
-  const {
-    data: notificacionesProgramadas = [],
-    isLoading: cargandoNotificaciones,
-  } = useNotificacionesProgramadas(
-    { estado: 'PROGRAMADA', idLead: selectedLeadId },
+  const { data: notificacionesResponse, isLoading: cargandoNotificaciones } =
+    useNotificacionesProgramadas(
+    { estado: 'PROGRAMADA', idLead: selectedLeadId, page: 1, limit: 10 },
     { enabled: Boolean(selectedLeadId) }
+  )
+  const notificacionesProgramadas = useMemo(
+    () => notificacionesResponse?.data ?? [],
+    [notificacionesResponse?.data]
   )
 
   const actividadActiva = useMemo(
@@ -133,10 +188,16 @@ export function SeguimientoForm({
       notificacionesProgramadas.find(
         (notificacion) =>
           notificacion.estado === 'PROGRAMADA' &&
+          notificacion.id !== notificacionInicial?.id &&
           notificacion.idLead === selectedLeadId &&
           (!actividadActiva || notificacion.idActividad === actividadActiva.id)
       ),
-    [actividadActiva, notificacionesProgramadas, selectedLeadId]
+    [
+      actividadActiva,
+      notificacionInicial?.id,
+      notificacionesProgramadas,
+      selectedLeadId,
+    ]
   )
   const tipoNotificacionExistente =
     notificacionProgramadaExistente?.tipo === 'SEGUIMIENTO'
@@ -149,8 +210,11 @@ export function SeguimientoForm({
   }, [leadIdInicial, setValue])
 
   useEffect(() => {
-    setValue('correoCliente', correoPrincipal)
-  }, [contacto?.id, correoPrincipal, setValue])
+    setValue(
+      'correoCliente',
+      notificacionInicial?.correoCliente ?? correoPrincipal
+    )
+  }, [contacto?.id, correoPrincipal, notificacionInicial?.correoCliente, setValue])
 
   const inputClass = (hasError: boolean, readOnly = false) =>
     `w-full rounded-xl border px-3 py-2.5 text-sm text-gray-900 outline-none ${
@@ -203,8 +267,21 @@ export function SeguimientoForm({
 
     targets.forEach((target) => {
       const fechaEnvio = values.instancias[0][target].fechaEnvio
-      const fechaEnvioTime = new Date(fechaEnvio).getTime()
+      let fechaEnvioTime = Number.NaN
+      try {
+        fechaEnvioTime = new Date(limaInputToUtcISO(fechaEnvio)).getTime()
+      } catch {
+        return
+      }
       if (!Number.isFinite(fechaEnvioTime)) return
+
+      if (fechaEnvioTime <= Date.now()) {
+        setError(`instancias.0.${target}.fechaEnvio`, {
+          type: 'validate',
+          message: 'La fecha de envío debe estar en el futuro',
+        })
+        isValid = false
+      }
 
       if (actividadFin !== undefined && fechaEnvioTime >= actividadFin) {
         setError(`instancias.0.${target}.fechaEnvio`, {
@@ -223,30 +300,41 @@ export function SeguimientoForm({
     if (!validateActividadWindow(values)) return
 
     const instancia = values.instancias[0]
+    const internal = {
+      ...instancia.internal,
+      fechaEnvio: limaInputToUtcISO(instancia.internal.fechaEnvio),
+      idTemplate: instancia.internal.idTemplate || null,
+    }
+    const external = {
+      ...instancia.external,
+      fechaEnvio: limaInputToUtcISO(instancia.external.fechaEnvio),
+      idTemplate: instancia.external.idTemplate || null,
+    }
+
+    if (notificacionInicial && onEdit) {
+      await onEdit(notificacionInicial.id, {
+        correoCliente: values.correoCliente,
+        internal,
+        external,
+      })
+      return
+    }
+
     await onSubmit({
       idLead: values.idLead,
       correoCliente: values.correoCliente,
-      instancias: [{
-        internal: {
-          ...instancia.internal,
-          fechaEnvio: limaInputToUtcISO(instancia.internal.fechaEnvio),
-          idTemplate: instancia.internal.idTemplate || null,
-        },
-        external: {
-          ...instancia.external,
-          fechaEnvio: limaInputToUtcISO(instancia.external.fechaEnvio),
-          idTemplate: instancia.external.idTemplate || null,
-        },
-      }],
+      instancias: [{ internal, external }],
     })
   }
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-6 border-b border-gray-100 pb-5">
-        <h2 className="text-lg font-bold text-gray-950">Crear seguimiento</h2>
+        <h2 className="text-lg font-bold text-gray-950">
+          {editando ? 'Editar seguimiento' : 'Crear seguimiento'}
+        </h2>
         <p className="mt-1 text-sm text-gray-500">
-          Configura una secuencia de correos por instancia: uno interno y otro para el contacto.
+          Configura un correo interno para el encargado y otro externo para el contacto.
         </p>
       </div>
 
@@ -259,7 +347,7 @@ export function SeguimientoForm({
             id="seg-lead"
             {...register('idLead', { valueAsNumber: true })}
             className={inputClass(!!errors.idLead)}
-            disabled={Boolean(leadIdInicial)}
+            disabled={Boolean(leadIdInicial) || editando}
           >
             <option value={0}>Selecciona un lead</option>
             {leads.map((lead) => (
@@ -308,6 +396,14 @@ export function SeguimientoForm({
           <Warning>
             Ya existe un {tipoNotificacionExistente} programado para la actividad
             activa de este lead. Cancélalo antes de crear un seguimiento.
+          </Warning>
+        )}
+
+        {editando && (
+          <Warning>
+            La API no devuelve los cuerpos ni las plantillas usadas previamente.
+            Vuelve a seleccionar una plantilla o escribe ambos cuerpos para
+            reemplazar la programación actual.
           </Warning>
         )}
 
@@ -457,7 +553,11 @@ export function SeguimientoForm({
             className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
             {isLoading && <Loader2 size={16} className="animate-spin" />}
-            {isLoading ? 'Guardando...' : 'Guardar seguimiento'}
+            {isLoading
+              ? 'Guardando...'
+              : editando
+                ? 'Actualizar seguimiento'
+                : 'Guardar seguimiento'}
           </button>
         </div>
       </form>

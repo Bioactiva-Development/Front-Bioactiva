@@ -7,6 +7,7 @@ import {
   ChevronUp,
   Clock,
   Mail,
+  Pencil,
   Trash2,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -106,12 +107,14 @@ interface ProgramadaItemProps {
   notificacion: NotificacionProgramada
   leadLabel?: string
   responsableActual?: string
+  onEdit?: (notificacion: NotificacionProgramada) => void
 }
 
 export function NotificacionProgramadaItem({
   notificacion,
   leadLabel,
   responsableActual,
+  onEdit,
 }: Readonly<ProgramadaItemProps>) {
   const { mutateAsync: cancelar, isPending } = useCancelarProgramada()
   const esProgramada = notificacion.estado === 'PROGRAMADA'
@@ -125,6 +128,14 @@ export function NotificacionProgramadaItem({
   const fechaPrincipal = esSeguimiento
     ? notificacion.instancias?.[0]?.fechaEnvioInterno
     : notificacion.fechaEnvioInterno
+  const instancia = notificacion.instancias?.[0]
+  const puedeEditar = Boolean(
+    esProgramada &&
+    esSeguimiento &&
+    instancia &&
+    !instancia.enviadoInterno &&
+    !instancia.enviadoExterno
+  )
 
   const handleCancelar = async () => {
     if (!esProgramada) {
@@ -173,6 +184,15 @@ export function NotificacionProgramadaItem({
       </p>
 
       <div className="mt-4 flex flex-wrap justify-end gap-2">
+        {puedeEditar && onEdit && (
+          <button
+            type="button"
+            onClick={() => onEdit(notificacion)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+          >
+            <Pencil size={13} /> Editar
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setMostrandoDetalle((visible) => !visible)}

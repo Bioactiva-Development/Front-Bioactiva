@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/store'
 import { RolUsuario } from '@/types/enums'
 import { usePerfil } from '@/hooks/perfil/usePerfil'
@@ -9,6 +9,7 @@ import { useLeads } from '@/hooks/pipeline/useLeads'
 import {
   useCrearRecordatorio,
   useCrearSeguimiento,
+  useEditarSeguimiento,
   useNotificacionesProgramadas,
 } from '@/hooks/notificaciones/useNotificaciones'
 import {
@@ -20,7 +21,9 @@ import { SeguimientoForm } from '@/components/modules/notificaciones/Seguimiento
 import {
   CrearRecordatorioRequest,
   CrearSeguimientoRequest,
+  EditarSeguimientoRequest,
   NotificacionProgramada,
+  NotificacionesMeta,
 } from '@/types/notificacion.types'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 
@@ -40,18 +43,36 @@ const TITULOS: Record<Seccion, string> = {
   calendario: 'Calendario',
 }
 
+const NOTIFICATIONS_PAGE_SIZE = 10
+
 export default function NotificacionesPage() {
   const [seccion, setSeccion] = useState<Seccion>('historial')
   const [formError, setFormError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [programadasPage, setProgramadasPage] = useState(1)
+  const [vencidasPage, setVencidasPage] = useState(1)
+  const [seguimientoEditar, setSeguimientoEditar] =
+    useState<NotificacionProgramada | null>(null)
   const usuario = useAuthStore((state) => state.usuario)
   const idResponsable =
     usuario?.rol === RolUsuario.Trabajador ? usuario.id : undefined
 
-  const { data: programadas = [], isLoading: loadingProgramadas } =
-    useNotificacionesProgramadas({ estado: 'PROGRAMADA', idResponsable })
-  const { data: vencidas = [], isLoading: loadingVencidas } =
-    useNotificacionesProgramadas({ estado: 'VENCIDA', idResponsable })
+  const { data: programadasResponse, isLoading: loadingProgramadas } =
+    useNotificacionesProgramadas({
+      estado: 'PROGRAMADA',
+      idResponsable,
+      page: programadasPage,
+      limit: NOTIFICATIONS_PAGE_SIZE,
+    })
+  const { data: vencidasResponse, isLoading: loadingVencidas } =
+    useNotificacionesProgramadas({
+      estado: 'VENCIDA',
+      idResponsable,
+      page: vencidasPage,
+      limit: NOTIFICATIONS_PAGE_SIZE,
+    })
+  const programadas = programadasResponse?.data ?? []
+  const vencidas = vencidasResponse?.data ?? []
   const { data: leadsResponse } = useLeads({ limit: 100 })
 
   const leads = useMemo(
@@ -66,6 +87,8 @@ export default function NotificacionesPage() {
     useCrearRecordatorio()
   const { mutateAsync: crearSeguimiento, isPending: creandoSeguimiento } =
     useCrearSeguimiento()
+  const { mutateAsync: editarSeguimiento, isPending: editandoSeguimiento } =
+    useEditarSeguimiento()
 
   const {
     integraciones,
@@ -82,7 +105,14 @@ export default function NotificacionesPage() {
 
   const navigate = (next: Seccion) => {
     resetMessages()
+    setSeguimientoEditar(null)
     setSeccion(next)
+  }
+
+  const iniciarEdicion = (notificacion: NotificacionProgramada) => {
+    resetMessages()
+    setSeguimientoEditar(notificacion)
+    setSeccion('seguimiento')
   }
 
   const handleRecordatorio = async (values: CrearRecordatorioRequest) => {
@@ -104,6 +134,21 @@ export default function NotificacionesPage() {
       setSeccion('historial')
     } catch (error) {
       setFormError(getErrorMessage(error, 'No se pudo programar el seguimiento.'))
+    }
+  }
+
+  const handleEditarSeguimiento = async (
+    id: number,
+    values: EditarSeguimientoRequest
+  ) => {
+    resetMessages()
+    try {
+      await editarSeguimiento({ id, data: values })
+      setSeguimientoEditar(null)
+      setSuccessMessage('Seguimiento actualizado correctamente.')
+      setSeccion('historial')
+    } catch (error) {
+      setFormError(getErrorMessage(error, 'No se pudo actualizar el seguimiento.'))
     }
   }
 
@@ -159,8 +204,11 @@ export default function NotificacionesPage() {
 
       {seccion === 'seguimiento' && (
         <SeguimientoForm
+          key={seguimientoEditar?.id ?? 'nuevo'}
           onSubmit={handleSeguimiento}
-          isLoading={creandoSeguimiento}
+          onEdit={handleEditarSeguimiento}
+          notificacionInicial={seguimientoEditar ?? undefined}
+          isLoading={creandoSeguimiento || editandoSeguimiento}
           error={formError}
           onCancel={() => navigate('historial')}
         />
@@ -177,11 +225,14 @@ export default function NotificacionesPage() {
           <div className="grid gap-5 xl:grid-cols-2">
             <HistoryColumn
               title="Programadas"
-              count={programadas.length}
+              count={programadasResponse?.meta.total ?? 0}
               tone="scheduled"
               notifications={programadas}
               loading={loadingProgramadas}
               leadsPorId={leadsPorId}
+              meta={programadasResponse?.meta}
+              onPageChange={setProgramadasPage}
+              onEdit={iniciarEdicion}
             />
             <HistoryColumn
               title="Vencidas"
@@ -189,6 +240,8 @@ export default function NotificacionesPage() {
               notifications={vencidas}
               loading={loadingVencidas}
               leadsPorId={leadsPorId}
+              meta={vencidasResponse?.meta}
+              onPageChange={setVencidasPage}
             />
           </div>
         </div>
@@ -215,6 +268,9 @@ interface HistoryColumnProps {
   tone: 'scheduled' | 'expired'
   notifications: NotificacionProgramada[]
   loading: boolean
+  meta?: NotificacionesMeta
+  onPageChange: (page: number) => void
+  onEdit?: (notificacion: NotificacionProgramada) => void
   leadsPorId: Map<number, { codigo: string; organizacion_nombre?: string; contacto_nombre?: string; encargado_nombre?: string }>
 }
 
@@ -224,6 +280,9 @@ function HistoryColumn({
   tone,
   notifications,
   loading,
+  meta,
+  onPageChange,
+  onEdit,
   leadsPorId,
 }: Readonly<HistoryColumnProps>) {
   const scheduled = tone === 'scheduled'
@@ -258,11 +317,53 @@ function HistoryColumn({
                 ? `${lead.codigo} · ${lead.organizacion_nombre ?? lead.contacto_nombre ?? 'Lead'}`
                 : `Lead ${notificacion.idLead}`}
               responsableActual={lead?.encargado_nombre}
+              onEdit={onEdit}
             />
           )
         })}
+        {meta && (meta.totalPages > 1 || meta.page > 1) && (
+          <Pagination meta={meta} onPageChange={onPageChange} />
+        )}
       </div>
     </section>
+  )
+}
+
+function Pagination({
+  meta,
+  onPageChange,
+}: Readonly<{
+  meta: NotificacionesMeta
+  onPageChange: (page: number) => void
+}>) {
+  const totalPages = Math.max(1, meta.totalPages)
+
+  return (
+    <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+      <span className="text-xs text-gray-500">
+        Página {meta.page} de {totalPages}
+      </span>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          aria-label="Página anterior"
+          onClick={() => onPageChange(meta.page - 1)}
+          disabled={meta.page <= 1}
+          className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 disabled:opacity-40"
+        >
+          <ChevronLeft size={15} />
+        </button>
+        <button
+          type="button"
+          aria-label="Página siguiente"
+          onClick={() => onPageChange(meta.page + 1)}
+          disabled={meta.page >= totalPages}
+          className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 disabled:opacity-40"
+        >
+          <ChevronRight size={15} />
+        </button>
+      </div>
+    </div>
   )
 }
 

@@ -25,7 +25,8 @@ describe('notification mocks', () => {
       estado: 'PROGRAMADA',
       idLead: 1,
     })
-    expect(result.some((item) => item.tipo === 'RECORDATORIO')).toBe(true)
+    expect(result.data.some((item) => item.tipo === 'RECORDATORIO')).toBe(true)
+    expect(result.meta.total).toBeGreaterThan(0)
   })
 
   it('creates follow-ups with nested instances', async () => {

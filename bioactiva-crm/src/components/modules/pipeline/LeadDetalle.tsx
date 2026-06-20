@@ -150,8 +150,12 @@ export function LeadDetalle({
   const { data: cotizaciones = [], isLoading: loadingCotizaciones } =
     useCotizacionesPorLead(lead.id)
   const { data: notificacionesInApp = [] } = useNotificacionesInApp()
-  const { data: notificacionesProgramadas = [] } =
-    useNotificacionesProgramadas({ idLead: lead.id })
+  const { data: notificacionesProgramadasResponse } =
+    useNotificacionesProgramadas({ idLead: lead.id, page: 1, limit: 10 })
+  const notificacionesProgramadas = useMemo(
+    () => notificacionesProgramadasResponse?.data ?? [],
+    [notificacionesProgramadasResponse?.data]
+  )
 
   const { mutateAsync: crearActividad, isPending: creando } =
     useCrearActividad()

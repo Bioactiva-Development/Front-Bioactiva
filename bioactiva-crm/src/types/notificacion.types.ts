@@ -32,6 +32,18 @@ export interface NotificacionProgramada {
   createdAt: string
 }
 
+export interface NotificacionesMeta {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+export interface NotificacionesPaginadas {
+  data: NotificacionProgramada[]
+  meta: NotificacionesMeta
+}
+
 export interface NotificacionInApp {
   id: number
   titulo: string
@@ -46,6 +58,8 @@ export interface FiltrosNotificacionesProgramadas {
   estado?: Extract<EstadoNotificacionProgramada, 'PROGRAMADA' | 'VENCIDA'>
   idLead?: number
   idResponsable?: number
+  page?: number
+  limit?: number
 }
 
 export interface CrearRecordatorioRequest {
@@ -72,4 +86,10 @@ export interface CrearSeguimientoRequest {
   idLead: number
   correoCliente: string
   instancias: InstanciaSeguimientoRequest[]
+}
+
+export interface EditarSeguimientoRequest {
+  correoCliente?: string
+  internal: MensajeSeguimientoRequest
+  external: MensajeSeguimientoRequest
 }

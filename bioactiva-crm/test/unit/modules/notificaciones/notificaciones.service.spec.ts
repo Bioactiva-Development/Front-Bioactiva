@@ -30,16 +30,22 @@ describe('notificaciones/notificaciones.service', () => {
   beforeEach(() => jest.clearAllMocks())
 
   it('lists scheduled notifications with backend filters', async () => {
-    getMock.mockResolvedValueOnce({ data: [scheduled] })
+    const page = {
+      data: [scheduled],
+      meta: { page: 2, limit: 5, total: 6, totalPages: 2 },
+    }
+    getMock.mockResolvedValueOnce({ data: page })
     const result = await notificacionesService.getProgramadas({
       estado: 'PROGRAMADA',
       idResponsable: 3,
+      page: 2,
+      limit: 5,
     })
 
     expect(getMock).toHaveBeenCalledWith('/notifications', {
-      params: { estado: 'PROGRAMADA', idResponsable: 3 },
+      params: { estado: 'PROGRAMADA', idResponsable: 3, page: 2, limit: 5 },
     })
-    expect(result).toEqual([scheduled])
+    expect(result).toEqual(page)
   })
 
   it('gets in-app notifications', async () => {
@@ -100,5 +106,31 @@ describe('notificaciones/notificaciones.service', () => {
     postMock.mockResolvedValueOnce({ data: { ...scheduled, tipo: 'SEGUIMIENTO' } })
     await notificacionesService.createSeguimiento(payload)
     expect(postMock).toHaveBeenCalledWith('/notifications/follow-ups', payload)
+  })
+
+  it('edits a scheduled follow-up with the flat PATCH contract', async () => {
+    const payload = {
+      correoCliente: 'cliente@example.com',
+      internal: {
+        fechaEnvio: '2026-06-20T10:00:00.000Z',
+        idTemplate: null,
+        asunto: 'Interno actualizado',
+        cuerpo: 'Preparar',
+      },
+      external: {
+        fechaEnvio: '2026-06-20T11:00:00.000Z',
+        idTemplate: null,
+        asunto: 'Cliente actualizado',
+        cuerpo: 'Seguimiento',
+      },
+    }
+    patchMock.mockResolvedValueOnce({ data: { ...scheduled, tipo: 'SEGUIMIENTO' } })
+
+    await notificacionesService.editarSeguimiento(20, payload)
+
+    expect(patchMock).toHaveBeenCalledWith(
+      '/notifications/follow-ups/20',
+      payload
+    )
   })
 })
