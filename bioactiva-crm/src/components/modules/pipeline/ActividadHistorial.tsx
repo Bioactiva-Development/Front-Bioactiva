@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import {
   Mail, Phone, Users, HelpCircle,
-  CheckCircle2, Clock, Trash2, XCircle,
+  CheckCircle2, Clock, XCircle,
   ChevronDown, ChevronUp, Send,
   AlertTriangle,
   Bell, Save, Loader2,
@@ -13,7 +13,6 @@ import { Actividad } from '@/types/actividad.types'
 import { TipoActividad, EstadoActividad } from '@/types/enums'
 import {
   useCompletarActividad,
-  useEliminarActividad,
   useEditarNotasActividad,
   useCrearEventoCalendario,
 } from '@/hooks/pipeline/useActividades'
@@ -86,8 +85,6 @@ function ActividadItem({
 
   const { mutateAsync: completar, isPending: completando } =
     useCompletarActividad(leadId)
-  const { mutateAsync: eliminar, isPending: eliminando } =
-    useEliminarActividad(leadId)
   const { mutateAsync: guardarNotas, isPending: guardandoNotas } =
     useEditarNotasActividad(leadId)
   const { mutateAsync: crearEvento, isPending: creandoEvento } =
@@ -207,16 +204,6 @@ function ActividadItem({
                 Completar
               </button>
             )}
-            <button
-              onClick={() => eliminar(actividad.id)}
-              disabled={eliminando}
-              title="Eliminar actividad"
-              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500
-                hover:bg-red-50 transition-colors
-                disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Trash2 size={14} />
-            </button>
             <button
               onClick={() => setExpandido(!expandido)}
               className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600
