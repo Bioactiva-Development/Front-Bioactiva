@@ -5,30 +5,20 @@ const templateIdSchema = z
   .int()
   .nonnegative('La plantilla seleccionada no es válida')
 
-const fechaEnvioSchema = z
-  .string()
-  .min(1, 'La fecha y hora son obligatorias')
+const minutosAntesSchema = z
+  .number({ error: 'Los minutos de anticipación son obligatorios' })
+  .int('Los minutos deben ser un número entero')
   .refine(
-    (value) => Number.isFinite(new Date(value).getTime()),
-    'La fecha y hora no es válida'
+    (value) => [15, 30, 60].includes(value),
+    'Seleccione 15 minutos, 30 minutos o 1 hora'
   )
-
-const getTime = (value: string) => new Date(value).getTime()
 
 export const recordatorioSchema = z.object({
   idLead: z
     .number({ error: 'El lead es obligatorio' })
     .int()
     .min(1, 'Debe seleccionar un lead'),
-  minutosAntes: z
-    .number({ error: 'Los minutos de anticipación son obligatorios' })
-    .int('Los minutos deben ser un número entero')
-    .min(1, 'El mínimo es 1 minuto')
-    .max(120, 'El máximo es 120 minutos')
-    .refine(
-      (value) => [15, 30, 60].includes(value),
-      'Seleccione 15 minutos, 30 minutos o 1 hora'
-    ),
+  minutosAntes: minutosAntesSchema,
   idTemplate: templateIdSchema,
   asunto: z
     .string()
@@ -41,7 +31,7 @@ export const recordatorioSchema = z.object({
 export type RecordatorioFormValues = z.infer<typeof recordatorioSchema>
 
 const mensajeSeguimientoSchema = z.object({
-  fechaEnvio: fechaEnvioSchema,
+  minutosAntes: minutosAntesSchema,
   idTemplate: templateIdSchema,
   asunto: z
     .string()
@@ -57,17 +47,12 @@ const instanciaSeguimientoSchema = z
     external: mensajeSeguimientoSchema,
   })
   .refine(
-    ({ internal, external }) => {
-      const internalTime = getTime(internal.fechaEnvio)
-      const externalTime = getTime(external.fechaEnvio)
-      if (!Number.isFinite(internalTime) || !Number.isFinite(externalTime)) {
-        return true
-      }
-      return externalTime > internalTime
-    },
+    ({ internal, external }) =>
+      internal.minutosAntes > external.minutosAntes,
     {
-      message: 'El correo al cliente debe enviarse después del correo interno',
-      path: ['external', 'fechaEnvio'],
+      message:
+        'El correo interno debe tener más anticipación que el correo al cliente',
+      path: ['external', 'minutosAntes'],
     }
   )
 

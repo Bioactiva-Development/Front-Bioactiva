@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, useWatch, type UseFormRegister } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertCircle, Loader2 } from 'lucide-react'
@@ -20,7 +20,7 @@ import {
 } from '@/types/notificacion.types'
 import { EstadoActividad } from '@/types/enums'
 import { getContactoEmailOptions } from '@/lib/utils/contacto-email.utils'
-import { APP_TIME_ZONE, limaInputToUtcISO } from '@/lib/utils/timezone.utils'
+import { APP_TIME_ZONE } from '@/lib/utils/timezone.utils'
 
 interface SeguimientoFormProps {
   onSubmit: (data: CrearSeguimientoRequest) => Promise<void>
@@ -33,20 +33,19 @@ interface SeguimientoFormProps {
 }
 
 type Target = 'internal' | 'external'
-type SchedulePart = 'date' | 'time'
 
-const targets: Target[] = ['internal', 'external']
+const ANTICIPACIONES = [15, 30, 60] as const
 
 const nuevaInstancia = () => ({
   internal: {
-    fechaEnvio: '',
+    minutosAntes: 60,
     idTemplate: 0,
     asunto: 'Revisión interna de seguimiento comercial',
     cuerpo:
       'Hola, tienes un seguimiento pendiente asociado al lead seleccionado. Revisa la actividad antes del envío al cliente.',
   },
   external: {
-    fechaEnvio: '',
+    minutosAntes: 30,
     idTemplate: 0,
     asunto: 'Seguimiento a la propuesta comercial de BioActiva',
     cuerpo:
@@ -54,36 +53,18 @@ const nuevaInstancia = () => ({
   },
 })
 
-const toLimaInputParts = (fecha?: string) => {
-  if (!fecha) return { date: '', time: '', value: '' }
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: APP_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  }).formatToParts(new Date(fecha))
-  const value = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((part) => part.type === type)?.value ?? ''
-  const date = `${value('year')}-${value('month')}-${value('day')}`
-  const time = `${value('hour')}:${value('minute')}`
-  return { date, time, value: `${date}T${time}` }
-}
-
 const getInstanciaInicial = (notificacion?: NotificacionProgramada) => {
   const instancia = notificacion?.instancias?.[0]
   if (!instancia) return nuevaInstancia()
   return {
     internal: {
-      fechaEnvio: toLimaInputParts(instancia.fechaEnvioInterno).value,
+      minutosAntes: 60,
       idTemplate: 0,
       asunto: instancia.asuntoInterno,
       cuerpo: '',
     },
     external: {
-      fechaEnvio: toLimaInputParts(instancia.fechaEnvioExterno).value,
+      minutosAntes: 30,
       idTemplate: 0,
       asunto: instancia.asuntoExterno,
       cuerpo: '',
@@ -118,21 +99,10 @@ export function SeguimientoForm({
 }: Readonly<SeguimientoFormProps>) {
   const editando = Boolean(notificacionInicial)
   const instanciaInicial = getInstanciaInicial(notificacionInicial)
-  const internalInitial = toLimaInputParts(
-    notificacionInicial?.instancias?.[0]?.fechaEnvioInterno
-  )
-  const externalInitial = toLimaInputParts(
-    notificacionInicial?.instancias?.[0]?.fechaEnvioExterno
-  )
   const { data: leadsResponse } = useLeads({ limit: 100 })
   const leads = leadsResponse?.data ?? []
   const plantillasQuery = usePlantillasActivas()
   const plantillas = plantillasQuery.data ?? []
-  const [internalDate, setInternalDate] = useState(internalInitial.date)
-  const [internalTime, setInternalTime] = useState(internalInitial.time)
-  const [externalDate, setExternalDate] = useState(externalInitial.date)
-  const [externalTime, setExternalTime] = useState(externalInitial.time)
-
   const {
     register,
     handleSubmit,
@@ -151,6 +121,14 @@ export function SeguimientoForm({
   })
 
   const selectedLeadId = useWatch({ control, name: 'idLead' })
+  const internalMinutes = useWatch({
+    control,
+    name: 'instancias.0.internal.minutosAntes',
+  })
+  const externalMinutes = useWatch({
+    control,
+    name: 'instancias.0.external.minutosAntes',
+  })
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId)
   const { data: actividades = [], isLoading: cargandoActividades } =
     useActividades(selectedLeadId || 0)
@@ -216,6 +194,27 @@ export function SeguimientoForm({
     )
   }, [contacto?.id, correoPrincipal, notificacionInicial?.correoCliente, setValue])
 
+  useEffect(() => {
+    const instancia = notificacionInicial?.instancias?.[0]
+    if (!instancia || !actividadActiva) return
+
+    const fin = new Date(actividadActiva.fecha_fin).getTime()
+    const internal = Math.round(
+      (fin - new Date(instancia.fechaEnvioInterno).getTime()) / 60_000
+    )
+    const external = Math.round(
+      (fin - new Date(instancia.fechaEnvioExterno).getTime()) / 60_000
+    )
+    if (
+      ANTICIPACIONES.includes(internal as (typeof ANTICIPACIONES)[number]) &&
+      ANTICIPACIONES.includes(external as (typeof ANTICIPACIONES)[number]) &&
+      internal > external
+    ) {
+      setValue('instancias.0.internal.minutosAntes', internal)
+      setValue('instancias.0.external.minutosAntes', external)
+    }
+  }, [actividadActiva, notificacionInicial, setValue])
+
   const inputClass = (hasError: boolean, readOnly = false) =>
     `w-full rounded-xl border px-3 py-2.5 text-sm text-gray-900 outline-none ${
       hasError
@@ -232,61 +231,34 @@ export function SeguimientoForm({
     setValue(`instancias.0.${target}.cuerpo`, template.cuerpo)
   }
 
-  const updateSchedule = (
-    target: Target,
-    part: SchedulePart,
-    nextValue: string
-  ) => {
-    const currentDate = target === 'internal' ? internalDate : externalDate
-    const currentTime = target === 'internal' ? internalTime : externalTime
-    const nextDate = part === 'date' ? nextValue : currentDate
-    const nextTime = part === 'time' ? nextValue : currentTime
-
-    if (target === 'internal') {
-      if (part === 'date') setInternalDate(nextValue)
-      else setInternalTime(nextValue)
-    } else if (part === 'date') {
-      setExternalDate(nextValue)
-    } else {
-      setExternalTime(nextValue)
-    }
-
-    setValue(
-      `instancias.0.${target}.fechaEnvio`,
-      nextDate && nextTime ? `${nextDate}T${nextTime}` : '',
-      { shouldDirty: true, shouldValidate: true }
-    )
+  const fechaDesdeAnticipacion = (minutos: number) => {
+    if (!actividadActiva) return null
+    const fin = new Date(actividadActiva.fecha_fin).getTime()
+    if (!Number.isFinite(fin)) return null
+    return new Date(fin - minutos * 60_000).toISOString()
   }
 
   const validateActividadWindow = (values: SeguimientoFormValues) => {
     clearErrors('instancias')
-    const actividadFin = actividadActiva
-      ? new Date(actividadActiva.fecha_fin).getTime()
-      : undefined
+    if (!actividadActiva) return false
     let isValid = true
 
-    targets.forEach((target) => {
-      const fechaEnvio = values.instancias[0][target].fechaEnvio
-      let fechaEnvioTime = Number.NaN
-      try {
-        fechaEnvioTime = new Date(limaInputToUtcISO(fechaEnvio)).getTime()
-      } catch {
+    ;(['internal', 'external'] as const).forEach((target) => {
+      const minutos = values.instancias[0][target].minutosAntes
+      const fechaEnvio = fechaDesdeAnticipacion(minutos)
+      const fechaEnvioTime = fechaEnvio
+        ? new Date(fechaEnvio).getTime()
+        : Number.NaN
+      if (!Number.isFinite(fechaEnvioTime)) {
+        isValid = false
         return
       }
-      if (!Number.isFinite(fechaEnvioTime)) return
 
       if (fechaEnvioTime <= Date.now()) {
-        setError(`instancias.0.${target}.fechaEnvio`, {
+        setError(`instancias.0.${target}.minutosAntes`, {
           type: 'validate',
-          message: 'La fecha de envío debe estar en el futuro',
-        })
-        isValid = false
-      }
-
-      if (actividadFin !== undefined && fechaEnvioTime >= actividadFin) {
-        setError(`instancias.0.${target}.fechaEnvio`, {
-          type: 'validate',
-          message: 'Debe enviarse antes de la fecha fin de la actividad activa',
+          message:
+            'La actividad finaliza demasiado pronto para esta anticipación',
         })
         isValid = false
       }
@@ -300,15 +272,24 @@ export function SeguimientoForm({
     if (!validateActividadWindow(values)) return
 
     const instancia = values.instancias[0]
+    const internalFecha = fechaDesdeAnticipacion(
+      instancia.internal.minutosAntes
+    )
+    const externalFecha = fechaDesdeAnticipacion(
+      instancia.external.minutosAntes
+    )
+    if (!internalFecha || !externalFecha) return
     const internal = {
-      ...instancia.internal,
-      fechaEnvio: limaInputToUtcISO(instancia.internal.fechaEnvio),
+      fechaEnvio: internalFecha,
       idTemplate: instancia.internal.idTemplate || null,
+      asunto: instancia.internal.asunto,
+      cuerpo: instancia.internal.cuerpo,
     }
     const external = {
-      ...instancia.external,
-      fechaEnvio: limaInputToUtcISO(instancia.external.fechaEnvio),
+      fechaEnvio: externalFecha,
       idTemplate: instancia.external.idTemplate || null,
+      asunto: instancia.external.asunto,
+      cuerpo: instancia.external.cuerpo,
     }
 
     if (notificacionInicial && onEdit) {
@@ -334,7 +315,8 @@ export function SeguimientoForm({
           {editando ? 'Editar seguimiento' : 'Crear seguimiento'}
         </h2>
         <p className="mt-1 text-sm text-gray-500">
-          Configura un correo interno para el encargado y otro externo para el contacto.
+          Selecciona la anticipación al fin de la actividad para el correo
+          interno y el correo al contacto.
         </p>
       </div>
 
@@ -437,16 +419,22 @@ export function SeguimientoForm({
                 className={inputClass(false, true)}
               />
             </div>
-            <ScheduleFields
+            <AnticipationSelector
               prefix="seg-internal"
-              date={internalDate}
-              time={internalTime}
-              error={instanceErrors?.internal?.fechaEnvio?.message}
-              onDateChange={(value) => updateSchedule('internal', 'date', value)}
-              onTimeChange={(value) => updateSchedule('internal', 'time', value)}
+              target="internal"
+              value={internalMinutes}
+              counterpart={externalMinutes}
+              estimatedAt={fechaDesdeAnticipacion(internalMinutes)}
+              error={instanceErrors?.internal?.minutosAntes?.message}
+              register={register}
+              onChange={(value) =>
+                setValue('instancias.0.internal.minutosAntes', value, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
             />
           </div>
-          <input type="hidden" {...register('instancias.0.internal.fechaEnvio')} />
           <MessageFields
             prefix="seg-internal"
             register={register}
@@ -461,7 +449,7 @@ export function SeguimientoForm({
           <MessageHeader
             tone="external"
             title="Correo para el contacto"
-            description="Correo externo. Cada seguimiento puede tener fechas y contenido distintos."
+            description="Correo externo que se enviará después del aviso interno al encargado."
           />
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <div className="space-y-1.5">
@@ -506,16 +494,22 @@ export function SeguimientoForm({
                 <TemplateOptions loading={plantillasQuery.isLoading} plantillas={plantillas} />
               </select>
             </div>
-            <ScheduleFields
+            <AnticipationSelector
               prefix="seg-external"
-              date={externalDate}
-              time={externalTime}
-              error={instanceErrors?.external?.fechaEnvio?.message}
-              onDateChange={(value) => updateSchedule('external', 'date', value)}
-              onTimeChange={(value) => updateSchedule('external', 'time', value)}
+              target="external"
+              value={externalMinutes}
+              counterpart={internalMinutes}
+              estimatedAt={fechaDesdeAnticipacion(externalMinutes)}
+              error={instanceErrors?.external?.minutosAntes?.message}
+              register={register}
+              onChange={(value) =>
+                setValue('instancias.0.external.minutosAntes', value, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
             />
           </div>
-          <input type="hidden" {...register('instancias.0.external.fechaEnvio')} />
           <MessageFields
             prefix="seg-external"
             register={register}
@@ -586,49 +580,77 @@ function MessageHeader({
   )
 }
 
-function ScheduleFields({
+function AnticipationSelector({
   prefix,
-  date,
-  time,
+  target,
+  value,
+  counterpart,
+  estimatedAt,
   error,
-  onDateChange,
-  onTimeChange,
+  register,
+  onChange,
 }: Readonly<{
   prefix: string
-  date: string
-  time: string
+  target: Target
+  value: number
+  counterpart: number
+  estimatedAt: string | null
   error?: string
-  onDateChange: (value: string) => void
-  onTimeChange: (value: string) => void
+  register: UseFormRegister<SeguimientoFormValues>
+  onChange: (value: number) => void
 }>) {
   return (
-    <>
-      <div className="space-y-1.5">
-        <FieldLabel htmlFor={`${prefix}-date`}>Fecha de envío</FieldLabel>
-        <input
-          id={`${prefix}-date`}
-          type="date"
-          value={date}
-          onChange={(event) => onDateChange(event.target.value)}
-          className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${
-            error ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white'
-          }`}
-        />
-        {error && <p className="text-xs text-red-500">{error}</p>}
+    <div className="space-y-2 lg:col-span-2">
+      <FieldLabel htmlFor={`${prefix}-15`}>
+        Anticipación al fin de la actividad
+      </FieldLabel>
+      <input
+        type="hidden"
+        {...register(`instancias.0.${target}.minutosAntes`, {
+          valueAsNumber: true,
+        })}
+      />
+      <div
+        className={`flex flex-wrap gap-2 rounded-2xl border bg-white p-4 ${
+          error ? 'border-red-300' : 'border-gray-200'
+        }`}
+      >
+        {ANTICIPACIONES.map((minutes) => {
+          const violatesOrder =
+            target === 'internal'
+              ? minutes <= counterpart
+              : minutes >= counterpart
+          return (
+            <button
+              key={minutes}
+              id={`${prefix}-${minutes}`}
+              type="button"
+              disabled={violatesOrder}
+              aria-pressed={value === minutes}
+              onClick={() => onChange(minutes)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-35 ${
+                value === minutes
+                  ? 'border-emerald-600 bg-emerald-600 text-white'
+                  : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300'
+              }`}
+            >
+              {minutes === 60 ? '1 hora' : `${minutes} min`}
+            </button>
+          )
+        })}
       </div>
-      <div className="space-y-1.5">
-        <FieldLabel htmlFor={`${prefix}-time`}>Hora de envío</FieldLabel>
-        <input
-          id={`${prefix}-time`}
-          type="time"
-          value={time}
-          onChange={(event) => onTimeChange(event.target.value)}
-          className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${
-            error ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white'
-          }`}
-        />
-      </div>
-    </>
+      <p className="text-xs text-gray-400">
+        {target === 'internal'
+          ? 'Debe tener más anticipación que el correo al contacto.'
+          : 'Debe tener menos anticipación que el correo interno.'}
+      </p>
+      {estimatedAt && (
+        <p className="text-xs text-gray-500">
+          Envío estimado: {formatFecha(estimatedAt)}
+        </p>
+      )}
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
   )
 }
 

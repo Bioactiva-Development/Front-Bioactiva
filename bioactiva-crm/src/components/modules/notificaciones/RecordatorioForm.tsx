@@ -216,7 +216,17 @@ export function RecordatorioForm({
             type="hidden"
             {...register('minutosAntes', { valueAsNumber: true })}
           />
-          <div className="flex flex-wrap gap-2">
+          <p
+            id="rec-anticipacion-label"
+            className="mb-3 text-sm font-semibold text-gray-700"
+          >
+            Definir tiempo antes del fin de la actividad para el envío del correo
+          </p>
+          <div
+            className="flex flex-wrap gap-2"
+            role="group"
+            aria-labelledby="rec-anticipacion-label"
+          >
             {TIEMPOS_RECORDATORIO.map((option) => (
               <button
                 key={option.value}
