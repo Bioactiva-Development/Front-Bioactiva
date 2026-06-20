@@ -47,43 +47,43 @@ describe('modules/organizaciones/OrganizacionCard', () => {
 
   it('renders nombre "Empresa SAC"', () => {
     render(<OrganizacionCard organizacion={baseOrg} />)
-    expect(screen.getByText('Empresa SAC')).toBeInTheDocument()
+    expect(screen.getAllByText('Empresa SAC').length).toBeGreaterThan(0)
   })
 
   it('renders initial letter in circle (E)', () => {
     render(<OrganizacionCard organizacion={baseOrg} />)
-    expect(screen.getByText('E')).toBeInTheDocument()
+    expect(screen.getAllByText('E').length).toBeGreaterThan(0)
   })
 
   it('renders RUC', () => {
     render(<OrganizacionCard organizacion={baseOrg} />)
-    expect(screen.getByText('20123456789')).toBeInTheDocument()
+    expect(screen.getAllByText('20123456789').length).toBeGreaterThan(0)
   })
 
   it('renders "Sin RUC" when ruc is null', () => {
     const org: Organizacion = { ...baseOrg, ruc: null as unknown as string | undefined }
     render(<OrganizacionCard organizacion={org} />)
-    expect(screen.getByText('Sin RUC')).toBeInTheDocument()
+    expect(screen.getAllByText('Sin RUC').length).toBeGreaterThan(0)
   })
 
   it('renders sector', () => {
     render(<OrganizacionCard organizacion={baseOrg} />)
-    expect(screen.getByText('TECNOLOGIA')).toBeInTheDocument()
+    expect(screen.getAllByText('TECNOLOGIA').length).toBeGreaterThan(0)
   })
 
   it('renders actividad_economica', () => {
     render(<OrganizacionCard organizacion={baseOrg} />)
-    expect(screen.getByText(/Software/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Software/).length).toBeGreaterThan(0)
   })
 
   it('renders tamano badge with formatTamano', () => {
     render(<OrganizacionCard organizacion={baseOrg} />)
-    expect(screen.getByText('Mediana')).toBeInTheDocument()
+    expect(screen.getAllByText('Mediana').length).toBeGreaterThan(0)
   })
 
   it('renders sub_area', () => {
     render(<OrganizacionCard organizacion={baseOrg} />)
-    expect(screen.getByText('Lima')).toBeInTheDocument()
+    expect(screen.getAllByText('Lima').length).toBeGreaterThan(0)
   })
 
   it('renders ExternalLink button', () => {

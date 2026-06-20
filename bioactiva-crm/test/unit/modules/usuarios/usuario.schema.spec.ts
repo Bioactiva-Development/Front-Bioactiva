@@ -115,25 +115,25 @@ describe('usuarios/usuario.schema', () => {
     it('accepts matching passwords', () => {
       expect(
         cambiarPasswordSchema.parse({
-          password: '123456',
-          confirmPassword: '123456',
+          password: 'Test123!',
+          confirmPassword: 'Test123!',
         })
-      ).toEqual({ password: '123456', confirmPassword: '123456' })
+      ).toEqual({ password: 'Test123!', confirmPassword: 'Test123!' })
     })
 
     it('rejects short password', () => {
       expect(() =>
         cambiarPasswordSchema.parse({
-          password: '12345',
-          confirmPassword: '12345',
+          password: 'Ab1!',
+          confirmPassword: 'Ab1!',
         })
-      ).toThrow('al menos 6 caracteres')
+      ).toThrow('al menos 8 caracteres')
     })
 
     it('rejects empty confirmPassword', () => {
       expect(() =>
         cambiarPasswordSchema.parse({
-          password: '123456',
+          password: 'Test123!',
           confirmPassword: '',
         })
       ).toThrow('Confirme la contraseña')
@@ -142,8 +142,8 @@ describe('usuarios/usuario.schema', () => {
     it('rejects mismatched passwords', () => {
       expect(() =>
         cambiarPasswordSchema.parse({
-          password: '123456',
-          confirmPassword: '654321',
+          password: 'Test123!',
+          confirmPassword: 'Test1234!',
         })
       ).toThrow('Las contraseñas no coinciden')
     })

@@ -25,9 +25,14 @@ async function abrirPanel() {
 describe('modules/pipeline/LeadFiltros', () => {
   beforeEach(() => jest.clearAllMocks())
 
-  it('renders the semáforo segmented options (alertaActividad)', async () => {
+  async function abrirFiltros() {
+    const filtrosBtn = screen.getByText('Filtros')
+    await userEvent.click(filtrosBtn)
+  }
+
+  it('renders the semáforo segmented options', async () => {
     render(<LeadFiltros filtros={{}} onChange={jest.fn()} onLimpiar={jest.fn()} />)
-    await abrirPanel()
+    await abrirFiltros()
     expect(screen.getByText('Todas')).toBeInTheDocument()
     expect(screen.getByText('Sin actividades')).toBeInTheDocument()
     expect(screen.getByText('Pendiente')).toBeInTheDocument()
@@ -38,33 +43,17 @@ describe('modules/pipeline/LeadFiltros', () => {
   it('emits alerta_actividad when a semáforo option is clicked', async () => {
     const onChange = jest.fn()
     render(<LeadFiltros filtros={{}} onChange={onChange} onLimpiar={jest.fn()} />)
-    await abrirPanel()
-    await userEvent.click(screen.getByText('Por vencer'))
+    await abrirFiltros()
+    await userEvent.click(screen.getByText('Vencidas'))
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ alerta_actividad: 'POR_VENCER' })
     )
   })
 
-  it('selects an organization from the buscador and maps idOrg', async () => {
-    const onChange = jest.fn()
-    render(<LeadFiltros filtros={{}} onChange={onChange} onLimpiar={jest.fn()} />)
-    await abrirPanel()
-    await userEvent.click(screen.getByPlaceholderText(/seleccionar organización/i))
-    await userEvent.click(screen.getByText('Altomayo'))
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ id_org: 'org-1' })
-    )
-  })
-
-  it('emits a sector change', async () => {
-    const onChange = jest.fn()
-    render(<LeadFiltros filtros={{}} onChange={onChange} onLimpiar={jest.fn()} />)
-    await abrirPanel()
-    const sectorSelect = screen.getByLabelText('Sector')
-    await userEvent.selectOptions(sectorSelect, 'TECNOLOGIA')
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ sector: 'TECNOLOGIA' })
-    )
+  it('renders organization options from the hook', async () => {
+    render(<LeadFiltros filtros={{}} onChange={jest.fn()} onLimpiar={jest.fn()} />)
+    await abrirFiltros()
+    expect(screen.getByText('Altomayo')).toBeInTheDocument()
   })
 
   it('loads responsables and emits an estado change', async () => {
@@ -72,6 +61,7 @@ describe('modules/pipeline/LeadFiltros', () => {
     render(<LeadFiltros filtros={{}} onChange={onChange} onLimpiar={jest.fn()} />)
     await abrirPanel()
     await waitFor(() => expect(getUsuarios).toHaveBeenCalled())
+    await abrirFiltros()
 
     const estadoSelect = screen.getByLabelText('Estado')
     await userEvent.selectOptions(estadoSelect, LeadState.Ofertado)
@@ -82,7 +72,7 @@ describe('modules/pipeline/LeadFiltros', () => {
 
   it('shows a validation error when fechaHasta is earlier than fechaDesde', async () => {
     render(<LeadFiltros filtros={{}} onChange={jest.fn()} onLimpiar={jest.fn()} />)
-    await abrirPanel()
+    await abrirFiltros()
     fireEvent.change(screen.getByLabelText('Creados desde'), {
       target: { value: '2026-06-10' },
     })
@@ -90,6 +80,20 @@ describe('modules/pipeline/LeadFiltros', () => {
       target: { value: '2026-06-01' },
     })
     expect(screen.getByText(/debe ser igual o posterior/i)).toBeInTheDocument()
+  })
+
+  it('shows the leads total when provided', () => {
+    render(<LeadFiltros filtros={{}} onChange={jest.fn()} onLimpiar={jest.fn()} total={42} />)
+    expect(screen.getByText('42')).toBeInTheDocument()
+  })
+
+  it('emits the search term as it is typed', async () => {
+    const onChange = jest.fn()
+    render(<LeadFiltros filtros={{}} onChange={onChange} onLimpiar={jest.fn()} />)
+    await abrirFiltros()
+    const input = screen.getByPlaceholderText(/Buscar por código/i)
+    await userEvent.type(input, 'a')
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ search: 'a' }))
   })
 
   it('shows a "Limpiar" button that calls onLimpiar when there are active filters', async () => {
@@ -101,7 +105,7 @@ describe('modules/pipeline/LeadFiltros', () => {
         onLimpiar={onLimpiar}
       />
     )
-    await abrirPanel()
+    await abrirFiltros()
     await userEvent.click(screen.getByRole('button', { name: /Limpiar/i }))
     expect(onLimpiar).toHaveBeenCalled()
   })

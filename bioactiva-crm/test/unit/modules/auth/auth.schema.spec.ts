@@ -72,13 +72,13 @@ describe('security/auth.schema', () => {
     ).toThrow('Las contraseñas no coinciden')
   })
 
-  it('rejects reset password shorter than 6 chars', () => {
+  it('rejects reset password shorter than 8 chars', () => {
     expect(() =>
       resetPasswordSchema.parse({
-        password: 'Se1!',
-        confirmPassword: 'Se1!',
+        password: 'Ab1!',
+        confirmPassword: 'Ab1!',
       })
-    ).toThrow('La contraseña debe tener al menos 6 caracteres')
+    ).toThrow('La contraseña debe tener al menos 8 caracteres')
   })
 
 })

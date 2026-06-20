@@ -16,7 +16,7 @@ const basePlantilla: Plantilla = {
 describe('modules/plantillas/PlantillaCard', () => {
   it('renders plantilla nombre', () => {
     render(<PlantillaCard plantilla={basePlantilla} onVer={jest.fn()} onEditar={jest.fn()} onEliminar={jest.fn()} />)
-    expect(screen.getByText('Notificación de Seguimiento')).toBeInTheDocument()
+    expect(screen.getAllByText('Notificación de Seguimiento').length).toBeGreaterThan(0)
   })
 
   it('renders truncated asunto when longer than 60 chars', () => {
@@ -25,56 +25,56 @@ describe('modules/plantillas/PlantillaCard', () => {
       asunto: 'A'.repeat(70),
     }
     render(<PlantillaCard plantilla={long} onVer={jest.fn()} onEditar={jest.fn()} onEliminar={jest.fn()} />)
-    expect(screen.getByText(`${'A'.repeat(60)}...`)).toBeInTheDocument()
+    expect(screen.getAllByText(`${'A'.repeat(60)}...`).length).toBeGreaterThan(0)
   })
 
   it('renders asunto directly when 60 chars or less', () => {
     render(<PlantillaCard plantilla={basePlantilla} onVer={jest.fn()} onEditar={jest.fn()} onEliminar={jest.fn()} />)
-    expect(screen.getByText(basePlantilla.asunto)).toBeInTheDocument()
+    expect(screen.getAllByText(basePlantilla.asunto).length).toBeGreaterThan(0)
   })
 
   it('shows Activa badge when plantilla is active', () => {
     render(<PlantillaCard plantilla={basePlantilla} onVer={jest.fn()} onEditar={jest.fn()} onEliminar={jest.fn()} />)
-    expect(screen.getByText('Activa')).toBeInTheDocument()
+    expect(screen.getAllByText('Activa').length).toBeGreaterThan(0)
   })
 
   it('shows Inactiva badge when plantilla is inactive', () => {
     const inactive: Plantilla = { ...basePlantilla, activo: false }
     render(<PlantillaCard plantilla={inactive} onVer={jest.fn()} onEditar={jest.fn()} onEliminar={jest.fn()} />)
-    expect(screen.getByText('Inactiva')).toBeInTheDocument()
+    expect(screen.getAllByText('Inactiva').length).toBeGreaterThan(0)
   })
 
   it('renders formatted date', () => {
     render(<PlantillaCard plantilla={basePlantilla} onVer={jest.fn()} onEditar={jest.fn()} onEliminar={jest.fn()} />)
-    expect(screen.getByText(/15 mar/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/15 mar/i).length).toBeGreaterThan(0)
   })
 
   it('calls onVer when nombre is clicked', async () => {
     const onVer = jest.fn()
     render(<PlantillaCard plantilla={basePlantilla} onVer={onVer} onEditar={jest.fn()} onEliminar={jest.fn()} />)
-    await userEvent.click(screen.getByText('Notificación de Seguimiento'))
+    await userEvent.click(screen.getAllByText('Notificación de Seguimiento')[0])
     expect(onVer).toHaveBeenCalledWith(basePlantilla)
   })
 
   it('calls onVer when eye button is clicked', async () => {
     const onVer = jest.fn()
     render(<PlantillaCard plantilla={basePlantilla} onVer={onVer} onEditar={jest.fn()} onEliminar={jest.fn()} />)
-    const verBtn = screen.getByTitle('Ver detalle')
-    await userEvent.click(verBtn)
+    const verBtns = screen.getAllByTitle('Ver detalle')
+    await userEvent.click(verBtns[0])
     expect(onVer).toHaveBeenCalledWith(basePlantilla)
   })
 
   it('calls onEditar when edit button is clicked', async () => {
     const onEditar = jest.fn()
     render(<PlantillaCard plantilla={basePlantilla} onVer={jest.fn()} onEditar={onEditar} onEliminar={jest.fn()} />)
-    await userEvent.click(screen.getByTitle('Editar'))
+    await userEvent.click(screen.getAllByTitle('Editar')[0])
     expect(onEditar).toHaveBeenCalledWith(basePlantilla)
   })
 
   it('calls onEliminar when delete button is clicked', async () => {
     const onEliminar = jest.fn()
     render(<PlantillaCard plantilla={basePlantilla} onVer={jest.fn()} onEditar={jest.fn()} onEliminar={onEliminar} />)
-    await userEvent.click(screen.getByTitle('Eliminar'))
+    await userEvent.click(screen.getAllByTitle('Eliminar')[0])
     expect(onEliminar).toHaveBeenCalledWith(basePlantilla)
   })
 })

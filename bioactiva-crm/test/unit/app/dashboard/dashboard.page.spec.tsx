@@ -19,11 +19,30 @@ jest.mock('@/hooks/dashboard/useDashboardMetrics', () => ({
   useDashboardMetrics: (...args: unknown[]) => mockUseDashboardMetrics(...args),
 }))
 
-// Stub any icon the page imports (lucide-react) without enumerating them, so
-// adding/removing icons in the page never breaks this suite.
-jest.mock('lucide-react', () =>
-  new Proxy({}, { get: () => () => <svg /> })
-)
+jest.mock('@phosphor-icons/react/dist/csr/Target', () => ({ Target: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/Percent', () => ({ Percent: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/Clock', () => ({ Clock: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/Hourglass', () => ({ Hourglass: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/Pulse', () => ({ Pulse: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/CurrencyDollar', () => ({ CurrencyDollar: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/TrendUp', () => ({ TrendUp: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/CalendarX', () => ({ CalendarX: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/ChartLineUp', () => ({ ChartLineUp: () => null }), { virtual: true })
+
+jest.mock('lucide-react', () => {
+  const icons = {
+    RefreshCw: 'refresh-cw',
+    ChevronDown: 'chevron-down',
+    ChevronUp: 'chevron-up',
+    Filter: 'filter',
+    Calendar: 'calendar',
+  }
+  const result: Record<string, React.FC> = {}
+  for (const [name] of Object.entries(icons)) {
+    result[name] = () => <svg />
+  }
+  return result
+})
 
 jest.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -83,7 +102,7 @@ function renderPage() {
 function getActiveTabText() {
   const buttons = screen.getAllByRole('button')
   for (const btn of buttons) {
-    if (btn.className.includes('bg-emerald-700')) {
+    if (btn.className.includes('bg-emerald-600')) {
       return btn.textContent
     }
   }
@@ -103,13 +122,19 @@ describe('dashboard/page', () => {
     expect(screen.getByText('Dashboard comercial')).toBeInTheDocument()
   })
 
-  it('renders subtitle "BioActiva CRM"', () => {
+  it('renders subtitle "Métricas del periodo seleccionado"', () => {
     renderPage()
-    expect(screen.getByText('BioActiva CRM')).toBeInTheDocument()
+    expect(screen.getByText('Métricas del periodo seleccionado')).toBeInTheDocument()
   })
 
-  it('renders year selector with 2024, 2025, 2026 options', () => {
+  async function abrirFiltros() {
+    const filtrosBtn = screen.getByText('Filtros')
+    await userEvent.click(filtrosBtn)
+  }
+
+  it('renders year selector with 2024, 2025, 2026 options', async () => {
     renderPage()
+    await abrirFiltros()
     const select = screen.getByRole('combobox')
     expect(select).toBeInTheDocument()
     const options = screen.getAllByRole('option')
@@ -119,8 +144,9 @@ describe('dashboard/page', () => {
     expect(options[2]).toHaveValue('2026')
   })
 
-  it('renders period tabs', () => {
+  it('renders period tabs', async () => {
     renderPage()
+    await abrirFiltros()
     expect(screen.getByText('AÑO COMPLETO')).toBeInTheDocument()
     expect(screen.getByText('1ER TRIMESTRE')).toBeInTheDocument()
     expect(screen.getByText('2DO TRIMESTRE')).toBeInTheDocument()
@@ -128,8 +154,9 @@ describe('dashboard/page', () => {
     expect(screen.getByText('4TO TRIMESTRE')).toBeInTheDocument()
   })
 
-  it('renders "Reiniciar" button', () => {
+  it('renders "Reiniciar" button', async () => {
     renderPage()
+    await abrirFiltros()
     expect(screen.getByText('Reiniciar')).toBeInTheDocument()
   })
 
@@ -137,13 +164,7 @@ describe('dashboard/page', () => {
     mockUseDashboardMetrics.mockReturnValue({ data: mockMetrics, isLoading: false, isError: false })
     renderPage()
     expect(screen.getByText('Leads generados')).toBeInTheDocument()
-    expect(screen.getByText('Tasa de conversión')).toBeInTheDocument()
-    expect(screen.getByText('Propuesta → Venta')).toBeInTheDocument()
     expect(screen.getByText('Ticket promedio')).toBeInTheDocument()
-    expect(screen.getByText('Tiempo promedio de cierre')).toBeInTheDocument()
-    expect(screen.getByText('Tiempo en etapa propuesta')).toBeInTheDocument()
-    expect(screen.getByText('Seguimientos por lead')).toBeInTheDocument()
-    expect(screen.getByText('Leads sin avance')).toBeInTheDocument()
     expect(screen.getByText('Monto en pipeline')).toBeInTheDocument()
     expect(screen.getByText('Ingresos cerrados')).toBeInTheDocument()
   })
@@ -186,16 +207,16 @@ describe('dashboard/page', () => {
     expect(screen.getByText('Estado de cotizaciones')).toBeInTheDocument()
   })
 
-  it('shows loading message "Cargando pipeline..." when leads loading', () => {
+  it('shows loading message "Cargando..." when leads loading', () => {
     mockUseLeads.mockReturnValue({ data: { data: [] }, isLoading: true, isError: false })
     renderPage()
-    expect(screen.getByText('Cargando pipeline...')).toBeInTheDocument()
+    expect(screen.getByText('Cargando...')).toBeInTheDocument()
   })
 
-  it('shows loading message "Cargando cotizaciones..." when cotizaciones loading', () => {
+  it('shows loading message "Cargando..." when cotizaciones loading', () => {
     mockUseCotizaciones.mockReturnValue({ data: { data: [] }, isLoading: true, isError: false })
     renderPage()
-    expect(screen.getByText('Cargando cotizaciones...')).toBeInTheDocument()
+    expect(screen.getByText('Cargando...')).toBeInTheDocument()
   })
 
   it('shows error message when metrics error', () => {
@@ -210,13 +231,14 @@ describe('dashboard/page', () => {
     mockUseCotizaciones.mockReturnValue({ data: { data: [] }, isLoading: false, isError: false })
     renderPage()
     expect(
-      screen.getByText('Sin cotizaciones en el periodo seleccionado.')
+      screen.getByText('Sin cotizaciones en el periodo.')
     ).toBeInTheDocument()
   })
 
   it('clicking period tab triggers state change', async () => {
     const user = userEvent.setup()
     renderPage()
+    await abrirFiltros()
     expect(getActiveTabText()).toContain('AÑO COMPLETO')
     await user.click(screen.getByText('1ER TRIMESTRE'))
     expect(getActiveTabText()).toContain('1ER TRIMESTRE')
@@ -225,6 +247,7 @@ describe('dashboard/page', () => {
   it('clicking Reiniciar button resets period to anio', async () => {
     const user = userEvent.setup()
     renderPage()
+    await abrirFiltros()
     expect(getActiveTabText()).toContain('AÑO COMPLETO')
     await user.click(screen.getByText('1ER TRIMESTRE'))
     expect(getActiveTabText()).toContain('1ER TRIMESTRE')

@@ -61,7 +61,7 @@ describe('security/auth.service (API mode)', () => {
     expect(postMock).toHaveBeenCalledWith('/auth/login', {
       correo: 'admin@bioactiva.pe',
       password: 'Secret123!',
-    })
+    }, undefined)
     expect(response).toEqual({ accessToken: 'token-123', accessTokenExpiresIn: 900 })
   })
 

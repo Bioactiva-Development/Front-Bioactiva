@@ -14,7 +14,7 @@ const baseContacto: Contacto = {
   id: 1,
   nombres: 'Juan',
   apellidos: 'Pérez',
-  vocativo: 'Sr' as any,
+  vocativo: 'SR' as any,
   cargo: 'Gerente General',
   correo: 'jperez@empresa.com',
   telefono: '999888777',
@@ -33,60 +33,60 @@ describe('modules/contactos/ContactoCard', () => {
 
   it('renders initials', () => {
     render(<ContactoCard contacto={baseContacto} />)
-    expect(screen.getByText('JP')).toBeInTheDocument()
+    expect(screen.getAllByText('JP').length).toBeGreaterThan(0)
   })
 
   it('renders full name with vocativo', () => {
     render(<ContactoCard contacto={baseContacto} />)
-    expect(screen.getByText('Sr. Juan Pérez')).toBeInTheDocument()
+    expect(screen.getAllByText('Sr. Juan Pérez').length).toBeGreaterThan(0)
   })
 
   it('renders full name without vocativo', () => {
     const c: Contacto = { ...baseContacto, vocativo: undefined }
     render(<ContactoCard contacto={c} />)
-    expect(screen.getByText('Juan Pérez')).toBeInTheDocument()
+    expect(screen.getAllByText('Juan Pérez').length).toBeGreaterThan(0)
   })
 
   it('renders cargo', () => {
     render(<ContactoCard contacto={baseContacto} />)
-    expect(screen.getByText('Gerente General')).toBeInTheDocument()
+    expect(screen.getAllByText('Gerente General').length).toBeGreaterThan(0)
   })
 
   it('renders organizacion_nombre', () => {
     render(<ContactoCard contacto={baseContacto} />)
-    expect(screen.getByText('Empresa SAC')).toBeInTheDocument()
+    expect(screen.getAllByText('Empresa SAC').length).toBeGreaterThan(0)
   })
 
   it('renders correo', () => {
     render(<ContactoCard contacto={baseContacto} />)
-    expect(screen.getByText('jperez@empresa.com')).toBeInTheDocument()
+    expect(screen.getAllByText('jperez@empresa.com').length).toBeGreaterThan(0)
   })
 
   it('renders telefono', () => {
     render(<ContactoCard contacto={baseContacto} />)
-    expect(screen.getByText('999888777')).toBeInTheDocument()
+    expect(screen.getAllByText('999888777').length).toBeGreaterThan(0)
   })
 
   it('renders fallback for missing telefono', () => {
     const c: Contacto = { ...baseContacto, telefono: null }
     render(<ContactoCard contacto={c} />)
-    expect(screen.getByText('—')).toBeInTheDocument()
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0)
   })
 
   it('shows Activo badge for VIGENTE estado_correo', () => {
     render(<ContactoCard contacto={baseContacto} />)
-    expect(screen.getByText('Activo')).toBeInTheDocument()
+    expect(screen.getAllByText('Activo').length).toBeGreaterThan(0)
   })
 
   it('shows Inactivo badge for VENCIDO estado_correo', () => {
     const c: Contacto = { ...baseContacto, estado_correo: 'VENCIDO' }
     render(<ContactoCard contacto={c} />)
-    expect(screen.getByText('Inactivo')).toBeInTheDocument()
+    expect(screen.getAllByText('Inactivo').length).toBeGreaterThan(0)
   })
 
   it('calls router.push when clicked', async () => {
     render(<ContactoCard contacto={baseContacto} />)
-    const row = screen.getByText('JP').closest('tr')
+    const row = screen.getAllByText('JP')[0].closest('tr')
     expect(row).toBeInTheDocument()
     if (row) {
       await userEvent.click(row)

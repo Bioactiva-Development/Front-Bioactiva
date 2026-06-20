@@ -8,7 +8,7 @@ const VALID_DATA = {
   cargo: 'Gerente de Proyectos',
   correo: 'rperales@altomayo.com.pe',
   correo2: 'rperales2@altomayo.com.pe',
-  telefono: '+51 997 654 321',
+  telefono: '997654321',
   comentarios: 'Contacto principal',
   idOrganizacion: 'org-001',
 }
@@ -100,22 +100,22 @@ describe('contactos/contacto.schema', () => {
     ).toMatchObject({ telefono: '' })
   })
 
-  it('rejects telefono exceeding 20 characters', () => {
+  it('rejects telefono exceeding 9 characters', () => {
     expect(() =>
-      contactoSchema.parse({ ...VALID_DATA, telefono: '+1 555 1234 5678 9012' })
-    ).toThrow('Máximo 20 caracteres')
+      contactoSchema.parse({ ...VALID_DATA, telefono: '1234567890' })
+    ).toThrow('Ingresa los 9 dígitos')
   })
 
-  it('rejects telefono without international prefix', () => {
-    expect(() =>
+  it('accepts telefono with 9 digits (no prefix)', () => {
+    expect(
       contactoSchema.parse({ ...VALID_DATA, telefono: '987654321' })
-    ).toThrow('formato internacional')
+    ).toMatchObject({ telefono: '987654321' })
   })
 
   it('rejects telefono with parentheses', () => {
     expect(() =>
       contactoSchema.parse({ ...VALID_DATA, telefono: '+(51)987654321' })
-    ).toThrow('formato internacional')
+    ).toThrow('Ingresa los 9 dígitos')
   })
 
   it('accepts optional comentarios as empty string', () => {

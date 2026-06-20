@@ -55,6 +55,10 @@ jest.mock('lucide-react', () => ({
   Loader2: () => <div data-testid="icon-loader" />,
   Save: () => <div data-testid="icon-save" />,
   ArrowLeft: () => <div data-testid="icon-arrow-left" />,
+  FileText: () => <div data-testid="icon-file-text" />,
+  User: () => <div data-testid="icon-user" />,
+  DollarSign: () => <div data-testid="icon-dollar" />,
+  StickyNote: () => <div data-testid="icon-sticky-note" />,
 }))
 
 const baseCotizacion: Cotizacion = {

@@ -5,6 +5,7 @@ import { RolUsuario } from '@/types/enums'
 
 const mockLogout = jest.fn()
 const mockToggleCollapsed = jest.fn()
+const mockCloseSidebar = jest.fn()
 
 const mockUseAuthStore = jest.fn()
 const mockUseUIStore = jest.fn()
@@ -25,6 +26,19 @@ jest.mock('next/navigation', () => ({
   usePathname: (...args: unknown[]) => mockUsePathname(...args),
   useSearchParams: () => new URLSearchParams(),
 }))
+
+beforeAll(() => {
+  window.matchMedia = jest.fn().mockImplementation((query: string) => ({
+    matches: query.includes('min-width: 1024px'),
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  }))
+})
 
 const adminUser = {
   id: 1,
@@ -47,6 +61,7 @@ function defaultMocks(overrides: Record<string, unknown> = {}) {
   mockUseUIStore.mockReturnValue({
     sidebarCollapsed: false,
     toggleCollapsed: mockToggleCollapsed,
+    closeSidebar: mockCloseSidebar,
     sidebarOpen: true,
     ...overrides,
   })
@@ -62,55 +77,67 @@ describe('layout/Sidebar', () => {
 
   it('renders when sidebarOpen is true', () => {
     render(<Sidebar />)
-    expect(screen.getByText('BioActiva')).toBeInTheDocument()
-    expect(screen.getByText('CRM')).toBeInTheDocument()
+    expect(screen.getAllByText('BioActiva').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('CRM').length).toBeGreaterThan(0)
   })
 
-  it('returns null when sidebarOpen is false', () => {
+  it('renders hidden overlay when sidebarOpen is false', () => {
     mockUseUIStore.mockReturnValue({
       sidebarCollapsed: false,
       toggleCollapsed: mockToggleCollapsed,
+      closeSidebar: mockCloseSidebar,
       sidebarOpen: false,
     })
-    const { container } = render(<Sidebar />)
-    expect(container.innerHTML).toBe('')
+    render(<Sidebar />)
+    const overlays = document.querySelectorAll('.fixed')
+    const overlay = Array.from(overlays).find(el =>
+      el.className.includes('pointer-events-none')
+    )
+    expect(overlay).toBeTruthy()
+    expect(overlay).toHaveClass('opacity-0', 'pointer-events-none')
   })
 
   it('shows admin-only nav items for admin users', () => {
     render(<Sidebar />)
-    expect(screen.getByText('Gestión de Usuarios')).toBeInTheDocument()
+    expect(screen.getAllByText('Gestión de Usuarios').length).toBeGreaterThan(0)
   })
 
   it('hides admin-only nav items for non-admin users', () => {
     mockUseAuthStore.mockReturnValue({ usuario: workerUser })
     render(<Sidebar />)
-    expect(screen.queryByText('Gestión de Usuarios')).not.toBeInTheDocument()
+    expect(screen.queryAllByText('Gestión de Usuarios').length).toBe(0)
   })
 
   it('renders all common nav items', () => {
     render(<Sidebar />)
-    expect(screen.getByText('Dashboard')).toBeInTheDocument()
-    expect(screen.getByText('Organizaciones')).toBeInTheDocument()
-    expect(screen.getByText('Contactos')).toBeInTheDocument()
-    expect(screen.getByText('Pipeline')).toBeInTheDocument()
-    expect(screen.getByText('Cotizaciones')).toBeInTheDocument()
-    expect(screen.getByText('Importar / Exportar')).toBeInTheDocument()
-    expect(screen.getByText('Notificaciones')).toBeInTheDocument()
-    expect(screen.getByText('Plantillas')).toBeInTheDocument()
+    expect(screen.getAllByText('Dashboard').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Organizaciones').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Contactos').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Pipeline').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Cotizaciones').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Importar / Exportar').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Notificaciones').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Plantillas').length).toBeGreaterThan(0)
   })
 
   it('highlights active nav item based on pathname', () => {
     mockUsePathname.mockReturnValue('/pipeline')
     render(<Sidebar />)
-    const activeLink = screen.getByText('Pipeline').closest('a')
-    expect(activeLink).toHaveClass('bg-emerald-50', 'text-emerald-700')
+    const activeLinks = screen.getAllByText('Pipeline')
+    activeLinks.forEach(link => {
+      const anchor = link.closest('a')
+      expect(anchor).toHaveClass('bg-emerald-50', 'text-emerald-700')
+    })
   })
 
   it('does not highlight non-matching nav items', () => {
     mockUsePathname.mockReturnValue('/organizaciones')
     render(<Sidebar />)
-    const dashboardLink = screen.getByText('Dashboard').closest('a')
-    expect(dashboardLink).not.toHaveClass('bg-emerald-50')
+    const dashboardLinks = screen.getAllByText('Dashboard')
+    dashboardLinks.forEach(link => {
+      const anchor = link.closest('a')
+      expect(anchor).not.toHaveClass('bg-emerald-50')
+    })
   })
 
   it('renders collapsed sidebar with collapsed class', () => {
@@ -130,12 +157,12 @@ describe('layout/Sidebar', () => {
 
   it('renders logout button with text when expanded', () => {
     render(<Sidebar />)
-    expect(screen.getByText('Cerrar sesión')).toBeInTheDocument()
+    expect(screen.getAllByText('Cerrar sesión').length).toBeGreaterThan(0)
   })
 
   it('calls logout when logout button is clicked', async () => {
     render(<Sidebar />)
-    await userEvent.click(screen.getByText('Cerrar sesión'))
+    await userEvent.click(screen.getAllByText('Cerrar sesión')[0])
     expect(mockLogout).toHaveBeenCalledTimes(1)
   })
 
