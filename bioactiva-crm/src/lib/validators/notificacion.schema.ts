@@ -24,7 +24,11 @@ export const recordatorioSchema = z.object({
     .number({ error: 'Los minutos de anticipación son obligatorios' })
     .int('Los minutos deben ser un número entero')
     .min(1, 'El mínimo es 1 minuto')
-    .max(120, 'El máximo es 120 minutos'),
+    .max(120, 'El máximo es 120 minutos')
+    .refine(
+      (value) => [15, 30, 60].includes(value),
+      'Seleccione 15 minutos, 30 minutos o 1 hora'
+    ),
   idTemplate: templateIdSchema,
   asunto: z
     .string()

@@ -4,15 +4,25 @@ import {
 } from '@/lib/validators/notificacion.schema'
 
 describe('notificacion schemas', () => {
-  it('accepts a reminder with 1 to 120 minutes', () => {
+  it.each([15, 30, 60])('accepts the supported reminder time %i', (minutosAntes) => {
     const result = recordatorioSchema.parse({
       idLead: 10,
-      minutosAntes: 30,
+      minutosAntes,
       idTemplate: 0,
       asunto: 'Recordatorio',
       cuerpo: 'Cuerpo',
     })
-    expect(result.idLead).toBe(10)
+    expect(result.minutosAntes).toBe(minutosAntes)
+  })
+
+  it('rejects custom reminder times', () => {
+    expect(() => recordatorioSchema.parse({
+      idLead: 10,
+      minutosAntes: 45,
+      idTemplate: 0,
+      asunto: 'Recordatorio',
+      cuerpo: 'Cuerpo',
+    })).toThrow('Seleccione 15 minutos, 30 minutos o 1 hora')
   })
 
   it('rejects reminders outside the documented range', () => {
