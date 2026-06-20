@@ -508,15 +508,19 @@ export function LeadDetalle({
                 Las cotizaciones aceptadas o rechazadas sincronizan el cierre del lead.
               </p>
             </div>
-            <button
-              onClick={() => router.push(`/cotizaciones/nueva?lead=${lead.id}`)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
-                font-semibold bg-emerald-600 hover:bg-emerald-700
-                text-white transition-colors shrink-0"
-            >
-              <Plus size={14} />
-              Nueva cotización
-            </button>
+            {/* El backend permite una sola cotización por lead: el botón se oculta
+                cuando ya existe una. */}
+            {cotizaciones.length === 0 && (
+              <button
+                onClick={() => router.push(`/cotizaciones/nueva?lead=${lead.id}`)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
+                  font-semibold bg-emerald-600 hover:bg-emerald-700
+                  text-white transition-colors shrink-0"
+              >
+                <Plus size={14} />
+                Nueva cotización
+              </button>
+            )}
           </div>
 
           {loadingCotizaciones ? (
