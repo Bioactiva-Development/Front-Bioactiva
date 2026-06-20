@@ -35,7 +35,6 @@ export interface ContactoFormData {
 
 export interface ContactoFiltros {
     search?: string
-    idOrganizacion?: string
     page?: number
     limit?: number
 }

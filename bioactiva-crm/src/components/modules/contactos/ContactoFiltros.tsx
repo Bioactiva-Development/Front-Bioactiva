@@ -4,7 +4,6 @@ import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { Search, X } from 'lucide-react'
 import { ContactoFiltros as FiltrosType } from '@/types/contacto.types'
 import { useDebounce } from '@/hooks/shared/useDebounce'
-import { useOrganizaciones } from '@/hooks/organizaciones/useOrganizaciones'
 
 interface ContactoFiltrosProps {
   filtros:   FiltrosType
@@ -22,8 +21,7 @@ export function ContactoFiltros({
   const filtrosRef = useRef(filtros)
   useLayoutEffect(() => { filtrosRef.current = filtros })
 
-  const { data: orgsData } = useOrganizaciones({ limit: 100 })
-  const organizaciones     = orgsData?.data ?? []
+
 
   useEffect(() => {
     const newSearch = debouncedSearch || undefined
@@ -33,20 +31,14 @@ export function ContactoFiltros({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch])
 
-  const handleOrganizacion = (value: string) => {
-    onChange({
-      ...filtros,
-      idOrganizacion: value || undefined,
-      page: 1,
-    })
-  }
+
 
   const handleLimpiar = () => {
     setSearchLocal('')
     onLimpiar()
   }
 
-  const hayFiltrosActivos = filtros.search || filtros.idOrganizacion
+  const hayFiltrosActivos = filtros.search
 
   return (
     <div className="space-y-2">
@@ -60,7 +52,7 @@ export function ContactoFiltros({
           type="text"
           value={searchLocal}
           onChange={(e) => setSearchLocal(e.target.value)}
-          placeholder="Buscar por nombre, email, cargo, organización..."
+          placeholder="Buscar por nombre de contacto..."
           className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200
             bg-white text-gray-900 text-sm outline-none focus:border-emerald-400
             placeholder:text-gray-400 transition-colors"
@@ -77,20 +69,7 @@ export function ContactoFiltros({
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <select
-          value={filtros.idOrganizacion ?? ''}
-          onChange={(e) => handleOrganizacion(e.target.value)}
-          className="px-3 py-2 rounded-xl border border-gray-200 bg-white
-            text-sm outline-none focus:border-emerald-400 text-gray-600
-            transition-colors cursor-pointer"
-        >
-          <option value="">Todas las organizaciones</option>
-          {organizaciones.map((org) => (
-            <option key={org.id} value={org.id}>
-              {org.nombre}
-            </option>
-          ))}
-        </select>
+
 
         {hayFiltrosActivos && (
           <button
