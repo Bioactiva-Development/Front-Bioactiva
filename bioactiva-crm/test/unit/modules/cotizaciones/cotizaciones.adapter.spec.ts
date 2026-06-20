@@ -132,7 +132,6 @@ describe('cotizaciones.adapter', () => {
         id_lead: 2,
         id_remitente: 1,
         fecha_cot: '2026-06-02',
-        dirigido: 'Valeria Torres',
         cliente: 'Banco de Crédito del Perú S.A.',
         producto: 'Ley 30309',
         nombre_servicio: 'Deducción I+D+i',
@@ -144,15 +143,14 @@ describe('cotizaciones.adapter', () => {
 
       const result = mapCotizacionFormToBackend(formData)
 
+      // dirigido/cliente/nombreRemitente los deriva el backend: no se envían al crear.
       expect(result).toEqual({
         fechaCot: '2026-06-02',
-        dirigido: 'Valeria Torres',
         nombreServicio: 'Deducción I+D+i',
         monto: '6500.00',
         tipo: 'PEN',
         idLead: 2,
         idRemitente: 1,
-        cliente: 'Banco de Crédito del Perú S.A.',
         producto: 'Ley 30309',
         observacion: 'Cotización inicial',
         linkPropuesta: 'https://drive.google.com',
@@ -163,12 +161,12 @@ describe('cotizaciones.adapter', () => {
   describe('mapCotizacionUpdateToBackend', () => {
     it('only includes defined fields', () => {
       const result = mapCotizacionUpdateToBackend({
-        dirigido: 'New client',
+        cliente: 'New client',
         monto: 9999.5,
       })
 
       expect(result).toEqual({
-        dirigido: 'New client',
+        cliente: 'New client',
         monto: '9999.50',
       })
     })
@@ -176,7 +174,6 @@ describe('cotizaciones.adapter', () => {
     it('omits undefined fields', () => {
       const result = mapCotizacionUpdateToBackend({
         fecha_cot: undefined,
-        dirigido: undefined,
         cliente: undefined,
         producto: undefined,
         nombre_servicio: undefined,

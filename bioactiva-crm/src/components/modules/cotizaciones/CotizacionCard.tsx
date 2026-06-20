@@ -65,8 +65,8 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
           <p className="text-xs font-semibold text-gray-700">
             {formatMonto(cotizacion.monto, cotizacion.tipo)}
           </p>
-          {cotizacion.dirigido && (
-            <p className="text-xs text-gray-400 truncate">{cotizacion.dirigido}</p>
+          {cotizacion.contacto_nombre && (
+            <p className="text-xs text-gray-400 truncate">{cotizacion.contacto_nombre}</p>
           )}
           <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide
             ${ESTADO_COLORS[cotizacion.estado]}`}>
@@ -92,7 +92,7 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
       {/* Contacto — oculto en móvil, visible en sm+ */}
       <td className="hidden sm:table-cell px-4 py-3">
         <p className="text-sm font-semibold text-gray-800">
-          {cotizacion.dirigido}
+          {cotizacion.contacto_nombre ?? '—'}
         </p>
         {cotizacion.organizacion_nombre && (
           <p className="text-xs text-gray-400 mt-0.5">

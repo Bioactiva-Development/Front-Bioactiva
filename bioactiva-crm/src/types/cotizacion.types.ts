@@ -33,7 +33,6 @@ export interface CotizacionFormData {
   id_lead:         number
   id_remitente:    number
   fecha_cot:       string
-  dirigido:        string
   cliente?:        string
   producto?:       string
   nombre_remitente?: string

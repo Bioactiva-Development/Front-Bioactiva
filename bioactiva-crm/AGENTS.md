@@ -145,9 +145,10 @@ Contrato de `POST /activities`:
 
 Contrato de `POST /quotations`:
 
-- Body: `fechaCot`, `dirigido`, `nombreServicio`, `monto` como string decimal, `tipo`, `idLead`, `idRemitente`, opcionales `cliente`, `producto`, `observacion`, `linkPropuesta`.
+- Body de creación: `fechaCot`, `nombreServicio`, `monto` como string decimal, `tipo`, `idLead`, `idRemitente`, opcionales `producto`, `observacion`, `linkPropuesta`.
+- NO enviar en la creación `dirigido` (lo deriva del contacto del lead), `cliente` (lo deriva de la organización) ni `nombreRemitente` (snapshot automático). `idAuthor` lo toma del JWT.
 - Nuevas cotizaciones inician en `PENDIENTE`; para enviar/aceptar/rechazar usar lifecycle.
-- `PATCH /quotations/:id` no permite cambiar `estado`, `idLead` ni `idRemitente`.
+- `PATCH /quotations/:id` no permite cambiar `estado`, `idLead` ni `idRemitente`; sí permite override de `dirigido` y `cliente`.
 - Backend no permite modificar cotizaciones terminales `ACEPTADA` o `RECHAZADA`.
 - `DELETE /quotations/:id` es soft delete.
 - `idRemitente` debe pertenecer a un usuario real del backend. Cargar remitentes desde `GET /users`; no hardcodear `Luis Torres`, `Administracion` u otros IDs.
