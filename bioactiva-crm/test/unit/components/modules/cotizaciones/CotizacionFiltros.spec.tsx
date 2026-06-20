@@ -76,38 +76,7 @@ describe('modules/cotizaciones/CotizacionFiltros', () => {
     })
   })
 
-  it('renders search input with placeholder Buscar por código, contacto, servicio...', () => {
-    render(<CotizacionFiltros {...defaultProps} />)
-    expect(screen.getByPlaceholderText('Buscar por código, contacto, servicio...')).toBeInTheDocument()
-  })
-
-  it('shows clear X button when search is not empty', () => {
-    const filtros: FiltrosType = { ...baseFiltros, search: 'test' }
-    render(<CotizacionFiltros {...defaultProps} filtros={filtros} />)
-    expect(screen.getByTestId('icon-x')).toBeInTheDocument()
-  })
-
-  it('hidden clear X button when search is empty', () => {
-    render(<CotizacionFiltros {...defaultProps} filtros={baseFiltros} />)
-    expect(screen.queryByTestId('icon-x')).not.toBeInTheDocument()
-  })
-
-  it('clicking clear X clears search input value', async () => {
-    const filtros: FiltrosType = { ...baseFiltros, search: 'test' }
-    render(<CotizacionFiltros {...defaultProps} filtros={filtros} />)
-    const input = screen.getByPlaceholderText('Buscar por código, contacto, servicio...') as HTMLInputElement
-    expect(input.value).toBe('test')
-    await userEvent.click(screen.getByTestId('icon-x').closest('button')!)
-    expect(input.value).toBe('')
-  })
-
-  it('shows Loader2 when isLoading is true and search is not empty', () => {
-    const filtros: FiltrosType = { ...baseFiltros, search: 'test' }
-    render(<CotizacionFiltros {...defaultProps} filtros={filtros} isLoading={true} />)
-    expect(screen.getByTestId('icon-loader')).toBeInTheDocument()
-  })
-
-  it('shows Search icon when isLoading is false', () => {
+  it('shows OrgBuscador instead of search input', () => {
     render(<CotizacionFiltros {...defaultProps} />)
     expect(screen.getByTestId('org-buscador')).toBeInTheDocument()
   })

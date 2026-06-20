@@ -86,7 +86,7 @@ describe('modules/contactos/ContactoForm', () => {
     })
 
     it('renders vocativo select with enum options', () => {
-      expect(screen.getByLabelText('Vocativo')).toBeInTheDocument()
+      expect(screen.getByLabelText('Vocativo *')).toBeInTheDocument()
       expect(screen.getByText('Sr.')).toBeInTheDocument()
       expect(screen.getByText('Sra.')).toBeInTheDocument()
       expect(screen.getByText('Srta.')).toBeInTheDocument()
@@ -100,7 +100,7 @@ describe('modules/contactos/ContactoForm', () => {
     })
 
     it('renders apellidos input', () => {
-      const input = screen.getByLabelText('Apellidos *')
+      const input = screen.getByLabelText('Apellidos Opcional')
       expect(input).toBeInTheDocument()
       expect(input).toHaveAttribute('type', 'text')
       expect(input).toHaveAttribute('placeholder', 'Apellidos del contacto')

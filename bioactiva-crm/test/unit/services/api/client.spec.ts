@@ -167,7 +167,7 @@ describe('apiClient', () => {
     })
 
     it('forces logout on jwt expired outside auth/login and invitations', async () => {
-      await expect(resOnRejected(createError({ message: 'jwt expired', response: { status: 400, data: { message: 'jwt expired' } } }))).rejects.toThrow('jwt expired')
+      await expect(resOnRejected(createError({ message: 'jwt expired', response: { status: 401, data: { message: 'jwt expired' } }, config: { headers: {}, url: '/test', _retry: true } }))).rejects.toThrow('jwt expired')
       expect(mockClearSession).toHaveBeenCalled()
     })
 

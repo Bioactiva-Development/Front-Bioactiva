@@ -74,7 +74,7 @@ describe('modules/plantillas/PlantillaCard', () => {
   it('calls onEliminar when delete button is clicked', async () => {
     const onEliminar = jest.fn()
     render(<PlantillaCard plantilla={basePlantilla} onVer={jest.fn()} onEditar={jest.fn()} onEliminar={onEliminar} />)
-    await userEvent.click(screen.getAllByTitle('Eliminar')[0])
+    await userEvent.click(screen.getAllByTitle('Eliminar o desactivar')[0])
     expect(onEliminar).toHaveBeenCalledWith(basePlantilla)
   })
 })

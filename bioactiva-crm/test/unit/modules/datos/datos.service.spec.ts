@@ -59,27 +59,19 @@ describe('datos/datos.service (API mode)', () => {
 
       const result = await datosService.exportar({
         entidad: 'contactos',
-        busqueda: '',
       })
       expect(getMock).toHaveBeenCalledWith('/api/datos/exportar', {
-        params: { entidad: 'contactos', busqueda: '' },
+        params: { entidad: 'contactos' },
       })
       expect(result.data).toHaveLength(1)
     })
   })
 
   describe('contarExportacion', () => {
-    it('fetches export count', async () => {
-      getMock.mockResolvedValueOnce({ data: { total: 50 } })
-
-      const result = await datosService.contarExportacion({
+    it('throws COUNT_NOT_SUPPORTED', async () => {
+      await expect(datosService.contarExportacion({
         entidad: 'leads',
-        busqueda: '',
-      })
-      expect(getMock).toHaveBeenCalledWith('/api/datos/exportar/contar', {
-        params: { entidad: 'leads', busqueda: '' },
-      })
-      expect(result.total).toBe(50)
+      })).rejects.toThrow('COUNT_NOT_SUPPORTED')
     })
   })
 })

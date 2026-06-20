@@ -86,10 +86,13 @@ describe('notificaciones hooks', () => {
       defaultOptions: { queries: { retry: false } },
     })
     const scheduledKey = ['notificaciones', 'scheduled', { estado: 'PROGRAMADA' }]
-    client.setQueryData(scheduledKey, [
-      { id: 1, estado: 'PROGRAMADA' },
-      { id: 2, estado: 'PROGRAMADA' },
-    ])
+    client.setQueryData(scheduledKey, {
+      data: [
+        { id: 1, estado: 'PROGRAMADA' },
+        { id: 2, estado: 'PROGRAMADA' },
+      ],
+      meta: { page: 1, limit: 10, total: 2, totalPages: 1 },
+    })
 
     const localWrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
@@ -100,9 +103,12 @@ describe('notificaciones hooks', () => {
 
     await act(async () => { await result.current.mutateAsync(1) })
 
-    expect(client.getQueryData(scheduledKey)).toEqual([
-      { id: 2, estado: 'PROGRAMADA' },
-    ])
+    expect(client.getQueryData(scheduledKey)).toEqual({
+      data: [
+        { id: 2, estado: 'PROGRAMADA' },
+      ],
+      meta: { page: 1, limit: 10, total: 1, totalPages: 1 },
+    })
   })
 
   it('restores cached scheduled notifications when cancellation is rejected', async () => {
@@ -113,10 +119,13 @@ describe('notificaciones hooks', () => {
       defaultOptions: { queries: { retry: false } },
     })
     const scheduledKey = ['notificaciones', 'scheduled', { estado: 'PROGRAMADA' }]
-    const scheduled = [
-      { id: 1, estado: 'PROGRAMADA' },
-      { id: 2, estado: 'PROGRAMADA' },
-    ]
+    const scheduled = {
+      data: [
+        { id: 1, estado: 'PROGRAMADA' },
+        { id: 2, estado: 'PROGRAMADA' },
+      ],
+      meta: { page: 1, limit: 10, total: 2, totalPages: 1 },
+    }
     client.setQueryData(scheduledKey, scheduled)
 
     const localWrapper = ({ children }: { children: React.ReactNode }) => (

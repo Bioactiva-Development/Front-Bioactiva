@@ -79,15 +79,15 @@ describe('modules/contactos/ContactoDetalle', () => {
     expect(screen.getByText('JP')).toBeInTheDocument()
   })
 
-  it('renders Activo badge when estado_correo is VIGENTE', () => {
+  it('renders Vigente badge when estado_correo is VIGENTE', () => {
     render(<ContactoDetalle {...defaultProps} />)
-    expect(screen.getByText('Activo')).toBeInTheDocument()
+    expect(screen.getByText('Vigente')).toBeInTheDocument()
   })
 
-  it('renders Inactivo badge when estado_correo is VENCIDO', () => {
+  it('renders Vencido badge when estado_correo is VENCIDO', () => {
     const c: Contacto = { ...baseContacto, estado_correo: 'VENCIDO' }
     render(<ContactoDetalle {...defaultProps} contacto={c} />)
-    expect(screen.getByText('Inactivo')).toBeInTheDocument()
+    expect(screen.getByText('Vencido')).toBeInTheDocument()
   })
 
   it('renders Volver button that navigates to contactos route', async () => {
@@ -103,27 +103,27 @@ describe('modules/contactos/ContactoDetalle', () => {
     expect(onEditar).toHaveBeenCalled()
   })
 
-  it('renders Marcar inactivo when estado is VIGENTE', () => {
+  it('renders Marcar como Vencido when estado is VIGENTE', () => {
     render(<ContactoDetalle {...defaultProps} />)
-    expect(screen.getByText('Marcar inactivo')).toBeInTheDocument()
+    expect(screen.getByText('Marcar como Vencido')).toBeInTheDocument()
   })
 
-  it('renders Marcar activo when estado is VENCIDO', () => {
+  it('renders Marcar como Vigente when estado is VENCIDO', () => {
     const c: Contacto = { ...baseContacto, estado_correo: 'VENCIDO' }
     render(<ContactoDetalle {...defaultProps} contacto={c} />)
-    expect(screen.getByText('Marcar activo')).toBeInTheDocument()
+    expect(screen.getByText('Marcar como Vigente')).toBeInTheDocument()
   })
 
   it('clicking onCambiarEstado button calls onCambiarEstado', async () => {
     const onCambiarEstado = jest.fn()
     render(<ContactoDetalle {...defaultProps} onCambiarEstado={onCambiarEstado} />)
-    await userEvent.click(screen.getByText('Marcar inactivo'))
+    await userEvent.click(screen.getByText('Marcar como Vencido'))
     expect(onCambiarEstado).toHaveBeenCalled()
   })
 
   it('shows loader when isCambiandoEstado is true', () => {
     render(<ContactoDetalle {...defaultProps} isCambiandoEstado={true} />)
-    expect(screen.getByRole('button', { name: /marcar inactivo/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /marcar como vencido/i })).toBeDisabled()
   })
 
   it('renders organizacion_nombre', () => {

@@ -57,9 +57,10 @@ describe('contactos/contacto.schema', () => {
     ).toMatchObject({ apellidos: '' })
   })
 
-  it('accepts optional vocativo', () => {
-    const result = contactoSchema.parse({ ...VALID_DATA, vocativo: undefined })
-    expect(result.vocativo).toBeUndefined()
+  it('rejects missing vocativo', () => {
+    expect(() =>
+      contactoSchema.parse({ ...VALID_DATA, vocativo: undefined })
+    ).toThrow('El campo Vocativo es obligatorio')
   })
 
   it('accepts valid vocativo values', () => {
@@ -141,9 +142,11 @@ describe('contactos/contacto.schema', () => {
       nombres: 'Juan',
       correo: 'juan@example.com',
       idOrganizacion: 'org-001',
+      vocativo: Vocativo.SR,
     })
     expect(result.nombres).toBe('Juan')
     expect(result.correo).toBe('juan@example.com')
     expect(result.idOrganizacion).toBe('org-001')
+    expect(result.vocativo).toBe(Vocativo.SR)
   })
 })
