@@ -108,15 +108,18 @@ Contrato de `POST /leads` y `PATCH /leads/:id`:
 - El estado inicial backend siempre es `EN_PROSPECTO`; la UI crea leads siempre en `En prospecto`.
 - No hardcodear responsables: siempre cargar usuarios activos desde `GET /users`.
 
-Filtro basico del pipeline:
+Filtros del pipeline (server-side, soportados por `GET /leads`):
 
-- Busqueda comercial.
-- Estado.
-- Encargado.
-- Canal.
-- Solo con alerta activa.
+- Buscador de organizacion: el campo de busqueda es un selector que mapea la organizacion elegida a `idOrg`. No es busqueda libre por texto.
+- Estado (`estado`).
+- Encargado (`idEncargado`).
+- Sector (`sector`): el backend de leads ya soporta filtrar por el sector de la organizacion vinculada. Se envia el valor del enum `Sector` (ej. `TECNOLOGIA`).
+- Rango de fechas de creacion (`fechaDesde`, `fechaHasta`, con `fechaHasta >= fechaDesde`).
+- Semaforo de actividades (`alertaActividad`), ver abajo.
 
-No reintroducir filtros de sector, tipo de organizacion, tamano o fecha de creacion en pipeline si el backend de leads no los soporta.
+El semaforo del lead esta atado al campo backend `activityAlert` y al filtro `alertaActividad`. Ambos usan el mismo enum, de menor a mayor severidad: `SIN_ACTIVIDADES` < `PENDIENTE` < `EN_RIESGO` < `POR_VENCER`. Omitir el filtro trae todos los leads; valores invalidos devuelven 400. No usar los valores antiguos `VERDE/AMARILLO/ROJO` ni `TODAS/VENCIDAS`.
+
+No reintroducir filtros de tipo de organizacion o tamano en pipeline si el backend de leads no los soporta.
 
 ### Actividades
 

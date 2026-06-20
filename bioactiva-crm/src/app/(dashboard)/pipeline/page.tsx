@@ -2,14 +2,16 @@
 
 import { Suspense, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { AlertCircle, AlertTriangle, Clock, Loader2, Plus, User } from 'lucide-react'
+import { AlertCircle, Clock, Loader2, Plus, User } from 'lucide-react'
+import { SEMAFORO_UI } from '@/lib/utils/semaforo.utils'
 import { useMoverLeadPipeline, usePipelineColumns } from '@/hooks/pipeline/useLeads'
 import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
 import { KanbanBoard } from '@/components/modules/pipeline/KanbanBoard'
 import { LeadFiltros } from '@/components/modules/pipeline/LeadFiltros'
 import { LeadDrawer } from '@/components/modules/pipeline/LeadDrawer'
 import { LeadFiltros as FiltrosType, Lead } from '@/types/lead.types'
-import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
+import { EstadoCot, LeadState, Sector, TipoMoneda } from '@/types/enums'
+import { ActivityAlertFilter } from '@/types/lead.types'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 
 const COLUMNAS_MOVIL = [
@@ -27,27 +29,32 @@ function LeadListItem({ lead, onClick }: { lead: Lead; onClick: (lead: Lead) => 
   const { data: cotizaciones = [] } = useCotizacionesPorLead(lead.id)
   const cot = cotizaciones.find((c) => c.estado !== EstadoCot.Rechazada) ?? null
 
+  // Semáforo de actividades (backend: activityAlert): verde → amarillo → naranja → rojo.
+  const sem = lead.activity_alert ? SEMAFORO_UI[lead.activity_alert] : null
+
   return (
     <button
       type="button"
       onClick={() => onClick(lead)}
-      className="w-full bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-left
-        hover:border-emerald-200 hover:shadow-md transition-all active:scale-[0.99]"
+      className={`w-full bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-left
+        hover:border-emerald-200 hover:shadow-md transition-all active:scale-[0.99]
+        ${sem ? `border-l-4 ${sem.accent}` : ''}`}
     >
-      {lead.activity_alert === 'ROJO' && (
-        <div className="mb-2">
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase
-            px-2 py-0.5 rounded-full bg-red-100 text-red-600">
-            <AlertTriangle size={9} /> Actividad vencida
-          </span>
-        </div>
-      )}
-      {lead.activity_alert !== 'ROJO' && lead.tiene_alerta && (
-        <div className="mb-2">
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase
-            px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-            <Clock size={9} /> {lead.alerta_motivo ?? '+30 días sin avance'}
-          </span>
+      {(sem || lead.tiene_alerta) && (
+        <div className="mb-2 flex items-center gap-1.5 flex-wrap">
+          {sem && (
+            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase
+              px-2.5 py-1 rounded-full ${sem.pill}`}>
+              <span className={`w-2 h-2 rounded-full ${sem.dot} ${sem.pulse ? 'animate-pulse' : ''}`} />
+              {sem.label}
+            </span>
+          )}
+          {lead.tiene_alerta && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase
+              px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+              <Clock size={9} /> {lead.alerta_motivo ?? '+30 días sin avance'}
+            </span>
+          )}
         </div>
       )}
 
@@ -91,6 +98,11 @@ function filtrosFromParams(sp: URLSearchParams): FiltrosType {
   const idOrg = sp.get('idOrg')
   if (idOrg) filtros.id_org = idOrg
 
+  const sector = sp.get('sector')
+  if (sector && (Object.values(Sector) as string[]).includes(sector)) {
+    filtros.sector = sector as Sector
+  }
+
   const search = sp.get('search')
   if (search) filtros.search = search
 
@@ -100,9 +112,12 @@ function filtrosFromParams(sp: URLSearchParams): FiltrosType {
   const fechaHasta = sp.get('fechaHasta')
   if (fechaHasta) filtros.fecha_hasta = fechaHasta
 
+  const ALERTAS: ActivityAlertFilter[] = [
+    'SIN_ACTIVIDADES', 'PENDIENTE', 'EN_RIESGO', 'POR_VENCER',
+  ]
   const alerta = sp.get('alertaActividad')
-  if (alerta === 'TODAS' || alerta === 'POR_VENCER' || alerta === 'VENCIDAS') {
-    filtros.alerta_actividad = alerta
+  if (alerta && (ALERTAS as string[]).includes(alerta)) {
+    filtros.alerta_actividad = alerta as ActivityAlertFilter
   }
 
   return filtros
@@ -113,6 +128,7 @@ function paramsFromFiltros(filtros: FiltrosType): string {
   if (filtros.estado) sp.set('estado', filtros.estado)
   if (filtros.id_encargado) sp.set('idEncargado', String(filtros.id_encargado))
   if (filtros.id_org) sp.set('idOrg', filtros.id_org)
+  if (filtros.sector) sp.set('sector', filtros.sector)
   if (filtros.search) sp.set('search', filtros.search)
   if (filtros.fecha_desde) sp.set('fechaDesde', filtros.fecha_desde)
   if (filtros.fecha_hasta) sp.set('fechaHasta', filtros.fecha_hasta)

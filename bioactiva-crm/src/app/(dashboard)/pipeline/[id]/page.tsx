@@ -9,7 +9,7 @@ import {
   useEliminarLead,
 } from '@/hooks/pipeline/useLeads'
 import { LeadDetalle } from '@/components/modules/pipeline/LeadDetalle'
-import { LeadForm } from '@/components/modules/pipeline/LeadForm'
+import { LeadForm, LeadEditFocus } from '@/components/modules/pipeline/LeadForm'
 import { LeadFormValues } from '@/lib/validators/lead.schema'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 
@@ -19,6 +19,7 @@ export default function LeadDetallePage() {
   const id                              = Number(params.id)
   const accionInicial                   = searchParams.get('accion')
   const [editando, setEditando]         = useState(accionInicial === 'editar')
+  const [focusField, setFocusField]     = useState<LeadEditFocus | undefined>(undefined)
   const [errorGuardar, setErrorGuardar] = useState<string | null>(null)
 
   const { data: lead, isLoading, isError } = useLead(id)
@@ -84,6 +85,7 @@ export default function LeadDetallePage() {
           onSubmit={handleGuardar}
           isLoading={isPending}
           error={errorGuardar}
+          focusField={focusField}
         />
       </div>
     )
@@ -92,7 +94,7 @@ export default function LeadDetallePage() {
   return (
     <LeadDetalle
       lead={lead}
-      onEditar={() => setEditando(true)}
+      onEditar={(focus) => { setFocusField(focus); setEditando(true) }}
       onEliminar={handleEliminar}
       eliminando={eliminando}
       initialAction={

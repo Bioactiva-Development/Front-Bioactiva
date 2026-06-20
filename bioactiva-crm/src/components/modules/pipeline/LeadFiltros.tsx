@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { ChevronDown, ChevronUp, Filter, Search, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Building2, ChevronDown, ChevronUp, Filter, X } from 'lucide-react'
 import { LeadFiltros as FiltrosType, ActivityAlertFilter } from '@/types/lead.types'
-import { EstadoUsuario, LeadState } from '@/types/enums'
+import { EstadoUsuario, LeadState, Sector } from '@/types/enums'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { UsuarioListItem } from '@/types/usuario.types'
-import { useOrganizaciones } from '@/hooks/organizaciones/useOrganizaciones'
+import { useOrganizaciones, useOrganizacion } from '@/hooks/organizaciones/useOrganizaciones'
+import { useDebounce } from '@/hooks/shared/useDebounce'
+import { formatSector } from '@/lib/utils/organizacion.utils'
 
 interface LeadFiltrosProps {
   filtros:   FiltrosType
@@ -25,30 +27,126 @@ const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
   nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
 })
 
-// Semáforo de actividades (backend: alertaActividad). "Todas" = sin filtro.
+// Semáforo de actividades (backend: alertaActividad). Mismos valores que el
+// campo activityAlert del lead. "Todas" = sin filtro. Severidad de menor a mayor:
+// SIN_ACTIVIDADES < PENDIENTE < EN_RIESGO < POR_VENCER.
 const SEMAFORO_OPCIONES: {
   value: ActivityAlertFilter | undefined
   label: string
   dots: string[]
 }[] = [
-  { value: undefined,    label: 'Todas',      dots: [] },
-  { value: 'POR_VENCER', label: 'Por vencer', dots: ['bg-amber-500'] },
-  { value: 'VENCIDAS',   label: 'Vencidas',   dots: ['bg-red-500'] },
-  { value: 'TODAS',      label: 'Con alerta', dots: ['bg-amber-500', 'bg-red-500'] },
+  { value: undefined,         label: 'Todas',           dots: [] },
+  { value: 'SIN_ACTIVIDADES', label: 'Sin actividades', dots: ['bg-emerald-500'] },
+  { value: 'PENDIENTE',       label: 'Pendiente',       dots: ['bg-yellow-400'] },
+  { value: 'EN_RIESGO',       label: 'En riesgo',       dots: ['bg-orange-500'] },
+  { value: 'POR_VENCER',      label: 'Por vencer',      dots: ['bg-red-500'] },
 ]
 
 // Filtros server-side soportados por GET /leads (sin canal/solo_alerta, que eran
-// client-side). estado, encargado, organización, búsqueda, rango de fechas y el
-// toggle de "por vencer/vencidas" se mandan al backend.
+// client-side). estado, encargado, organización (idOrg), sector, rango de fechas
+// y el semáforo (alertaActividad) se mandan al backend.
 const sanitizeFiltros = (filtros: FiltrosType): FiltrosType => ({
   search: filtros.search,
   estado: filtros.estado,
   id_encargado: filtros.id_encargado,
   id_org: filtros.id_org,
+  sector: filtros.sector,
   alerta_actividad: filtros.alerta_actividad,
   fecha_desde: filtros.fecha_desde,
   fecha_hasta: filtros.fecha_hasta,
 })
+
+// Buscador-selector de organización: el usuario escribe, elige una organización
+// y se mapea su id a filtros.id_org (GET /leads?idOrg=...).
+function OrgBuscador({
+  value,
+  onSelect,
+}: {
+  value?: string
+  onSelect: (idOrg: string | undefined) => void
+}) {
+  const [query, setQuery] = useState('')
+  const [abierto, setAbierto] = useState(false)
+  const debounced = useDebounce(query.trim(), 300)
+  const blurTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const { data: resultados } = useOrganizaciones({
+    search: debounced || undefined,
+    limit: 20,
+  })
+  // Resuelve el nombre de la organización ya seleccionada (p. ej. al cargar la
+  // página desde una URL con idOrg) para mostrarlo en el input.
+  const { data: seleccionada } = useOrganizacion(value ?? '')
+
+  const opciones = resultados?.data ?? []
+  const nombreSeleccionado = seleccionada?.nombre ?? ''
+
+  const elegir = (id: string) => {
+    if (blurTimeout.current) clearTimeout(blurTimeout.current)
+    onSelect(id)
+    setQuery('')
+    setAbierto(false)
+  }
+
+  const limpiar = () => {
+    onSelect(undefined)
+    setQuery('')
+    setAbierto(false)
+  }
+
+  return (
+    <div className="relative">
+      <Building2
+        size={14}
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+      />
+      <input
+        type="text"
+        value={abierto ? query : nombreSeleccionado}
+        onFocus={() => { setAbierto(true); setQuery('') }}
+        onBlur={() => {
+          blurTimeout.current = setTimeout(() => setAbierto(false), 150)
+        }}
+        onChange={(e) => { setQuery(e.target.value); setAbierto(true) }}
+        placeholder="Buscar y seleccionar organización..."
+        className="w-full pl-8 pr-8 py-1.5 rounded-lg border border-gray-100
+          bg-white text-sm text-gray-700 outline-none focus:border-emerald-300
+          placeholder:text-gray-300"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={limpiar}
+          aria-label="Quitar organización"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300
+            hover:text-gray-500 cursor-pointer"
+        >
+          <X size={14} />
+        </button>
+      )}
+
+      {abierto && opciones.length > 0 && (
+        <ul className="absolute z-20 mt-1 w-full max-h-56 overflow-auto rounded-lg
+          border border-gray-100 bg-white shadow-lg py-1">
+          {opciones.map((org) => (
+            <li key={org.id}>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => elegir(org.id)}
+                className={`w-full text-left px-3 py-1.5 text-sm cursor-pointer
+                  hover:bg-emerald-50
+                  ${org.id === value ? 'text-emerald-700 font-medium' : 'text-gray-700'}`}
+              >
+                {org.nombre}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 export function LeadFiltros({
   filtros,
@@ -58,9 +156,6 @@ export function LeadFiltros({
 }: LeadFiltrosProps) {
   const [abierto, setAbierto] = useState(false)
   const [responsables, setResponsables] = useState<ResponsableOption[]>([])
-
-  const { data: orgsData } = useOrganizaciones({ limit: 100 })
-  const organizaciones = orgsData?.data ?? []
 
   const filtrosBasicos = useMemo(() => sanitizeFiltros(filtros), [filtros])
 
@@ -91,6 +186,7 @@ export function LeadFiltros({
     filtrosBasicos.estado ||
     filtrosBasicos.id_encargado ||
     filtrosBasicos.id_org ||
+    filtrosBasicos.sector ||
     filtrosBasicos.alerta_actividad ||
     filtrosBasicos.fecha_desde ||
     filtrosBasicos.fecha_hasta
@@ -166,30 +262,20 @@ export function LeadFiltros({
         <div className="px-4 pb-3 space-y-2.5 border-t border-gray-100">
 
           <div className="pt-2.5">
-            <div className="relative">
-              <Search
-                size={14}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              />
-              <input
-                type="search"
-                value={filtrosBasicos.search ?? ''}
-                onChange={(e) => updateFiltros({
-                  ...filtrosBasicos,
-                  search: e.target.value || undefined,
-                })}
-                placeholder="Buscar por código, organización, contacto, servicio o responsable..."
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-gray-100
-                  bg-white text-sm text-gray-700 outline-none focus:border-emerald-300
-                  placeholder:text-gray-300"
-              />
-            </div>
+            <OrgBuscador
+              value={filtrosBasicos.id_org}
+              onSelect={(idOrg) => updateFiltros({
+                ...filtrosBasicos,
+                id_org: idOrg,
+              })}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div className="space-y-1">
               <label htmlFor="lflt-estado" className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Estado</label>
               <select
+                id="lflt-estado"
                 value={filtrosBasicos.estado ?? ''}
                 onChange={(e) => updateFiltros({
                   ...filtrosBasicos,
@@ -209,6 +295,7 @@ export function LeadFiltros({
             <div className="space-y-1">
               <label htmlFor="lflt-encargado" className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Encargado</label>
               <select
+                id="lflt-encargado"
                 value={filtrosBasicos.id_encargado ?? ''}
                 onChange={(e) => updateFiltros({
                   ...filtrosBasicos,
@@ -228,21 +315,21 @@ export function LeadFiltros({
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="lflt-org" className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Organización</label>
+              <label htmlFor="lflt-sector" className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Sector</label>
               <select
-                id="lflt-org"
-                value={filtrosBasicos.id_org ?? ''}
+                id="lflt-sector"
+                value={filtrosBasicos.sector ?? ''}
                 onChange={(e) => updateFiltros({
                   ...filtrosBasicos,
-                  id_org: e.target.value || undefined,
+                  sector: e.target.value ? (e.target.value as Sector) : undefined,
                 })}
                 className="w-full px-3 py-1.5 rounded-lg border border-gray-100
                   bg-white text-sm text-gray-600 outline-none focus:border-emerald-300
                   cursor-pointer"
               >
-                <option value="">Todas las organizaciones</option>
-                {organizaciones.map((org) => (
-                  <option key={org.id} value={org.id}>{org.nombre}</option>
+                <option value="">Todos los sectores</option>
+                {Object.values(Sector).map((s) => (
+                  <option key={s} value={s}>{formatSector(s)}</option>
                 ))}
               </select>
             </div>

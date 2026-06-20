@@ -29,16 +29,27 @@ const scheduled = {
 describe('notificaciones/notificaciones.service', () => {
   beforeEach(() => jest.clearAllMocks())
 
-  it('lists scheduled notifications with backend filters', async () => {
-    getMock.mockResolvedValueOnce({ data: [scheduled] })
+  it('lists scheduled notifications, unwrapping the paginated { data, meta } response', async () => {
+    getMock.mockResolvedValueOnce({
+      data: {
+        data: [scheduled],
+        meta: { page: 1, limit: 100, total: 1, totalPages: 1 },
+      },
+    })
     const result = await notificacionesService.getProgramadas({
       estado: 'PROGRAMADA',
       idResponsable: 3,
     })
 
     expect(getMock).toHaveBeenCalledWith('/notifications', {
-      params: { estado: 'PROGRAMADA', idResponsable: 3 },
+      params: { estado: 'PROGRAMADA', idResponsable: 3, limit: 100 },
     })
+    expect(result).toEqual([scheduled])
+  })
+
+  it('tolerates a legacy plain-array response for scheduled notifications', async () => {
+    getMock.mockResolvedValueOnce({ data: [scheduled] })
+    const result = await notificacionesService.getProgramadas()
     expect(result).toEqual([scheduled])
   })
 

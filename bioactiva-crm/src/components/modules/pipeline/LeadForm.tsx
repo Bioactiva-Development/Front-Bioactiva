@@ -20,6 +20,15 @@ import { LeadState } from '@/types/enums'
 import { AssignableUsuario } from '@/types/usuario.types'
 import { toLeadDateInputValue } from '@/lib/utils/lead-date.utils'
 
+// Secciones a las que se puede posicionar el formulario al abrir en edición.
+export type LeadEditFocus = 'datos' | 'contexto'
+
+// Cada foco apunta al primer campo editable de la sección equivalente del detalle.
+const FOCUS_ANCHOR: Record<LeadEditFocus, string> = {
+  datos:    'ldf-contacto',
+  contexto: 'ldf-comentarios',
+}
+
 interface LeadFormProps {
   lead?:      Lead
   estadoInicial?: LeadState
@@ -27,6 +36,7 @@ interface LeadFormProps {
   onSubmit:   (data: LeadFormValues) => Promise<void>
   isLoading:  boolean
   error?:     string | null
+  focusField?: LeadEditFocus
 }
 
 interface ResponsableOption {
@@ -82,6 +92,7 @@ export function LeadForm({
   onSubmit,
   isLoading,
   error,
+  focusField,
 }: Readonly<LeadFormProps>) {
   const router    = useRouter()
   const esEdicion = !!lead
@@ -185,6 +196,24 @@ export function LeadForm({
   useEffect(() => {
     reset(getLeadFormDefaults(lead, estadoInicial))
   }, [estadoInicial, lead, reset])
+
+  // Posiciona el formulario en la sección desde la que se pidió editar (al venir
+  // del detalle del lead). Hace scroll y enfoca el primer campo de la sección.
+  useEffect(() => {
+    if (!focusField) return
+    const anchorId = FOCUS_ANCHOR[focusField]
+    const timer = setTimeout(() => {
+      const el = document.getElementById(anchorId) as
+        | HTMLInputElement
+        | HTMLSelectElement
+        | HTMLTextAreaElement
+        | null
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      if (!el.disabled) el.focus({ preventScroll: true })
+    }, 120)
+    return () => clearTimeout(timer)
+  }, [focusField])
 
   useEffect(() => {
     if (!esEdicion || orgSeleccionada) return
@@ -320,6 +349,7 @@ export function LeadForm({
                 <span className="text-gray-400 normal-case font-normal">Opcional</span>
               </label>
               <select
+                id="ldf-contacto"
                 {...register('id_contacto', {
                   setValueAs: (value) => value ? Number(value) : undefined,
                 })}
