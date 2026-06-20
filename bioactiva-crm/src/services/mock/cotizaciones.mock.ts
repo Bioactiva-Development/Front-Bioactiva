@@ -145,7 +145,8 @@ export const mockCreateCotizacion = async (
     id_lead:          data.id_lead,
     id_remitente:     data.id_remitente,
     fecha_cot:        data.fecha_cot,
-    dirigido:         data.dirigido,
+    // El backend deriva `dirigido` del contacto del lead; el form ya no lo envía.
+    dirigido:         '',
     cliente:          data.cliente,
     producto:         data.producto,
     nombre_remitente: 'Administración',

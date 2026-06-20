@@ -2,7 +2,8 @@ import { z } from 'zod'
 import { TipoMoneda } from '@/types/enums'
 
 // `estado` no se incluye: el backend siempre crea en PENDIENTE.
-// `nombre_remitente` no se incluye: el backend lo captura de idRemitente.
+// `nombre_remitente`, `dirigido` y `cliente` no se envían al crear: el backend
+// los deriva del lead (contacto/organización) y captura el remitente como snapshot.
 export const cotizacionSchema = z.object({
   id_lead: z
     .number({ error: 'El lead es obligatorio' })
@@ -15,11 +16,6 @@ export const cotizacionSchema = z.object({
   fecha_cot: z
     .string()
     .min(1, 'La fecha es obligatoria'),
-
-  dirigido: z
-    .string()
-    .min(1, 'El campo dirigido es obligatorio')
-    .max(90, 'Máximo 90 caracteres'),
 
   cliente: z
     .string()

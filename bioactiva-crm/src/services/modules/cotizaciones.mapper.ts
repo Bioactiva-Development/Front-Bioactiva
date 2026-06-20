@@ -39,23 +39,34 @@ export interface CotizacionesDtoResponse {
   }
 }
 
+// POST /quotations: el backend deriva automáticamente `dirigido` (contacto del
+// lead), `cliente` (organización) y `nombreRemitente` (snapshot del remitente);
+// esos campos NO se envían en la creación. `idAuthor` se toma del JWT.
 export interface CotizacionCreateDto {
   fechaCot: string
-  dirigido: string
   nombreServicio: string
   monto: string
   tipo: string
   idLead: number
   idRemitente: number
-  cliente?: string
   producto?: string
   observacion?: string
   linkPropuesta?: string
 }
 
-export type CotizacionUpdateDto = Partial<
-  Omit<CotizacionCreateDto, 'idLead' | 'idRemitente'>
->
+// PATCH /quotations/:id permite override de `cliente`. No permite cambiar
+// `estado`, `idLead` ni `idRemitente`. `dirigido` se omite: el form ya no lo
+// gestiona (lo deriva el backend del contacto del lead).
+export interface CotizacionUpdateDto {
+  fechaCot?: string
+  cliente?: string
+  nombreServicio?: string
+  monto?: string
+  tipo?: string
+  producto?: string
+  observacion?: string
+  linkPropuesta?: string
+}
 
 const ESTADO_DOMAIN_TO_BACKEND: Record<EstadoCot, string> = {
   [EstadoCot.Pendiente]: 'PENDIENTE',
@@ -153,16 +164,12 @@ export const toCreateCotizacionDto = (
 ): CotizacionCreateDto => {
   const dto: CotizacionCreateDto = {
     fechaCot: toIsoDateTime(data.fecha_cot),
-    dirigido: data.dirigido,
     nombreServicio: data.nombre_servicio,
     monto: String(data.monto),
     tipo: data.tipo,
     idLead: data.id_lead,
     idRemitente: data.id_remitente,
   }
-
-  const cliente = trimOrUndefined(data.cliente)
-  if (cliente !== undefined) dto.cliente = cliente
 
   const producto = trimOrUndefined(data.producto)
   if (producto !== undefined) dto.producto = producto
@@ -182,7 +189,6 @@ export const toUpdateCotizacionDto = (
   const dto: CotizacionUpdateDto = {}
 
   if (data.fecha_cot !== undefined) dto.fechaCot = toIsoDateTime(data.fecha_cot)
-  if (data.dirigido !== undefined) dto.dirigido = data.dirigido
   if (data.nombre_servicio !== undefined) dto.nombreServicio = data.nombre_servicio
   if (data.monto !== undefined) dto.monto = String(data.monto)
   if (data.tipo !== undefined) dto.tipo = data.tipo
