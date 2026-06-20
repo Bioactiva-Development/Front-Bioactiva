@@ -86,9 +86,7 @@ const aplicarFiltrosClientSide = (
     filtradas = filtradas.filter(
       (o) =>
         o.nombre.toLowerCase().includes(q) ||
-        o.nombre_comercial.toLowerCase().includes(q) ||
-        (o.ruc ?? '').includes(q) ||
-        o.codigo_cliente.toLowerCase().includes(q)
+        o.nombre_comercial.toLowerCase().includes(q)
     )
   }
   if (filtros?.sector) filtradas = filtradas.filter((o) => o.sector === filtros.sector)

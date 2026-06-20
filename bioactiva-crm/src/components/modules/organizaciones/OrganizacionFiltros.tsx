@@ -71,7 +71,7 @@ export function OrganizacionFiltros({
           type="text"
           value={searchLocal}
           onChange={(e) => setSearchLocal(e.target.value)}
-          placeholder="Buscar por ID, RUC, nombre, sector..."
+          placeholder="Buscar por nombre de organización..."
           className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200
             bg-white text-gray-900 text-sm outline-none focus:border-emerald-400
             placeholder:text-gray-400 transition-colors"

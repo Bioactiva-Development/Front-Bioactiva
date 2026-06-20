@@ -27,10 +27,8 @@ function forceLogout(): void {
     globalThis.location.href = `${ROUTES.auth.login}?expired=1`
 }
 
-// Solo mensajes que indican expiración/invalidez del JWT de sesión del usuario.
-// Patrones genéricos como "token.*expired" quedan excluidos a propósito para
-// no confundir errores de tokens de invitación o recuperación con la sesión.
-const JWT_EXPIRED_PATTERN = /jwt expired|jwt malformed|invalid signature/i
+// (El regex de JWT expirado fue removido según requerimientos del Mantis:
+// no depender de mensajes específicos del backend y confiar en cualquier 401)
 
 const processQueue = (error: unknown, token: string | null) => {
     failedQueue.forEach(prom => {
@@ -162,12 +160,13 @@ apiClient.interceptors.response.use(
         const rawMessage = Array.isArray(backendMessage) ? backendMessage[0] : backendMessage ?? ''
 
         if (
-            JWT_EXPIRED_PATTERN.test(rawMessage) &&
+            error.response?.status === 401 &&
             !originalRequest.url?.includes('/auth/login') &&
-            !originalRequest.url?.includes('/invitations')
+            !originalRequest.url?.includes('/invitations') &&
+            !originalRequest.url?.includes('/reset-password')
         ) {
             forceLogout()
-            throw Object.assign(new Error(rawMessage), { status: error.response?.status })
+            throw Object.assign(new Error(rawMessage || 'Su sesión ha expirado o no es válida.'), { status: error.response?.status })
         }
 
         const mensajeFinal = sanitizeSensitiveMessage(resolveErrorMessage(error, backendMessage))

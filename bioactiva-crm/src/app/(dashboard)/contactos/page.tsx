@@ -16,9 +16,7 @@ export default function ContactosPage() {
   const router       = useRouter()
   const searchParams = useSearchParams()
 
-  const orgParam = searchParams.get('organizacion') ?? undefined
-
-  const [filtros, setFiltros] = useState<FiltrosType>({ idOrganizacion: orgParam })
+  const [filtros, setFiltros] = useState<FiltrosType>({})
   const [pagina, setPagina]   = useState(1)
 
   const searchDebounced = useDebounce(filtros.search ?? '', 400)
@@ -26,11 +24,10 @@ export default function ContactosPage() {
   // Resetear página cuando cambian los filtros
   useEffect(() => {
     setPagina(1)
-  }, [searchDebounced, filtros.idOrganizacion])
+  }, [searchDebounced])
 
   const { data, isLoading, isError } = useContactos({
     search:         searchDebounced || undefined,
-    idOrganizacion: filtros.idOrganizacion,
     page:           pagina,
     limit:          ITEMS_POR_PAGINA,
   })

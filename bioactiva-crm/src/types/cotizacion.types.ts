@@ -51,6 +51,7 @@ export interface CotizacionFiltros {
   id_org?:       string
   estado?:       EstadoCot
   id_remitente?: number
+  tipo?:         TipoMoneda
   fecha_desde?:  string
   fecha_hasta?:  string
   page?:         number

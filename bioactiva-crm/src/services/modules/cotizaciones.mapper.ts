@@ -141,6 +141,7 @@ export const toCotizacionQueryParams = (
   // Filtra por la organización del lead asociado (server-side).
   if (filtros?.id_org) params.idOrg = filtros.id_org
   if (filtros?.id_remitente) params.idRemitente = filtros.id_remitente
+  if (filtros?.tipo) params.tipo = filtros.tipo === TipoMoneda.Soles ? 'PEN' : 'USD'
   if (filtros?.fecha_desde) params.fechaDesde = filtros.fecha_desde
   if (filtros?.fecha_hasta) params.fechaHasta = filtros.fecha_hasta
 

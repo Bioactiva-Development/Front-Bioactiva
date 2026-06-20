@@ -205,7 +205,7 @@ const delay = (ms: number = 600) =>
     new Promise((resolve) => setTimeout(resolve, ms))
 
 export const mockGetContactos = async (
-    filtros?: ContactoFiltros
+    filtros?: ContactoFiltros & { idOrganizacion?: string }
 ): Promise<ContactosResponse> => {
     await delay()
 
@@ -216,10 +216,7 @@ export const mockGetContactos = async (
         resultado = resultado.filter(
             (c) =>
                 c.nombres.toLowerCase().includes(q) ||
-                (c.apellidos ?? '').toLowerCase().includes(q) ||
-                c.correo.toLowerCase().includes(q) ||
-                c.cargo?.toLowerCase().includes(q) ||
-                c.organizacion_nombre?.toLowerCase().includes(q)
+                (c.apellidos ?? '').toLowerCase().includes(q)
         )
     }
 

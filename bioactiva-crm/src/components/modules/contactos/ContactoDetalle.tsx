@@ -98,7 +98,7 @@ export function ContactoDetalle({
                     ? 'bg-red-50 text-red-600 border border-red-200'
                     : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   }`}>
-                  {contacto.estado_correo === 'VENCIDO' ? 'Inactivo' : 'Activo'}
+                  {contacto.estado_correo === 'VENCIDO' ? 'Vencido' : 'Vigente'}
                 </span>
               </div>
               {contacto.cargo && (
@@ -125,7 +125,7 @@ export function ContactoDetalle({
                 ? <Loader2 size={14} className="animate-spin" />
                 : null
               }
-              {contacto.estado_correo === 'VENCIDO' ? 'Marcar activo' : 'Marcar inactivo'}
+              {contacto.estado_correo === 'VENCIDO' ? 'Marcar como Vigente' : 'Marcar como Vencido'}
             </button>
 
             <button
