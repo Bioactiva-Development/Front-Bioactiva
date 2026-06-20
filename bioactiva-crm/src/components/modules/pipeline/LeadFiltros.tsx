@@ -18,7 +18,6 @@ interface LeadFiltrosProps {
   filtros:   FiltrosType
   onChange:  (filtros: FiltrosType) => void
   onLimpiar: () => void
-  total?:    number
 }
 
 interface ResponsableOption {
@@ -64,7 +63,6 @@ export function LeadFiltros({
   filtros,
   onChange,
   onLimpiar,
-  total,
 }: LeadFiltrosProps) {
   const [abierto, setAbierto] = useState(false)
   const [responsables, setResponsables] = useState<ResponsableOption[]>([])
@@ -157,11 +155,6 @@ export function LeadFiltros({
           </span>
           {hayFiltrosActivos && (
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          )}
-          {total !== undefined && (
-            <span className="text-xs text-gray-400">
-              · <span className="font-semibold text-emerald-600">{total}</span> leads
-            </span>
           )}
         </div>
         {abierto

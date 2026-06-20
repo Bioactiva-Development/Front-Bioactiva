@@ -16,7 +16,6 @@ interface KanbanColumnProps {
   overClasses:  string
   /** Color sutil para los bordes laterales (left/right) */
   sideBorder?:  string
-  total:        number
   isLoading?:   boolean
   hasMore?:     boolean
   loadingMore?: boolean
@@ -35,7 +34,6 @@ export function KanbanColumn({
   color,
   overClasses,
   sideBorder  = '',
-  total,
   isLoading   = false,
   hasMore     = false,
   loadingMore = false,
@@ -79,10 +77,6 @@ export function KanbanColumn({
           <span className="text-sm font-bold text-gray-800 uppercase tracking-wide flex-1">
             {titulo}
           </span>
-          <span className="text-xs font-bold text-gray-500 bg-gray-100
-            px-2 py-0.5 rounded-full tabular-nums">
-            {total}
-          </span>
         </div>
 
         <div className="flex flex-col gap-2.5 flex-1 min-h-40">
@@ -117,7 +111,7 @@ export function KanbanColumn({
             >
               {loadingMore
                 ? <Loader2 size={14} className="animate-spin" />
-                : `Cargar más (${leads.length} de ${total})`}
+                : 'Cargar más'}
             </button>
           )}
         </div>

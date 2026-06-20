@@ -156,12 +156,6 @@ function PipelineContent() {
   const { mutateAsync: moverLead, isPending: actualizandoEstado } =
     useMoverLeadPipeline()
 
-  const total =
-    columnas.prospecto.total +
-    columnas.ofertado.total +
-    columnas.cierreVenta.total +
-    columnas.cierreSinVenta.total
-
   const isLoading =
     columnas.prospecto.isLoading ||
     columnas.ofertado.isLoading ||
@@ -243,7 +237,6 @@ function PipelineContent() {
         filtros={filtros}
         onChange={handleFiltrosChange}
         onLimpiar={handleLimpiarFiltros}
-        total={total}
       />
 
       {dragError && (
@@ -269,7 +262,6 @@ function PipelineContent() {
           <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
             {COLUMNAS_MOVIL.map((col) => {
               const isActive = tabMovil === col.key
-              const count = columnas[col.key].total
               return (
                 <button
                   key={col.key}
@@ -278,11 +270,6 @@ function PipelineContent() {
                     ${isActive ? col.activeClass : 'text-gray-500 hover:text-gray-700'}`}
                 >
                   {col.label}
-                  {count > 0 && (
-                    <span className={`ml-1 ${isActive ? 'opacity-75' : 'text-gray-400'}`}>
-                      {count}
-                    </span>
-                  )}
                 </button>
               )
             })}
@@ -312,9 +299,7 @@ function PipelineContent() {
               className="w-full py-3 text-sm font-semibold text-emerald-600
                 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors disabled:opacity-60"
             >
-              {columnas[tabMovil].loadingMore
-                ? 'Cargando...'
-                : `Ver más (${columnas[tabMovil].leads.length} de ${columnas[tabMovil].total})`}
+              {columnas[tabMovil].loadingMore ? 'Cargando...' : 'Ver más'}
             </button>
           )}
         </div>

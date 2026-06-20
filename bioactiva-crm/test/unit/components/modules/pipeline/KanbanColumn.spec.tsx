@@ -10,6 +10,9 @@ jest.mock('@atlaskit/pragmatic-drag-and-drop/element/adapter', () => ({
   monitorForElements:    jest.fn(() => jest.fn()),
 }))
 jest.mock('lucide-react', () => new Proxy({}, { get: () => () => null }))
+jest.mock('@/hooks/cotizaciones/useCotizaciones', () => ({
+  useCotizacionesPorLead: () => ({ data: [] }),
+}))
 
 const makeLead = (id: number): Lead => ({
   id,
@@ -33,14 +36,19 @@ const baseProps = {
 }
 
 describe('modules/pipeline/KanbanColumn', () => {
-  it('shows the total count from meta (not the loaded length)', () => {
-    render(<KanbanColumn {...baseProps} leads={[makeLead(1)]} total={23} />)
+  it('renders the column title', () => {
+    render(<KanbanColumn {...baseProps} leads={[makeLead(1)]} />)
     expect(screen.getByText('En prospecto')).toBeInTheDocument()
-    expect(screen.getByText('23')).toBeInTheDocument()
+  })
+
+  it('does not render a per-state lead counter', () => {
+    render(<KanbanColumn {...baseProps} leads={[makeLead(1), makeLead(2)]} />)
+    // El badge de conteo por estado se removió (no mapeado en backend).
+    expect(screen.queryByText('2')).not.toBeInTheDocument()
   })
 
   it('renders the empty state', () => {
-    render(<KanbanColumn {...baseProps} leads={[]} total={0} />)
+    render(<KanbanColumn {...baseProps} leads={[]} />)
     expect(screen.getByText('Sin leads')).toBeInTheDocument()
   })
 
@@ -50,7 +58,6 @@ describe('modules/pipeline/KanbanColumn', () => {
       <KanbanColumn
         {...baseProps}
         leads={[makeLead(1)]}
-        total={10}
         hasMore
         onCargarMas={onCargarMas}
       />
@@ -60,7 +67,7 @@ describe('modules/pipeline/KanbanColumn', () => {
   })
 
   it('does not render "Cargar más" when there are no more pages', () => {
-    render(<KanbanColumn {...baseProps} leads={[makeLead(1)]} total={1} hasMore={false} />)
+    render(<KanbanColumn {...baseProps} leads={[makeLead(1)]} hasMore={false} />)
     expect(screen.queryByText(/Cargar más/i)).not.toBeInTheDocument()
   })
 })

@@ -92,11 +92,6 @@ describe('modules/pipeline/LeadFiltros', () => {
     expect(screen.getByText(/debe ser igual o posterior/i)).toBeInTheDocument()
   })
 
-  it('shows the leads total when provided', () => {
-    render(<LeadFiltros filtros={{}} onChange={jest.fn()} onLimpiar={jest.fn()} total={42} />)
-    expect(screen.getByText('42')).toBeInTheDocument()
-  })
-
   it('shows a "Limpiar" button that calls onLimpiar when there are active filters', async () => {
     const onLimpiar = jest.fn()
     render(
