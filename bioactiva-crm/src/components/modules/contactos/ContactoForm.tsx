@@ -141,7 +141,7 @@ export function ContactoForm({
             <div className="grid grid-cols-4 gap-4">
               <div className="space-y-1.5">
                 <label htmlFor="cf-vocativo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Vocativo
+                  Vocativo <span className="text-red-500">*</span>
                 </label>
                 <select
                   id="cf-vocativo"
@@ -153,6 +153,9 @@ export function ContactoForm({
                     <option key={v} value={v}>{formatVocativo(v)}</option>
                   ))}
                 </select>
+                {errors.vocativo && (
+                  <p className="text-red-500 text-xs">{errors.vocativo.message}</p>
+                )}
               </div>
 
               <div className="col-span-3 space-y-1.5">
@@ -174,7 +177,8 @@ export function ContactoForm({
 
             <div className="space-y-1.5">
               <label htmlFor="cf-apellidos" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Apellidos <span className="text-red-500">*</span>
+                Apellidos{' '}
+                <span className="text-gray-400 normal-case font-normal">Opcional</span>
               </label>
               <input
                 id="cf-apellidos"

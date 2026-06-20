@@ -52,7 +52,7 @@ export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
                   ? 'bg-red-50 text-red-600'
                   : 'bg-emerald-50 text-emerald-700'
                 }`}>
-                {contacto.estado_correo === 'VENCIDO' ? 'Inactivo' : 'Activo'}
+                {contacto.estado_correo === 'VENCIDO' ? 'Vencido' : 'Vigente'}
               </span>
             </div>
           </div>
@@ -88,7 +88,7 @@ export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
             ? 'bg-red-50 text-red-600'
             : 'bg-emerald-50 text-emerald-700'
           }`}>
-          {contacto.estado_correo === 'VENCIDO' ? 'Inactivo' : 'Activo'}
+          {contacto.estado_correo === 'VENCIDO' ? 'Vencido' : 'Vigente'}
         </span>
       </td>
 
