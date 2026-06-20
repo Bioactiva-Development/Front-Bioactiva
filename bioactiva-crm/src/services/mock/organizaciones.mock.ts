@@ -181,9 +181,7 @@ export const mockGetOrganizaciones = async (
     resultado = resultado.filter(
       (o) =>
         o.nombre.toLowerCase().includes(q) ||
-        o.ruc?.includes(q) ||
-        o.codigo_cliente.toLowerCase().includes(q) ||
-        o.sector.toLowerCase().includes(q)
+        o.nombre_comercial.toLowerCase().includes(q)
     )
   }
 
