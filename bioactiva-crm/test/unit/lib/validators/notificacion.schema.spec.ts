@@ -4,36 +4,46 @@ import {
 } from '@/lib/validators/notificacion.schema'
 
 describe('notificacion schemas', () => {
-  it('accepts a reminder with 1 to 120 minutes', () => {
+  it.each([15, 30, 60])('accepts the supported reminder time %i', (minutosAntes) => {
     const result = recordatorioSchema.parse({
       idLead: 10,
-      minutosAntes: 30,
+      minutosAntes,
       idTemplate: 0,
       asunto: 'Recordatorio',
       cuerpo: 'Cuerpo',
     })
-    expect(result.idLead).toBe(10)
+    expect(result.minutosAntes).toBe(minutosAntes)
   })
 
-  it('rejects reminders outside the documented range', () => {
+  it('rejects custom reminder times', () => {
+    expect(() => recordatorioSchema.parse({
+      idLead: 10,
+      minutosAntes: 45,
+      idTemplate: 0,
+      asunto: 'Recordatorio',
+      cuerpo: 'Cuerpo',
+    })).toThrow('Seleccione 15 minutos, 30 minutos o 1 hora')
+  })
+
+  it('rejects unsupported reminder times', () => {
     expect(() => recordatorioSchema.parse({
       idLead: 10,
       minutosAntes: 121,
       idTemplate: 0,
       asunto: 'Recordatorio',
       cuerpo: 'Cuerpo',
-    })).toThrow('El máximo es 120 minutos')
+    })).toThrow('Seleccione 15 minutos, 30 minutos o 1 hora')
   })
 
   const instancia = {
     internal: {
-      fechaEnvio: '2026-06-20T10:00',
+      minutosAntes: 60,
       idTemplate: 0,
       asunto: 'Interno',
       cuerpo: 'Preparar',
     },
     external: {
-      fechaEnvio: '2026-06-20T11:00',
+      minutosAntes: 30,
       idTemplate: 0,
       asunto: 'Cliente',
       cuerpo: 'Seguimiento',
@@ -56,32 +66,35 @@ describe('notificacion schemas', () => {
       instancias: [
         instancia,
         {
-          internal: { ...instancia.internal, fechaEnvio: '2026-06-20T12:00' },
-          external: { ...instancia.external, fechaEnvio: '2026-06-20T13:00' },
+          internal: { ...instancia.internal, minutosAntes: 60 },
+          external: { ...instancia.external, minutosAntes: 15 },
         },
       ],
     })).toThrow('El seguimiento debe tener exactamente una instancia')
   })
 
-  it('rejects invalid follow-up dates before checking sequence order', () => {
+  it('rejects unsupported follow-up anticipation', () => {
     expect(() => seguimientoSchema.parse({
       idLead: 10,
       correoCliente: 'cliente@example.com',
       instancias: [{
         ...instancia,
-        internal: { ...instancia.internal, fechaEnvio: 'no-es-fecha' },
+        internal: { ...instancia.internal, minutosAntes: 45 },
       }],
-    })).toThrow('La fecha y hora no es válida')
+    })).toThrow('Seleccione 15 minutos, 30 minutos o 1 hora')
   })
 
-  it('rejects an external email before its internal email', () => {
+  it('requires more anticipation for the internal email', () => {
     expect(() => seguimientoSchema.parse({
       idLead: 10,
       correoCliente: 'cliente@example.com',
       instancias: [{
         ...instancia,
-        external: { ...instancia.external, fechaEnvio: '2026-06-20T09:00' },
+        internal: { ...instancia.internal, minutosAntes: 30 },
+        external: { ...instancia.external, minutosAntes: 60 },
       }],
-    })).toThrow('El correo al cliente debe enviarse después del correo interno')
+    })).toThrow(
+      'El correo interno debe tener más anticipación que el correo al cliente'
+    )
   })
 })

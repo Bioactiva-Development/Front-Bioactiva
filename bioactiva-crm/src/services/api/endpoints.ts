@@ -105,6 +105,7 @@ export const ENDPOINTS = {
         cancel:       (id: number) => `/notifications/${id}`,
         recordatorio: '/notifications/reminders',
         seguimiento:  '/notifications/follow-ups',
+        editSeguimiento: (id: number) => `/notifications/follow-ups/${id}`,
         inApp:        '/notifications/in-app',
         readInApp:    (id: number) => `/notifications/in-app/${id}/read`,
     },
