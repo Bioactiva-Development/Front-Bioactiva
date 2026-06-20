@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import {
     UsuarioListItem,
     EditarUsuarioRequest,
     CambiarPasswordRequest,
+    UsuarioFilters,
 } from '@/types/usuario.types'
 import { RolUsuario } from '@/types/enums'
 
@@ -36,14 +37,19 @@ export function useUsuarios() {
         successMessage: null,
     })
 
+    // Recuerda los últimos filtros/página para que las recargas tras una mutación
+    // (editar, habilitar, etc.) mantengan la página y filtros actuales.
+    const filtrosRef = useRef<UsuarioFilters>({ page: 1, limit: 10 })
+
     const clearMessages = useCallback(() => {
         setState(prev => ({ ...prev, error: null, successMessage: null }))
     }, [])
 
-    const cargar = useCallback(async () => {
+    const cargar = useCallback(async (filtros?: UsuarioFilters) => {
+        if (filtros) filtrosRef.current = filtros
         try {
             setState(prev => ({ ...prev, isLoading: true, error: null }))
-            const res = await usuariosService.getUsuarios()
+            const res = await usuariosService.getUsuarios(filtrosRef.current)
             setState(prev => ({
                 ...prev,
                 usuarios: res.usuarios,

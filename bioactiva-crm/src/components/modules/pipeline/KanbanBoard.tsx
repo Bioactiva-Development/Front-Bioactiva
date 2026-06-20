@@ -95,7 +95,6 @@ export function KanbanBoard({
             overClasses={col.overClasses}
             sideBorder={col.sideBorder}
             leads={columna.leads}
-            total={columna.total}
             isLoading={columna.isLoading}
             hasMore={columna.hasMore}
             loadingMore={columna.loadingMore}

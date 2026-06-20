@@ -5,7 +5,7 @@ import {
   toLeadQueryParams,
   toUpdateLeadDto,
 } from '@/services/modules/leads.mapper'
-import { LeadState } from '@/types/enums'
+import { LeadState, Sector } from '@/types/enums'
 
 describe('leads.mapper', () => {
   it('maps backend lead DTOs to frontend leads', () => {
@@ -66,24 +66,27 @@ describe('leads.mapper', () => {
       ultimoCambioEstado: '2026-06-02T10:00:00.000Z',
     }
 
-    expect(fromLeadDto({ ...base, activityAlert: 'ROJO' }).activity_alert).toBe('ROJO')
-    expect(fromLeadDto({ ...base, activityAlert: 'AMARILLO' }).activity_alert).toBe('AMARILLO')
-    expect(fromLeadDto({ ...base, activityAlert: 'VERDE' }).activity_alert).toBe('VERDE')
+    expect(fromLeadDto({ ...base, activityAlert: 'POR_VENCER' }).activity_alert).toBe('POR_VENCER')
+    expect(fromLeadDto({ ...base, activityAlert: 'EN_RIESGO' }).activity_alert).toBe('EN_RIESGO')
+    expect(fromLeadDto({ ...base, activityAlert: 'PENDIENTE' }).activity_alert).toBe('PENDIENTE')
+    expect(fromLeadDto({ ...base, activityAlert: 'SIN_ACTIVIDADES' }).activity_alert).toBe('SIN_ACTIVIDADES')
     expect(fromLeadDto({ ...base, activityAlert: 'desconocido' }).activity_alert).toBeUndefined()
     expect(fromLeadDto(base).activity_alert).toBeUndefined()
   })
 
-  it('maps the new lead list filters (organización, semáforo y rango de fechas)', () => {
+  it('maps the new lead list filters (organización, sector, semáforo y rango de fechas)', () => {
     expect(toLeadQueryParams({
       id_org: 'org-uuid-1',
-      alerta_actividad: 'VENCIDAS',
+      sector: Sector.TECNOLOGIA,
+      alerta_actividad: 'POR_VENCER',
       fecha_desde: '2022-01-01',
       fecha_hasta: '2026-06-11',
       page: 1,
       limit: 10,
     })).toEqual({
       idOrg: 'org-uuid-1',
-      alertaActividad: 'VENCIDAS',
+      sector: 'TECNOLOGIA',
+      alertaActividad: 'POR_VENCER',
       fechaDesde: '2022-01-01',
       fechaHasta: '2026-06-11',
       page: 1,

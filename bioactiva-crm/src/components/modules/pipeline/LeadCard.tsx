@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
-import { AlertTriangle, Clock, ExternalLink, FileMinus, User } from 'lucide-react'
+import { Calendar, Clock, ExternalLink, User } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
-import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
+import { EstadoCot, TipoMoneda } from '@/types/enums'
 import { Cotizacion } from '@/types/cotizacion.types'
 import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
+import { SEMAFORO_UI } from '@/lib/utils/semaforo.utils'
+import { formatLeadDateOnly } from '@/lib/utils/lead-date.utils'
 
 const AVATAR_COLORS = [
   'bg-emerald-500', 'bg-blue-500',  'bg-violet-500',
@@ -72,33 +74,33 @@ export function LeadCard({
     )
   }
 
-  // Badge de alerta superior: ROJO > tiene_alerta > AMARILLO
-  let alertBadge: React.ReactNode = null
-  if (lead.activity_alert === 'ROJO') {
-    alertBadge = (
-      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5
-        bg-red-100 text-red-600 text-[10px] font-bold uppercase tracking-wide shrink-0">
-        <AlertTriangle size={10} className="shrink-0" />
-        Vencida
-      </span>
-    )
-  } else if (lead.tiene_alerta) {
-    alertBadge = (
-      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5
-        bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wide shrink-0">
-        <Clock size={10} className="shrink-0" />
-        {lead.alerta_motivo ?? '+30 días'}
-      </span>
-    )
-  } else if (lead.activity_alert === 'AMARILLO') {
-    alertBadge = (
-      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5
-        bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wide shrink-0">
-        <Clock size={10} className="shrink-0" />
-        Por vencer
-      </span>
-    )
-  }
+  // Semáforo de actividades (backend: activityAlert). Siempre visible cuando el
+  // lead lo trae, con color por severidad: verde → amarillo → naranja → rojo.
+  const sem = lead.activity_alert ? SEMAFORO_UI[lead.activity_alert] : null
+
+  const semBadge = sem && (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1
+      text-[11px] font-bold uppercase tracking-wide shrink-0 ${sem.pill}`}>
+      <span className={`w-2 h-2 rounded-full ${sem.dot} ${sem.pulse ? 'animate-pulse' : ''}`} />
+      {sem.label}
+    </span>
+  )
+
+  // Badge secundario: lead estancado (+30 días sin avance), concepto aparte del semáforo.
+  const staleBadge = lead.tiene_alerta && (
+    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5
+      bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wide shrink-0">
+      <Clock size={10} className="shrink-0" />
+      {lead.alerta_motivo ?? '+30 días'}
+    </span>
+  )
+
+  const alertBadge = sem || lead.tiene_alerta ? (
+    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+      {semBadge}
+      {staleBadge}
+    </div>
+  ) : null
 
   const externalLinkBtn = (
     <button
@@ -124,6 +126,7 @@ export function LeadCard({
         bg-white rounded-xl border border-gray-200 shadow p-4
         flex flex-col gap-3 cursor-pointer select-none transition duration-150
         hover:border-emerald-200 hover:shadow-md hover:-translate-y-0.5
+        ${sem ? `border-l-4 ${sem.accent}` : ''}
         ${isOverlay
           ? 'shadow-2xl ring-2 ring-emerald-300 ring-offset-2 rotate-1 scale-[1.02]'
           : ''}
@@ -150,18 +153,12 @@ export function LeadCard({
         {!alertBadge && externalLinkBtn}
       </div>
 
-      {/* Monto de cotización o badge "Por cotizar" */}
-      {cot ? (
+      {/* Monto de la cotización (si existe) */}
+      {cot && (
         <span className="text-sm font-bold text-emerald-600 tabular-nums">
           {formatMonto(cot.monto, cot.tipo)}
         </span>
-      ) : lead.estado === LeadState.Prospecto ? (
-        <span className="inline-flex items-center gap-1.5 rounded-lg
-          bg-gray-100 text-gray-500 text-xs font-medium px-2.5 py-1 self-start">
-          <FileMinus size={12} className="shrink-0" />
-          Por cotizar
-        </span>
-      ) : null}
+      )}
 
       {/* Contacto — encima del separador */}
       {lead.contacto_nombre && (
@@ -193,6 +190,12 @@ export function LeadCard({
           </div>
         </div>
       )}
+
+      {/* Fecha de creación del lead */}
+      <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+        <Calendar size={11} className="shrink-0" />
+        Creado el {formatLeadDateOnly(lead.created_at)}
+      </div>
     </div>
   )
 }

@@ -138,6 +138,7 @@ export const toCotizacionQueryParams = (
   if (filtros?.page) params.page = filtros.page
   if (filtros?.limit) params.limit = filtros.limit
   if (filtros?.idLead) params.idLead = filtros.idLead
+  // Filtra por la organización del lead asociado (server-side).
   if (filtros?.id_org) params.idOrg = filtros.id_org
   if (filtros?.id_remitente) params.idRemitente = filtros.id_remitente
   if (filtros?.tipo) params.tipo = filtros.tipo === TipoMoneda.Soles ? 'PEN' : 'USD'

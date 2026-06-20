@@ -17,8 +17,22 @@ import {
   NotificacionProgramada,
 } from '@/types/notificacion.types'
 
+// El backend pagina `GET /notifications` con un `limit` por defecto de 10. Estas
+// vistas muestran listas completas filtradas (por lead, responsable o estado),
+// así que pedimos un límite alto para no truncar resultados.
+const PROGRAMADAS_PAGE_SIZE = 100
+
+// `GET /notifications` ahora responde paginado `{ data, meta }`. Se tolera el
+// arreglo plano legacy por compatibilidad.
+type ProgramadasResponse =
+  | NotificacionProgramada[]
+  | {
+      data: NotificacionProgramada[]
+      meta?: { page: number; limit: number; total: number; totalPages: number }
+    }
+
 const toQueryParams = (filtros?: FiltrosNotificacionesProgramadas) => {
-  const params: Record<string, string | number> = {}
+  const params: Record<string, string | number> = { limit: PROGRAMADAS_PAGE_SIZE }
   if (filtros?.estado) params.estado = filtros.estado
   if (filtros?.idLead) params.idLead = filtros.idLead
   if (filtros?.idResponsable) params.idResponsable = filtros.idResponsable
@@ -31,11 +45,12 @@ export const notificacionesService = {
   ): Promise<NotificacionProgramada[]> => {
     if (USE_MOCK) return mockGetProgramadas(filtros)
 
-    const response = await apiClient.get<NotificacionProgramada[]>(
+    const response = await apiClient.get<ProgramadasResponse>(
       ENDPOINTS.notificaciones.list,
       { params: toQueryParams(filtros) }
     )
-    return response.data
+    const body = response.data
+    return Array.isArray(body) ? body : body.data ?? []
   },
 
   getInApp: async (): Promise<NotificacionInApp[]> => {

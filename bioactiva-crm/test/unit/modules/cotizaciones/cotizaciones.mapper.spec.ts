@@ -87,6 +87,19 @@ describe('cotizaciones.mapper', () => {
       limit: 20,
     })
 
+    // Filtros server-side adicionales soportados por GET /quotations.
+    expect(toCotizacionQueryParams({
+      id_org: 'org-uuid-1',
+      id_remitente: 3,
+      fecha_desde: '2026-01-01',
+      fecha_hasta: '2026-06-30',
+    })).toEqual({
+      idOrg: 'org-uuid-1',
+      idRemitente: 3,
+      fechaDesde: '2026-01-01',
+      fechaHasta: '2026-06-30',
+    })
+
     expect(toCreateCotizacionDto({
       id_lead: 2,
       id_remitente: 1,

@@ -4,16 +4,26 @@ export interface DashboardMetricsParams {
   idEncargado?: number
 }
 
+/**
+ * Montos reportados por divisa. Las cotizaciones pueden estar en soles (PEN)
+ * o dolares (USD) y el backend nunca los combina: cada divisa se reporta por
+ * separado. No sumar ni convertir entre `pen` y `usd`.
+ */
+export type MoneyByCurrency = {
+  pen: number
+  usd: number
+}
+
 export interface DashboardMetrics {
   totalLeads: number
-  averageTicketAmount: number
+  averageTicketAmount: MoneyByCurrency
   conversionRate: number
   avgClosingTimeDays: number
   proposalToCloseRate: number
   avgProposalStageDays: number
   avgActivitiesPerLead: number
-  pipelineTotalAmount: number
-  closedRevenue: number
+  pipelineTotalAmount: MoneyByCurrency
+  closedRevenue: MoneyByCurrency
   stalledLeadPercentage: number
   periodStart: string
   periodEnd: string

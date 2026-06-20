@@ -5,32 +5,26 @@ import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Pencil, Building2, User,
   Briefcase, Calendar, Mail, Phone,
-  Plus, MessageSquare, FileText, History,
-  ExternalLink, AlertCircle, DollarSign, Bell,
+  Plus, MessageSquare, FileText,
+  ExternalLink, AlertCircle, DollarSign,
 } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
 import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
 import { ROUTES } from '@/lib/constants/routes'
 import { ActividadHistorial } from './ActividadHistorial'
 import { ActividadForm } from './ActividadForm'
+import { LeadEditFocus } from './LeadForm'
 import { useActividades, useCrearActividad } from '@/hooks/pipeline/useActividades'
-import { useActualizarEstadoLead } from '@/hooks/pipeline/useLeads'
 import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
 import {
   useCrearRecordatorio,
   useCrearSeguimiento,
-  useNotificacionesInApp,
-  useNotificacionesProgramadas,
 } from '@/hooks/notificaciones/useNotificaciones'
 import { RecordatorioForm } from '@/components/modules/notificaciones/RecordatorioForm'
 import { SeguimientoForm } from '@/components/modules/notificaciones/SeguimientoForm'
 import { ActividadFormValues } from '@/lib/validators/actividad.schema'
 import { getErrorMessage } from '@/lib/utils/error.utils'
-import { validateLeadStateTransition } from '@/lib/utils/lead-flow.utils'
-import {
-  formatLeadDateOnly,
-  getLeadCloseDateStatus,
-} from '@/lib/utils/lead-date.utils'
+import { formatLeadDateOnly } from '@/lib/utils/lead-date.utils'
 import {
   getBlockingPendingActivity,
   isLeadStaleWithoutProgress,
@@ -43,7 +37,7 @@ import {
 
 interface LeadDetalleProps {
   lead:     Lead
-  onEditar: () => void
+  onEditar: (focus?: LeadEditFocus) => void
   onEliminar?: () => void
   eliminando?: boolean
   initialAction?: 'actividad' | 'seguimiento'
@@ -55,13 +49,6 @@ const ESTADO_COLORS: Record<LeadState, string> = {
   [LeadState.CierreVenta]:   'bg-emerald-50 text-emerald-700',
   [LeadState.CierreSinVenta]: 'bg-red-50 text-red-600',
 }
-
-const ESTADOS_PIPELINE = [
-  LeadState.Prospecto,
-  LeadState.Ofertado,
-  LeadState.CierreVenta,
-  LeadState.CierreSinVenta,
-]
 
 const COTIZACION_COLORS: Record<EstadoCot, string> = {
   [EstadoCot.Pendiente]: 'bg-gray-100 text-gray-600',
@@ -131,12 +118,10 @@ export function LeadDetalle({
 }: LeadDetalleProps) {
   const router                          = useRouter()
   const [tab, setTab]                   = useState<
-    'info' | 'actividades' | 'cotizaciones' | 'historial'
+    'info' | 'actividades' | 'cotizaciones'
   >(initialAction ? 'actividades' : 'info')
   const [mostrarForm, setMostrarForm]   = useState(initialAction === 'actividad')
   const [errorActividad, setErrorActividad] = useState<string | null>(null)
-  const [estadoError, setEstadoError]   = useState<string | null>(null)
-  const [borradorCotId, setBorradorCotId] = useState<number | null>(null)
   const [actividadBloqueada, setActividadBloqueada] = useState<string | null>(null)
   const [notificacionMode, setNotificacionMode] = useState<
     'recordatorio' | 'seguimiento' | null
@@ -149,20 +134,14 @@ export function LeadDetalle({
     useActividades(lead.id)
   const { data: cotizaciones = [], isLoading: loadingCotizaciones } =
     useCotizacionesPorLead(lead.id)
-  const { data: notificacionesInApp = [] } = useNotificacionesInApp()
-  const { data: notificacionesProgramadas = [] } =
-    useNotificacionesProgramadas({ idLead: lead.id })
 
   const { mutateAsync: crearActividad, isPending: creando } =
     useCrearActividad()
 
-  const { mutateAsync: actualizarEstado, isPending: actualizandoEstado } =
-    useActualizarEstadoLead()
   const { mutateAsync: crearRecordatorio, isPending: creandoRecordatorio } =
     useCrearRecordatorio()
   const { mutateAsync: crearSeguimiento, isPending: creandoSeguimiento } =
     useCrearSeguimiento()
-  const closeDateStatus = getLeadCloseDateStatus(lead.fecha_cierre)
 
   const pendingActivity = useMemo(
     () => getBlockingPendingActivity(actividades),
@@ -184,30 +163,6 @@ export function LeadDetalle({
       setMostrarForm(false)
     } catch (err: unknown) {
       setErrorActividad(getErrorMessage(err, 'No se pudo registrar la actividad.'))
-    }
-  }
-
-  const handleCambiarEstado = async (estado: LeadState) => {
-    const guard = validateLeadStateTransition(lead.estado, estado, cotizaciones)
-    if (!guard.allowed) {
-      setEstadoError(guard.reason ?? 'No se puede realizar el cambio de estado.')
-      return
-    }
-
-    try {
-      setEstadoError(null)
-      setBorradorCotId(null)
-      const { borrador } = await actualizarEstado({ id: lead.id, estado })
-      // OFERTADO: el backend generó la cotización borrador automáticamente.
-      if (borrador) setBorradorCotId(borrador.id)
-    } catch (err: unknown) {
-      // 409: el lead tiene una actividad pendiente que debe resolverse antes.
-      const status = (err as { status?: number })?.status
-      setEstadoError(
-        status === 409
-          ? 'El lead tiene una actividad pendiente. Complétala o cancélala (en la pestaña Actividades) antes de cambiar el estado.'
-          : getErrorMessage(err, 'No se pudo cambiar el estado del lead.')
-      )
     }
   }
 
@@ -246,67 +201,6 @@ export function LeadDetalle({
     }
   }
 
-  const historial = useMemo(() => {
-    const eventos = [
-      {
-        id: `lead-${lead.id}-created`,
-        fecha: lead.created_at,
-        tipo: 'Lead creado',
-        titulo: lead.organizacion_nombre ?? 'Lead creado',
-        detalle: `${lead.organizacion_nombre ?? 'Organización'} - ${lead.servicio_interes}`,
-      },
-      ...actividades.map((actividad) => ({
-        id: `actividad-${actividad.id}`,
-        fecha: actividad.updated_at ?? actividad.created_at,
-        tipo: `Actividad ${actividad.estado}`,
-        titulo: actividad.nombre_actividad,
-        detalle: `${actividad.tipo}${actividad.responsable_nombre ? ` - ${actividad.responsable_nombre}` : ''}`,
-      })),
-      ...cotizaciones.map((cotizacion) => ({
-        id: `cotizacion-${cotizacion.id}`,
-        fecha: cotizacion.updated_at ?? cotizacion.created_at,
-        tipo: `Cotización ${cotizacion.estado}`,
-        titulo: cotizacion.codigo,
-        detalle: `${cotizacion.nombre_servicio} - ${formatMonto(cotizacion.monto, cotizacion.tipo)}`,
-      })),
-      ...notificacionesInApp
-        .filter((notificacion) => notificacion.idLead === lead.id)
-        .map((notificacion) => ({
-        id: `notificacion-${notificacion.id}`,
-        fecha: notificacion.createdAt,
-        tipo: 'Alerta',
-        titulo: notificacion.titulo,
-        detalle: notificacion.mensaje,
-      })),
-      ...notificacionesProgramadas.map((notificacion) => ({
-          id: `notificacion-programada-${notificacion.id}`,
-          fecha: notificacion.createdAt,
-          tipo: `${notificacion.tipo} programado`,
-          titulo:
-            notificacion.asuntoInterno ??
-            `Seguimiento de ${notificacion.instancias?.length ?? 0} instancia(s)`,
-          detalle: `Actividad ${notificacion.idActividad} - estado ${notificacion.estado}`,
-        })),
-      {
-        id: `lead-${lead.id}-state`,
-        fecha: lead.updated_at,
-        tipo: 'Estado actual',
-        titulo: lead.estado,
-        detalle: 'Última actualización registrada en el pipeline.',
-      },
-    ]
-
-    return eventos.sort(
-      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-    )
-  }, [
-    actividades,
-    cotizaciones,
-    lead,
-    notificacionesInApp,
-    notificacionesProgramadas,
-  ])
-
   return (
     <div className="space-y-6">
 
@@ -330,11 +224,13 @@ export function LeadDetalle({
                   {lead.estado}
                 </span>
               </div>
-              <h1 className="text-xl font-bold text-gray-900 mt-1">
+              <h1 className="text-xl font-bold text-gray-900 mt-1 flex items-center gap-2">
+                <Building2 size={18} className="text-emerald-600 shrink-0" />
                 {lead.organizacion_nombre}
               </h1>
               {lead.servicio_interes && (
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                  <Briefcase size={14} className="text-gray-400 shrink-0" />
                   {lead.servicio_interes}
                 </p>
               )}
@@ -343,7 +239,7 @@ export function LeadDetalle({
 
           <div className="flex items-center gap-2">
             <button
-              onClick={onEditar}
+              onClick={() => onEditar()}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
                 font-semibold border border-emerald-600 text-emerald-600
                 hover:bg-emerald-50 transition-colors"
@@ -354,9 +250,9 @@ export function LeadDetalle({
           </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-gray-50">
-          {isLeadStaleWithoutProgress(lead) && (
-            <div className="mb-4 flex items-start gap-2 rounded-xl
+        {isLeadStaleWithoutProgress(lead) && (
+          <div className="mt-4 pt-4 border-t border-gray-50">
+            <div className="flex items-start gap-2 rounded-xl
               border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
               <AlertCircle size={16} className="mt-0.5 shrink-0" />
               <p>
@@ -364,65 +260,8 @@ export function LeadDetalle({
                 actividad o actualiza el avance comercial para resolver la alerta.
               </p>
             </div>
-          )}
-
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">
-            Mover a estado
-          </p>
-          <div className="flex items-center gap-2 flex-wrap">
-            {ESTADOS_PIPELINE.map((estado) => (
-              <button
-                key={estado}
-                onClick={() => handleCambiarEstado(estado)}
-                disabled={lead.estado === estado || actualizandoEstado}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold
-                  transition-colors disabled:cursor-not-allowed
-                  ${lead.estado === estado
-                    ? `${ESTADO_COLORS[estado]} opacity-100 cursor-default`
-                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                  }`}
-              >
-                {estado}
-              </button>
-            ))}
           </div>
-          {estadoError && (
-            <div className="mt-3 flex items-start gap-2 rounded-xl
-              border border-amber-200 bg-amber-50 px-3 py-2 text-sm
-              text-amber-800">
-              <AlertCircle size={16} className="mt-0.5 shrink-0" />
-              <div>
-                <p>{estadoError}</p>
-                <button
-                  type="button"
-                  onClick={() => router.push(`/cotizaciones/nueva?lead=${lead.id}`)}
-                  className="mt-1 text-xs font-bold text-amber-900 underline
-                    underline-offset-2"
-                >
-                  Crear cotización para este lead
-                </button>
-              </div>
-            </div>
-          )}
-          {borradorCotId && (
-            <div className="mt-3 flex items-start gap-2 rounded-xl
-              border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm
-              text-emerald-800">
-              <FileText size={16} className="mt-0.5 shrink-0" />
-              <div>
-                <p>Se generó una cotización borrador. Complétala.</p>
-                <button
-                  type="button"
-                  onClick={() => router.push(ROUTES.cotizacion(borradorCotId))}
-                  className="mt-1 text-xs font-bold text-emerald-700 underline
-                    underline-offset-2"
-                >
-                  Completar cotización
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       <div className="flex gap-2">
@@ -430,7 +269,6 @@ export function LeadDetalle({
           { key: 'info',        label: 'Información',  icono: <Briefcase size={14} /> },
           { key: 'actividades', label: 'Actividades',  icono: <MessageSquare size={14} /> },
           { key: 'cotizaciones', label: 'Cotizaciones', icono: <FileText size={14} /> },
-          { key: 'historial',   label: 'Historial',    icono: <History size={14} /> },
         ].map((t) => (
           <button
             key={t.key}
@@ -463,24 +301,24 @@ export function LeadDetalle({
       {tab === 'info' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-              Datos del lead
-            </h3>
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                Datos del lead
+              </h3>
+              <button
+                onClick={() => onEditar('datos')}
+                className="inline-flex items-center gap-1 text-xs font-semibold
+                  text-emerald-600 hover:text-emerald-700 transition-colors"
+              >
+                <Pencil size={12} />
+                Editar
+              </button>
+            </div>
             <div className="space-y-4">
-              <InfoItem
-                icono={<Building2 size={14} />}
-                label="Organización"
-                valor={lead.organizacion_nombre}
-              />
               <InfoItem
                 icono={<User size={14} />}
                 label="Contacto"
                 valor={lead.contacto_nombre}
-              />
-              <InfoItem
-                icono={<Briefcase size={14} />}
-                label="Servicio de interés"
-                valor={lead.servicio_interes}
               />
               <InfoItem
                 icono={<Mail size={14} />}
@@ -494,50 +332,51 @@ export function LeadDetalle({
               />
               <InfoItem
                 icono={<Calendar size={14} />}
-                label="Fecha de cierre estimada"
-                valor={lead.fecha_cierre && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span>{formatLeadDateOnly(lead.fecha_cierre)}</span>
-                    {closeDateStatus && (
-                      <span className={`rounded-full border px-2 py-0.5 text-xs
-                        font-semibold ${closeDateStatus.className}`}>
-                        {closeDateStatus.label}
-                      </span>
-                    )}
-                  </div>
-                )}
+                label="Fecha de creación"
+                valor={formatLeadDateOnly(lead.created_at)}
               />
             </div>
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-              Contexto comercial
-            </h3>
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                Contexto comercial
+              </h3>
+              <button
+                onClick={() => onEditar('contexto')}
+                className="inline-flex items-center gap-1 text-xs font-semibold
+                  text-emerald-600 hover:text-emerald-700 transition-colors"
+              >
+                <Pencil size={12} />
+                Editar
+              </button>
+            </div>
             <div className="space-y-4">
-              {lead.comentarios && (
-                <div>
-                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">
-                    Comentarios
-                  </p>
+              <div>
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">
+                  Comentarios
+                </p>
+                {lead.comentarios ? (
                   <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3">
                     {lead.comentarios}
                   </p>
-                </div>
-              )}
-              {lead.desafio_oportunidad && (
-                <div>
-                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">
-                    Desafío u oportunidad
-                  </p>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">Sin comentarios registrados.</p>
+                )}
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">
+                  Desafío u oportunidad
+                </p>
+                {lead.desafio_oportunidad ? (
                   <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3">
                     {lead.desafio_oportunidad}
                   </p>
-                </div>
-              )}
-              {!lead.comentarios && !lead.desafio_oportunidad && (
-                <p className="text-sm text-gray-400 italic">Sin notas registradas.</p>
-              )}
+                ) : (
+                  <p className="text-sm text-gray-400 italic">Sin desafío u oportunidad registrado.</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -655,15 +494,19 @@ export function LeadDetalle({
                 Las cotizaciones aceptadas o rechazadas sincronizan el cierre del lead.
               </p>
             </div>
-            <button
-              onClick={() => router.push(`/cotizaciones/nueva?lead=${lead.id}`)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
-                font-semibold bg-emerald-600 hover:bg-emerald-700
-                text-white transition-colors shrink-0"
-            >
-              <Plus size={14} />
-              Nueva cotización
-            </button>
+            {/* El backend permite una sola cotización por lead: el botón se oculta
+                cuando ya existe una. */}
+            {cotizaciones.length === 0 && (
+              <button
+                onClick={() => router.push(`/cotizaciones/nueva?lead=${lead.id}`)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
+                  font-semibold bg-emerald-600 hover:bg-emerald-700
+                  text-white transition-colors shrink-0"
+              >
+                <Plus size={14} />
+                Nueva cotización
+              </button>
+            )}
           </div>
 
           {loadingCotizaciones ? (
@@ -723,56 +566,6 @@ export function LeadDetalle({
         </div>
       )}
 
-      {tab === 'historial' && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">
-            Historial comercial
-          </h3>
-          {historial.length === 0 ? (
-            <EmptyPanel message="Sin eventos comerciales registrados." />
-          ) : (
-            <div className="space-y-3">
-              {historial.map((evento) => (
-                <div key={evento.id} className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <span className="w-7 h-7 rounded-full bg-emerald-50
-                      text-emerald-600 mt-1 flex items-center justify-center">
-                      {evento.id.startsWith('notificacion')
-                        ? <Bell size={13} />
-                        : evento.id.startsWith('cotizacion')
-                          ? <FileText size={13} />
-                          : evento.id.startsWith('actividad')
-                            ? <MessageSquare size={13} />
-                            : <History size={13} />
-                      }
-                    </span>
-                    <span className="w-px flex-1 bg-gray-100 mt-1" />
-                  </div>
-                  <div className="flex-1 rounded-xl border border-gray-100 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-bold text-emerald-600
-                          uppercase tracking-wide">
-                          {evento.tipo}
-                        </p>
-                        <p className="text-sm font-semibold text-gray-900 mt-1">
-                          {evento.titulo}
-                        </p>
-                      </div>
-                      <span className="text-xs text-gray-400 shrink-0">
-                        {formatFecha(evento.fecha)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-2">
-                      {evento.detalle}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 }

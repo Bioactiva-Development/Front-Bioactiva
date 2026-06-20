@@ -1,4 +1,5 @@
 import {
+  getAllowedLeadTransitions,
   getCotizacionStateFromLeadState,
   validateLeadStateTransition,
 } from '@/lib/utils/lead-flow.utils'
@@ -69,5 +70,52 @@ describe('lead-flow.utils', () => {
         cotizacion(EstadoCot.Enviada),
       ]).allowed
     ).toBe(true)
+  })
+
+  it('lets a closed lead move back to ofertado or to the other closing state', () => {
+    // Los cierres ya no son terminales (sin requerir re-transición de cotización).
+    expect(
+      validateLeadStateTransition(LeadState.CierreVenta, LeadState.Ofertado, []).allowed
+    ).toBe(true)
+    expect(
+      validateLeadStateTransition(LeadState.CierreVenta, LeadState.CierreSinVenta, []).allowed
+    ).toBe(true)
+    expect(
+      validateLeadStateTransition(LeadState.CierreSinVenta, LeadState.CierreVenta, []).allowed
+    ).toBe(true)
+    expect(
+      validateLeadStateTransition(LeadState.CierreSinVenta, LeadState.Ofertado, []).allowed
+    ).toBe(true)
+  })
+
+  it('never allows returning to prospecto', () => {
+    expect(
+      validateLeadStateTransition(LeadState.Ofertado, LeadState.Prospecto, []).allowed
+    ).toBe(false)
+    expect(
+      validateLeadStateTransition(LeadState.CierreVenta, LeadState.Prospecto, []).allowed
+    ).toBe(false)
+  })
+
+  it('blocks closing directly from prospecto', () => {
+    expect(
+      validateLeadStateTransition(LeadState.Prospecto, LeadState.CierreVenta, []).allowed
+    ).toBe(false)
+  })
+
+  it('exposes the structural transitions allowed per state', () => {
+    expect(getAllowedLeadTransitions(LeadState.Prospecto)).toEqual([LeadState.Ofertado])
+    expect(getAllowedLeadTransitions(LeadState.Ofertado)).toEqual([
+      LeadState.CierreVenta,
+      LeadState.CierreSinVenta,
+    ])
+    expect(getAllowedLeadTransitions(LeadState.CierreVenta)).toEqual([
+      LeadState.Ofertado,
+      LeadState.CierreSinVenta,
+    ])
+    expect(getAllowedLeadTransitions(LeadState.CierreSinVenta)).toEqual([
+      LeadState.Ofertado,
+      LeadState.CierreVenta,
+    ])
   })
 })

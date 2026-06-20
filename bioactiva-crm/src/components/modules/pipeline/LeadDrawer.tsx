@@ -2,24 +2,17 @@
 
 import { useRouter } from 'next/navigation'
 import {
-  X, ExternalLink, User, Plus,
-  AlertTriangle, FileText, History,
+  X, ExternalLink, User, AlertTriangle,
 } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
 import {
   LeadState,
   TipoActividad,
   EstadoActividad,
-  EstadoCot,
-  TipoMoneda,
 } from '@/types/enums'
 import { useActividades } from '@/hooks/pipeline/useActividades'
-import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
 import { ROUTES } from '@/lib/constants/routes'
-import {
-  formatLeadDateOnly,
-  getLeadCloseDateStatus,
-} from '@/lib/utils/lead-date.utils'
+import { getAllowedLeadTransitions } from '@/lib/utils/lead-flow.utils'
 
 interface LeadDrawerProps {
   lead:         Lead
@@ -64,25 +57,9 @@ const TIPO_ICONOS: Record<TipoActividad, string> = {
   [TipoActividad.Otro]:    '📌',
 }
 
-const COTIZACION_COLORS: Record<EstadoCot, string> = {
-  [EstadoCot.Pendiente]: 'bg-gray-100 text-gray-600',
-  [EstadoCot.Enviada]:   'bg-blue-50 text-blue-700',
-  [EstadoCot.Aceptada]:  'bg-emerald-50 text-emerald-700',
-  [EstadoCot.Rechazada]: 'bg-red-50 text-red-600',
-}
-
-function formatMonto(monto: number, tipo: TipoMoneda) {
-  const simbolo = tipo === TipoMoneda.Soles ? 'S/' : '$'
-  return `${simbolo} ${monto.toLocaleString('es-PE', {
-    minimumFractionDigits: 2,
-  })}`
-}
-
 export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
   const router = useRouter()
   const { data: actividades = [] } = useActividades(lead.id)
-  const { data: cotizaciones = [] } = useCotizacionesPorLead(lead.id)
-  const closeDateStatus = getLeadCloseDateStatus(lead.fecha_cierre)
 
   const formatFecha = (fecha: string) =>
     new Date(fecha).toLocaleDateString('es-PE', {
@@ -169,28 +146,6 @@ export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
                 {lead.encargado_nombre ?? '—'}
               </p>
             </div>
-            <div>
-              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
-                Fecha cierre estimada
-              </p>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <p className="text-sm text-gray-800 font-medium">
-                  {lead.fecha_cierre
-                    ? formatLeadDateOnly(lead.fecha_cierre, {
-                        day:   '2-digit',
-                        month: 'short',
-                      })
-                    : '—'
-                  }
-                </p>
-                {closeDateStatus && (
-                  <span className={`rounded-full border px-2 py-0.5 text-xs
-                    font-semibold ${closeDateStatus.className}`}>
-                    {closeDateStatus.label}
-                  </span>
-                )}
-              </div>
-            </div>
           </div>
 
           {lead.desafio_oportunidad && (
@@ -266,111 +221,17 @@ export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
               </div>
             )}
           </div>
-
-          <div>
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
-                Cotizaciones ({cotizaciones.length})
-              </p>
-              <button
-                onClick={() => {
-                  onCerrar()
-                  router.push(`/cotizaciones/nueva?lead=${lead.id}`)
-                }}
-                className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1
-                  text-xs font-semibold text-emerald-600 hover:bg-emerald-50
-                  transition-colors"
-              >
-                <Plus size={12} />
-                Nueva
-              </button>
-            </div>
-
-            {cotizaciones.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-gray-200
-                px-4 py-5 text-center">
-                <FileText size={18} className="mx-auto text-gray-300 mb-2" />
-                <p className="text-sm text-gray-400">
-                  Sin cotizaciones asociadas.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {cotizaciones.map((cotizacion) => (
-                  <button
-                    key={cotizacion.id}
-                    type="button"
-                    onClick={() => {
-                      onCerrar()
-                      router.push(ROUTES.cotizacion(cotizacion.id))
-                    }}
-                    className="w-full text-left rounded-xl border border-gray-100
-                      bg-white p-3 hover:border-emerald-200 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-bold text-emerald-600">
-                          {cotizacion.codigo}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                          {cotizacion.nombre_servicio}
-                        </p>
-                      </div>
-                      <span className={`text-[11px] font-bold px-2 py-1
-                        rounded-lg uppercase tracking-wide shrink-0
-                        ${COTIZACION_COLORS[cotizacion.estado]}`}>
-                        {cotizacion.estado}
-                      </span>
-                    </div>
-                    <p className="text-xs font-bold text-gray-900 mt-2">
-                      {formatMonto(cotizacion.monto, cotizacion.tipo)}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">
-              Historial comercial
-            </p>
-            <div className="space-y-2">
-              <div className="flex gap-2 text-sm">
-                <History size={14} className="text-emerald-600 mt-0.5 shrink-0" />
-                <div>
-                  <p className="font-semibold text-gray-700">Lead creado</p>
-                  <p className="text-xs text-gray-400">
-                    {formatFecha(lead.created_at)}
-                  </p>
-                </div>
-              </div>
-              {cotizaciones.slice(0, 2).map((cotizacion) => (
-                <div key={`hist-cot-${cotizacion.id}`} className="flex gap-2 text-sm">
-                  <FileText size={14} className="text-emerald-600 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-semibold text-gray-700">
-                      Cotización {cotizacion.estado}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {cotizacion.codigo} · {formatFecha(cotizacion.updated_at)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
-        {/* Cambiar etapa — solo en móvil */}
-        {onMoverLead && (
+        {/* Cambiar etapa — solo en móvil, solo a estados destino permitidos */}
+        {onMoverLead && getAllowedLeadTransitions(lead.estado).length > 0 && (
           <div className="lg:hidden px-6 py-4 border-t border-gray-100 space-y-3">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
               Cambiar etapa
             </p>
             <div className="grid grid-cols-2 gap-2">
               {ETAPAS_PIPELINE
-                .filter((etapa) => etapa.estado !== lead.estado)
+                .filter((etapa) => getAllowedLeadTransitions(lead.estado).includes(etapa.estado))
                 .map((etapa) => (
                   <button
                     key={etapa.estado}
