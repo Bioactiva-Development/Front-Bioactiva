@@ -47,8 +47,10 @@ export interface CotizacionFormData {
 
 export interface CotizacionFiltros {
   id_lead?:      number
+  id_org?:       number
   estado?:       EstadoCot
   id_remitente?: number
+  tipo?:         TipoMoneda
   fecha_desde?:  string
   fecha_hasta?:  string
   search?:       string   // búsqueda local en mock; confirmar con backend
