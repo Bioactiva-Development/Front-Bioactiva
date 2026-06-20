@@ -7,6 +7,7 @@ jest.mock('lucide-react', () => new Proxy({}, { get: () => () => null }))
 
 jest.mock('@/hooks/organizaciones/useOrganizaciones', () => ({
   useOrganizaciones: () => ({ data: { data: [{ id: 'org-1', nombre: 'Altomayo' }] } }),
+  useOrganizacion: () => ({ data: undefined }),
 }))
 
 const getUsuarios = jest.fn().mockResolvedValue({
@@ -15,6 +16,11 @@ const getUsuarios = jest.fn().mockResolvedValue({
 jest.mock('@/services/modules/usuarios.service', () => ({
   usuariosService: { getUsuarios: (...args: unknown[]) => getUsuarios(...args) },
 }))
+
+// El panel de filtros está colapsado por defecto; lo abrimos antes de aseverar.
+async function abrirPanel() {
+  await userEvent.click(screen.getByText('Filtros'))
+}
 
 describe('modules/pipeline/LeadFiltros', () => {
   beforeEach(() => jest.clearAllMocks())
@@ -28,9 +34,10 @@ describe('modules/pipeline/LeadFiltros', () => {
     render(<LeadFiltros filtros={{}} onChange={jest.fn()} onLimpiar={jest.fn()} />)
     await abrirFiltros()
     expect(screen.getByText('Todas')).toBeInTheDocument()
+    expect(screen.getByText('Sin actividades')).toBeInTheDocument()
+    expect(screen.getByText('Pendiente')).toBeInTheDocument()
+    expect(screen.getByText('En riesgo')).toBeInTheDocument()
     expect(screen.getByText('Por vencer')).toBeInTheDocument()
-    expect(screen.getByText('Vencidas')).toBeInTheDocument()
-    expect(screen.getByText('Con alerta')).toBeInTheDocument()
   })
 
   it('emits alerta_actividad when a semáforo option is clicked', async () => {
@@ -39,7 +46,7 @@ describe('modules/pipeline/LeadFiltros', () => {
     await abrirFiltros()
     await userEvent.click(screen.getByText('Vencidas'))
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ alerta_actividad: 'VENCIDAS' })
+      expect.objectContaining({ alerta_actividad: 'POR_VENCER' })
     )
   })
 
@@ -52,10 +59,11 @@ describe('modules/pipeline/LeadFiltros', () => {
   it('loads responsables and emits an estado change', async () => {
     const onChange = jest.fn()
     render(<LeadFiltros filtros={{}} onChange={onChange} onLimpiar={jest.fn()} />)
+    await abrirPanel()
     await waitFor(() => expect(getUsuarios).toHaveBeenCalled())
     await abrirFiltros()
 
-    const [estadoSelect] = screen.getAllByRole('combobox')
+    const estadoSelect = screen.getByLabelText('Estado')
     await userEvent.selectOptions(estadoSelect, LeadState.Ofertado)
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ estado: LeadState.Ofertado })

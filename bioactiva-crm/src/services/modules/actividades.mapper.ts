@@ -77,10 +77,10 @@ const trimOrUndefined = (value?: string | null): string | undefined => {
 const toIsoDateTime = (value: string): string => {
   if (value.endsWith('Z')) return value
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
-    return `${value}:00.000Z`
+    return new Date(value).toISOString()
   }
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value)) {
-    return `${value}.000Z`
+    return new Date(value).toISOString()
   }
   return new Date(value).toISOString()
 }

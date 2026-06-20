@@ -1,235 +1,274 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertTriangle, Clock, Bell, X } from 'lucide-react'
-import { Notificacion, NotificacionProgramada } from '@/types/notificacion.types'
-import { EstadoNotif } from '@/types/enums'
-import { useMarcarLeida, useCancelarProgramada } from '@/hooks/notificaciones/useNotificaciones'
+import { AlertTriangle, Clock, Mail, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ROUTES } from '@/lib/constants/routes'
+import {
+  NotificacionInApp,
+  NotificacionProgramada,
+} from '@/types/notificacion.types'
+import {
+  useCancelarProgramada,
+  useMarcarLeida,
+} from '@/hooks/notificaciones/useNotificaciones'
+import { APP_TIME_ZONE } from '@/lib/utils/timezone.utils'
 
-interface NotificacionAlertaProps {
-  notificacion: Notificacion
-}
+const formatFecha = (fecha: string) =>
+  new Date(fecha).toLocaleString('es-PE', {
+    timeZone: APP_TIME_ZONE,
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 
 const formatTiempo = (fecha: string, ahora: number) => {
-  const diff = ahora - new Date(fecha).getTime()
-  const horas = Math.floor(diff / (1000 * 60 * 60))
+  const horas = Math.floor((ahora - new Date(fecha).getTime()) / 3_600_000)
   const dias = Math.floor(horas / 24)
-
   if (dias > 0) return `Hace ${dias} día${dias > 1 ? 's' : ''}`
   if (horas > 0) return `Hace ${horas} h`
   return 'Hace un momento'
 }
 
-export function NotificacionAlerta({ notificacion }: Readonly<NotificacionAlertaProps>) {
-  const router = useRouter()
-  const { mutateAsync: marcarLeida } = useMarcarLeida()
-
-  const esNoLeida = notificacion.estado === EstadoNotif.NoLeida
-  const [tiempo] = useState(() => formatTiempo(notificacion.created_at, Date.now()))
-
-  const handleClick = async () => {
-    if (esNoLeida) await marcarLeida(notificacion.id)
-    if (notificacion.id_lead) {
-      router.push(ROUTES.lead(notificacion.id_lead))
-    }
-  }
-
+function EstadoEnvioBadge({ enviado }: Readonly<{ enviado: boolean }>) {
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={handleClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick() }}
-      className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer
-        transition-colors
-        ${esNoLeida
-          ? 'bg-red-50 border-red-100 hover:bg-red-100'
-          : 'bg-white border-gray-100 hover:bg-gray-50'
-        }`}
-    >
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0
-        ${esNoLeida ? 'bg-red-100' : 'bg-gray-100'}`}>
-        <AlertTriangle
-          size={15}
-          className={esNoLeida ? 'text-red-500' : 'text-gray-400'}
-        />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm font-semibold truncate
-          ${esNoLeida ? 'text-red-700' : 'text-gray-600'}`}>
-          {notificacion.titulo}
-        </p>
-        {notificacion.lead_org && (
-          <p className="text-xs text-gray-500 mt-0.5 truncate">
-            {notificacion.lead_org}
-          </p>
-        )}
-        <p className="text-xs text-gray-400 mt-1">
-          {tiempo}
-        </p>
-      </div>
-      {esNoLeida && (
-        <div className="w-2 h-2 rounded-full bg-red-500 shrink-0 mt-1.5" />
-      )}
-    </div>
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+      enviado
+        ? 'bg-emerald-100 text-emerald-700'
+        : 'bg-amber-100 text-amber-700'
+    }`}>
+      {enviado ? 'Enviado' : 'Pendiente'}
+    </span>
   )
 }
 
-interface NotificacionProgramadaItemProps {
+export function NotificacionAlerta({
+  notificacion,
+}: Readonly<{ notificacion: NotificacionInApp }>) {
+  const router = useRouter()
+  const { mutateAsync: marcarLeida } = useMarcarLeida()
+  const esNoLeida = notificacion.estado === 'NO_LEIDA'
+  const esLeadSinMovimiento =
+    notificacion.idLead !== null &&
+    notificacion.idActividad === null &&
+    /lead sin movimiento/i.test(notificacion.titulo)
+  const [tiempo] = useState(() => formatTiempo(notificacion.createdAt, Date.now()))
+
+  const handleClick = async () => {
+    if (esNoLeida) await marcarLeida(notificacion.id)
+    if (notificacion.idLead) router.push(ROUTES.lead(notificacion.idLead))
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors ${
+        esNoLeida
+          ? 'border-red-100 bg-red-50 hover:bg-red-100'
+          : 'border-gray-100 bg-white hover:bg-gray-50'
+      }`}
+    >
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+        esNoLeida ? 'bg-red-100' : 'bg-gray-100'
+      }`}>
+        <AlertTriangle size={15} className={esNoLeida ? 'text-red-500' : 'text-gray-400'} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className={`block truncate text-sm font-semibold ${
+          esNoLeida ? 'text-red-700' : 'text-gray-700'
+        }`}>
+          {notificacion.titulo}
+        </span>
+        {esLeadSinMovimiento && (
+          <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+            Alerta automatica 30+ dias
+          </span>
+        )}
+        <span className="mt-1 block text-xs text-gray-500">{notificacion.mensaje}</span>
+        <span className="mt-1 block text-xs text-gray-400">{tiempo}</span>
+      </span>
+      {esNoLeida && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-red-500" />}
+    </button>
+  )
+}
+
+interface ProgramadaItemProps {
   notificacion: NotificacionProgramada
+  leadLabel?: string
+  responsableActual?: string
 }
 
 export function NotificacionProgramadaItem({
   notificacion,
-}: Readonly<NotificacionProgramadaItemProps>) {
+  leadLabel,
+  responsableActual,
+}: Readonly<ProgramadaItemProps>) {
   const { mutateAsync: cancelar, isPending } = useCancelarProgramada()
+  const esProgramada = notificacion.estado === 'PROGRAMADA'
+  const [confirmandoCancelacion, setConfirmandoCancelacion] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
 
-  const formatFecha = (fecha: string) =>
-    new Date(fecha).toLocaleDateString('es-PE', {
-      day:    '2-digit',
-      month:  'short',
-      year:   'numeric',
-      hour:   '2-digit',
-      minute: '2-digit',
-    })
+  const handleCancelar = async () => {
+    if (!esProgramada) {
+      setCancelError(
+        'La notificación ya no puede cancelarse porque está vencida o ya fue ejecutada.'
+      )
+      return
+    }
 
-  const esProgramada = notificacion.estado === 'Programada'
+    try {
+      setCancelError(null)
+      await cancelar(notificacion.id)
+      setConfirmandoCancelacion(false)
+    } catch (err: unknown) {
+      const status = (err as { status?: number })?.status
+      setCancelError(
+        status === 409
+          ? 'La notificación ya no puede cancelarse porque está vencida o ya fue ejecutada.'
+          : 'No se pudo cancelar la notificación. Intente nuevamente.'
+      )
+    }
+  }
 
   return (
-    <div className="flex items-start gap-3 p-4 rounded-xl border border-gray-100
-      bg-white">
-      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center
-        justify-center shrink-0">
-        <Clock size={15} className="text-blue-500" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-gray-800 truncate">
-          {notificacion.asunto}
-        </p>
-        {notificacion.lead_org && (
-          <p className="text-xs text-gray-500 mt-0.5">
-            {notificacion.lead_codigo} · {notificacion.lead_org}
-          </p>
-        )}
-        <p className="text-xs text-gray-400 mt-1">
-          Programada: {formatFecha(notificacion.fecha_envio)}
-        </p>
-        <p className="text-xs text-gray-400">
-          Para: {notificacion.destinatario}
-        </p>
-      </div>
-
-      {esProgramada && (
-        <button
-          onClick={() => cancelar(notificacion.id)}
-          disabled={isPending}
-          title="Cancelar notificación"
-          className="p-1.5 rounded-lg text-gray-400 hover:text-red-500
-            hover:bg-red-50 transition-colors shrink-0
-            disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <X size={14} />
-        </button>
-      )}
-    </div>
-  )
-}
-
-interface NotificacionDropdownProps {
-  onVerTodas:    () => void
-  onVerPipeline: () => void
-}
-
-export function NotificacionDropdown({
-  onVerTodas,
-  onVerPipeline,
-}: Readonly<NotificacionDropdownProps>) {
-  return (
-    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl
-      shadow-2xl border border-gray-100 z-50 overflow-hidden">
-
-      <div className="flex items-center justify-between px-4 py-3
-        border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          <Bell size={14} className="text-emerald-600" />
-          <span className="text-sm font-bold text-gray-700 uppercase tracking-wide">
-            Notificaciones
-          </span>
-        </div>
-        <span className="text-xs text-emerald-600 font-semibold">
-          2 por leer
+    <article className="rounded-2xl border border-gray-100 bg-white p-4">
+      <div className="flex items-start gap-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50">
+          {notificacion.tipo === 'RECORDATORIO'
+            ? <Clock size={15} className="text-blue-600" />
+            : <Mail size={15} className="text-blue-600" />}
         </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold text-gray-900">
+              {notificacion.tipo === 'RECORDATORIO'
+                ? notificacion.asuntoInterno
+                : `Seguimiento de ${notificacion.instancias?.length ?? 0} instancia(s)`}
+            </p>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+              esProgramada
+                ? 'bg-emerald-50 text-emerald-700'
+                : 'bg-amber-50 text-amber-700'
+            }`}>
+              {notificacion.estado}
+            </span>
+          </div>
+          {leadLabel && <p className="mt-1 text-xs text-gray-500">{leadLabel}</p>}
+          <p className="mt-1 text-xs text-gray-500">
+            Encargado actual: {responsableActual ?? `Usuario ${notificacion.idResponsable}`}
+          </p>
+
+          {notificacion.tipo === 'RECORDATORIO' && notificacion.fechaEnvioInterno && (
+            <div className="mt-2 space-y-1 text-xs text-gray-500">
+              <p>
+                Envío interno: {formatFecha(notificacion.fechaEnvioInterno)}
+                {' '}
+                <EstadoEnvioBadge enviado={notificacion.enviadoInterno} />
+              </p>
+              {!notificacion.enviadoInterno && (
+                <p className="text-gray-400">
+                  Si la actividad se marca como completada antes del envío, el
+                  backend cancelará este recordatorio pendiente.
+                </p>
+              )}
+              {esProgramada && (
+                <p className="text-gray-400">
+                  También puedes cancelarlo manualmente antes de su ejecución.
+                  Al cancelarse, desaparece de esta lista y no se envía.
+                </p>
+              )}
+            </div>
+          )}
+
+          {notificacion.tipo === 'SEGUIMIENTO' && (
+            <p className="mt-2 text-xs text-gray-400">
+              Si la actividad se completa antes de un paso programado, el
+              backend cancelará los pasos pendientes. El correo externo se
+              enviará solo si la actividad sigue pendiente en su fecha
+              programada. También puedes cancelar la notificación completa antes
+              de su ejecución; al cancelarse, no se envía ni queda en esta lista.
+            </p>
+          )}
+
+          {notificacion.instancias?.map((instancia) => (
+            <div key={instancia.id} className="mt-3 rounded-xl bg-gray-50 p-3 text-xs">
+              <p className="font-semibold text-gray-700">Instancia {instancia.orden}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-gray-500">
+                <span>Interno: {formatFecha(instancia.fechaEnvioInterno)}</span>
+                <EstadoEnvioBadge enviado={instancia.enviadoInterno} />
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-gray-500">
+                <span>Cliente: {formatFecha(instancia.fechaEnvioExterno)}</span>
+                <EstadoEnvioBadge enviado={instancia.enviadoExterno} />
+              </div>
+              {!instancia.enviadoExterno && (
+                <p className="mt-1 text-gray-400">
+                  Se enviará al cliente si el encargado no completa la
+                  actividad antes de esta fecha.
+                </p>
+              )}
+            </div>
+          ))}
+
+          {notificacion.correoCliente && (
+            <p className="mt-2 text-xs text-gray-400">
+              Destinatario externo: {notificacion.correoCliente}
+            </p>
+          )}
+        </div>
+
+        {esProgramada && (
+          <div className="shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setCancelError(null)
+                setConfirmandoCancelacion(true)
+              }}
+              disabled={isPending}
+              title="Cancelar notificación"
+              className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Contenido */}
-      <div className="max-h-80 overflow-y-auto p-3 space-y-1">
-        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide px-1 mb-2">
-          Sin leer
-        </p>
-        <div className="flex items-center gap-2 px-2 py-2 rounded-lg
-          hover:bg-gray-50 cursor-pointer">
-          <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center">
-            <AlertTriangle size={13} className="text-red-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-gray-800 truncate">
-              Actividad vencida en LEAD-2025-003 (...
-            </p>
-            <p className="text-xs text-gray-400">Hace 3 h</p>
-          </div>
-          <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-        </div>
-        <div className="flex items-center gap-2 px-2 py-2 rounded-lg
-          hover:bg-gray-50 cursor-pointer">
-          <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center">
-            <AlertTriangle size={13} className="text-red-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-gray-800 truncate">
-              Actividad vencida en LEAD-2025-008 (...
-            </p>
-            <p className="text-xs text-gray-400">Hace 1 h</p>
-          </div>
-          <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-        </div>
-
-        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide px-1 mt-3 mb-2">
-          Leídas
-        </p>
-        <div className="flex items-center gap-2 px-2 py-2 rounded-lg
-          hover:bg-gray-50 cursor-pointer opacity-60">
-          <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center">
-            <Clock size={13} className="text-gray-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-gray-700 truncate">
-              Actividad vencida en LEAD-2025-005 (L...
-            </p>
-            <p className="text-xs text-gray-400">Hace 8 días</p>
+      {confirmandoCancelacion && (
+        <div className="mt-3 rounded-xl border border-red-100 bg-red-50 p-3 text-xs text-red-700">
+          <p className="font-semibold">Cancelar notificación programada</p>
+          <p className="mt-1">
+            Se anularán los envíos pendientes. La notificación cancelada no se
+            mostrará en programadas ni como ejecutada en el historial.
+          </p>
+          {cancelError && <p className="mt-2 font-semibold">{cancelError}</p>}
+          <div className="mt-3 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmandoCancelacion(false)
+                setCancelError(null)
+              }}
+              disabled={isPending}
+              className="rounded-lg px-3 py-1.5 font-semibold text-gray-500 hover:bg-white"
+            >
+              Volver
+            </button>
+            <button
+              type="button"
+              onClick={handleCancelar}
+              disabled={isPending || !esProgramada}
+              className="rounded-lg bg-red-600 px-3 py-1.5 font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              {isPending ? 'Cancelando...' : 'Confirmar cancelación'}
+            </button>
           </div>
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-3
-        border-t border-gray-100">
-        <button
-          onClick={onVerTodas}
-          className="text-xs text-gray-500 hover:text-emerald-600
-            font-semibold transition-colors"
-        >
-          Ver todas
-        </button>
-        <button
-          onClick={onVerPipeline}
-          className="text-xs text-emerald-600 hover:text-emerald-700
-            font-semibold transition-colors flex items-center gap-1"
-        >
-          Ver pipeline →
-        </button>
-      </div>
-    </div>
+      )}
+    </article>
   )
 }

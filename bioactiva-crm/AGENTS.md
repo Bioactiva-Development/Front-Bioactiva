@@ -91,8 +91,14 @@ Reglas:
 - `Prospecto -> Cierre con venta` y `Prospecto -> Cierre sin venta` estan bloqueados. Primero debe existir propuesta formal en `Ofertado`.
 - `Ofertado -> Cierre con venta` acepta la cotizacion con `PATCH /quotations/:id/accept`.
 - `Ofertado -> Cierre sin venta` rechaza la cotizacion con `PATCH /quotations/:id/reject`.
-- `Cierre con venta` y `Cierre sin venta` son estados finales; no se puede mover desde un cierre.
-- No se permite regresar un lead avanzado a `En prospecto`.
+- `Cierre con venta` y `Cierre sin venta` YA NO son finales: pueden volver a `Ofertado` o pasar al otro cierre. Transiciones validas del backend (`PATCH /leads/:id/status`):
+  - `En prospecto -> Ofertado`.
+  - `Ofertado -> Cierre con venta | Cierre sin venta`.
+  - `Cierre con venta -> Ofertado | Cierre sin venta`.
+  - `Cierre sin venta -> Ofertado | Cierre con venta`.
+- Entre estados de cierre la cotizacion ya es terminal (`ACEPTADA`/`RECHAZADA`) y no se re-transiciona: solo se cambia el estado del lead con `PATCH /leads/:id/status`.
+- Al pasar a `Ofertado` desde cualquier estado, el backend crea un borrador de cotizacion solo si el lead no tiene una.
+- No se permite regresar un lead a `En prospecto` una vez que avanzo. Reenviar el mismo estado es un no-op valido.
 - Al mover un lead por drag and drop, no crear cotizaciones fantasma. Usar solo cotizaciones reales asociadas al lead.
 - `ACEPTADA` y `RECHAZADA` son terminales en backend. No se pueden modificar por `PATCH /quotations/:id`.
 - Para avanzar estados se usan endpoints de lifecycle: `/send`, `/accept`, `/reject`.
@@ -108,15 +114,18 @@ Contrato de `POST /leads` y `PATCH /leads/:id`:
 - El estado inicial backend siempre es `EN_PROSPECTO`; la UI crea leads siempre en `En prospecto`.
 - No hardcodear responsables: siempre cargar usuarios activos desde `GET /users`.
 
-Filtro basico del pipeline:
+Filtros del pipeline (server-side, soportados por `GET /leads`):
 
-- Busqueda comercial.
-- Estado.
-- Encargado.
-- Canal.
-- Solo con alerta activa.
+- Buscador de organizacion: el campo de busqueda es un selector que mapea la organizacion elegida a `idOrg`. No es busqueda libre por texto.
+- Estado (`estado`).
+- Encargado (`idEncargado`).
+- Sector (`sector`): el backend de leads ya soporta filtrar por el sector de la organizacion vinculada. Se envia el valor del enum `Sector` (ej. `TECNOLOGIA`).
+- Rango de fechas de creacion (`fechaDesde`, `fechaHasta`, con `fechaHasta >= fechaDesde`).
+- Semaforo de actividades (`alertaActividad`), ver abajo.
 
-No reintroducir filtros de sector, tipo de organizacion, tamano o fecha de creacion en pipeline si el backend de leads no los soporta.
+El semaforo del lead esta atado al campo backend `activityAlert` y al filtro `alertaActividad`. Ambos usan el mismo enum, de menor a mayor severidad: `SIN_ACTIVIDADES` < `PENDIENTE` < `EN_RIESGO` < `POR_VENCER`. Omitir el filtro trae todos los leads; valores invalidos devuelven 400. No usar los valores antiguos `VERDE/AMARILLO/ROJO` ni `TODAS/VENCIDAS`.
+
+No reintroducir filtros de tipo de organizacion o tamano en pipeline si el backend de leads no los soporta.
 
 ### Actividades
 

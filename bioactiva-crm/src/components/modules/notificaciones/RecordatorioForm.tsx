@@ -1,25 +1,26 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Info, Loader2, Save } from 'lucide-react'
+import { AlertCircle, Info, Loader2, Save } from 'lucide-react'
 import { usePlantillasActivas } from '@/hooks/plantillas/usePlantillas'
 import { useLeads } from '@/hooks/pipeline/useLeads'
 import { useActividades } from '@/hooks/pipeline/useActividades'
+import { useNotificacionesProgramadas } from '@/hooks/notificaciones/useNotificaciones'
 import {
   recordatorioSchema,
   RecordatorioFormValues,
 } from '@/lib/validators/notificacion.schema'
-import { NotificacionProgramada } from '@/types/notificacion.types'
+import { CrearRecordatorioRequest } from '@/types/notificacion.types'
+import { EstadoActividad } from '@/types/enums'
 
 interface RecordatorioFormProps {
-  onSubmit: (data: RecordatorioFormValues & Partial<NotificacionProgramada>) => Promise<void>
+  onSubmit: (data: CrearRecordatorioRequest) => Promise<void>
   isLoading: boolean
   error?: string | null
   onCancel?: () => void
   leadIdInicial?: number
-  actividadIdInicial?: number
 }
 
 export function RecordatorioForm({
@@ -28,8 +29,7 @@ export function RecordatorioForm({
   error,
   onCancel,
   leadIdInicial,
-  actividadIdInicial,
-}: RecordatorioFormProps) {
+}: Readonly<RecordatorioFormProps>) {
   const { data: leadsResponse } = useLeads({ limit: 100 })
   const leads = leadsResponse?.data ?? []
   const plantillasActivas = usePlantillasActivas()
@@ -39,85 +39,82 @@ export function RecordatorioForm({
     handleSubmit,
     control,
     setValue,
-    getValues,
     formState: { errors },
   } = useForm<RecordatorioFormValues>({
     resolver: zodResolver(recordatorioSchema),
     defaultValues: {
-      id_lead: leadIdInicial ?? 0,
-      id_actividad: actividadIdInicial ?? 0,
-      id_plantilla: 0,
-      fecha_envio: '',
-      hora_envio: '',
+      idLead: leadIdInicial ?? 0,
+      minutosAntes: 30,
+      idTemplate: 0,
       asunto: '',
       cuerpo: '',
     },
   })
 
-  const selectedLeadId = useWatch({ control, name: 'id_lead' })
-  const selectedPlantillaId = useWatch({ control, name: 'id_plantilla' })
-  const selectedActividadId = useWatch({ control, name: 'id_actividad' })
-
+  const selectedLeadId = useWatch({ control, name: 'idLead' })
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId)
   const { data: actividades = [] } = useActividades(selectedLeadId)
-  const selectedActividad = actividades.find(
-    (actividad) => actividad.id === selectedActividadId
+  const {
+    data: notificacionesProgramadas = [],
+    isLoading: cargandoNotificaciones,
+  } = useNotificacionesProgramadas(
+    { estado: 'PROGRAMADA', idLead: selectedLeadId },
+    { enabled: Boolean(selectedLeadId) }
   )
+  const actividadActiva = actividades.find(
+    (actividad) => actividad.estado === EstadoActividad.Pendiente
+  )
+  const notificacionProgramadaExistente = useMemo(
+    () =>
+      notificacionesProgramadas.find(
+        (notificacion) =>
+          notificacion.estado === 'PROGRAMADA' &&
+          notificacion.idLead === selectedLeadId &&
+          (!actividadActiva || notificacion.idActividad === actividadActiva.id)
+      ),
+    [actividadActiva, notificacionesProgramadas, selectedLeadId]
+  )
+  const tipoNotificacionExistente =
+    notificacionProgramadaExistente?.tipo === 'SEGUIMIENTO'
+      ? 'seguimiento'
+      : 'recordatorio'
+
+  const plantillas = plantillasActivas.data ?? []
 
   useEffect(() => {
-    if (leadIdInicial) setValue('id_lead', leadIdInicial)
-    if (actividadIdInicial) setValue('id_actividad', actividadIdInicial)
-  }, [actividadIdInicial, leadIdInicial, setValue])
+    if (leadIdInicial) setValue('idLead', leadIdInicial)
+  }, [leadIdInicial, setValue])
 
-  const plantillasDisponibles = plantillasActivas.data?.filter(
-    (plantilla) => plantilla.activo
-  ) ?? []
-
-  const selectedPlantilla = plantillasDisponibles.find(
-    (plantilla) => plantilla.id === selectedPlantillaId
-  )
-
-  useEffect(() => {
-    if (!selectedPlantilla) return
-
-    const cuerpoActual = getValues('cuerpo')
-    const asuntoActual = getValues('asunto')
-
-    if (!asuntoActual) {
-      setValue('asunto', selectedPlantilla.asunto)
-    }
-
-    if (!cuerpoActual) {
-      setValue('cuerpo', selectedPlantilla.cuerpo)
-    }
-  }, [selectedPlantilla?.id, selectedPlantilla, getValues, setValue])
-
-  const handleFormSubmit = async (data: RecordatorioFormValues) => {
-    if (!selectedLead || !selectedActividad) return
-
-    await onSubmit({
-      ...data,
-      id_lead: selectedLead.id,
-      id_actividad: selectedActividad.id,
-      fecha_envio: `${data.fecha_envio}T${data.hora_envio}`,
-      destinatario: selectedLead.encargado_nombre ?? 'Responsable',
-      lead_codigo: selectedLead.codigo,
-      lead_org: selectedLead.organizacion_nombre ?? selectedLead.contacto_nombre,
-      actividad_nombre: selectedActividad.nombre_actividad,
-    })
+  const applyTemplate = (templateId: number) => {
+    const template = plantillas.find((item) => item.id === templateId)
+    if (!template) return
+    setValue('asunto', template.asunto)
+    setValue('cuerpo', template.cuerpo)
   }
 
   const inputClass = (hasError: boolean) =>
-    `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
-      transition-colors placeholder:text-gray-400
-      ${hasError
-        ? 'border-red-400 bg-red-50'
-        : 'border-gray-200 focus:border-emerald-400 bg-white'
+    `w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 outline-none
+      transition-colors placeholder:text-gray-400 ${
+        hasError
+          ? 'border-red-400 bg-red-50'
+          : 'border-gray-200 bg-white focus:border-emerald-400'
       }`
 
+  const submit = async (values: RecordatorioFormValues) => {
+    if (notificacionProgramadaExistente) return
+
+    await onSubmit({
+      idLead: values.idLead,
+      minutosAntes: values.minutosAntes,
+      idTemplate: values.idTemplate || null,
+      asunto: values.asunto,
+      cuerpo: values.cuerpo,
+    })
+  }
+
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
-      <div className="flex items-center justify-between gap-4 mb-6">
+    <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
             Programar recordatorio
@@ -126,23 +123,23 @@ export function RecordatorioForm({
         </div>
         <button
           type="button"
-          onClick={() => onCancel?.()}
-          className="text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors"
+          onClick={onCancel}
+          className="text-sm font-semibold text-gray-500 hover:text-gray-700"
         >
           Cancelar
         </button>
       </div>
 
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(submit)} className="space-y-6">
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-1.5">
-            <label htmlFor="rec-lead" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <label htmlFor="rec-lead" className="text-xs font-semibold uppercase text-gray-500">
               Lead <span className="text-red-500">*</span>
             </label>
             <select
               id="rec-lead"
-              {...register('id_lead', { valueAsNumber: true })}
-              className={inputClass(!!errors.id_lead)}
+              {...register('idLead', { valueAsNumber: true })}
+              className={inputClass(!!errors.idLead)}
               disabled={Boolean(leadIdInicial)}
             >
               <option value={0}>Selecciona un lead</option>
@@ -152,126 +149,112 @@ export function RecordatorioForm({
                 </option>
               ))}
             </select>
-            {errors.id_lead && (
-              <p className="text-red-500 text-xs">{errors.id_lead.message}</p>
+            {errors.idLead && (
+              <p className="text-xs text-red-500">{errors.idLead.message}</p>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="rec-actividad" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Actividad <span className="text-red-500">*</span>
+            <label htmlFor="rec-minutos" className="text-xs font-semibold uppercase text-gray-500">
+              Minutos antes del fin <span className="text-red-500">*</span>
             </label>
-            <select
-              id="rec-actividad"
-              {...register('id_actividad', { valueAsNumber: true })}
-              className={inputClass(!!errors.id_actividad)}
-              disabled={!selectedLead || Boolean(actividadIdInicial)}
-            >
-              <option value={0}>
-                {selectedLead ? 'Selecciona una actividad' : 'Selecciona primero un lead'}
-              </option>
-              {actividades.map((actividad) => (
-                <option key={actividad.id} value={actividad.id}>
-                  {actividad.nombre_actividad}
-                </option>
-              ))}
-            </select>
-            {errors.id_actividad && (
-              <p className="text-red-500 text-xs">{errors.id_actividad.message}</p>
+            <input
+              id="rec-minutos"
+              type="number"
+              min={1}
+              max={120}
+              {...register('minutosAntes', { valueAsNumber: true })}
+              className={inputClass(!!errors.minutosAntes)}
+            />
+            {errors.minutosAntes && (
+              <p className="text-xs text-red-500">{errors.minutosAntes.message}</p>
             )}
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-1.5">
-            <label htmlFor="rec-plantilla" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Plantilla <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="rec-plantilla"
-              {...register('id_plantilla', { valueAsNumber: true })}
-              className={inputClass(!!errors.id_plantilla)}
-            >
-              <option value={0}>Selecciona una plantilla</option>
-              {plantillasDisponibles.map((plantilla) => (
-                <option key={plantilla.id} value={plantilla.id}>
-                  {plantilla.nombre}
-                </option>
-              ))}
-            </select>
-            {errors.id_plantilla && (
-              <p className="text-red-500 text-xs">{errors.id_plantilla.message}</p>
-            )}
+        {selectedLead && (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
+            <p className="font-semibold">
+              Encargado actual: {selectedLead.encargado_nombre ?? 'Sin nombre'}
+            </p>
+            <p className="mt-1 text-xs">
+              {actividadActiva
+                ? `Actividad activa: ${actividadActiva.nombre_actividad}. El backend calculará el envío desde su fecha de fin.`
+                : 'Este lead no tiene una actividad pendiente; el backend rechazará la programación.'}
+            </p>
           </div>
+        )}
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label htmlFor="rec-fecha" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Fecha <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="rec-fecha"
-                type="date"
-                {...register('fecha_envio')}
-                className={inputClass(!!errors.fecha_envio)}
-              />
-              {errors.fecha_envio && (
-                <p className="text-red-500 text-xs">{errors.fecha_envio.message}</p>
-              )}
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="rec-hora" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Hora <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="rec-hora"
-                type="time"
-                {...register('hora_envio')}
-                className={inputClass(!!errors.hora_envio)}
-              />
-              {errors.hora_envio && (
-                <p className="text-red-500 text-xs">{errors.hora_envio.message}</p>
-              )}
-            </div>
+        {notificacionProgramadaExistente && (
+          <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            <AlertCircle size={17} className="mt-0.5 shrink-0" />
+            <p>
+              Ya existe un {tipoNotificacionExistente} programado para la
+              actividad activa de este lead. Cancélalo antes de crear una nueva
+              notificación.
+            </p>
           </div>
+        )}
+
+        <div className="space-y-1.5">
+          <label htmlFor="rec-template" className="text-xs font-semibold uppercase text-gray-500">
+            Plantilla opcional
+          </label>
+          <select
+            id="rec-template"
+            {...register('idTemplate', {
+              valueAsNumber: true,
+              onChange: (event) => applyTemplate(Number(event.target.value)),
+            })}
+            className={inputClass(!!errors.idTemplate)}
+            disabled={plantillasActivas.isLoading}
+          >
+            <option value={0}>
+              {plantillasActivas.isLoading ? 'Cargando plantillas...' : 'Sin plantilla'}
+            </option>
+            {plantillas.map((plantilla) => (
+              <option key={plantilla.id} value={plantilla.id}>
+                {plantilla.nombre}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-400">
+            La plantilla solo precarga asunto y cuerpo; puedes editarlos sin
+            modificar la plantilla original.
+          </p>
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="rec-asunto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label htmlFor="rec-asunto" className="text-xs font-semibold uppercase text-gray-500">
             Asunto <span className="text-red-500">*</span>
           </label>
           <input
             id="rec-asunto"
-            type="text"
             {...register('asunto')}
             className={inputClass(!!errors.asunto)}
-            placeholder="Asunto del mensaje"
           />
           {errors.asunto && (
-            <p className="text-red-500 text-xs">{errors.asunto.message}</p>
+            <p className="text-xs text-red-500">{errors.asunto.message}</p>
           )}
         </div>
 
         <div className="space-y-1.5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-            <label htmlFor="rec-cuerpo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Cuerpo del mensaje <span className="text-red-500">*</span>
+          <div className="flex items-center justify-between gap-2">
+            <label htmlFor="rec-cuerpo" className="text-xs font-semibold uppercase text-gray-500">
+              Cuerpo <span className="text-red-500">*</span>
             </label>
-            <span className="text-xs text-gray-400 flex items-center gap-1">
-              <Info size={12} />
-              <span className="sm:hidden">Personalizable con plantilla</span>
-              <span className="hidden sm:inline">El cuerpo se puede personalizar luego de seleccionar plantilla</span>
+            <span className="flex items-center gap-1 text-xs text-gray-400">
+              <Info size={12} /> Admite texto o HTML
             </span>
           </div>
           <textarea
             id="rec-cuerpo"
-            rows={8}
+            rows={7}
             {...register('cuerpo')}
             className={`${inputClass(!!errors.cuerpo)} resize-y font-mono text-xs`}
-            placeholder="Texto del recordatorio"
           />
           {errors.cuerpo && (
-            <p className="text-red-500 text-xs">{errors.cuerpo.message}</p>
+            <p className="text-xs text-red-500">{errors.cuerpo.message}</p>
           )}
         </div>
 
@@ -281,32 +264,21 @@ export function RecordatorioForm({
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-          <button
-            type="button"
-            onClick={() => onCancel?.()}
-            className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600
-              hover:bg-gray-50 transition-colors"
-          >
+        <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
+          <button type="button" onClick={onCancel} className="rounded-xl border px-4 py-2.5 text-sm font-semibold text-gray-600">
             Volver
           </button>
           <button
             type="submit"
-            disabled={isLoading}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white
-              hover:bg-emerald-700 transition-colors disabled:bg-emerald-400 disabled:cursor-not-allowed"
+            disabled={
+              isLoading ||
+              cargandoNotificaciones ||
+              Boolean(notificacionProgramadaExistente)
+            }
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {isLoading ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Programando...
-              </>
-            ) : (
-              <>
-                <Save size={16} />
-                Programar recordatorio
-              </>
-            )}
+            {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {isLoading ? 'Programando...' : 'Programar recordatorio'}
           </button>
         </div>
       </form>

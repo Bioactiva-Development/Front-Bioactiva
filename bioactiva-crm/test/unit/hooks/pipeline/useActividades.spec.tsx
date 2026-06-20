@@ -1,6 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React from 'react'
+import { TipoActividad } from '@/types/enums'
+import type { ActividadFormData } from '@/types/actividad.types'
 
 const mockGetByLead = jest.fn()
 const mockCreate = jest.fn()
@@ -10,6 +12,7 @@ const mockCancel = jest.fn()
 const mockDelete = jest.fn()
 const mockGetComentarios = jest.fn()
 const mockCreateComentario = jest.fn()
+const mockCreateCalendarEvent = jest.fn()
 const mockUpdateNotas = jest.fn()
 
 jest.mock('@/services/modules/actividades.service', () => ({
@@ -23,6 +26,7 @@ jest.mock('@/services/modules/actividades.service', () => ({
     updateNotas: mockUpdateNotas,
     getComentarios: mockGetComentarios,
     createComentario: mockCreateComentario,
+    createCalendarEvent: mockCreateCalendarEvent,
   },
 }))
 
@@ -63,6 +67,7 @@ import {
   useEditarNotasActividad,
   useComentarios,
   useCrearComentario,
+  useCrearEventoCalendario,
 } from '@/hooks/pipeline/useActividades'
 
 function wrapper({ children }: { children: React.ReactNode }) {
@@ -97,20 +102,21 @@ describe('pipeline/useActividades', () => {
   describe('useCrearActividad', () => {
     it('creates activity and invalidates queries', async () => {
       mockCreate.mockResolvedValueOnce({ id: 1 })
+      const payload: ActividadFormData = {
+        id_lead: 42,
+        nombre_actividad: 'Reunión',
+        fecha_inicio: '2026-06-15T10:00',
+        fecha_fin: '2026-06-15T10:30',
+        tipo: TipoActividad.Reunion,
+      }
 
       const { result } = renderHook(() => useCrearActividad(), { wrapper })
 
       await act(async () => {
-        await result.current.mutateAsync({
-          id_lead: 42,
-          nombre_actividad: 'Reunión',
-        } as any)
+        await result.current.mutateAsync(payload)
       })
 
-      expect(mockCreate).toHaveBeenCalledWith({
-        id_lead: 42,
-        nombre_actividad: 'Reunión',
-      })
+      expect(mockCreate).toHaveBeenCalledWith(payload)
     })
   })
 
@@ -131,6 +137,7 @@ describe('pipeline/useActividades', () => {
   describe('useCompletarActividad', () => {
     it('completes activity with notes', async () => {
       mockComplete.mockResolvedValueOnce({ ok: true })
+      const invalidateSpy = jest.spyOn(QueryClient.prototype, 'invalidateQueries')
 
       const { result } = renderHook(() => useCompletarActividad(42), { wrapper })
 
@@ -139,6 +146,8 @@ describe('pipeline/useActividades', () => {
       })
 
       expect(mockComplete).toHaveBeenCalledWith(1, 'Done')
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['notificaciones'] })
+      invalidateSpy.mockRestore()
     })
 
     it('completes activity without notes', async () => {
@@ -157,6 +166,7 @@ describe('pipeline/useActividades', () => {
   describe('useCancelarActividad', () => {
     it('cancels activity by id', async () => {
       mockCancel.mockResolvedValueOnce({ ok: true })
+      const invalidateSpy = jest.spyOn(QueryClient.prototype, 'invalidateQueries')
 
       const { result } = renderHook(() => useCancelarActividad(42), { wrapper })
 
@@ -165,6 +175,21 @@ describe('pipeline/useActividades', () => {
       })
 
       expect(mockCancel).toHaveBeenCalledWith(1)
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['notificaciones'] })
+      invalidateSpy.mockRestore()
+    })
+  })
+
+  describe('useCrearEventoCalendario', () => {
+    it('creates calendar event for an activity', async () => {
+      mockCreateCalendarEvent.mockResolvedValueOnce({ id: 2, outlook_event_id: 'evt' })
+      const { result } = renderHook(() => useCrearEventoCalendario(42), { wrapper })
+
+      await act(async () => {
+        await result.current.mutateAsync(2)
+      })
+
+      expect(mockCreateCalendarEvent).toHaveBeenCalledWith(2)
     })
   })
 

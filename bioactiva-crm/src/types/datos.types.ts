@@ -1,5 +1,3 @@
-import { Sector, TipoEmpresa, TamanoEmpresa, LeadState, EstadoCot } from '@/types/enums'
-
 export type EntidadExportable = 'organizaciones' | 'contactos' | 'leads' | 'cotizaciones'
 
 export type TipoConflicto = 'error' | 'advertencia' | 'duplicado'
@@ -35,34 +33,60 @@ export interface ConfirmarImportResult {
     mensaje: string
 }
 
-export interface FiltrosOrganizacion {
-    sector: Sector | ''
-    tipo: TipoEmpresa | ''
-    tamano: TamanoEmpresa | ''
+// ─── New async import API ──────────────────────────────────────────────────
+
+export interface ImportIssue {
+    sheet: string
+    row: number
+    message: string
 }
 
-export interface FiltrosContacto {
-    organizacion: string
+export interface ValidateImportResult {
+    valid: boolean
+    errors: ImportIssue[]
+    warnings: ImportIssue[]
+    parsedCounts: {
+        organizaciones: number
+        contactos: number
+        leads: number
+        cotizaciones: number
+    }
 }
 
-export interface FiltrosLead {
-    estado: LeadState | ''
+export interface CommitImportResult {
+    jobId: string
 }
 
-export interface FiltrosCotizacion {
-    estado: EstadoCot | ''
+export type ImportJobState = 'waiting' | 'active' | 'completed' | 'failed' | 'delayed'
+
+export interface ImportJobSummary {
+    inserted: {
+        organizaciones: number
+        contactos: number
+        leads: number
+        actividades: number
+        cotizaciones: number
+    }
+    skipped: ImportIssue[]
+    warnings: ImportIssue[]
 }
 
-export type FiltrosEspecificos =
-    | FiltrosOrganizacion
-    | FiltrosContacto
-    | FiltrosLead
-    | FiltrosCotizacion
+export interface ImportJobResult {
+    valid: boolean
+    validation: ValidateImportResult
+    summary: ImportJobSummary
+}
+
+export interface ImportJobStatus {
+    id: string
+    state: ImportJobState
+    progress: number
+    result: ImportJobResult | null
+    failedReason: string | null
+}
 
 export interface FiltrosExportacion {
     entidad: EntidadExportable
-    busqueda: string
-    filtros: FiltrosEspecificos
 }
 
 export interface ExportarResult {

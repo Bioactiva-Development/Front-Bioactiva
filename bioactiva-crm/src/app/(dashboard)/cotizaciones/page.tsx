@@ -26,8 +26,6 @@ export default function CotizacionesPage() {
   const limit        = data?.limit ?? 10
   const totalPaginas = Math.ceil(total / limit)
 
-  const handleLimpiarFiltros = () => setFiltros(FILTROS_INICIALES)
-
   const handlePagina = (pagina: number) => {
     setFiltros((prev) => ({ ...prev, page: pagina }))
   }
@@ -54,8 +52,6 @@ export default function CotizacionesPage() {
       <CotizacionFiltros
         filtros={filtros}
         onChange={setFiltros}
-        onLimpiar={handleLimpiarFiltros}
-        isLoading={isLoading}
       />
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

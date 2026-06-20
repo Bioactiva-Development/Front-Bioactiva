@@ -53,8 +53,18 @@ export default function PlantillasPage() {
       setConfirmEliminar(null)
     } catch (err: unknown) {
       const msg = getErrorMessage(err, 'No se pudo eliminar la plantilla.')
-      const esEnUso = msg.toLowerCase().includes('asociada a una notificación')
-      setErrorEliminar(msg)
+      const status = (err as { status?: number })?.status
+      const normalized = msg.toLowerCase()
+      const esEnUso =
+        status === 409 ||
+        normalized.includes('asociada a una notificación') ||
+        normalized.includes('asociada a una notificacion') ||
+        normalized.includes('asociada')
+      setErrorEliminar(
+        esEnUso
+          ? 'No se puede eliminar la plantilla porque está asociada a notificaciones históricas. Desactívala para ocultarla del selector.'
+          : msg
+      )
       setOfrecerDesactivar(esEnUso)
     }
   }
@@ -218,12 +228,14 @@ export default function PlantillasPage() {
           />
           <div className="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
             <h3 id="dialog-title-plantilla" className="text-lg font-bold text-gray-900">
-              Eliminar plantilla
+              Eliminar o desactivar plantilla
             </h3>
             <p className="text-sm text-gray-600">
               ¿Estás seguro de eliminar{' '}
               <span className="font-semibold">{confirmEliminar.nombre}</span>?
-              Esta acción no se puede deshacer.
+              Si ya fue usada en notificaciones o seguimientos anteriores, el
+              backend impedirá eliminarla físicamente y solo podrás
+              desactivarla.
             </p>
 
             {errorEliminar && (
@@ -235,6 +247,11 @@ export default function PlantillasPage() {
 
             {ofrecerDesactivar ? (
               <div className="flex flex-col gap-2">
+                <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  Las notificaciones existentes conservan su propia copia de
+                  asunto y cuerpo. Desactivar la plantilla solo la oculta del
+                  selector para nuevas programaciones.
+                </p>
                 <button
                   onClick={handleDesactivar}
                   disabled={desactivando}

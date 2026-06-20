@@ -99,7 +99,7 @@ export default function ControlAccesoPage() {
     const { isAdministrador, usuario: currentUser } = useAuthStore()
 
     const {
-        usuarios,
+        usuarios, total: totalUsuarios,
         isLoading: isLoadingUsuarios, error: errorUsuarios, successMessage,
         cargar, cambiarRol, cambiarPassword, deshabilitar, habilitar, clearMessages,
     } = useUsuarios()
@@ -115,6 +115,7 @@ export default function ControlAccesoPage() {
     const [term, setTerm] = useState('')
     const [estadoFiltro, setEstadoFiltro] = useState('')
     const [page, setPage] = useState(1)
+    const [usuariosPage, setUsuariosPage] = useState(1)
     const termDebounced = useDebounce(term, 400)
 
     const params: ListInvitacionesParams = {
@@ -132,8 +133,8 @@ export default function ControlAccesoPage() {
     } = useInvitaciones(params)
 
     useEffect(() => {
-        cargar()
-    }, [cargar])
+        cargar({ page: usuariosPage, limit: LIMIT })
+    }, [cargar, usuariosPage])
 
     useEffect(() => {
         if (successMessage) {
@@ -222,6 +223,7 @@ export default function ControlAccesoPage() {
     }
 
     const totalPages = Math.ceil(totalInvitaciones / LIMIT)
+    const totalPagesUsuarios = Math.ceil(totalUsuarios / LIMIT)
 
     return (
         <div>
@@ -377,6 +379,32 @@ export default function ControlAccesoPage() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {totalUsuarios > 0 && (
+                    <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+                        <p className="text-sm text-gray-400">
+                            Mostrando {((usuariosPage - 1) * LIMIT) + 1}–{Math.min(usuariosPage * LIMIT, totalUsuarios)} de {totalUsuarios} usuario{totalUsuarios === 1 ? '' : 's'}
+                        </p>
+                        {totalPagesUsuarios > 1 && (
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setUsuariosPage((p) => Math.max(1, p - 1))}
+                                    disabled={usuariosPage === 1}
+                                    className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronLeft size={16} />
+                                </button>
+                                <button
+                                    onClick={() => setUsuariosPage((p) => Math.min(totalPagesUsuarios, p + 1))}
+                                    disabled={usuariosPage === totalPagesUsuarios}
+                                    className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronRight size={16} />
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

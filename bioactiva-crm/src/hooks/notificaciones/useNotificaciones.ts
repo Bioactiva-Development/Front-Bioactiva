@@ -1,66 +1,45 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { notificacionesService } from '@/services/modules/notificaciones.service'
-import { NotificacionProgramada } from '@/types/notificacion.types'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { QUERY_KEYS } from '@/lib/constants/queryKeys'
 import { getErrorMessage } from '@/lib/utils/error.utils'
+import { notificacionesService } from '@/services/modules/notificaciones.service'
+import {
+  CrearRecordatorioRequest,
+  CrearSeguimientoRequest,
+  FiltrosNotificacionesProgramadas,
+  NotificacionProgramada,
+} from '@/types/notificacion.types'
 
-// --- HOOK CENTRO ---
-// Mientras el módulo `notifications` del backend siga "Pendiente", el service
-// retorna un centro vacío en 404 sin propagar error. Usamos `retry: false`
-// para evitar 3 reintentos consecutivos por cada poll, y `refetchOnWindowFocus`
-// se mantiene desactivado para reducir tráfico cuando el módulo no aporta data.
-export function useCentroNotificaciones() {
+export function useNotificacionesProgramadas(
+  filtros?: FiltrosNotificacionesProgramadas,
+  options?: { enabled?: boolean }
+) {
   return useQuery({
-    queryKey: ['notificaciones', 'centro'],
-    queryFn:  () => notificacionesService.getCentro(),
-    staleTime: 1000 * 60 * 1,
-    refetchInterval: 1000 * 60 * 2, // refresca cada 2 minutos
-    refetchOnWindowFocus: false,
-    retry: false,
+    queryKey: QUERY_KEYS.notificaciones.scheduled(filtros),
+    queryFn: () => notificacionesService.getProgramadas(filtros),
+    enabled: options?.enabled ?? true,
+    staleTime: 1000 * 60,
   })
 }
 
-// --- HOOK LISTADO ---
-export function useNotificaciones() {
+export function useNotificacionesInApp() {
   return useQuery({
-    queryKey: ['notificaciones', 'list'],
-    queryFn:  () => notificacionesService.getAll(),
-    staleTime: 1000 * 60 * 1,
-    retry: false,
+    queryKey: QUERY_KEYS.notificaciones.inApp(),
+    queryFn: () => notificacionesService.getInApp(),
+    staleTime: 1000 * 60,
+    refetchInterval: 1000 * 60 * 2,
+    refetchOnWindowFocus: true,
   })
 }
 
-export function useNotificacionesPorLead(leadId: number) {
-  return useQuery({
-    queryKey: ['notificaciones', 'lead', leadId],
-    queryFn:  () => notificacionesService.getByLead(leadId),
-    enabled:  !!leadId,
-    staleTime: 1000 * 60 * 1,
-    retry: false,
-  })
-}
-
-// --- HOOK MARCAR LEÍDA ---
 export function useMarcarLeida() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (id: number) => notificacionesService.marcarLeida(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
-    },
-    onError: (err: unknown) => {
-      console.error(getErrorMessage(err))
-    },
-  })
-}
-
-export function useMarcarTodasLeidas() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: () => notificacionesService.marcarTodasLeidas(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.notificaciones.inApp(),
+      })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
@@ -73,10 +52,35 @@ export function useCancelarProgramada() {
 
   return useMutation({
     mutationFn: (id: number) => notificacionesService.cancelarProgramada(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({
+        queryKey: ['notificaciones', 'scheduled'],
+      })
+
+      const previousScheduledQueries =
+        queryClient.getQueriesData<NotificacionProgramada[]>({
+          queryKey: ['notificaciones', 'scheduled'],
+        })
+
+      previousScheduledQueries.forEach(([queryKey, notificaciones]) => {
+        if (!notificaciones) return
+        queryClient.setQueryData(
+          queryKey,
+          notificaciones.filter((notificacion) => notificacion.id !== id)
+        )
+      })
+
+      return { previousScheduledQueries }
     },
-    onError: (err: unknown) => {
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['notificaciones', 'scheduled'],
+      })
+    },
+    onError: (err: unknown, _id, context) => {
+      context?.previousScheduledQueries.forEach(([queryKey, notificaciones]) => {
+        queryClient.setQueryData(queryKey, notificaciones)
+      })
       console.error(getErrorMessage(err))
     },
   })
@@ -86,10 +90,12 @@ export function useCrearRecordatorio() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: Partial<NotificacionProgramada>) =>
+    mutationFn: (data: CrearRecordatorioRequest) =>
       notificacionesService.createRecordatorio(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
+      queryClient.invalidateQueries({
+        queryKey: ['notificaciones', 'scheduled'],
+      })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
@@ -101,10 +107,12 @@ export function useCrearSeguimiento() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: Partial<NotificacionProgramada>) =>
+    mutationFn: (data: CrearSeguimientoRequest) =>
       notificacionesService.createSeguimiento(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
+      queryClient.invalidateQueries({
+        queryKey: ['notificaciones', 'scheduled'],
+      })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))

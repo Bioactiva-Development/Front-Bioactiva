@@ -76,32 +76,28 @@ const paginateCotizaciones = (
 const filterCotizaciones = (
   data: Cotizacion[],
   filtros?: CotizacionFiltros
-) => {
-  const search = filtros?.search?.trim().toLowerCase()
+) =>
+  data.filter(
+    (cotizacion) => !filtros?.estado || cotizacion.estado === filtros.estado
+  )
 
-  return data.filter((cotizacion) => {
-    if (filtros?.estado && cotizacion.estado !== filtros.estado) return false
-
-    if (!search) return true
-
-    return [
-      cotizacion.codigo,
-      cotizacion.dirigido,
-      cotizacion.cliente,
-      cotizacion.nombre_servicio,
-      cotizacion.contacto_nombre,
-      cotizacion.organizacion_nombre,
-      cotizacion.producto,
-    ].some((value) => value?.toLowerCase().includes(search))
-  })
-}
-
-const getSyncedCotizaciones = async (): Promise<Cotizacion[]> => {
+const getSyncedCotizaciones = async (
+  filtros?: CotizacionFiltros
+): Promise<Cotizacion[]> => {
+  // Se reenvían los filtros soportados server-side (idOrg, estado, idRemitente,
+  // fechas) forzando un límite alto y sin paginar: la paginación y la búsqueda
+  // libre se resuelven en cliente sobre el set cruzado con leads activos.
   const [pipeline, response] = await Promise.all([
     leadsService.getPipeline(),
     apiClient.get<RawCotizacionesResponse>(
       ENDPOINTS.cotizaciones.list,
-      { params: toCotizacionQueryParams({ limit: SYNC_FETCH_LIMIT }) }
+      {
+        params: toCotizacionQueryParams({
+          ...filtros,
+          page: undefined,
+          limit: SYNC_FETCH_LIMIT,
+        }),
+      }
     ),
   ])
 
@@ -175,7 +171,7 @@ export const cotizacionesService = {
 
   getAll: async (filtros?: CotizacionFiltros): Promise<CotizacionesResponse> => {
     if (USE_MOCK) return mockGetCotizaciones(filtros)
-    const syncedCotizaciones = await getSyncedCotizaciones()
+    const syncedCotizaciones = await getSyncedCotizaciones(filtros)
     return paginateCotizaciones(
       filterCotizaciones(syncedCotizaciones, filtros),
       filtros

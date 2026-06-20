@@ -1,102 +1,85 @@
 import { z } from 'zod'
 
+const templateIdSchema = z
+  .number()
+  .int()
+  .nonnegative('La plantilla seleccionada no es válida')
+
+const fechaEnvioSchema = z
+  .string()
+  .min(1, 'La fecha y hora son obligatorias')
+  .refine(
+    (value) => Number.isFinite(new Date(value).getTime()),
+    'La fecha y hora no es válida'
+  )
+
+const getTime = (value: string) => new Date(value).getTime()
 
 export const recordatorioSchema = z.object({
-  id_lead: z
+  idLead: z
     .number({ error: 'El lead es obligatorio' })
+    .int()
     .min(1, 'Debe seleccionar un lead'),
-
-  id_actividad: z
-    .number({ error: 'La actividad es obligatoria' }),
-
-  id_plantilla: z
-    .number({ error: 'La plantilla es obligatoria' })
-    .min(1, 'Debe seleccionar una plantilla'),
-
-  fecha_envio: z
-    .string()
-    .min(1, 'La fecha de envío es obligatoria'),
-
-  hora_envio: z
-    .string()
-    .min(1, 'La hora de envío es obligatoria'),
-
+  minutosAntes: z
+    .number({ error: 'Los minutos de anticipación son obligatorios' })
+    .int('Los minutos deben ser un número entero')
+    .min(1, 'El mínimo es 1 minuto')
+    .max(120, 'El máximo es 120 minutos'),
+  idTemplate: templateIdSchema,
   asunto: z
     .string()
+    .trim()
     .min(1, 'El asunto es obligatorio')
     .max(255, 'Máximo 255 caracteres'),
-
-  cuerpo: z
-    .string()
-    .min(1, 'El cuerpo es obligatorio'),
+  cuerpo: z.string().trim().min(1, 'El cuerpo es obligatorio'),
 })
 
 export type RecordatorioFormValues = z.infer<typeof recordatorioSchema>
 
-export const seguimientoSchema = z.object({
-  id_lead: z
-    .number({ error: 'El lead es obligatorio' })
-    .min(1, 'Debe seleccionar un lead'),
-
-  id_actividad: z
-    .number({ error: 'La actividad es obligatoria' }),
-
-  id_plantilla_interno: z
-    .number({ error: 'La plantilla interna es obligatoria' })
-    .min(1, 'Debe seleccionar una plantilla para el responsable'),
-
-  fecha_envio_interno: z
+const mensajeSeguimientoSchema = z.object({
+  fechaEnvio: fechaEnvioSchema,
+  idTemplate: templateIdSchema,
+  asunto: z
     .string()
-    .min(1, 'La fecha del correo interno es obligatoria'),
-
-  hora_envio_interno: z
-    .string()
-    .min(1, 'La hora del correo interno es obligatoria'),
-
-  asunto_interno: z
-    .string()
-    .min(1, 'El asunto interno es obligatorio'),
-
-  cuerpo_interno: z
-    .string()
-    .min(1, 'El cuerpo interno es obligatorio'),
-
-  id_plantilla_externo: z
-    .number({ error: 'La plantilla externa es obligatoria' })
-    .min(1, 'Debe seleccionar una plantilla para el cliente'),
-
-  fecha_envio_externo: z
-    .string()
-    .min(1, 'La fecha del correo externo es obligatoria'),
-
-  hora_envio_externo: z
-    .string()
-    .min(1, 'La hora del correo externo es obligatoria'),
-
-  asunto_externo: z
-    .string()
-    .min(1, 'El asunto externo es obligatorio'),
-
-  cuerpo_externo: z
-    .string()
-    .min(1, 'El cuerpo externo es obligatorio'),
-
-  correo_cliente: z
-    .email('Correo del cliente inválido')
-    .min(1, 'El correo del cliente es obligatorio'),
+    .trim()
+    .min(1, 'El asunto es obligatorio')
+    .max(255, 'Máximo 255 caracteres'),
+  cuerpo: z.string().trim().min(1, 'El cuerpo es obligatorio'),
 })
 
-.refine(
-  (data) => {
-    if (!data.fecha_envio_interno || !data.fecha_envio_externo) return true
-    const interno = new Date(`${data.fecha_envio_interno}T${data.hora_envio_interno}`)
-    const externo = new Date(`${data.fecha_envio_externo}T${data.hora_envio_externo}`)
-    return externo > interno
-  },
-  {
-    message: 'El correo al cliente debe programarse después del recordatorio interno',
-    path:    ['fecha_envio_externo'],
-  }
-)
+const instanciaSeguimientoSchema = z
+  .object({
+    internal: mensajeSeguimientoSchema,
+    external: mensajeSeguimientoSchema,
+  })
+  .refine(
+    ({ internal, external }) => {
+      const internalTime = getTime(internal.fechaEnvio)
+      const externalTime = getTime(external.fechaEnvio)
+      if (!Number.isFinite(internalTime) || !Number.isFinite(externalTime)) {
+        return true
+      }
+      return externalTime > internalTime
+    },
+    {
+      message: 'El correo al cliente debe enviarse después del correo interno',
+      path: ['external', 'fechaEnvio'],
+    }
+  )
+
+export const seguimientoSchema = z.object({
+  idLead: z
+    .number({ error: 'El lead es obligatorio' })
+    .int()
+    .min(1, 'Debe seleccionar un lead'),
+  correoCliente: z
+    .email('Correo del cliente inválido')
+    .min(1, 'El correo del cliente es obligatorio'),
+  // El backend (POST /notifications/follow-ups) exige exactamente una
+  // instancia por seguimiento: un correo interno y luego uno externo.
+  instancias: z
+    .array(instanciaSeguimientoSchema)
+    .length(1, 'El seguimiento debe tener exactamente una instancia'),
+})
 
 export type SeguimientoFormValues = z.infer<typeof seguimientoSchema>

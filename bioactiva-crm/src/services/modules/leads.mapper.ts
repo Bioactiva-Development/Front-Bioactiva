@@ -24,7 +24,12 @@ export interface LeadDtoOut {
   activityAlert?: string | null
 }
 
-const ACTIVITY_ALERTS = new Set<ActivityAlert>(['VERDE', 'AMARILLO', 'ROJO'])
+const ACTIVITY_ALERTS = new Set<ActivityAlert>([
+  'SIN_ACTIVIDADES',
+  'PENDIENTE',
+  'EN_RIESGO',
+  'POR_VENCER',
+])
 
 const toActivityAlert = (value?: string | null): ActivityAlert | undefined =>
   value && ACTIVITY_ALERTS.has(value as ActivityAlert)
@@ -112,6 +117,8 @@ export const toLeadQueryParams = (filtros?: LeadFiltros) => {
   if (filtros?.estado) params.estado = toBackendLeadState(filtros.estado)
   if (filtros?.id_encargado) params.idEncargado = filtros.id_encargado
   if (filtros?.id_org) params.idOrg = filtros.id_org
+  // Sector de la organización vinculada (valor del enum Sector, ej. TECNOLOGIA).
+  if (filtros?.sector) params.sector = filtros.sector
   if (filtros?.search) params.search = filtros.search
   // Enum TODAS | POR_VENCER | VENCIDAS. Se omite para traer todos los leads.
   if (filtros?.alerta_actividad) params.alertaActividad = filtros.alerta_actividad

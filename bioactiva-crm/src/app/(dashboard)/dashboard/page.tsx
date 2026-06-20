@@ -22,11 +22,12 @@ import { useLeads }              from '@/hooks/pipeline/useLeads'
 import { useCotizaciones }       from '@/hooks/cotizaciones/useCotizaciones'
 import { useDashboardMetrics }   from '@/hooks/dashboard/useDashboardMetrics'
 import { EstadoCot, LeadState }  from '@/types/enums'
+import type { MoneyByCurrency }   from '@/types/dashboard.types'
 
 
 interface KpiCardProps {
   label:        string
-  valor:        string | number
+  valor:        React.ReactNode
   descripcion:  string
   icono:        React.ReactNode
   iconoBg:      string
@@ -130,8 +131,28 @@ const getPeriodDates = (periodo: string, anio: string) => {
   }
 }
 
-const formatCurrency = (value?: number) =>
+const formatPen = (value?: number) =>
   `S/ ${(value ?? 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+const formatUsd = (value?: number) =>
+  `US$ ${(value ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+/**
+ * Muestra un monto en ambas divisas por separado (S/ y US$). El backend reporta
+ * cada divisa de forma independiente y nunca las combina, por eso se apilan en
+ * dos lineas en lugar de sumarse. Se renderiza con <span> para ser HTML valido
+ * dentro del <p> de la KpiCard.
+ */
+function MoneyDual({ value }: Readonly<{ value?: MoneyByCurrency }>) {
+  return (
+    <span className="flex flex-col gap-0.5 leading-none">
+      <span>{formatPen(value?.pen)}</span>
+      <span className="text-sm font-bold text-gray-400 tabular-nums tracking-tight">
+        {formatUsd(value?.usd)}
+      </span>
+    </span>
+  )
+}
 
 const formatPercent = (value?: number) =>
   `${(value ?? 0).toLocaleString('es-PE', { maximumFractionDigits: 2 })}%`
@@ -161,6 +182,8 @@ export default function DashboardPage() {
     useDashboardMetrics(dashboardParams)
 
   const kpiValor = (value: string) => cargandoMetricas ? '...' : value
+  const kpiMonto = (value?: MoneyByCurrency) =>
+    cargandoMetricas ? '...' : <MoneyDual value={value} />
 
   const hoy = useMemo(() => new Date().toLocaleDateString('es-PE', {
     day: '2-digit', month: 'short', year: 'numeric',
@@ -372,22 +395,22 @@ export default function DashboardPage() {
           />
           <KpiCard compact accentBorder="border-t-emerald-200"
             label="Ticket promedio"
-            valor={kpiValor(formatCurrency(metrics?.averageTicketAmount))}
-            descripcion="Promedio de cierres con venta"
+            valor={kpiMonto(metrics?.averageTicketAmount)}
+            descripcion="Promedio de cierres con venta · soles y dólares por separado"
             iconoBg="bg-emerald-50"
             icono={<CurrencyDollar size={16} weight="duotone" className="text-emerald-500" />}
           />
           <KpiCard compact accentBorder="border-t-cyan-200"
             label="Monto en pipeline"
-            valor={kpiValor(formatCurrency(metrics?.pipelineTotalAmount))}
-            descripcion="Monto de leads abiertos"
+            valor={kpiMonto(metrics?.pipelineTotalAmount)}
+            descripcion="Monto de leads abiertos · soles y dólares por separado"
             iconoBg="bg-cyan-50"
             icono={<ChartLineUp size={16} weight="duotone" className="text-cyan-600" />}
           />
           <KpiCard compact accentBorder="border-t-blue-200"
             label="Ingresos cerrados"
-            valor={kpiValor(formatCurrency(metrics?.closedRevenue))}
-            descripcion="Cotizaciones cerradas con venta"
+            valor={kpiMonto(metrics?.closedRevenue)}
+            descripcion="Cotizaciones cerradas con venta · soles y dólares por separado"
             iconoBg="bg-blue-50"
             icono={<CurrencyDollar size={16} weight="duotone" className="text-blue-500" />}
           />

@@ -45,8 +45,9 @@ export const QUERY_KEYS = {
     },
 
     notificaciones: {
-        list: (filters?: Record<string, unknown>) => ['notificaciones', 'list', filters],
-        pendientes: () => ['notificaciones', 'pendientes'],
+        scheduled: (filters?: unknown) =>
+          ['notificaciones', 'scheduled', filters],
+        inApp: () => ['notificaciones', 'in-app'],
     },
 
     plantillas: {

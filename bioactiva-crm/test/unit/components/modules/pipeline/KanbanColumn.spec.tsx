@@ -11,6 +11,9 @@ jest.mock('@atlaskit/pragmatic-drag-and-drop/element/adapter', () => ({
   monitorForElements:    jest.fn(() => jest.fn()),
 }))
 jest.mock('lucide-react', () => new Proxy({}, { get: () => () => null }))
+jest.mock('@/hooks/cotizaciones/useCotizaciones', () => ({
+  useCotizacionesPorLead: () => ({ data: [] }),
+}))
 
 function createWrapper() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -44,7 +47,12 @@ describe('modules/pipeline/KanbanColumn', () => {
   it('shows the total count from meta (not the loaded length)', () => {
     render(<KanbanColumn {...baseProps} leads={[makeLead(1)]} total={23} />, { wrapper: createWrapper() })
     expect(screen.getByText('En prospecto')).toBeInTheDocument()
-    expect(screen.getByText('23')).toBeInTheDocument()
+  })
+
+  it('does not render a per-state lead counter', () => {
+    render(<KanbanColumn {...baseProps} leads={[makeLead(1), makeLead(2)]} />)
+    // El badge de conteo por estado se removió (no mapeado en backend).
+    expect(screen.queryByText('2')).not.toBeInTheDocument()
   })
 
   it('renders the empty state', () => {
@@ -58,7 +66,6 @@ describe('modules/pipeline/KanbanColumn', () => {
       <KanbanColumn
         {...baseProps}
         leads={[makeLead(1)]}
-        total={10}
         hasMore
         onCargarMas={onCargarMas}
       />,

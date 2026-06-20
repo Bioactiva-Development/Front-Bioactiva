@@ -16,7 +16,6 @@ import {
   ActividadFormData,
   ComentarioActividad,
 } from '@/types/actividad.types'
-import { notificacionesService } from '@/services/modules/notificaciones.service'
 import {
   ActividadesDtoResponse,
   ActividadDtoOut,
@@ -73,6 +72,19 @@ export const actividadesService = {
     return fromActividadDto(response.data)
   },
 
+  createCalendarEvent: async (id: number): Promise<Actividad> => {
+    if (USE_MOCK) return mockUpdateActividad(id, {
+      outlook_event_id: `mock-outlook-${id}`,
+      outlook_imported: true,
+      teamsMeetingUrl: `https://teams.microsoft.com/l/meetup-join/mock-${id}`,
+    })
+
+    const response = await apiClient.post<ActividadDtoOut>(
+      ENDPOINTS.actividades.calendarEvent(id)
+    )
+    return fromActividadDto(response.data)
+  },
+
   complete: async (id: number, notas?: string): Promise<Actividad> => {
     if (!USE_MOCK && notas?.trim()) {
       await actividadesService.update(id, { notas })
@@ -84,7 +96,6 @@ export const actividadesService = {
           ENDPOINTS.actividades.complete(id)
         )).data)
 
-    await notificacionesService.cancelarPendientesPorActividad(id)
     return actividad
   },
 
@@ -106,7 +117,6 @@ export const actividadesService = {
           ENDPOINTS.actividades.cancel(id)
         )).data)
 
-    await notificacionesService.cancelarPendientesPorActividad(id)
     return actividad
   },
 

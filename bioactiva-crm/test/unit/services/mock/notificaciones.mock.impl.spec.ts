@@ -1,69 +1,50 @@
 import {
-  mockGetCentro,
-  mockGetNotificaciones,
-  mockMarcarLeida,
-  mockMarcarTodasLeidas,
-  mockCancelarProgramada,
-  mockCancelarPendientesPorActividad,
   mockCreateRecordatorio,
   mockCreateSeguimiento,
+  mockGetInApp,
+  mockGetProgramadas,
+  mockMarcarLeida,
 } from '@/services/mock/notificaciones.mock'
-import { EstadoNotif } from '@/types/enums'
 
-describe('mocks/notificaciones.mock (implementation)', () => {
-  describe('mockGetCentro', () => {
-    it('returns centro with vencidas and programadas', async () => {
-      const result = await mockGetCentro()
-      expect(result).toHaveProperty('vencidas')
-      expect(result).toHaveProperty('programadas')
-      expect(result).toHaveProperty('sinLeer')
-      expect(result.vencidas.length).toBeGreaterThan(0)
-    })
+describe('notification mocks', () => {
+  it('returns and marks in-app notifications', async () => {
+    const inbox = await mockGetInApp()
+    expect(inbox.length).toBeGreaterThan(0)
+    const updated = await mockMarcarLeida(inbox[0].id)
+    expect(updated.estado).toBe('LEIDA')
   })
 
-  describe('mockGetNotificaciones', () => {
-    it('returns list of notificaciones', async () => {
-      const result = await mockGetNotificaciones()
-      expect(Array.isArray(result)).toBe(true)
+  it('creates and filters scheduled reminders', async () => {
+    await mockCreateRecordatorio({
+      idLead: 1,
+      minutosAntes: 30,
+      asunto: 'Aviso',
+      cuerpo: 'Cuerpo',
     })
+    const result = await mockGetProgramadas({
+      estado: 'PROGRAMADA',
+      idLead: 1,
+    })
+    expect(result.some((item) => item.tipo === 'RECORDATORIO')).toBe(true)
   })
 
-  describe('mockMarcarLeida', () => {
-    it('marks notification as read', async () => {
-      const result = await mockMarcarLeida(1)
-      expect(result.estado).toBe(EstadoNotif.Leida)
+  it('creates follow-ups with nested instances', async () => {
+    const result = await mockCreateSeguimiento({
+      idLead: 1,
+      correoCliente: 'cliente@example.com',
+      instancias: [{
+        internal: {
+          fechaEnvio: '2026-06-20T10:00:00.000Z',
+          asunto: 'Interno',
+          cuerpo: 'Preparar',
+        },
+        external: {
+          fechaEnvio: '2026-06-20T11:00:00.000Z',
+          asunto: 'Cliente',
+          cuerpo: 'Seguimiento',
+        },
+      }],
     })
-  })
-
-  describe('mockMarcarTodasLeidas', () => {
-    it('marks all as read', async () => {
-      await expect(mockMarcarTodasLeidas()).resolves.toBeUndefined()
-    })
-  })
-
-  describe('mockCancelarProgramada', () => {
-    it('throws for non-existent programada', async () => {
-      await expect(mockCancelarProgramada(1)).rejects.toThrow('Notificación programada no encontrada')
-    })
-  })
-
-  describe('mockCancelarPendientesPorActividad', () => {
-    it('cancels pending by activity', async () => {
-      await expect(mockCancelarPendientesPorActividad(1)).resolves.toBeUndefined()
-    })
-  })
-
-  describe('mockCreateRecordatorio', () => {
-    it('creates recordatorio', async () => {
-      const result = await mockCreateRecordatorio({ leadId: 1 } as any)
-      expect(result).toHaveProperty('id')
-    })
-  })
-
-  describe('mockCreateSeguimiento', () => {
-    it('creates seguimiento', async () => {
-      const result = await mockCreateSeguimiento({ leadId: 1 } as any)
-      expect(result).toHaveProperty('id')
-    })
+    expect(result.instancias).toHaveLength(1)
   })
 })
