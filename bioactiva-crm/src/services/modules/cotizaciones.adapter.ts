@@ -116,15 +116,14 @@ export function mapBackendCotizacionesResponse(
 export function mapCotizacionFormToBackend(
   data: CotizacionFormData
 ): Record<string, unknown> {
+  // El backend deriva dirigido/cliente/nombreRemitente: no se envían al crear.
   return {
     fechaCot:       data.fecha_cot,
-    dirigido:       data.dirigido,
     nombreServicio: data.nombre_servicio,
     monto:          data.monto.toFixed(2),    // backend espera string decimal
     tipo:           data.tipo,                // PEN | USD — ya coinciden
     idLead:         data.id_lead,
     idRemitente:    data.id_remitente,
-    cliente:        data.cliente,
     producto:       data.producto,
     observacion:    data.observacion,
     linkPropuesta:  data.link_propuesta,
@@ -136,7 +135,6 @@ export function mapCotizacionUpdateToBackend(
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   if (data.fecha_cot       !== undefined) out.fechaCot       = data.fecha_cot
-  if (data.dirigido        !== undefined) out.dirigido       = data.dirigido
   if (data.cliente         !== undefined) out.cliente        = data.cliente
   if (data.producto        !== undefined) out.producto       = data.producto
   if (data.nombre_servicio !== undefined) out.nombreServicio = data.nombre_servicio

@@ -128,13 +128,18 @@ describe('cotizaciones/cotizaciones.service (API mode)', () => {
 
       const result = await cotizacionesService.create({
         id_lead: 2, id_remitente: 1, fecha_cot: '2026-06-02',
-        dirigido: 'Valeria Torres', nombre_servicio: 'Deducción I+D+i',
+        nombre_servicio: 'Deducción I+D+i',
         monto: 6500, tipo: 'PEN' as const, estado: EstadoCot.Pendiente,
       })
 
       expect(postMock).toHaveBeenCalledWith('/quotations', expect.objectContaining({
         idLead: 2, nombreServicio: 'Deducción I+D+i',
       }))
+      // El backend deriva dirigido/cliente/nombreRemitente: no se envían al crear.
+      const body = postMock.mock.calls[0][1]
+      expect(body).not.toHaveProperty('dirigido')
+      expect(body).not.toHaveProperty('cliente')
+      expect(body).not.toHaveProperty('nombreRemitente')
       expect(result.id).toBe(4)
     })
   })

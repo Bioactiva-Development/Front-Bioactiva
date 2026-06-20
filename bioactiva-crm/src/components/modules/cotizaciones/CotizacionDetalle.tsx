@@ -257,7 +257,6 @@ export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionD
           <div className="grid grid-cols-2 gap-4">
             <InfoItem label="Fecha"     valor={formatFecha(cotizacion.fecha_cot)} />
             <InfoItem label="Lead"      valor={`#${cotizacion.id_lead}`} />
-            <InfoItem label="Dirigido"  valor={cotizacion.dirigido} />
             <InfoItem label="Cliente"   valor={cotizacion.cliente ?? undefined} />
             <InfoItem label="Producto"  valor={cotizacion.producto ?? undefined} />
             <InfoItem label="Remitente" valor={cotizacion.nombre_remitente} />

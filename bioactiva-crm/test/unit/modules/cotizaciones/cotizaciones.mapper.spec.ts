@@ -100,11 +100,12 @@ describe('cotizaciones.mapper', () => {
       fechaHasta: '2026-06-30',
     })
 
+    // POST /quotations: dirigido, cliente y nombreRemitente los deriva el backend;
+    // aunque vengan en el form, NO deben enviarse en el body de creación.
     expect(toCreateCotizacionDto({
       id_lead: 2,
       id_remitente: 1,
       fecha_cot: '2026-06-02',
-      dirigido: 'Valeria Torres',
       cliente: 'Banco de Crédito del Perú S.A.',
       producto: '',
       nombre_remitente: 'Admin Bioactiva',
@@ -117,8 +118,6 @@ describe('cotizaciones.mapper', () => {
       idLead: 2,
       idRemitente: 1,
       fechaCot: '2026-06-02T00:00:00.000Z',
-      dirigido: 'Valeria Torres',
-      cliente: 'Banco de Crédito del Perú S.A.',
       nombreServicio: 'Deducción I+D+i',
       monto: '0',
       tipo: 'PEN',

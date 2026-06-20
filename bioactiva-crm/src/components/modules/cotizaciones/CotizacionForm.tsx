@@ -99,7 +99,6 @@ export function CotizacionForm({
           id_lead:         cotizacion.id_lead,
           id_remitente:    cotizacion.id_remitente,
           fecha_cot:       cotizacion.fecha_cot.split('T')[0],
-          dirigido:        cotizacion.dirigido,
           cliente:         cotizacion.cliente ?? '',
           producto:        cotizacion.producto ?? '',
           nombre_servicio: cotizacion.nombre_servicio,
@@ -126,7 +125,6 @@ export function CotizacionForm({
   const { data: leadAutocompletado } = useLead(leadIdParaAutocompletar)
   const bloquearCamposDesdeLead = Boolean(leadAutocompletado) && !esEdicion
   const bloquearCamposFijos = esEdicion || bloquearCamposDesdeLead
-  const bloquearDirigido = bloquearCamposFijos && Boolean(leadAutocompletado?.contacto_nombre)
   const readOnlyClass = 'bg-gray-50 text-gray-500 cursor-default focus:border-gray-200'
   const remitenteAutocompletadoNombre =
     leadAutocompletado?.encargado_nombre ??
@@ -204,7 +202,6 @@ export function CotizacionForm({
 
     setValue('id_lead', leadAutocompletado.id)
     setValue('fecha_cot', getTodayLocalDate())
-    setValue('dirigido', leadAutocompletado.contacto_nombre ?? '')
     setValue('cliente', leadAutocompletado.organizacion_nombre ?? '')
     setValue('id_remitente', leadAutocompletado.id_encargado)
     setValue('nombre_servicio', leadAutocompletado.servicio_interes ?? '')
@@ -266,37 +263,18 @@ export function CotizacionForm({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label htmlFor="cot-dirigido" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Dirigido a <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="cot-dirigido"
-                  type="text"
-                  placeholder="Nombre del destinatario"
-                  readOnly={bloquearDirigido}
-                  {...register('dirigido')}
-                  className={`${inputClass(!!errors.dirigido)} ${bloquearDirigido ? readOnlyClass : ''}`}
-                />
-                {errors.dirigido && (
-                  <p className="text-red-500 text-xs">{errors.dirigido.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="cot-cliente" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Cliente
-                </label>
-                <input
-                  id="cot-cliente"
-                  type="text"
-                  placeholder="Razón social o empresa"
-                  readOnly={bloquearCamposFijos}
-                  {...register('cliente')}
-                  className={`${inputClass(!!errors.cliente)} ${bloquearCamposFijos ? readOnlyClass : ''}`}
-                />
-              </div>
+            <div className="space-y-1.5">
+              <label htmlFor="cot-cliente" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Cliente
+              </label>
+              <input
+                id="cot-cliente"
+                type="text"
+                placeholder="Razón social o empresa"
+                readOnly={bloquearCamposFijos}
+                {...register('cliente')}
+                className={`${inputClass(!!errors.cliente)} ${bloquearCamposFijos ? readOnlyClass : ''}`}
+              />
             </div>
           </div>
 
@@ -367,9 +345,8 @@ export function CotizacionForm({
                 id="cot-servicio"
                 type="text"
                 placeholder="Descripción del servicio ofertado"
-                readOnly={bloquearCamposFijos}
                 {...register('nombre_servicio')}
-                className={`${inputClass(!!errors.nombre_servicio)} ${bloquearCamposFijos ? readOnlyClass : ''}`}
+                className={inputClass(!!errors.nombre_servicio)}
               />
               {errors.nombre_servicio && (
                 <p className="text-red-500 text-xs">{errors.nombre_servicio.message}</p>

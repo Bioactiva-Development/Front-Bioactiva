@@ -7,12 +7,10 @@ describe('validators/cotizacion.schema', () => {
       id_lead: 2,
       id_remitente: 1,
       fecha_cot: '2026-06-02',
-      dirigido: 'Valeria Torres',
       nombre_servicio: 'Deducción I+D+i',
       monto: 6500,
       tipo: TipoMoneda.Soles,
     })
-    expect(result.dirigido).toBe('Valeria Torres')
     expect(result.monto).toBe(6500)
     expect(result.tipo).toBe(TipoMoneda.Soles)
   })
@@ -65,20 +63,6 @@ describe('validators/cotizacion.schema', () => {
         tipo: TipoMoneda.Soles,
       })
     ).toThrow('El monto debe ser mayor o igual a 0')
-  })
-
-  it('rejects empty dirigido', () => {
-    expect(() =>
-      cotizacionSchema.parse({
-        id_lead: 2,
-        id_remitente: 1,
-        fecha_cot: '2026-06-02',
-        dirigido: '',
-        nombre_servicio: 'Deducción I+D+i',
-        monto: 6500,
-        tipo: TipoMoneda.Soles,
-      })
-    ).toThrow('El campo dirigido es obligatorio')
   })
 
   it('rejects empty nombre_servicio', () => {
@@ -140,15 +124,7 @@ describe('validators/cotizacion.schema', () => {
     expect(() =>
       cotizacionSchema.parse({
         id_lead: 2, id_remitente: 1, fecha_cot: '2026-06-02',
-        dirigido: 'X'.repeat(91),
-        nombre_servicio: 'Srv', monto: 100, tipo: TipoMoneda.Soles,
-      })
-    ).toThrow('Máximo 90 caracteres')
-
-    expect(() =>
-      cotizacionSchema.parse({
-        id_lead: 2, id_remitente: 1, fecha_cot: '2026-06-02',
-        dirigido: 'Test', nombre_servicio: 'X'.repeat(151), monto: 100, tipo: TipoMoneda.Soles,
+        nombre_servicio: 'X'.repeat(151), monto: 100, tipo: TipoMoneda.Soles,
       })
     ).toThrow('Máximo 150 caracteres')
   })
