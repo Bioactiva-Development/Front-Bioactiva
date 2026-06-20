@@ -12,6 +12,7 @@ import {
 } from '@/types/enums'
 import { useActividades } from '@/hooks/pipeline/useActividades'
 import { ROUTES } from '@/lib/constants/routes'
+import { getAllowedLeadTransitions } from '@/lib/utils/lead-flow.utils'
 
 interface LeadDrawerProps {
   lead:         Lead
@@ -222,15 +223,15 @@ export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
           </div>
         </div>
 
-        {/* Cambiar etapa — solo en móvil */}
-        {onMoverLead && (
+        {/* Cambiar etapa — solo en móvil, solo a estados destino permitidos */}
+        {onMoverLead && getAllowedLeadTransitions(lead.estado).length > 0 && (
           <div className="lg:hidden px-6 py-4 border-t border-gray-100 space-y-3">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
               Cambiar etapa
             </p>
             <div className="grid grid-cols-2 gap-2">
               {ETAPAS_PIPELINE
-                .filter((etapa) => etapa.estado !== lead.estado)
+                .filter((etapa) => getAllowedLeadTransitions(lead.estado).includes(etapa.estado))
                 .map((etapa) => (
                   <button
                     key={etapa.estado}

@@ -91,8 +91,14 @@ Reglas:
 - `Prospecto -> Cierre con venta` y `Prospecto -> Cierre sin venta` estan bloqueados. Primero debe existir propuesta formal en `Ofertado`.
 - `Ofertado -> Cierre con venta` acepta la cotizacion con `PATCH /quotations/:id/accept`.
 - `Ofertado -> Cierre sin venta` rechaza la cotizacion con `PATCH /quotations/:id/reject`.
-- `Cierre con venta` y `Cierre sin venta` son estados finales; no se puede mover desde un cierre.
-- No se permite regresar un lead avanzado a `En prospecto`.
+- `Cierre con venta` y `Cierre sin venta` YA NO son finales: pueden volver a `Ofertado` o pasar al otro cierre. Transiciones validas del backend (`PATCH /leads/:id/status`):
+  - `En prospecto -> Ofertado`.
+  - `Ofertado -> Cierre con venta | Cierre sin venta`.
+  - `Cierre con venta -> Ofertado | Cierre sin venta`.
+  - `Cierre sin venta -> Ofertado | Cierre con venta`.
+- Entre estados de cierre la cotizacion ya es terminal (`ACEPTADA`/`RECHAZADA`) y no se re-transiciona: solo se cambia el estado del lead con `PATCH /leads/:id/status`.
+- Al pasar a `Ofertado` desde cualquier estado, el backend crea un borrador de cotizacion solo si el lead no tiene una.
+- No se permite regresar un lead a `En prospecto` una vez que avanzo. Reenviar el mismo estado es un no-op valido.
 - Al mover un lead por drag and drop, no crear cotizaciones fantasma. Usar solo cotizaciones reales asociadas al lead.
 - `ACEPTADA` y `RECHAZADA` son terminales en backend. No se pueden modificar por `PATCH /quotations/:id`.
 - Para avanzar estados se usan endpoints de lifecycle: `/send`, `/accept`, `/reject`.

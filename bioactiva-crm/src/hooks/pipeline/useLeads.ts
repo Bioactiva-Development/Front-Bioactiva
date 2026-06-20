@@ -139,6 +139,16 @@ async function syncLeadAndCotizacionState(
   }
 
   if (estado === LeadState.CierreVenta || estado === LeadState.CierreSinVenta) {
+    // Re-cierre desde otro estado de cierre: la cotización ya es terminal
+    // (ACEPTADA/RECHAZADA) y no puede re-transicionarse. El backend permite el
+    // cambio de estado directamente vía PATCH /leads/:id/status.
+    if (
+      lead.estado === LeadState.CierreVenta ||
+      lead.estado === LeadState.CierreSinVenta
+    ) {
+      return { lead: await leadsService.updateEstado(lead.id, estado) }
+    }
+
     const cotizacion = getCotizacionToResolveLeadClosure(estado, cotizaciones)
     if (!cotizacion) throw new Error('No hay una cotización asociada para cerrar el lead.')
 
