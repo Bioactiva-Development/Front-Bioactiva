@@ -1,6 +1,7 @@
 import { Sector, TamanoEmpresa, TipoEmpresa } from '@/types/enums'
 import {
   Organizacion,
+  OrganizacionFiltros,
   OrganizacionFormData,
   SunatRucResult,
   SunatNombreResult,
@@ -142,6 +143,30 @@ const SECTOR_BACKEND_TO_DOMAIN = Object.fromEntries(
 
 const safeMap = <K extends string, V>(table: Record<string, V>, key: K, fallback: V): V =>
   table[key] ?? fallback
+
+/**
+ * Convierte los filtros de dominio (snake_case, enums en español) en los query
+ * params que acepta `GET /organizations`: `term` (busca en nombre y
+ * nombreComercial), `sector`, `tamano`, `tipo` (todos en MAYUSCULAS_SNAKE del
+ * backend) y la paginación `page`/`limit`. Solo se incluyen los filtros con
+ * valor para no enviar parámetros vacíos.
+ */
+export const toOrganizacionQueryParams = (
+  filtros?: OrganizacionFiltros
+): Record<string, string | number> => {
+  const params: Record<string, string | number> = {}
+  if (!filtros) return params
+
+  const term = filtros.search?.trim()
+  if (term) params.term = term
+  if (filtros.sector) params.sector = SECTOR_DOMAIN_TO_BACKEND[filtros.sector]
+  if (filtros.tamano) params.tamano = TAMANO_DOMAIN_TO_BACKEND[filtros.tamano]
+  if (filtros.tipo) params.tipo = TIPO_DOMAIN_TO_BACKEND[filtros.tipo]
+  if (filtros.page) params.page = filtros.page
+  if (filtros.limit) params.limit = filtros.limit
+
+  return params
+}
 
 // ---------------------------------------------------------------------------
 // Mappers DTO <-> dominio

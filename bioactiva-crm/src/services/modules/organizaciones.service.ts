@@ -30,6 +30,7 @@ import {
   fromSunatNombreDto,
   fromSunatRucDto,
   toCreateOrganizacionDto,
+  toOrganizacionQueryParams,
   toUpdateOrganizacionDto,
 } from './organizaciones.mapper'
 import { fromLeadDto, LeadDtoOut, LeadsDtoResponse } from './leads.mapper'
@@ -54,8 +55,25 @@ const RUC_REGEX = /^\d{11}$/
 const isRuc = (query: string) => RUC_REGEX.test(query.trim())
 
 /**
- * Lista de organizaciones. El backend retorna un array plano; los filtros y la
- * paginación se aplican en cliente hasta que el backend los soporte.
+ * Respuesta cruda de `GET /organizations`. El backend ya filtra y pagina en
+ * servidor (`{ data, meta }`), pero seguimos aceptando el arreglo plano legacy
+ * para no romper si algún entorno aún no expone la versión paginada.
+ */
+type OrganizacionesBackendResponse =
+  | OrganizacionDtoOut[]
+  | {
+      data?: OrganizacionDtoOut[]
+      meta?: {
+        page?: number
+        limit?: number
+        total?: number
+        totalPages?: number
+      }
+    }
+
+/**
+ * Filtros y paginación de respaldo en cliente. Solo se usa cuando el backend
+ * responde con un arreglo plano (sin filtrar/paginar en servidor).
  */
 const aplicarFiltrosClientSide = (
   data: Organizacion[],
@@ -89,18 +107,40 @@ const aplicarFiltrosClientSide = (
   }
 }
 
+/**
+ * Normaliza la respuesta de `GET /organizations` al modelo de dominio. Si el
+ * backend devuelve la respuesta paginada `{ data, meta }`, se confía en su
+ * filtrado/paginación; si devuelve un arreglo plano, se aplican filtros y
+ * paginación en cliente como respaldo.
+ */
+const normalizarRespuesta = (
+  raw: OrganizacionesBackendResponse,
+  filtros?: OrganizacionFiltros
+): OrganizacionesResponse => {
+  if (Array.isArray(raw)) {
+    return aplicarFiltrosClientSide(raw.map(fromOrganizacionDto), filtros)
+  }
+
+  const data = (raw.data ?? []).map(fromOrganizacionDto)
+  const page = raw.meta?.page ?? filtros?.page ?? 1
+  const limit = raw.meta?.limit ?? filtros?.limit ?? data.length
+  const total = raw.meta?.total ?? data.length
+
+  return { data, total, page, limit }
+}
+
 export const organizacionesService = {
-  /** GET /organizations */
+  /** GET /organizations — filtros server-side: term, sector, tamano, tipo, page, limit */
   getAll: async (
     filtros?: OrganizacionFiltros
   ): Promise<OrganizacionesResponse> => {
     if (USE_MOCK) return mockGetOrganizaciones(filtros)
 
-    const { data } = await apiClient.get<OrganizacionDtoOut[]>(
-      ENDPOINTS.organizaciones.list
+    const { data } = await apiClient.get<OrganizacionesBackendResponse>(
+      ENDPOINTS.organizaciones.list,
+      { params: toOrganizacionQueryParams(filtros) }
     )
-    const organizaciones = data.map(fromOrganizacionDto)
-    return aplicarFiltrosClientSide(organizaciones, filtros)
+    return normalizarRespuesta(data, filtros)
   },
 
   /** GET /organizations/:id */

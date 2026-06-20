@@ -3,6 +3,7 @@ import {
   fromOrganizacionDto,
   toCreateOrganizacionDto,
   toUpdateOrganizacionDto,
+  toOrganizacionQueryParams,
   fromSunatRucDto,
   fromSunatNombreDto,
   OrganizacionDtoOut,
@@ -405,6 +406,41 @@ describe('organizaciones/organizaciones.mapper', () => {
         nombre: 'ALTOMAYO PERU S.A.C.',
         ubicacion: 'LIMA',
         estado: undefined,
+      })
+    })
+  })
+
+  describe('toOrganizacionQueryParams', () => {
+    it('returns an empty object when there are no filters', () => {
+      expect(toOrganizacionQueryParams()).toEqual({})
+      expect(toOrganizacionQueryParams({})).toEqual({})
+    })
+
+    it('maps search to term and ignores blank search', () => {
+      expect(toOrganizacionQueryParams({ search: '  Altomayo  ' })).toEqual({
+        term: 'Altomayo',
+      })
+      expect(toOrganizacionQueryParams({ search: '   ' })).toEqual({})
+    })
+
+    it('maps domain enums to backend values', () => {
+      expect(
+        toOrganizacionQueryParams({
+          sector: Sector.TECNOLOGIA,
+          tamano: TamanoEmpresa.Pequena,
+          tipo: TipoEmpresa.Privada,
+        })
+      ).toEqual({
+        sector: Sector.TECNOLOGIA,
+        tamano: 'PEQUENO',
+        tipo: 'EMPRESA_NACIONAL',
+      })
+    })
+
+    it('includes pagination when provided', () => {
+      expect(toOrganizacionQueryParams({ page: 2, limit: 20 })).toEqual({
+        page: 2,
+        limit: 20,
       })
     })
   })
