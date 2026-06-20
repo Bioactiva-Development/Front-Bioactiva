@@ -107,6 +107,19 @@ describe('cotizaciones/cotizaciones.service (API mode)', () => {
       const result = await cotizacionesService.getAll({ estado: EstadoCot.Enviada })
       expect(result.data).toHaveLength(0)
     })
+
+    it('forwards idOrg server-side (sin paginar, con límite alto)', async () => {
+      ;(leadsService.getPipeline as jest.Mock).mockResolvedValue({
+        prospecto: [{ id: 2 }], ofertado: [], cierreVenta: [], cierreSinVenta: [], total: 1,
+      })
+      getMock.mockResolvedValueOnce({ data: { data: [rawCotizacion], meta: { total: 1 } } })
+
+      await cotizacionesService.getAll({ id_org: 'org-uuid-1', page: 2 })
+
+      expect(getMock).toHaveBeenCalledWith('/quotations', {
+        params: { idOrg: 'org-uuid-1', limit: 500 },
+      })
+    })
   })
 
   describe('create', () => {

@@ -1,14 +1,18 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Building2, ChevronDown, ChevronUp, Filter, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { ChevronDown, ChevronUp, Filter, X } from 'lucide-react'
 import { LeadFiltros as FiltrosType, ActivityAlertFilter } from '@/types/lead.types'
 import { EstadoUsuario, LeadState, Sector } from '@/types/enums'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { UsuarioListItem } from '@/types/usuario.types'
-import { useOrganizaciones, useOrganizacion } from '@/hooks/organizaciones/useOrganizaciones'
-import { useDebounce } from '@/hooks/shared/useDebounce'
+import { OrgBuscador } from '@/components/ui/OrgBuscador/OrgBuscador'
 import { formatSector } from '@/lib/utils/organizacion.utils'
+
+// Estilo del buscador de organización acorde al panel de filtros del pipeline.
+const ORG_INPUT_CLASS = `w-full pl-8 pr-8 py-1.5 rounded-lg border border-gray-100
+  bg-white text-sm text-gray-700 outline-none focus:border-emerald-300
+  placeholder:text-gray-300`
 
 interface LeadFiltrosProps {
   filtros:   FiltrosType
@@ -55,98 +59,6 @@ const sanitizeFiltros = (filtros: FiltrosType): FiltrosType => ({
   fecha_desde: filtros.fecha_desde,
   fecha_hasta: filtros.fecha_hasta,
 })
-
-// Buscador-selector de organización: el usuario escribe, elige una organización
-// y se mapea su id a filtros.id_org (GET /leads?idOrg=...).
-function OrgBuscador({
-  value,
-  onSelect,
-}: {
-  value?: string
-  onSelect: (idOrg: string | undefined) => void
-}) {
-  const [query, setQuery] = useState('')
-  const [abierto, setAbierto] = useState(false)
-  const debounced = useDebounce(query.trim(), 300)
-  const blurTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const { data: resultados } = useOrganizaciones({
-    search: debounced || undefined,
-    limit: 20,
-  })
-  // Resuelve el nombre de la organización ya seleccionada (p. ej. al cargar la
-  // página desde una URL con idOrg) para mostrarlo en el input.
-  const { data: seleccionada } = useOrganizacion(value ?? '')
-
-  const opciones = resultados?.data ?? []
-  const nombreSeleccionado = seleccionada?.nombre ?? ''
-
-  const elegir = (id: string) => {
-    if (blurTimeout.current) clearTimeout(blurTimeout.current)
-    onSelect(id)
-    setQuery('')
-    setAbierto(false)
-  }
-
-  const limpiar = () => {
-    onSelect(undefined)
-    setQuery('')
-    setAbierto(false)
-  }
-
-  return (
-    <div className="relative">
-      <Building2
-        size={14}
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-      />
-      <input
-        type="text"
-        value={abierto ? query : nombreSeleccionado}
-        onFocus={() => { setAbierto(true); setQuery('') }}
-        onBlur={() => {
-          blurTimeout.current = setTimeout(() => setAbierto(false), 150)
-        }}
-        onChange={(e) => { setQuery(e.target.value); setAbierto(true) }}
-        placeholder="Buscar y seleccionar organización..."
-        className="w-full pl-8 pr-8 py-1.5 rounded-lg border border-gray-100
-          bg-white text-sm text-gray-700 outline-none focus:border-emerald-300
-          placeholder:text-gray-300"
-      />
-      {value && (
-        <button
-          type="button"
-          onClick={limpiar}
-          aria-label="Quitar organización"
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300
-            hover:text-gray-500 cursor-pointer"
-        >
-          <X size={14} />
-        </button>
-      )}
-
-      {abierto && opciones.length > 0 && (
-        <ul className="absolute z-20 mt-1 w-full max-h-56 overflow-auto rounded-lg
-          border border-gray-100 bg-white shadow-lg py-1">
-          {opciones.map((org) => (
-            <li key={org.id}>
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => elegir(org.id)}
-                className={`w-full text-left px-3 py-1.5 text-sm cursor-pointer
-                  hover:bg-emerald-50
-                  ${org.id === value ? 'text-emerald-700 font-medium' : 'text-gray-700'}`}
-              >
-                {org.nombre}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
 
 export function LeadFiltros({
   filtros,
@@ -268,6 +180,7 @@ export function LeadFiltros({
                 ...filtrosBasicos,
                 id_org: idOrg,
               })}
+              inputClassName={ORG_INPUT_CLASS}
             />
           </div>
 

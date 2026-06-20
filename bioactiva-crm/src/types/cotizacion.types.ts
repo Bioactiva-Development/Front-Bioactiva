@@ -47,11 +47,12 @@ export interface CotizacionFormData {
 
 export interface CotizacionFiltros {
   id_lead?:      number
+  // Filtra por la organización del lead asociado (GET /quotations?idOrg=).
+  id_org?:       string
   estado?:       EstadoCot
   id_remitente?: number
   fecha_desde?:  string
   fecha_hasta?:  string
-  search?:       string   // búsqueda local en mock; confirmar con backend
   page?:         number
   limit?:        number
 }
