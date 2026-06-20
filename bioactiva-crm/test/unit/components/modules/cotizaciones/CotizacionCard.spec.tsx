@@ -23,6 +23,7 @@ const baseCotizacion: Cotizacion = {
   id_lead: 1,
   id_remitente: 1,
   fecha_cot: '2025-03-01',
+  contacto_nombre: 'Juan Pérez',
   dirigido: 'Juan Pérez',
   nombre_servicio: 'Consultoría I+D',
   monto: 15000,
@@ -41,71 +42,74 @@ describe('modules/cotizaciones/CotizacionCard', () => {
     jest.clearAllMocks()
   })
 
+  const renderCard = (cotizacion: Cotizacion) =>
+    render(<table><tbody><CotizacionCard cotizacion={cotizacion} /></tbody></table>)
+
   it('renders codigo', () => {
-    render(<CotizacionCard cotizacion={baseCotizacion} />)
+    renderCard(baseCotizacion)
     expect(screen.getAllByText('COT-001').length).toBeGreaterThan(0)
   })
 
   it('renders lead_codigo', () => {
-    render(<CotizacionCard cotizacion={baseCotizacion} />)
+    renderCard(baseCotizacion)
     expect(screen.getAllByText('LEAD-001').length).toBeGreaterThan(0)
   })
 
   it('renders periodo', () => {
-    render(<CotizacionCard cotizacion={baseCotizacion} />)
+    renderCard(baseCotizacion)
     expect(screen.getAllByText('Q1 2025').length).toBeGreaterThan(0)
   })
 
   it('renders dirigido', () => {
-    render(<CotizacionCard cotizacion={baseCotizacion} />)
+    renderCard(baseCotizacion)
     expect(screen.getAllByText('Juan Pérez').length).toBeGreaterThan(0)
   })
 
   it('renders organizacion_nombre', () => {
-    render(<CotizacionCard cotizacion={baseCotizacion} />)
+    renderCard(baseCotizacion)
     expect(screen.getAllByText('Empresa SAC').length).toBeGreaterThan(0)
   })
 
   it('renders nombre_servicio', () => {
-    render(<CotizacionCard cotizacion={baseCotizacion} />)
+    renderCard(baseCotizacion)
     expect(screen.getAllByText('Consultoría I+D').length).toBeGreaterThan(0)
   })
 
   it('formats monto with S/ symbol for Soles', () => {
-    render(<CotizacionCard cotizacion={baseCotizacion} />)
+    renderCard(baseCotizacion)
     expect(screen.getAllByText(/S\/ 15,000/).length).toBeGreaterThan(0)
   })
 
   it('formats monto with $ symbol for Dolares', () => {
     const dolares: Cotizacion = { ...baseCotizacion, tipo: TipoMoneda.Dolares }
-    render(<CotizacionCard cotizacion={dolares} />)
+    renderCard(dolares)
     expect(screen.getAllByText(/\$ 15,000/).length).toBeGreaterThan(0)
   })
 
   it('renders estado badge', () => {
-    render(<CotizacionCard cotizacion={baseCotizacion} />)
+    renderCard(baseCotizacion)
     expect(screen.getAllByText('Pendiente').length).toBeGreaterThan(0)
   })
 
   it('renders send button for Pendiente estado', () => {
-    render(<CotizacionCard cotizacion={baseCotizacion} />)
+    renderCard(baseCotizacion)
     expect(screen.getAllByTitle('Marcar como enviada').length).toBeGreaterThan(0)
   })
 
   it('hides send button for non-Pendiente estado', () => {
     const enviada: Cotizacion = { ...baseCotizacion, estado: EstadoCot.Enviada }
-    render(<CotizacionCard cotizacion={enviada} />)
+    renderCard(enviada)
     expect(screen.queryByTitle('Marcar como enviada')).not.toBeInTheDocument()
   })
 
   it('calls enviar when send button is clicked', async () => {
-    render(<CotizacionCard cotizacion={baseCotizacion} />)
+    renderCard(baseCotizacion)
     await userEvent.click(screen.getAllByTitle('Marcar como enviada')[0])
     expect(mockEnviar).toHaveBeenCalledWith(1)
   })
 
   it('calls router.push when row is clicked', async () => {
-    render(<CotizacionCard cotizacion={baseCotizacion} />)
+    renderCard(baseCotizacion)
     const row = screen.getAllByText('COT-001')[0].closest('tr')
     expect(row).toBeInTheDocument()
     if (row) {
@@ -116,7 +120,7 @@ describe('modules/cotizaciones/CotizacionCard', () => {
 
   it('renders lead id fallback when lead_codigo is missing', () => {
     const sinCodigo: Cotizacion = { ...baseCotizacion, lead_codigo: undefined }
-    render(<CotizacionCard cotizacion={sinCodigo} />)
+    renderCard(sinCodigo)
     expect(screen.getAllByText('#1').length).toBeGreaterThan(0)
   })
 })

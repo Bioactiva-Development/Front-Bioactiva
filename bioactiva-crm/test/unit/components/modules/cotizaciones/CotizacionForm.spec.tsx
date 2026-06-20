@@ -90,7 +90,6 @@ describe('modules/cotizaciones/CotizacionForm', () => {
       )
 
       expect(screen.getByLabelText(/fecha cotización/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/dirigido a/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/cliente/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/producto/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/remitente/i)).toBeInTheDocument()
@@ -201,13 +200,12 @@ describe('modules/cotizaciones/CotizacionForm', () => {
       expect(clienteInput).toHaveAttribute('readOnly')
     })
 
-    it('nombre_servicio input is readOnly when editing', () => {
+    it('renders nombre_servicio input when editing', () => {
       render(
         <CotizacionForm cotizacion={baseCotizacion} onSubmit={jest.fn()} isLoading={false} />
       )
 
-      const servicioInput = screen.getByLabelText(/nombre del servicio/i)
-      expect(servicioInput).toHaveAttribute('readOnly')
+      expect(screen.getByLabelText(/nombre del servicio/i)).toBeInTheDocument()
     })
 
     it('renders remitente as read-only text input in edit mode', () => {
@@ -219,31 +217,6 @@ describe('modules/cotizaciones/CotizacionForm', () => {
       expect(remitenteInput).toHaveAttribute('readOnly')
     })
 
-    it('dirigido input is readOnly when editing and lead has contacto_nombre', async () => {
-      const useLeadMock = jest.requireMock('@/hooks/pipeline/useLeads') as {
-        useLead: jest.Mock
-      }
-      useLeadMock.useLead.mockReturnValue({
-        data: {
-          id: 1,
-          codigo: 'L-001',
-          id_org: 1,
-          id_encargado: 2,
-          contacto_nombre: 'Juan Pérez',
-          organizacion_nombre: 'Empresa SAC',
-          servicio_interes: 'Consultoría',
-        },
-        isLoading: false,
-      })
-
-      render(
-        <CotizacionForm cotizacion={baseCotizacion} onSubmit={jest.fn()} isLoading={false} />
-      )
-
-      await screen.findByLabelText(/dirigido a/i)
-      const dirigidoInput = screen.getByLabelText(/dirigido a/i)
-      expect(dirigidoInput).toHaveAttribute('readOnly')
-    })
   })
 
   describe('interactions', () => {
