@@ -1,27 +1,30 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { CotizacionFiltros } from '@/components/modules/cotizaciones/CotizacionFiltros'
 import { CotizacionFiltros as FiltrosType } from '@/types/cotizacion.types'
 import { EstadoCot } from '@/types/enums'
 
-jest.mock('@/hooks/shared/useDebounce', () => ({
-  useDebounce: jest.fn((v: string) => v),
+// El buscador de organización se prueba por separado; aquí se sustituye por un
+// stub que expone onSelect para verificar el mapeo a id_org.
+jest.mock('@/components/ui/OrgBuscador/OrgBuscador', () => ({
+  OrgBuscador: ({
+    value,
+    onSelect,
+  }: {
+    value?: string
+    onSelect: (idOrg: string | undefined) => void
+  }) => (
+    <button data-testid="org-buscador" onClick={() => onSelect('org-1')}>
+      org:{value ?? 'none'}
+    </button>
+  ),
 }))
 
-jest.mock('lucide-react', () => ({
-  Search: () => <div data-testid="icon-search" />,
-  X: () => <div data-testid="icon-x" />,
-  Loader2: () => <div data-testid="icon-loader" />,
-}))
-
-const baseFiltros: FiltrosType = {
-  search: '',
-}
+const baseFiltros: FiltrosType = {}
 
 const defaultProps = {
   filtros: baseFiltros,
   onChange: jest.fn(),
-  onLimpiar: jest.fn(),
 }
 
 describe('modules/cotizaciones/CotizacionFiltros', () => {
@@ -73,44 +76,19 @@ describe('modules/cotizaciones/CotizacionFiltros', () => {
     })
   })
 
-  it('renders search input with placeholder Buscar...', () => {
+  it('renders the organization buscador', () => {
     render(<CotizacionFiltros {...defaultProps} />)
-    expect(screen.getByPlaceholderText('Buscar...')).toBeInTheDocument()
+    expect(screen.getByTestId('org-buscador')).toBeInTheDocument()
   })
 
-  it('shows clear X button when search is not empty', () => {
-    const filtros: FiltrosType = { ...baseFiltros, search: 'test' }
-    render(<CotizacionFiltros {...defaultProps} filtros={filtros} />)
-    expect(screen.getByTestId('icon-x')).toBeInTheDocument()
-  })
-
-  it('hidden clear X button when search is empty', () => {
-    render(<CotizacionFiltros {...defaultProps} filtros={baseFiltros} />)
-    expect(screen.queryByTestId('icon-x')).not.toBeInTheDocument()
-  })
-
-  it('clicking clear X clears search input value', async () => {
-    const filtros: FiltrosType = { ...baseFiltros, search: 'test' }
-    render(<CotizacionFiltros {...defaultProps} filtros={filtros} />)
-    const input = screen.getByPlaceholderText('Buscar...') as HTMLInputElement
-    expect(input.value).toBe('test')
-    await userEvent.click(screen.getByTestId('icon-x').closest('button')!)
-    expect(input.value).toBe('')
-  })
-
-  it('shows Loader2 when isLoading is true and search is not empty', () => {
-    const filtros: FiltrosType = { ...baseFiltros, search: 'test' }
-    render(<CotizacionFiltros {...defaultProps} filtros={filtros} isLoading={true} />)
-    expect(screen.getByTestId('icon-loader')).toBeInTheDocument()
-  })
-
-  it('shows Search icon when isLoading is false', () => {
-    render(<CotizacionFiltros {...defaultProps} />)
-    expect(screen.getByTestId('icon-search')).toBeInTheDocument()
-  })
-
-  it('shows Search icon when isLoading is true but search is empty', () => {
-    render(<CotizacionFiltros {...defaultProps} isLoading={true} />)
-    expect(screen.getByTestId('icon-search')).toBeInTheDocument()
+  it('selecting an organization calls onChange with id_org and page:1', async () => {
+    const onChange = jest.fn()
+    render(<CotizacionFiltros {...defaultProps} onChange={onChange} />)
+    await userEvent.click(screen.getByTestId('org-buscador'))
+    expect(onChange).toHaveBeenCalledWith({
+      ...baseFiltros,
+      id_org: 'org-1',
+      page: 1,
+    })
   })
 })

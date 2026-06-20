@@ -18,7 +18,15 @@ import { useContactosPorOrganizacion } from '@/hooks/contactos/useContactos'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { LeadState } from '@/types/enums'
 import { AssignableUsuario } from '@/types/usuario.types'
-import { toLeadDateInputValue } from '@/lib/utils/lead-date.utils'
+
+// Secciones a las que se puede posicionar el formulario al abrir en edición.
+export type LeadEditFocus = 'datos' | 'contexto'
+
+// Cada foco apunta al primer campo editable de la sección equivalente del detalle.
+const FOCUS_ANCHOR: Record<LeadEditFocus, string> = {
+  datos:    'ldf-contacto',
+  contexto: 'ldf-comentarios',
+}
 
 interface LeadFormProps {
   lead?:      Lead
@@ -27,6 +35,7 @@ interface LeadFormProps {
   onSubmit:   (data: LeadFormValues) => Promise<void>
   isLoading:  boolean
   error?:     string | null
+  focusField?: LeadEditFocus
 }
 
 interface ResponsableOption {
@@ -65,7 +74,6 @@ function getLeadFormDefaults(
       desafio_oportunidad:     lead.desafio_oportunidad ?? '',
       id_encargado:            lead.id_encargado,
       canal_captacion:         lead.canal_captacion ?? '',
-      fecha_cierre:            toLeadDateInputValue(lead.fecha_cierre),
     }
   }
 
@@ -82,6 +90,7 @@ export function LeadForm({
   onSubmit,
   isLoading,
   error,
+  focusField,
 }: Readonly<LeadFormProps>) {
   const router    = useRouter()
   const esEdicion = !!lead
@@ -185,6 +194,24 @@ export function LeadForm({
   useEffect(() => {
     reset(getLeadFormDefaults(lead, estadoInicial))
   }, [estadoInicial, lead, reset])
+
+  // Posiciona el formulario en la sección desde la que se pidió editar (al venir
+  // del detalle del lead). Hace scroll y enfoca el primer campo de la sección.
+  useEffect(() => {
+    if (!focusField) return
+    const anchorId = FOCUS_ANCHOR[focusField]
+    const timer = setTimeout(() => {
+      const el = document.getElementById(anchorId) as
+        | HTMLInputElement
+        | HTMLSelectElement
+        | HTMLTextAreaElement
+        | null
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      if (!el.disabled) el.focus({ preventScroll: true })
+    }, 120)
+    return () => clearTimeout(timer)
+  }, [focusField])
 
   useEffect(() => {
     if (!esEdicion || orgSeleccionada) return
@@ -320,12 +347,13 @@ export function LeadForm({
                 <span className="text-gray-400 normal-case font-normal">Opcional</span>
               </label>
               <select
+                id="ldf-contacto"
                 {...register('id_contacto', {
                   setValueAs: (value) => value ? Number(value) : undefined,
                 })}
-                disabled={!orgSeleccionada}
+                disabled={esEdicion || !orgSeleccionada}
                 className={`${inputClass(!!errors.id_contacto)} cursor-pointer
-                  ${!orgSeleccionada ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  ${esEdicion || !orgSeleccionada ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 <option value="">
                   {orgSeleccionada
@@ -346,7 +374,11 @@ export function LeadForm({
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-400">Puedes vincularlo después desde el detalle del lead.</p>
+              <p className="text-xs text-gray-400">
+                {esEdicion
+                  ? 'La organización y el contacto no se pueden cambiar al editar el lead.'
+                  : 'Puedes vincularlo después desde el detalle del lead.'}
+              </p>
             </div>
           </div>
 
@@ -422,7 +454,7 @@ export function LeadForm({
               </div>
             </div>
 
-            <div className={esEdicion ? 'grid grid-cols-2 gap-4' : 'space-y-4'}>
+            <div className="space-y-4">
               <div className="space-y-1.5">
                 <label htmlFor="ldf-canal" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   <Radio size={12} className="text-gray-400" />
@@ -464,23 +496,6 @@ export function LeadForm({
                   <p className="text-red-500 text-xs">{errors.canal_captacion.message}</p>
                 )}
               </div>
-
-              {esEdicion && (
-                <div className="space-y-1.5">
-                  <label htmlFor="ldf-fecha-cierre" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Fecha de cierre estimada
-                  </label>
-                  <input
-                    id="ldf-fecha-cierre"
-                    type="date"
-                    {...register('fecha_cierre')}
-                    className={inputClass(!!errors.fecha_cierre)}
-                  />
-                  {errors.fecha_cierre && (
-                    <p className="text-red-500 text-xs">{errors.fecha_cierre.message}</p>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 

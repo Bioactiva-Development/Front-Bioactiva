@@ -46,32 +46,31 @@ describe('modules/pipeline/LeadCard', () => {
     expect(screen.getByTitle('Carlos López')).toBeInTheDocument()
   })
 
-  it('shows "Por cotizar" badge only for EN_PROSPECTO leads', () => {
+  it('does not show the "Por cotizar" badge', () => {
     render(<LeadCard lead={baseLead} onClick={jest.fn()} />)
-    expect(screen.getByText('Por cotizar')).toBeInTheDocument()
-  })
-
-  it('does not show "Por cotizar" for non-prospecto leads', () => {
-    render(<LeadCard lead={{ ...baseLead, estado: LeadState.Ofertado }} onClick={jest.fn()} />)
     expect(screen.queryByText('Por cotizar')).not.toBeInTheDocument()
   })
 
+  it('shows the lead creation date', () => {
+    render(<LeadCard lead={baseLead} onClick={jest.fn()} />)
+    expect(screen.getByText(/Creado el/)).toBeInTheDocument()
+  })
+
   it.each([
-    ['ROJO',     'Vencida'],
-    ['AMARILLO', 'Por vencer'],
-  ] as const)('renders the %s activity alert badge', (alert, label) => {
+    ['SIN_ACTIVIDADES', 'Sin actividades'],
+    ['PENDIENTE',       'Pendiente'],
+    ['EN_RIESGO',       'En riesgo'],
+    ['POR_VENCER',      'Por vencer'],
+  ] as const)('renders the %s semáforo badge', (alert, label) => {
     render(<LeadCard lead={{ ...baseLead, activity_alert: alert }} onClick={jest.fn()} />)
     expect(screen.getByText(label)).toBeInTheDocument()
   })
 
-  it('does not render the VERDE badge (default ok state)', () => {
-    render(<LeadCard lead={{ ...baseLead, activity_alert: 'VERDE' }} onClick={jest.fn()} />)
-    expect(screen.queryByText('Al día')).not.toBeInTheDocument()
-  })
-
-  it('does not render an alert badge without activity_alert', () => {
+  it('does not render a semáforo badge without activity_alert', () => {
     render(<LeadCard lead={baseLead} onClick={jest.fn()} />)
-    expect(screen.queryByText('Vencida')).not.toBeInTheDocument()
+    expect(screen.queryByText('Sin actividades')).not.toBeInTheDocument()
+    expect(screen.queryByText('Pendiente')).not.toBeInTheDocument()
+    expect(screen.queryByText('En riesgo')).not.toBeInTheDocument()
     expect(screen.queryByText('Por vencer')).not.toBeInTheDocument()
   })
 

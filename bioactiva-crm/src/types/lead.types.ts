@@ -1,13 +1,21 @@
-import { LeadState } from './enums'
+import { LeadState, Sector } from './enums'
 
 // Semáforo de actividades del lead (backend: activityAlert).
-// VERDE = al día · AMARILLO = vence dentro de 3 días · ROJO = pendiente vencida.
-export type ActivityAlert = 'VERDE' | 'AMARILLO' | 'ROJO'
+// Severidad de menor a mayor: SIN_ACTIVIDADES < PENDIENTE < EN_RIESGO < POR_VENCER.
+//  · SIN_ACTIVIDADES = el lead no tiene actividades pendientes.
+//  · PENDIENTE       = tiene pendientes, pero ninguna en riesgo ni próxima a vencer.
+//  · EN_RIESGO       = al menos una pendiente pasó la mitad de su ventana de tiempo.
+//  · POR_VENCER      = al menos una pendiente vence en ≤4 días o ya está vencida.
+export type ActivityAlert =
+  | 'SIN_ACTIVIDADES'
+  | 'PENDIENTE'
+  | 'EN_RIESGO'
+  | 'POR_VENCER'
 
-// Filtro de alerta de actividades (GET /leads?alertaActividad=...).
-// TODAS = con alerta (amarillo + rojo) · POR_VENCER = amarillo · VENCIDAS = rojo.
-// Omitir el param trae todos los leads. Valores inválidos => 400.
-export type ActivityAlertFilter = 'TODAS' | 'POR_VENCER' | 'VENCIDAS'
+// Filtro de alerta de actividades (GET /leads?alertaActividad=...). Acepta los
+// mismos valores que el campo de respuesta. Omitir el param trae todos los
+// leads; valores inválidos => 400.
+export type ActivityAlertFilter = ActivityAlert
 
 export interface Lead {
   id:number
@@ -41,6 +49,8 @@ export interface LeadFiltros {
   estado?: LeadState
   id_encargado?: number
   id_org?: string
+  // Filtra por el sector de la organización vinculada (GET /leads?sector=).
+  sector?: Sector
   canal_captacion?: string
   solo_alerta?: boolean
   // Filtro de semáforo de actividades (backend: alertaActividad).

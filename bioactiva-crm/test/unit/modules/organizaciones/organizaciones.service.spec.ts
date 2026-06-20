@@ -83,11 +83,47 @@ describe('organizaciones/organizaciones.service (API mode)', () => {
 
       const result = await organizacionesService.getAll()
 
-      expect(getMock).toHaveBeenCalledWith('/organizations')
+      expect(getMock).toHaveBeenCalledWith('/organizations', { params: {} })
       expect(result.data).toHaveLength(2)
       expect(result.data[0].codigo_cliente).toBe('ALT-001')
       expect(result.data[0].tipo).toBe(TipoEmpresa.Privada)
       expect(result.data[0].tamano).toBe(TamanoEmpresa.Grande)
+    })
+
+    it('sends filters as server-side query params', async () => {
+      getMock.mockResolvedValueOnce({ data: dtoArray })
+
+      await organizacionesService.getAll({
+        search: 'cacao',
+        sector: Sector.AGROALIMENTARIA,
+        page: 2,
+        limit: 10,
+      })
+
+      expect(getMock).toHaveBeenCalledWith('/organizations', {
+        params: {
+          term: 'cacao',
+          sector: 'AGROALIMENTARIA',
+          page: 2,
+          limit: 10,
+        },
+      })
+    })
+
+    it('uses backend pagination metadata when the response is paginated', async () => {
+      getMock.mockResolvedValueOnce({
+        data: {
+          data: dtoArray,
+          meta: { page: 3, limit: 2, total: 42, totalPages: 21 },
+        },
+      })
+
+      const result = await organizacionesService.getAll({ page: 3, limit: 2 })
+
+      expect(result.data).toHaveLength(2)
+      expect(result.total).toBe(42)
+      expect(result.page).toBe(3)
+      expect(result.limit).toBe(2)
     })
 
     it('filters by search', async () => {

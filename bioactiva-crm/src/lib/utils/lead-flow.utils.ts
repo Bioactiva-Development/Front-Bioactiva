@@ -77,6 +77,22 @@ export function getCotizacionToOfferLead(
     )[0] ?? null
 }
 
+// Máquina de estados del lead (backend: PATCH /leads/:id/status).
+// Los estados de cierre YA NO son terminales: pueden volver a Ofertado o pasar al
+// otro cierre. Nunca se puede regresar a "En prospecto".
+const ALLOWED_LEAD_TRANSITIONS: Record<LeadState, LeadState[]> = {
+  [LeadState.Prospecto]:      [LeadState.Ofertado],
+  [LeadState.Ofertado]:       [LeadState.CierreVenta, LeadState.CierreSinVenta],
+  [LeadState.CierreVenta]:    [LeadState.Ofertado, LeadState.CierreSinVenta],
+  [LeadState.CierreSinVenta]: [LeadState.Ofertado, LeadState.CierreVenta],
+}
+
+// Estados destino estructuralmente válidos desde el estado actual (sin considerar
+// el requisito de cotización). Útil para construir la UI de cambio de etapa.
+export function getAllowedLeadTransitions(currentState: LeadState): LeadState[] {
+  return ALLOWED_LEAD_TRANSITIONS[currentState] ?? []
+}
+
 export function validateLeadStateTransition(
   currentState: LeadState,
   targetState: LeadState,
@@ -86,41 +102,42 @@ export function validateLeadStateTransition(
     return { allowed: false, reason: 'Estado de pipeline no válido.' }
   }
 
+  // Reenviar el mismo estado es un no-op válido (contrato backend).
   if (currentState === targetState) return { allowed: true }
 
-  if (
-    currentState === LeadState.CierreVenta ||
-    currentState === LeadState.CierreSinVenta
-  ) {
-    return {
-      allowed: false,
-      reason: 'Los estados de cierre son finales. No se puede mover el lead desde un cierre.',
-    }
-  }
-
+  // Nunca se puede regresar a "En prospecto" una vez que el lead avanzó.
   if (targetState === LeadState.Prospecto) {
     return {
       allowed: false,
-      reason: 'Un lead nuevo inicia en prospecto. No se puede regresar un lead avanzado a prospecto.',
+      reason: 'No se puede regresar un lead a "En prospecto".',
     }
   }
 
-  if (
-    currentState === LeadState.Prospecto &&
-    (targetState === LeadState.CierreVenta ||
-      targetState === LeadState.CierreSinVenta)
-  ) {
+  if (!getAllowedLeadTransitions(currentState).includes(targetState)) {
+    // Cierre directo desde prospecto: el backend responde 409.
+    if (
+      currentState === LeadState.Prospecto &&
+      (targetState === LeadState.CierreVenta ||
+        targetState === LeadState.CierreSinVenta)
+    ) {
+      return {
+        allowed: false,
+        reason: 'Antes de cerrar un lead debe existir una propuesta formal en estado Ofertado.',
+      }
+    }
     return {
       allowed: false,
-      reason: 'Antes de cerrar un lead debe existir una propuesta formal en estado Ofertado.',
+      reason: 'Cambio de estado no permitido para el pipeline.',
     }
   }
 
   // Prospecto -> Ofertado ya NO exige una cotización previa: al pasar a OFERTADO
-  // el backend genera automáticamente una cotización borrador PENDIENTE
-  // (PR #121). El front solo cambia el estado y luego consume ese borrador.
+  // el backend genera automáticamente una cotización borrador PENDIENTE.
 
+  // Cerrar DESDE Ofertado requiere una cotización que aceptar/rechazar. Entre
+  // estados de cierre la cotización ya es terminal: solo cambia el estado del lead.
   if (
+    currentState === LeadState.Ofertado &&
     (targetState === LeadState.CierreVenta ||
       targetState === LeadState.CierreSinVenta) &&
     !getCotizacionToResolveLeadClosure(targetState, cotizaciones)

@@ -18,8 +18,9 @@ export const contactoSchema = z.object({
         .or(z.literal('')),
 
     vocativo: z
-        .enum(Object.values(Vocativo) as [Vocativo, ...Vocativo[]])
-        .optional(),
+        .enum(Object.values(Vocativo) as [Vocativo, ...Vocativo[]], {
+            message: 'El campo Vocativo es obligatorio',
+        }),
 
     cargo: z
         .string()

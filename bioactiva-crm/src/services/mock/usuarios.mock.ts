@@ -15,7 +15,7 @@ import {
 
 // ── Usuario mocks ──────────────────────────────────────────────────────────────
 
-let mockUsuarios: UsuarioListItem[] = [
+const mockUsuarios: UsuarioListItem[] = [
     { id: 1, nombres: 'Administración', apellidos: '', correo: 'admin@bioactiva.pe', rol: RolUsuario.Administrador, estado: EstadoUsuario.Activo, created_at: '2024-01-01T08:00:00Z', updated_at: '2024-01-01T08:00:00Z' },
     { id: 2, nombres: 'Karien', apellidos: 'Diaz', correo: 'karien@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, created_at: '2024-01-02T08:00:00Z', updated_at: '2024-01-02T08:00:00Z' },
     { id: 3, nombres: 'Luis', apellidos: 'Torres', correo: 'ltorres@bioactiva.pe', rol: RolUsuario.Trabajador, estado: EstadoUsuario.Activo, created_at: '2024-01-03T08:00:00Z', updated_at: '2024-01-03T08:00:00Z' },
@@ -39,9 +39,16 @@ export function mockGetUsuarios(filters?: UsuarioFilters): UsuariosResponse {
     if (filters?.rol) result = result.filter(u => u.rol === filters.rol)
     if (filters?.estado) result = result.filter(u => u.estado === filters.estado)
 
+    const total = result.length
+    // Paginación: si se pasa `limit`, se segmenta; si no, se devuelve todo.
+    const page = filters?.page ?? 1
+    const limit = filters?.limit ?? total
+    const start = (page - 1) * limit
+    const usuarios = result.slice(start, start + limit)
+
     // `activos` refleja el total de cuentas activas, no solo las filtradas.
     const activos = mockUsuarios.filter(u => u.estado === EstadoUsuario.Activo).length
-    return { usuarios: result, total: result.length, activos }
+    return { usuarios, total, activos }
 }
 
 // Mantis #434 — GET /users/assignable: todos los habilitados, sin filtro por rol.
@@ -90,7 +97,7 @@ export function mockHabilitarUsuario(id: number): UsuarioListItem {
 
 // ── Invitación mocks ───────────────────────────────────────────────────────────
 
-let MOCK_INVITACIONES: Invitacion[] = [
+const MOCK_INVITACIONES: Invitacion[] = [
     {
         id: 1,
         correo: 'nuevo1@bioactiva.pe',

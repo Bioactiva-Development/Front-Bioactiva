@@ -18,7 +18,7 @@ Antes de analizar o modificar este proyecto, lee `AGENTS.md`. Ese archivo contie
   - Cierre sin venta usa cotizacion `RECHAZADA` via `/reject`.
   - No crear cotizaciones automaticas o fantasma al mover leads.
 - Las cotizaciones `ACEPTADA` y `RECHAZADA` son terminales en backend.
-- Los cierres del pipeline son finales y no se puede volver a `En prospecto`.
+- Los cierres del pipeline YA NO son finales: pueden volver a `Ofertado` o pasar al otro cierre. Lo unico prohibido es regresar a `En prospecto`. Entre cierres la cotizacion ya es terminal, asi que solo se cambia el estado del lead (`PATCH /leads/:id/status`), sin re-transicionar la cotizacion.
 - El estado del lead no se edita desde los formularios de creacion/edicion.
 - La creacion de leads se hace solo con `+ Nuevo Lead`; no reintroduzcas botones `+` por columna.
 - En cotizaciones, `idRemitente` debe venir de usuarios reales (`GET /users`). No hardcodear remitentes.

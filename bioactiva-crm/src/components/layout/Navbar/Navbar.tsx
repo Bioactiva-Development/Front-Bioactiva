@@ -1,17 +1,17 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Bell, ChevronDown, LogOut, User, Menu } from 'lucide-react'
+import { ChevronDown, LogOut, User, Menu } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore, useUIStore } from '@/store'
 import { useAuth } from '@/hooks/auth/useAuth'
-import { useNotificacionesInApp } from '@/hooks/notificaciones/useNotificaciones'
+
 import { RolUsuario } from '@/types/enums'
 
 export function Navbar() {
     const router = useRouter()
     const { usuario } = useAuthStore()
-    const { toggleSidebar, notificacionesPendientes } = useUIStore()
+    const { toggleSidebar } = useUIStore()
     const { logout } = useAuth()
     const [menuOpen, setMenuOpen] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
@@ -26,15 +26,7 @@ export function Navbar() {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const { data: notificacionesInApp = [] } = useNotificacionesInApp()
-    const { setNotificacionesPendientes } = useUIStore()
-    const sinLeer = notificacionesInApp.filter(
-        (notificacion) => notificacion.estado === 'NO_LEIDA'
-    ).length
 
-    useEffect(() => {
-        setNotificacionesPendientes(sinLeer)
-    }, [setNotificacionesPendientes, sinLeer])
 
     const iniciales = usuario
         ? `${usuario.nombres.charAt(0)}${usuario.apellidos.charAt(0)}`.toUpperCase()
@@ -56,17 +48,6 @@ export function Navbar() {
             <div className="flex-1" />
 
             <div className="flex items-center gap-2">
-
-                <button
-                    onClick={() => router.push('/notificaciones')}
-                    title="Ver notificaciones"
-                    className="relative p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
-                >
-                    <Bell size={20} />
-                    {notificacionesPendientes > 0 && (
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-                    )}
-                </button>
 
                 <div className="relative" ref={menuRef}>
                     <button
