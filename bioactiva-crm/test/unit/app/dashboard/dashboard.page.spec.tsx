@@ -19,24 +19,11 @@ jest.mock('@/hooks/dashboard/useDashboardMetrics', () => ({
   useDashboardMetrics: (...args: unknown[]) => mockUseDashboardMetrics(...args),
 }))
 
-jest.mock('lucide-react', () => {
-  const icons = {
-    Target: 'target',
-    Percent: 'percent',
-    Clock: 'clock',
-    Timer: 'timer',
-    Activity: 'activity',
-    DollarSign: 'dollar-sign',
-    TrendingUp: 'trending-up',
-    Calendar: 'calendar',
-    RefreshCw: 'refresh-cw',
-  }
-  const result: Record<string, React.FC> = {}
-  for (const [name] of Object.entries(icons)) {
-    result[name] = () => <svg />
-  }
-  return result
-})
+// Stub any icon the page imports (lucide-react) without enumerating them, so
+// adding/removing icons in the page never breaks this suite.
+jest.mock('lucide-react', () =>
+  new Proxy({}, { get: () => () => <svg /> })
+)
 
 jest.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -55,14 +42,14 @@ import DashboardPage from '@/app/(dashboard)/dashboard/page'
 
 const mockMetrics = {
   totalLeads: 42,
-  averageTicketAmount: 15500.5,
+  averageTicketAmount: { pen: 15500.5, usd: 4200.0 },
   conversionRate: 25.5,
   avgClosingTimeDays: 15.3,
   proposalToCloseRate: 60.0,
   avgProposalStageDays: 7.2,
   avgActivitiesPerLead: 3.5,
-  pipelineTotalAmount: 250000.0,
-  closedRevenue: 180000.0,
+  pipelineTotalAmount: { pen: 250000.0, usd: 64000.0 },
+  closedRevenue: { pen: 180000.0, usd: 48000.0 },
   stalledLeadPercentage: 12.8,
   periodStart: '2026-01-01',
   periodEnd: '2027-01-01',
@@ -172,8 +159,11 @@ describe('dashboard/page', () => {
     mockUseDashboardMetrics.mockReturnValue({ data: mockMetrics, isLoading: false, isError: false })
     renderPage()
     expect(screen.getByText('42')).toBeInTheDocument()
+    // Cada divisa se muestra por separado: S/ (PEN) y US$ (USD), sin sumarse.
     expect(screen.getByText(/S\/.*250/)).toBeInTheDocument()
     expect(screen.getByText(/S\/.*180/)).toBeInTheDocument()
+    expect(screen.getByText(/US\$.*64,000/)).toBeInTheDocument()
+    expect(screen.getByText(/US\$.*48,000/)).toBeInTheDocument()
   })
 
   it('renders pipeline section', () => {
