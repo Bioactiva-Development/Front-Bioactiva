@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useMemo } from 'react'
-import { useFieldArray, useForm, useWatch } from 'react-hook-form'
+import { useForm, useWatch, type UseFormRegister } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, CalendarClock, Loader2, Save } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { useContacto } from '@/hooks/contactos/useContactos'
 import { usePlantillasActivas } from '@/hooks/plantillas/usePlantillas'
 import { useLeads } from '@/hooks/pipeline/useLeads'
@@ -13,38 +13,96 @@ import {
   seguimientoSchema,
   SeguimientoFormValues,
 } from '@/lib/validators/notificacion.schema'
-import { CrearSeguimientoRequest } from '@/types/notificacion.types'
+import {
+  CrearSeguimientoRequest,
+  EditarSeguimientoRequest,
+  NotificacionProgramada,
+} from '@/types/notificacion.types'
 import { EstadoActividad } from '@/types/enums'
 import { getContactoEmailOptions } from '@/lib/utils/contacto-email.utils'
-import { APP_TIME_ZONE, limaInputToUtcISO } from '@/lib/utils/timezone.utils'
+import { APP_TIME_ZONE } from '@/lib/utils/timezone.utils'
 
 interface SeguimientoFormProps {
   onSubmit: (data: CrearSeguimientoRequest) => Promise<void>
+  onEdit?: (id: number, data: EditarSeguimientoRequest) => Promise<void>
+  notificacionInicial?: NotificacionProgramada
   isLoading: boolean
   error?: string | null
   onCancel?: () => void
   leadIdInicial?: number
 }
 
+type Target = 'internal' | 'external'
+
+const ANTICIPACIONES = [15, 30, 60] as const
+
 const nuevaInstancia = () => ({
-  internal: { fechaEnvio: '', idTemplate: 0, asunto: '', cuerpo: '' },
-  external: { fechaEnvio: '', idTemplate: 0, asunto: '', cuerpo: '' },
+  internal: {
+    minutosAntes: 60,
+    idTemplate: 0,
+    asunto: 'Revisión interna de seguimiento comercial',
+    cuerpo:
+      'Hola, tienes un seguimiento pendiente asociado al lead seleccionado. Revisa la actividad antes del envío al cliente.',
+  },
+  external: {
+    minutosAntes: 30,
+    idTemplate: 0,
+    asunto: 'Seguimiento a la propuesta comercial de BioActiva',
+    cuerpo:
+      'Hola, le escribimos para dar seguimiento a la propuesta revisada con BioActiva. Quedamos atentos a sus comentarios.',
+  },
 })
 
-const targets = ['internal', 'external'] as const
+const getInstanciaInicial = (notificacion?: NotificacionProgramada) => {
+  const instancia = notificacion?.instancias?.[0]
+  if (!instancia) return nuevaInstancia()
+  return {
+    internal: {
+      minutosAntes: 60,
+      idTemplate: 0,
+      asunto: instancia.asuntoInterno,
+      cuerpo: '',
+    },
+    external: {
+      minutosAntes: 30,
+      idTemplate: 0,
+      asunto: instancia.asuntoExterno,
+      cuerpo: '',
+    },
+  }
+}
+
+const formatFecha = (fecha: string) => {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: APP_TIME_ZONE,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(fecha))
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? ''
+
+  return `${value('day')}/${value('month')}/${value('year')} ${value('hour')}:${value('minute')}`
+}
 
 export function SeguimientoForm({
   onSubmit,
+  onEdit,
+  notificacionInicial,
   isLoading,
   error,
   onCancel,
   leadIdInicial,
 }: Readonly<SeguimientoFormProps>) {
+  const editando = Boolean(notificacionInicial)
+  const instanciaInicial = getInstanciaInicial(notificacionInicial)
   const { data: leadsResponse } = useLeads({ limit: 100 })
   const leads = leadsResponse?.data ?? []
   const plantillasQuery = usePlantillasActivas()
   const plantillas = plantillasQuery.data ?? []
-
   const {
     register,
     handleSubmit,
@@ -56,27 +114,33 @@ export function SeguimientoForm({
   } = useForm<SeguimientoFormValues>({
     resolver: zodResolver(seguimientoSchema),
     defaultValues: {
-      idLead: leadIdInicial ?? 0,
-      correoCliente: '',
-      instancias: [nuevaInstancia()],
+      idLead: notificacionInicial?.idLead ?? leadIdInicial ?? 0,
+      correoCliente: notificacionInicial?.correoCliente ?? '',
+      instancias: [instanciaInicial],
     },
   })
 
-  const { fields } = useFieldArray({
-    control,
-    name: 'instancias',
-  })
   const selectedLeadId = useWatch({ control, name: 'idLead' })
+  const internalMinutes = useWatch({
+    control,
+    name: 'instancias.0.internal.minutosAntes',
+  })
+  const externalMinutes = useWatch({
+    control,
+    name: 'instancias.0.external.minutosAntes',
+  })
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId)
   const { data: actividades = [], isLoading: cargandoActividades } =
     useActividades(selectedLeadId || 0)
   const { data: contacto } = useContacto(selectedLead?.id_contacto ?? 0)
-  const {
-    data: notificacionesProgramadas = [],
-    isLoading: cargandoNotificaciones,
-  } = useNotificacionesProgramadas(
-    { estado: 'PROGRAMADA', idLead: selectedLeadId },
+  const { data: notificacionesResponse, isLoading: cargandoNotificaciones } =
+    useNotificacionesProgramadas(
+    { estado: 'PROGRAMADA', idLead: selectedLeadId, page: 1, limit: 10 },
     { enabled: Boolean(selectedLeadId) }
+  )
+  const notificacionesProgramadas = useMemo(
+    () => notificacionesResponse?.data ?? [],
+    [notificacionesResponse?.data]
   )
 
   const actividadActiva = useMemo(
@@ -89,7 +153,6 @@ export function SeguimientoForm({
         )[0],
     [actividades]
   )
-
   const correosContacto = useMemo(
     () => getContactoEmailOptions(contacto),
     [contacto]
@@ -103,308 +166,359 @@ export function SeguimientoForm({
       notificacionesProgramadas.find(
         (notificacion) =>
           notificacion.estado === 'PROGRAMADA' &&
+          notificacion.id !== notificacionInicial?.id &&
           notificacion.idLead === selectedLeadId &&
           (!actividadActiva || notificacion.idActividad === actividadActiva.id)
       ),
-    [actividadActiva, notificacionesProgramadas, selectedLeadId]
+    [
+      actividadActiva,
+      notificacionInicial?.id,
+      notificacionesProgramadas,
+      selectedLeadId,
+    ]
   )
   const tipoNotificacionExistente =
     notificacionProgramadaExistente?.tipo === 'SEGUIMIENTO'
       ? 'seguimiento'
       : 'recordatorio'
-
-  const formatFecha = (fecha: string) =>
-    new Date(fecha).toLocaleDateString('es-PE', {
-      timeZone: APP_TIME_ZONE,
-      day:      '2-digit',
-      month:    'short',
-      year:     'numeric',
-      hour:     '2-digit',
-      minute:   '2-digit',
-    })
+  const instanceErrors = errors.instancias?.[0]
 
   useEffect(() => {
     if (leadIdInicial) setValue('idLead', leadIdInicial)
   }, [leadIdInicial, setValue])
 
   useEffect(() => {
-    setValue('correoCliente', correoPrincipal)
-  }, [contacto?.id, correoPrincipal, setValue])
+    setValue(
+      'correoCliente',
+      notificacionInicial?.correoCliente ?? correoPrincipal
+    )
+  }, [contacto?.id, correoPrincipal, notificacionInicial?.correoCliente, setValue])
 
-  const applyTemplate = (
-    index: number,
-    target: 'internal' | 'external',
-    templateId: number
-  ) => {
+  useEffect(() => {
+    const instancia = notificacionInicial?.instancias?.[0]
+    if (!instancia || !actividadActiva) return
+
+    const fin = new Date(actividadActiva.fecha_fin).getTime()
+    const internal = Math.round(
+      (fin - new Date(instancia.fechaEnvioInterno).getTime()) / 60_000
+    )
+    const external = Math.round(
+      (fin - new Date(instancia.fechaEnvioExterno).getTime()) / 60_000
+    )
+    if (
+      ANTICIPACIONES.includes(internal as (typeof ANTICIPACIONES)[number]) &&
+      ANTICIPACIONES.includes(external as (typeof ANTICIPACIONES)[number]) &&
+      internal > external
+    ) {
+      setValue('instancias.0.internal.minutosAntes', internal)
+      setValue('instancias.0.external.minutosAntes', external)
+    }
+  }, [actividadActiva, notificacionInicial, setValue])
+
+  const inputClass = (hasError: boolean, readOnly = false) =>
+    `w-full rounded-xl border px-3 py-2.5 text-sm text-gray-900 outline-none ${
+      hasError
+        ? 'border-red-400 bg-red-50'
+        : readOnly
+          ? 'border-gray-200 bg-gray-50'
+          : 'border-gray-200 bg-white focus:border-emerald-400'
+    }`
+
+  const applyTemplate = (target: Target, templateId: number) => {
     const template = plantillas.find((item) => item.id === templateId)
     if (!template) return
-    setValue(`instancias.${index}.${target}.asunto`, template.asunto)
-    setValue(`instancias.${index}.${target}.cuerpo`, template.cuerpo)
+    setValue(`instancias.0.${target}.asunto`, template.asunto)
+    setValue(`instancias.0.${target}.cuerpo`, template.cuerpo)
+  }
+
+  const fechaDesdeAnticipacion = (minutos: number) => {
+    if (!actividadActiva) return null
+    const fin = new Date(actividadActiva.fecha_fin).getTime()
+    if (!Number.isFinite(fin)) return null
+    return new Date(fin - minutos * 60_000).toISOString()
   }
 
   const validateActividadWindow = (values: SeguimientoFormValues) => {
     clearErrors('instancias')
-
-    const actividadFin = actividadActiva
-      ? new Date(actividadActiva.fecha_fin).getTime()
-      : undefined
+    if (!actividadActiva) return false
     let isValid = true
 
-    values.instancias.forEach((instancia, index) => {
-      targets.forEach((target) => {
-        const fechaEnvio = instancia[target].fechaEnvio
-        const fechaEnvioTime = new Date(fechaEnvio).getTime()
-        const field = `instancias.${index}.${target}.fechaEnvio` as const
+    ;(['internal', 'external'] as const).forEach((target) => {
+      const minutos = values.instancias[0][target].minutosAntes
+      const fechaEnvio = fechaDesdeAnticipacion(minutos)
+      const fechaEnvioTime = fechaEnvio
+        ? new Date(fechaEnvio).getTime()
+        : Number.NaN
+      if (!Number.isFinite(fechaEnvioTime)) {
+        isValid = false
+        return
+      }
 
-        if (!Number.isFinite(fechaEnvioTime)) return
-
-        if (actividadFin !== undefined && fechaEnvioTime >= actividadFin) {
-          setError(field, {
-            type: 'validate',
-            message:
-              'Debe enviarse antes de la fecha fin de la actividad activa',
-          })
-          isValid = false
-        }
-      })
+      if (fechaEnvioTime <= Date.now()) {
+        setError(`instancias.0.${target}.minutosAntes`, {
+          type: 'validate',
+          message:
+            'La actividad finaliza demasiado pronto para esta anticipación',
+        })
+        isValid = false
+      }
     })
 
     return isValid
   }
 
-  const inputClass = (hasError: boolean) =>
-    `w-full rounded-xl border px-3 py-2.5 text-sm text-gray-900 outline-none ${
-      hasError
-        ? 'border-red-400 bg-red-50'
-        : 'border-gray-200 bg-white focus:border-emerald-400'
-    }`
-
   const submit = async (values: SeguimientoFormValues) => {
     if (notificacionProgramadaExistente) return
     if (!validateActividadWindow(values)) return
 
+    const instancia = values.instancias[0]
+    const internalFecha = fechaDesdeAnticipacion(
+      instancia.internal.minutosAntes
+    )
+    const externalFecha = fechaDesdeAnticipacion(
+      instancia.external.minutosAntes
+    )
+    if (!internalFecha || !externalFecha) return
+    const internal = {
+      fechaEnvio: internalFecha,
+      idTemplate: instancia.internal.idTemplate || null,
+      asunto: instancia.internal.asunto,
+      cuerpo: instancia.internal.cuerpo,
+    }
+    const external = {
+      fechaEnvio: externalFecha,
+      idTemplate: instancia.external.idTemplate || null,
+      asunto: instancia.external.asunto,
+      cuerpo: instancia.external.cuerpo,
+    }
+
+    if (notificacionInicial && onEdit) {
+      await onEdit(notificacionInicial.id, {
+        correoCliente: values.correoCliente,
+        internal,
+        external,
+      })
+      return
+    }
+
     await onSubmit({
       idLead: values.idLead,
       correoCliente: values.correoCliente,
-      instancias: values.instancias.map((instancia) => ({
-        internal: {
-          ...instancia.internal,
-          fechaEnvio: limaInputToUtcISO(instancia.internal.fechaEnvio),
-          idTemplate: instancia.internal.idTemplate || null,
-        },
-        external: {
-          ...instancia.external,
-          fechaEnvio: limaInputToUtcISO(instancia.external.fechaEnvio),
-          idTemplate: instancia.external.idTemplate || null,
-        },
-      })),
+      instancias: [{ internal, external }],
     })
   }
 
   return (
-    <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-            Programar seguimiento
-          </p>
-          <h2 className="text-2xl font-bold text-gray-900">Nuevo seguimiento</h2>
-        </div>
-        <button type="button" onClick={onCancel} className="text-sm font-semibold text-gray-500">
-          Cancelar
-        </button>
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="mb-6 border-b border-gray-100 pb-5">
+        <h2 className="text-lg font-bold text-gray-950">
+          {editando ? 'Editar seguimiento' : 'Crear seguimiento'}
+        </h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Selecciona la anticipación al fin de la actividad para el correo
+          interno y el correo al contacto.
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit(submit)} className="space-y-6">
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-1.5">
-            <label htmlFor="seg-lead" className="text-xs font-semibold uppercase text-gray-500">
-              Lead <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="seg-lead"
-              {...register('idLead', { valueAsNumber: true })}
-              className={inputClass(!!errors.idLead)}
-              disabled={Boolean(leadIdInicial)}
-            >
-              <option value={0}>Selecciona un lead</option>
-              {leads.map((lead) => (
-                <option key={lead.id} value={lead.id}>
-                  {lead.codigo} · {lead.organizacion_nombre ?? lead.contacto_nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="seg-correo" className="text-xs font-semibold uppercase text-gray-500">
-              Correo del contacto <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="seg-correo"
-              {...register('correoCliente')}
-              className={inputClass(!!errors.correoCliente)}
-              disabled={correosContacto.length === 0}
-            >
-              <option value="">
-                {correosContacto.length ? 'Selecciona un correo' : 'El lead no tiene contacto con correo'}
+      <form onSubmit={handleSubmit(submit)} className="space-y-5">
+        <div className="space-y-1.5">
+          <label htmlFor="seg-lead" className="text-sm font-semibold text-gray-700">
+            Lead
+          </label>
+          <select
+            id="seg-lead"
+            {...register('idLead', { valueAsNumber: true })}
+            className={inputClass(!!errors.idLead)}
+            disabled={Boolean(leadIdInicial) || editando}
+          >
+            <option value={0}>Selecciona un lead</option>
+            {leads.map((lead) => (
+              <option key={lead.id} value={lead.id}>
+                {lead.servicio_interes} - {lead.organizacion_nombre ?? lead.contacto_nombre}
               </option>
-              {correosContacto.map((correo) => (
-                <option key={correo.value} value={correo.value}>
-                  {correo.label} · {correo.value}
-                </option>
-              ))}
-            </select>
-            {tieneMultiplesCorreos && (
-              <p className="text-xs text-gray-400">
-                El contacto tiene más de un correo. Selecciona el destinatario
-                que recibirá todas las instancias externas.
-              </p>
-            )}
-            {correosContacto.length === 1 && (
-              <p className="text-xs text-gray-400">
-                Se usará el único correo vigente registrado para el contacto.
-              </p>
-            )}
-            {errors.correoCliente && (
-              <p className="text-xs text-red-500">{errors.correoCliente.message}</p>
-            )}
-          </div>
+            ))}
+          </select>
+          {errors.idLead && (
+            <p className="text-xs text-red-500">{errors.idLead.message}</p>
+          )}
         </div>
 
         {selectedLead && (
-          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
-            <div className="flex items-start gap-3">
-              <CalendarClock size={18} className="mt-0.5 shrink-0" />
-              <div className="space-y-1">
-                <p>
-                  El seguimiento se programa con <strong>idLead</strong>. El
-                  backend resolverá la actividad activa y el encargado al
-                  guardar.
-                </p>
-                <p>
-                  Encargado actual:
-                  <strong> {selectedLead.encargado_nombre ?? 'Sin nombre'}</strong>.
-                </p>
-                {cargandoActividades && (
-                  <p className="text-emerald-700">Buscando actividad activa...</p>
-                )}
-                {actividadActiva && (
-                  <p>
-                    Actividad activa:
-                    <strong> {actividadActiva.nombre_actividad}</strong> · fin:
-                    <strong> {formatFecha(actividadActiva.fecha_fin)}</strong>.
-                  </p>
-                )}
-              </div>
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-bold text-emerald-800">Actividad asociada</div>
+              <span className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-[10px] font-bold text-emerald-700">
+                Solo lectura
+              </span>
             </div>
+            {cargandoActividades && (
+              <p className="mt-3 text-sm text-emerald-700">Buscando actividad activa...</p>
+            )}
+            {!cargandoActividades && actividadActiva && (
+              <dl className="mt-4 grid gap-3 md:grid-cols-3">
+                <ActivityValue
+                  label="Encargado"
+                  value={selectedLead.encargado_nombre ?? actividadActiva.responsable_nombre ?? 'Sin asignar'}
+                />
+                <ActivityValue label="Nombre de actividad" value={actividadActiva.nombre_actividad} />
+                <ActivityValue label="Fecha fin" value={formatFecha(actividadActiva.fecha_fin)} />
+              </dl>
+            )}
           </div>
         )}
 
         {sinActividadActiva && (
-          <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            <AlertCircle size={17} className="mt-0.5 shrink-0" />
-            <p>
-              Este lead no tiene una actividad pendiente activa. El backend
-              requiere una actividad activa para asociar el seguimiento.
-            </p>
-          </div>
+          <Warning>
+            Este lead no tiene una actividad pendiente activa. El backend requiere
+            una actividad activa para asociar el seguimiento.
+          </Warning>
         )}
 
         {notificacionProgramadaExistente && (
-          <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            <AlertCircle size={17} className="mt-0.5 shrink-0" />
-            <p>
-              Ya existe un {tipoNotificacionExistente} programado para la
-              actividad activa de este lead. Cancélalo antes de crear una
-              secuencia de seguimiento.
-            </p>
-          </div>
+          <Warning>
+            Ya existe un {tipoNotificacionExistente} programado para la actividad
+            activa de este lead. Cancélalo antes de crear un seguimiento.
+          </Warning>
         )}
 
-        <div className="space-y-4">
-          {fields.map((field, index) => {
-            const instanceErrors = errors.instancias?.[index]
-            return (
-              <section key={field.id} className="rounded-2xl border border-gray-200 p-5">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-900">Instancia {index + 1}</h3>
-                </div>
+        {editando && (
+          <Warning>
+            La API no devuelve los cuerpos ni las plantillas usadas previamente.
+            Vuelve a seleccionar una plantilla o escribe ambos cuerpos para
+            reemplazar la programación actual.
+          </Warning>
+        )}
 
-                {targets.map((target) => {
-                  const label = target === 'internal'
-                    ? 'Recordatorio interno al encargado'
-                    : 'Correo externo al cliente'
-                  const templateLabel = target === 'internal'
-                    ? 'Plantilla para recordatorio interno'
-                    : 'Plantilla para correo externo'
-                  const targetErrors = instanceErrors?.[target]
-                  return (
-                    <div key={target} className="mb-5 grid gap-4 border-b border-gray-100 pb-5 last:mb-0 last:border-0 last:pb-0">
-                      <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">
-                        {label}
-                      </p>
-                      <div className="grid gap-4 lg:grid-cols-2">
-                        <div>
-                          <label className="text-xs font-semibold text-gray-500">Fecha y hora</label>
-                          <input
-                            type="datetime-local"
-                            {...register(`instancias.${index}.${target}.fechaEnvio`)}
-                            className={inputClass(!!targetErrors?.fechaEnvio)}
-                          />
-                          {targetErrors?.fechaEnvio && (
-                            <p className="mt-1 text-xs text-red-500">{targetErrors.fechaEnvio.message}</p>
-                          )}
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold text-gray-500">{templateLabel}</label>
-                          <select
-                            {...register(`instancias.${index}.${target}.idTemplate`, {
-                              valueAsNumber: true,
-                              onChange: (event) =>
-                                applyTemplate(index, target, Number(event.target.value)),
-                            })}
-                            className={inputClass(false)}
-                            disabled={plantillasQuery.isLoading}
-                          >
-                            <option value={0}>
-                              {plantillasQuery.isLoading ? 'Cargando plantillas...' : 'Sin plantilla'}
-                            </option>
-                            {plantillas.map((plantilla) => (
-                              <option key={plantilla.id} value={plantilla.id}>{plantilla.nombre}</option>
-                            ))}
-                          </select>
-                          <p className="mt-1 text-[11px] text-gray-400">
-                            Copia asunto y cuerpo; puedes editarlos antes de programar.
-                          </p>
-                        </div>
-                      </div>
-                      <input
-                        placeholder="Asunto"
-                        {...register(`instancias.${index}.${target}.asunto`)}
-                        className={inputClass(!!targetErrors?.asunto)}
-                      />
-                      <textarea
-                        rows={4}
-                        placeholder="Cuerpo del correo"
-                        {...register(`instancias.${index}.${target}.cuerpo`)}
-                        className={`${inputClass(!!targetErrors?.cuerpo)} resize-y font-mono text-xs`}
-                      />
-                    </div>
-                  )
+        <section className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+          <MessageHeader
+            tone="internal"
+            title="Correo para el usuario"
+            description="Correo interno para que el encargado revise la actividad antes del envío al cliente."
+          />
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="space-y-1.5">
+              <FieldLabel htmlFor="seg-internal-template" optional>Plantilla</FieldLabel>
+              <select
+                id="seg-internal-template"
+                {...register('instancias.0.internal.idTemplate', {
+                  valueAsNumber: true,
+                  onChange: (event) => applyTemplate('internal', Number(event.target.value)),
                 })}
-              </section>
-            )
-          })}
-        </div>
+                className={inputClass(false)}
+                disabled={plantillasQuery.isLoading}
+              >
+                <TemplateOptions loading={plantillasQuery.isLoading} plantillas={plantillas} />
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <FieldLabel htmlFor="seg-internal-recipient">Destinatario</FieldLabel>
+              <input
+                id="seg-internal-recipient"
+                value={selectedLead?.encargado_nombre ?? ''}
+                readOnly
+                className={inputClass(false, true)}
+              />
+            </div>
+            <AnticipationSelector
+              prefix="seg-internal"
+              target="internal"
+              value={internalMinutes}
+              counterpart={externalMinutes}
+              estimatedAt={fechaDesdeAnticipacion(internalMinutes)}
+              error={instanceErrors?.internal?.minutosAntes?.message}
+              register={register}
+              onChange={(value) =>
+                setValue('instancias.0.internal.minutosAntes', value, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+            />
+          </div>
+          <MessageFields
+            prefix="seg-internal"
+            register={register}
+            target="internal"
+            subjectError={instanceErrors?.internal?.asunto?.message}
+            bodyError={instanceErrors?.internal?.cuerpo?.message}
+            inputClass={inputClass}
+          />
+        </section>
 
-        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-xs text-blue-800">
-          El correo externo al cliente debe programarse después del correo
-          interno y antes del fin de la actividad activa. El backend aplica
-          horario laboral [09:00-18:00) y puede mover envíos fuera de horario a
-          las 09:00. La integración Microsoft no se invoca desde este
-          seguimiento.
-        </div>
+        <section className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+          <MessageHeader
+            tone="external"
+            title="Correo para el contacto"
+            description="Correo externo que se enviará después del aviso interno al encargado."
+          />
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="space-y-1.5">
+              <FieldLabel htmlFor="seg-correo">Destinatario</FieldLabel>
+              <select
+                id="seg-correo"
+                {...register('correoCliente')}
+                className={inputClass(!!errors.correoCliente)}
+                disabled={correosContacto.length === 0}
+              >
+                <option value="">
+                  {correosContacto.length
+                    ? 'Selecciona un correo'
+                    : 'El lead no tiene contacto con correo'}
+                </option>
+                {correosContacto.map((correo) => (
+                  <option key={correo.value} value={correo.value}>
+                    {correo.label} - {correo.value}
+                  </option>
+                ))}
+              </select>
+              {tieneMultiplesCorreos && (
+                <p className="text-xs text-gray-400">
+                  Selecciona el correo que recibirá el seguimiento externo.
+                </p>
+              )}
+              {errors.correoCliente && (
+                <p className="text-xs text-red-500">{errors.correoCliente.message}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <FieldLabel htmlFor="seg-external-template" optional>Plantilla</FieldLabel>
+              <select
+                id="seg-external-template"
+                {...register('instancias.0.external.idTemplate', {
+                  valueAsNumber: true,
+                  onChange: (event) => applyTemplate('external', Number(event.target.value)),
+                })}
+                className={inputClass(false)}
+                disabled={plantillasQuery.isLoading}
+              >
+                <TemplateOptions loading={plantillasQuery.isLoading} plantillas={plantillas} />
+              </select>
+            </div>
+            <AnticipationSelector
+              prefix="seg-external"
+              target="external"
+              value={externalMinutes}
+              counterpart={internalMinutes}
+              estimatedAt={fechaDesdeAnticipacion(externalMinutes)}
+              error={instanceErrors?.external?.minutosAntes?.message}
+              register={register}
+              onChange={(value) =>
+                setValue('instancias.0.external.minutosAntes', value, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+            />
+          </div>
+          <MessageFields
+            prefix="seg-external"
+            register={register}
+            target="external"
+            subjectError={instanceErrors?.external?.asunto?.message}
+            bodyError={instanceErrors?.external?.cuerpo?.message}
+            inputClass={inputClass}
+          />
+        </section>
 
         {error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -413,8 +527,12 @@ export function SeguimientoForm({
         )}
 
         <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
-          <button type="button" onClick={onCancel} className="rounded-xl border px-4 py-2.5 text-sm font-semibold text-gray-600">
-            Volver
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600"
+          >
+            Cancelar
           </button>
           <button
             type="submit"
@@ -426,13 +544,209 @@ export function SeguimientoForm({
               Boolean(notificacionProgramadaExistente) ||
               correosContacto.length === 0
             }
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            {isLoading ? 'Programando...' : 'Programar seguimiento'}
+            {isLoading && <Loader2 size={16} className="animate-spin" />}
+            {isLoading
+              ? 'Guardando...'
+              : editando
+                ? 'Actualizar seguimiento'
+                : 'Guardar seguimiento'}
           </button>
         </div>
       </form>
+    </div>
+  )
+}
+
+function MessageHeader({
+  tone,
+  title,
+  description,
+}: Readonly<{
+  tone: 'internal' | 'external'
+  title: string
+  description: string
+}>) {
+  return (
+    <div className="border-b border-gray-200 pb-3">
+      <div className={`border-l-[3px] pl-3 ${
+        tone === 'internal' ? 'border-emerald-500' : 'border-blue-600'
+      }`}>
+        <h3 className="text-sm font-bold text-gray-950">{title}</h3>
+        <p className="mt-1 text-xs text-gray-500">{description}</p>
+      </div>
+    </div>
+  )
+}
+
+function AnticipationSelector({
+  prefix,
+  target,
+  value,
+  counterpart,
+  estimatedAt,
+  error,
+  register,
+  onChange,
+}: Readonly<{
+  prefix: string
+  target: Target
+  value: number
+  counterpart: number
+  estimatedAt: string | null
+  error?: string
+  register: UseFormRegister<SeguimientoFormValues>
+  onChange: (value: number) => void
+}>) {
+  return (
+    <div className="space-y-2 lg:col-span-2">
+      <FieldLabel htmlFor={`${prefix}-15`}>
+        Anticipación al fin de la actividad
+      </FieldLabel>
+      <input
+        type="hidden"
+        {...register(`instancias.0.${target}.minutosAntes`, {
+          valueAsNumber: true,
+        })}
+      />
+      <div
+        className={`flex flex-wrap gap-2 rounded-2xl border bg-white p-4 ${
+          error ? 'border-red-300' : 'border-gray-200'
+        }`}
+      >
+        {ANTICIPACIONES.map((minutes) => {
+          const violatesOrder =
+            target === 'internal'
+              ? minutes <= counterpart
+              : minutes >= counterpart
+          return (
+            <button
+              key={minutes}
+              id={`${prefix}-${minutes}`}
+              type="button"
+              disabled={violatesOrder}
+              aria-pressed={value === minutes}
+              onClick={() => onChange(minutes)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-35 ${
+                value === minutes
+                  ? 'border-emerald-600 bg-emerald-600 text-white'
+                  : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300'
+              }`}
+            >
+              {minutes === 60 ? '1 hora' : `${minutes} min`}
+            </button>
+          )
+        })}
+      </div>
+      <p className="text-xs text-gray-400">
+        {target === 'internal'
+          ? 'Debe tener más anticipación que el correo al contacto.'
+          : 'Debe tener menos anticipación que el correo interno.'}
+      </p>
+      {estimatedAt && (
+        <p className="text-xs text-gray-500">
+          Envío estimado: {formatFecha(estimatedAt)}
+        </p>
+      )}
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  )
+}
+
+function MessageFields({
+  prefix,
+  register,
+  target,
+  subjectError,
+  bodyError,
+  inputClass,
+}: Readonly<{
+  prefix: string
+  register: UseFormRegister<SeguimientoFormValues>
+  target: Target
+  subjectError?: string
+  bodyError?: string
+  inputClass: (hasError: boolean, readOnly?: boolean) => string
+}>) {
+  return (
+    <div className="mt-4 space-y-4">
+      <div className="space-y-1.5">
+        <FieldLabel htmlFor={`${prefix}-subject`}>Asunto</FieldLabel>
+        <input
+          id={`${prefix}-subject`}
+          {...register(`instancias.0.${target}.asunto`)}
+          className={inputClass(Boolean(subjectError))}
+        />
+        {subjectError && <p className="text-xs text-red-500">{subjectError}</p>}
+      </div>
+      <div className="space-y-1.5">
+        <FieldLabel htmlFor={`${prefix}-body`}>Cuerpo</FieldLabel>
+        <textarea
+          id={`${prefix}-body`}
+          rows={4}
+          {...register(`instancias.0.${target}.cuerpo`)}
+          className={`${inputClass(Boolean(bodyError))} resize-y`}
+        />
+        {bodyError && <p className="text-xs text-red-500">{bodyError}</p>}
+      </div>
+    </div>
+  )
+}
+
+function FieldLabel({
+  htmlFor,
+  optional = false,
+  children,
+}: Readonly<{
+  htmlFor: string
+  optional?: boolean
+  children: React.ReactNode
+}>) {
+  return (
+    <label htmlFor={htmlFor} className="text-sm font-semibold text-gray-700">
+      {children}
+      {optional && <span className="font-normal text-gray-400"> (opcional)</span>}
+    </label>
+  )
+}
+
+function TemplateOptions({
+  loading,
+  plantillas,
+}: Readonly<{
+  loading: boolean
+  plantillas: Array<{ id: number; nombre: string }>
+}>) {
+  return (
+    <>
+      <option value={0}>{loading ? 'Cargando plantillas...' : 'Sin plantilla'}</option>
+      {plantillas.map((plantilla) => (
+        <option key={plantilla.id} value={plantilla.id}>{plantilla.nombre}</option>
+      ))}
+    </>
+  )
+}
+
+function Warning({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+      <AlertCircle size={17} className="mt-0.5 shrink-0" />
+      <p>{children}</p>
+    </div>
+  )
+}
+
+function ActivityValue({
+  label,
+  value,
+}: Readonly<{ label: string; value: string }>) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white px-3 py-3">
+      <dt className="text-[10px] font-bold uppercase tracking-wide text-gray-400">
+        {label}
+      </dt>
+      <dd className="mt-1 text-sm font-semibold text-gray-900">{value}</dd>
     </div>
   )
 }

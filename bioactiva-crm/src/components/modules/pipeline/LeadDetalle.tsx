@@ -134,7 +134,6 @@ export function LeadDetalle({
     useActividades(lead.id)
   const { data: cotizaciones = [], isLoading: loadingCotizaciones } =
     useCotizacionesPorLead(lead.id)
-
   const { mutateAsync: crearActividad, isPending: creando } =
     useCrearActividad()
 

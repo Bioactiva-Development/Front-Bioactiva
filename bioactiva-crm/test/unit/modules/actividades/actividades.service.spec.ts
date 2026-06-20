@@ -63,6 +63,32 @@ describe('actividades/actividades.service (API mode)', () => {
     })
   })
 
+  describe('getAll', () => {
+    it('fetches pending meetings for the Microsoft calendar view', async () => {
+      getMock.mockResolvedValueOnce({
+        data: [{ ...rawActividad, tipo: 'REUNION' }],
+      })
+
+      const result = await actividadesService.getAll({
+        estado: EstadoActividad.Pendiente,
+        tipo: TipoActividad.Reunion,
+        id_responsable: 3,
+      })
+
+      expect(getMock).toHaveBeenCalledWith('/activities', {
+        params: {
+          estado: 'PENDIENTE',
+          tipo: 'REUNION',
+          idResponsable: 3,
+          page: 1,
+          limit: 100,
+        },
+      })
+      expect(result).toHaveLength(1)
+      expect(result[0].tipo).toBe(TipoActividad.Reunion)
+    })
+  })
+
   describe('create', () => {
     it('posts create activity and returns mapped actividad', async () => {
       postMock.mockResolvedValueOnce({ data: rawActividad })

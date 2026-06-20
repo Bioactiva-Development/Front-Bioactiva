@@ -5,8 +5,9 @@ import { notificacionesService } from '@/services/modules/notificaciones.service
 import {
   CrearRecordatorioRequest,
   CrearSeguimientoRequest,
+  EditarSeguimientoRequest,
   FiltrosNotificacionesProgramadas,
-  NotificacionProgramada,
+  NotificacionesPaginadas,
 } from '@/types/notificacion.types'
 
 export function useNotificacionesProgramadas(
@@ -58,15 +59,22 @@ export function useCancelarProgramada() {
       })
 
       const previousScheduledQueries =
-        queryClient.getQueriesData<NotificacionProgramada[]>({
+        queryClient.getQueriesData<NotificacionesPaginadas>({
           queryKey: ['notificaciones', 'scheduled'],
         })
 
-      previousScheduledQueries.forEach(([queryKey, notificaciones]) => {
-        if (!notificaciones) return
+      previousScheduledQueries.forEach(([queryKey, page]) => {
+        if (!page) return
+        const removed = page.data.some((notificacion) => notificacion.id === id)
         queryClient.setQueryData(
           queryKey,
-          notificaciones.filter((notificacion) => notificacion.id !== id)
+          {
+            ...page,
+            data: page.data.filter((notificacion) => notificacion.id !== id),
+            meta: removed
+              ? { ...page.meta, total: Math.max(0, page.meta.total - 1) }
+              : page.meta,
+          }
         )
       })
 
@@ -109,6 +117,28 @@ export function useCrearSeguimiento() {
   return useMutation({
     mutationFn: (data: CrearSeguimientoRequest) =>
       notificacionesService.createSeguimiento(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['notificaciones', 'scheduled'],
+      })
+    },
+    onError: (err: unknown) => {
+      console.error(getErrorMessage(err))
+    },
+  })
+}
+
+export function useEditarSeguimiento() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number
+      data: EditarSeguimientoRequest
+    }) => notificacionesService.editarSeguimiento(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['notificaciones', 'scheduled'],
