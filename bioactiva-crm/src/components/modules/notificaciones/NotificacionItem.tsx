@@ -1,7 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertTriangle, Clock, Mail, X } from 'lucide-react'
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Mail,
+  Trash2,
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ROUTES } from '@/lib/constants/routes'
 import {
@@ -109,7 +116,15 @@ export function NotificacionProgramadaItem({
   const { mutateAsync: cancelar, isPending } = useCancelarProgramada()
   const esProgramada = notificacion.estado === 'PROGRAMADA'
   const [confirmandoCancelacion, setConfirmandoCancelacion] = useState(false)
+  const [mostrandoDetalle, setMostrandoDetalle] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
+  const esSeguimiento = notificacion.tipo === 'SEGUIMIENTO'
+  const titulo = esSeguimiento
+    ? notificacion.instancias?.[0]?.asuntoInterno ?? 'Seguimiento comercial'
+    : notificacion.asuntoInterno ?? 'Recordatorio de actividad'
+  const fechaPrincipal = esSeguimiento
+    ? notificacion.instancias?.[0]?.fechaEnvioInterno
+    : notificacion.fechaEnvioInterno
 
   const handleCancelar = async () => {
     if (!esProgramada) {
@@ -134,109 +149,93 @@ export function NotificacionProgramadaItem({
   }
 
   return (
-    <article className="rounded-2xl border border-gray-100 bg-white p-4">
-      <div className="flex items-start gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50">
-          {notificacion.tipo === 'RECORDATORIO'
-            ? <Clock size={15} className="text-blue-600" />
-            : <Mail size={15} className="text-blue-600" />}
+    <article className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+          {esSeguimiento ? <Mail size={12} /> : <Clock size={12} />}
+          {esSeguimiento ? 'Seguimiento' : 'Recordatorio'}
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-gray-900">
-              {notificacion.tipo === 'RECORDATORIO'
-                ? notificacion.asuntoInterno
-                : `Seguimiento de ${notificacion.instancias?.length ?? 0} instancia(s)`}
-            </p>
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-              esProgramada
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'bg-amber-50 text-amber-700'
-            }`}>
-              {notificacion.estado}
-            </span>
-          </div>
-          {leadLabel && <p className="mt-1 text-xs text-gray-500">{leadLabel}</p>}
-          <p className="mt-1 text-xs text-gray-500">
-            Encargado actual: {responsableActual ?? `Usuario ${notificacion.idResponsable}`}
-          </p>
+        {fechaPrincipal && (
+          <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
+            esProgramada
+              ? 'border-gray-200 bg-white text-gray-600'
+              : 'border-red-200 bg-red-50 text-red-600'
+          }`}>
+            {formatFecha(fechaPrincipal)}
+          </span>
+        )}
+      </div>
 
-          {notificacion.tipo === 'RECORDATORIO' && notificacion.fechaEnvioInterno && (
-            <div className="mt-2 space-y-1 text-xs text-gray-500">
-              <p>
-                Envío interno: {formatFecha(notificacion.fechaEnvioInterno)}
-                {' '}
-                <EstadoEnvioBadge enviado={notificacion.enviadoInterno} />
-              </p>
-              {!notificacion.enviadoInterno && (
-                <p className="text-gray-400">
-                  Si la actividad se marca como completada antes del envío, el
-                  backend cancelará este recordatorio pendiente.
-                </p>
-              )}
-              {esProgramada && (
-                <p className="text-gray-400">
-                  También puedes cancelarlo manualmente antes de su ejecución.
-                  Al cancelarse, desaparece de esta lista y no se envía.
-                </p>
-              )}
+      <h3 className="mt-3 text-sm font-bold text-gray-950">{titulo}</h3>
+      {leadLabel && <p className="mt-1 text-xs font-medium text-gray-500">{leadLabel}</p>}
+      <p className="mt-2 text-xs text-gray-500">
+        Encargado: {responsableActual ?? `Usuario ${notificacion.idResponsable}`}
+      </p>
+
+      <div className="mt-4 flex flex-wrap justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setMostrandoDetalle((visible) => !visible)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 shadow-sm hover:border-gray-300"
+        >
+          {esSeguimiento ? 'Ver correos' : 'Ver detalle'}
+          {mostrandoDetalle ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+        </button>
+        {esProgramada && (
+          <button
+            type="button"
+            onClick={() => {
+              setCancelError(null)
+              setConfirmandoCancelacion(true)
+            }}
+            disabled={isPending}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 disabled:opacity-40"
+          >
+            <Trash2 size={13} /> Eliminar
+          </button>
+        )}
+      </div>
+
+      {mostrandoDetalle && (
+        <div className="mt-4 space-y-3 border-t border-gray-200 pt-4 text-xs text-gray-500">
+          {!esSeguimiento && notificacion.fechaEnvioInterno && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span>Envío interno: {formatFecha(notificacion.fechaEnvioInterno)}</span>
+              <EstadoEnvioBadge enviado={notificacion.enviadoInterno} />
             </div>
           )}
 
-          {notificacion.tipo === 'SEGUIMIENTO' && (
-            <p className="mt-2 text-xs text-gray-400">
-              Si la actividad se completa antes de un paso programado, el
-              backend cancelará los pasos pendientes. El correo externo se
-              enviará solo si la actividad sigue pendiente en su fecha
-              programada. También puedes cancelar la notificación completa antes
-              de su ejecución; al cancelarse, no se envía ni queda en esta lista.
-            </p>
-          )}
-
           {notificacion.instancias?.map((instancia) => (
-            <div key={instancia.id} className="mt-3 rounded-xl bg-gray-50 p-3 text-xs">
-              <p className="font-semibold text-gray-700">Instancia {instancia.orden}</p>
-              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-gray-500">
+            <div key={instancia.id} className="rounded-xl border border-gray-100 bg-white p-3">
+              <p className="font-bold text-gray-700">Instancia {instancia.orden}</p>
+              <p className="mt-2 font-semibold text-gray-700">{instancia.asuntoInterno}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 <span>Interno: {formatFecha(instancia.fechaEnvioInterno)}</span>
                 <EstadoEnvioBadge enviado={instancia.enviadoInterno} />
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-gray-500">
+              <p className="mt-2 font-semibold text-gray-700">{instancia.asuntoExterno}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 <span>Cliente: {formatFecha(instancia.fechaEnvioExterno)}</span>
                 <EstadoEnvioBadge enviado={instancia.enviadoExterno} />
               </div>
               {!instancia.enviadoExterno && (
-                <p className="mt-1 text-gray-400">
-                  Se enviará al cliente si el encargado no completa la
-                  actividad antes de esta fecha.
+                <p className="mt-2 text-gray-400">
+                  Se enviará solo si la actividad sigue pendiente en esa fecha.
                 </p>
               )}
             </div>
           ))}
 
           {notificacion.correoCliente && (
-            <p className="mt-2 text-xs text-gray-400">
-              Destinatario externo: {notificacion.correoCliente}
+            <p>Destinatario externo: {notificacion.correoCliente}</p>
+          )}
+          {esProgramada && (
+            <p className="text-gray-400">
+              Al completar la actividad, el backend cancela los pasos pendientes.
             </p>
           )}
         </div>
-
-        {esProgramada && (
-          <div className="shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                setCancelError(null)
-                setConfirmandoCancelacion(true)
-              }}
-              disabled={isPending}
-              title="Cancelar notificación"
-              className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
-      </div>
+      )}
 
       {confirmandoCancelacion && (
         <div className="mt-3 rounded-xl border border-red-100 bg-red-50 p-3 text-xs text-red-700">

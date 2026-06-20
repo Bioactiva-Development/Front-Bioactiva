@@ -398,9 +398,10 @@ export const mockDeleteLead = async (id: number): Promise<void> => {
 
 
 export const mockGetActividades = async (
-  leadId: number
+  leadId?: number
 ): Promise<Actividad[]> => {
   await delay(400)
+  if (!leadId) return [...MOCK_ACTIVIDADES]
   return MOCK_ACTIVIDADES.filter((a) => a.id_lead === leadId)
 }
 

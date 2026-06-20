@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { actividadesService } from '@/services/modules/actividades.service'
 import { QUERY_KEYS } from '@/lib/constants/queryKeys'
 import { ActividadFormData } from '@/types/actividad.types'
+import { EstadoActividad, TipoActividad } from '@/types/enums'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 import { useAuthStore } from '@/store'
 
@@ -10,6 +11,20 @@ export function useActividades(leadId: number) {
     queryKey: QUERY_KEYS.actividades.byLead(leadId),
     queryFn:  () => actividadesService.getByLead(leadId),
     enabled:  !!leadId,
+  })
+}
+
+export function useActividadesCalendario(idResponsable?: number) {
+  const filtros = {
+    estado: EstadoActividad.Pendiente,
+    tipo: TipoActividad.Reunion,
+    ...(idResponsable ? { id_responsable: idResponsable } : {}),
+  }
+
+  return useQuery({
+    queryKey: QUERY_KEYS.actividades.calendar(filtros),
+    queryFn: () => actividadesService.getAll(filtros),
+    staleTime: 1000 * 60,
   })
 }
 
@@ -101,6 +116,9 @@ export function useCrearEventoCalendario(leadId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.actividades.byLead(leadId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['actividades', 'calendar'],
       })
       queryClient.invalidateQueries({ queryKey: ['leads'] })
     },

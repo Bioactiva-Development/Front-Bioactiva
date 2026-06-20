@@ -36,6 +36,7 @@ export const QUERY_KEYS = {
     actividades: {
         byLead: (leadId: number) => ['actividades', 'lead', leadId],
         detail: (id: number) => ['actividades', id],
+        calendar: (filters?: unknown) => ['actividades', 'calendar', filters],
     },
 
     cotizaciones: {

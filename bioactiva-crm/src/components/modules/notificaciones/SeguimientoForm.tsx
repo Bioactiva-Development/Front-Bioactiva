@@ -3,7 +3,14 @@
 import { useEffect, useMemo } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, CalendarClock, Loader2, Save } from 'lucide-react'
+import {
+  AlertCircle,
+  CalendarClock,
+  Loader2,
+  Plus,
+  Save,
+  Trash2,
+} from 'lucide-react'
 import { useContacto } from '@/hooks/contactos/useContactos'
 import { usePlantillasActivas } from '@/hooks/plantillas/usePlantillas'
 import { useLeads } from '@/hooks/pipeline/useLeads'
@@ -62,7 +69,7 @@ export function SeguimientoForm({
     },
   })
 
-  const { fields } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: 'instancias',
   })
@@ -202,22 +209,19 @@ export function SeguimientoForm({
   }
 
   return (
-    <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-      <div className="mb-6 flex items-center justify-between gap-4">
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="mb-6 border-b border-gray-100 pb-5">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-            Programar seguimiento
+          <h2 className="text-lg font-bold text-gray-950">Crear seguimiento</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Configura una secuencia de correos por instancia: uno interno y otro para el contacto.
           </p>
-          <h2 className="text-2xl font-bold text-gray-900">Nuevo seguimiento</h2>
         </div>
-        <button type="button" onClick={onCancel} className="text-sm font-semibold text-gray-500">
-          Cancelar
-        </button>
       </div>
 
       <form onSubmit={handleSubmit(submit)} className="space-y-6">
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 lg:col-span-2">
             <label htmlFor="seg-lead" className="text-xs font-semibold uppercase text-gray-500">
               Lead <span className="text-red-500">*</span>
             </label>
@@ -236,7 +240,7 @@ export function SeguimientoForm({
             </select>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 lg:col-span-2">
             <label htmlFor="seg-correo" className="text-xs font-semibold uppercase text-gray-500">
               Correo del contacto <span className="text-red-500">*</span>
             </label>
@@ -273,31 +277,28 @@ export function SeguimientoForm({
         </div>
 
         {selectedLead && (
-          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
-            <div className="flex items-start gap-3">
-              <CalendarClock size={18} className="mt-0.5 shrink-0" />
-              <div className="space-y-1">
-                <p>
-                  El seguimiento se programa con <strong>idLead</strong>. El
-                  backend resolverá la actividad activa y el encargado al
-                  guardar.
-                </p>
-                <p>
-                  Encargado actual:
-                  <strong> {selectedLead.encargado_nombre ?? 'Sin nombre'}</strong>.
-                </p>
-                {cargandoActividades && (
-                  <p className="text-emerald-700">Buscando actividad activa...</p>
-                )}
-                {actividadActiva && (
-                  <p>
-                    Actividad activa:
-                    <strong> {actividadActiva.nombre_actividad}</strong> · fin:
-                    <strong> {formatFecha(actividadActiva.fecha_fin)}</strong>.
-                  </p>
-                )}
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm font-bold text-emerald-800">
+                <CalendarClock size={17} /> Actividad asociada
               </div>
+              <span className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-[10px] font-bold text-emerald-700">
+                Solo lectura
+              </span>
             </div>
+            {cargandoActividades && (
+              <p className="mt-3 text-sm text-emerald-700">Buscando actividad activa...</p>
+            )}
+            {!cargandoActividades && actividadActiva && (
+              <dl className="mt-4 grid gap-3 md:grid-cols-3">
+                <ActivityValue
+                  label="Encargado"
+                  value={selectedLead.encargado_nombre ?? actividadActiva.responsable_nombre ?? 'Sin asignar'}
+                />
+                <ActivityValue label="Nombre de actividad" value={actividadActiva.nombre_actividad} />
+                <ActivityValue label="Fecha fin" value={formatFecha(actividadActiva.fecha_fin)} />
+              </dl>
+            )}
           </div>
         )}
 
@@ -329,6 +330,15 @@ export function SeguimientoForm({
               <section key={field.id} className="rounded-2xl border border-gray-200 p-5">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900">Instancia {index + 1}</h3>
+                  {fields.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 size={13} /> Eliminar instancia
+                    </button>
+                  )}
                 </div>
 
                 {targets.map((target) => {
@@ -396,6 +406,15 @@ export function SeguimientoForm({
               </section>
             )
           })}
+          {fields.length < 3 && (
+            <button
+              type="button"
+              onClick={() => append(nuevaInstancia())}
+              className="inline-flex items-center gap-2 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+            >
+              <Plus size={15} /> Agregar instancia ({fields.length}/3)
+            </button>
+          )}
         </div>
 
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-xs text-blue-800">
@@ -433,6 +452,20 @@ export function SeguimientoForm({
           </button>
         </div>
       </form>
+    </div>
+  )
+}
+
+function ActivityValue({
+  label,
+  value,
+}: Readonly<{ label: string; value: string }>) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white px-3 py-3">
+      <dt className="text-[10px] font-bold uppercase tracking-wide text-gray-400">
+        {label}
+      </dt>
+      <dd className="mt-1 text-sm font-semibold text-gray-900">{value}</dd>
     </div>
   )
 }

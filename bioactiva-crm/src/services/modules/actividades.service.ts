@@ -13,6 +13,7 @@ import {
 } from '@/services/mock/leads.mock'
 import {
   Actividad,
+  ActividadFiltros,
   ActividadFormData,
   ComentarioActividad,
 } from '@/types/actividad.types'
@@ -35,6 +36,31 @@ const normalizeActividadesResponse = (
 }
 
 export const actividadesService = {
+
+  getAll: async (filtros?: ActividadFiltros): Promise<Actividad[]> => {
+    if (USE_MOCK) {
+      const actividades = await mockGetActividades()
+      return actividades.filter((actividad) => {
+        if (filtros?.id_lead && actividad.id_lead !== filtros.id_lead) return false
+        if (filtros?.id_responsable && actividad.id_responsable !== filtros.id_responsable) return false
+        if (filtros?.tipo && actividad.tipo !== filtros.tipo) return false
+        if (filtros?.estado && actividad.estado !== filtros.estado) return false
+        return true
+      })
+    }
+
+    const response = await apiClient.get<RawActividadesResponse>(
+      ENDPOINTS.actividades.list,
+      {
+        params: {
+          ...toActividadQueryParams(filtros),
+          page: 1,
+          limit: 100,
+        },
+      }
+    )
+    return normalizeActividadesResponse(response.data)
+  },
 
   getByLead: async (leadId: number): Promise<Actividad[]> => {
     if (USE_MOCK) return mockGetActividades(leadId)
