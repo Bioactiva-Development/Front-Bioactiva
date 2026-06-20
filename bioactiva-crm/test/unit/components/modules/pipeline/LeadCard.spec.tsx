@@ -46,14 +46,14 @@ describe('modules/pipeline/LeadCard', () => {
     expect(screen.getByTitle('Carlos López')).toBeInTheDocument()
   })
 
-  it('shows "Por cotizar" badge only for EN_PROSPECTO leads', () => {
+  it('does not show the "Por cotizar" badge', () => {
     render(<LeadCard lead={baseLead} onClick={jest.fn()} />)
-    expect(screen.getByText('Por cotizar')).toBeInTheDocument()
+    expect(screen.queryByText('Por cotizar')).not.toBeInTheDocument()
   })
 
-  it('does not show "Por cotizar" for non-prospecto leads', () => {
-    render(<LeadCard lead={{ ...baseLead, estado: LeadState.Ofertado }} onClick={jest.fn()} />)
-    expect(screen.queryByText('Por cotizar')).not.toBeInTheDocument()
+  it('shows the lead creation date', () => {
+    render(<LeadCard lead={baseLead} onClick={jest.fn()} />)
+    expect(screen.getByText(/Creado el/)).toBeInTheDocument()
   })
 
   it.each([

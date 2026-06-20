@@ -336,6 +336,11 @@ export function LeadDetalle({
               />
               <InfoItem
                 icono={<Calendar size={14} />}
+                label="Fecha de creación"
+                valor={formatLeadDateOnly(lead.created_at)}
+              />
+              <InfoItem
+                icono={<Calendar size={14} />}
                 label="Fecha de cierre estimada"
                 valor={lead.fecha_cierre && (
                   <div className="flex flex-wrap items-center gap-2">

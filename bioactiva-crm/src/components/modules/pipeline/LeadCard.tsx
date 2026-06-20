@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
-import { Clock, ExternalLink, FileMinus, User } from 'lucide-react'
+import { Calendar, Clock, ExternalLink, User } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
-import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
+import { EstadoCot, TipoMoneda } from '@/types/enums'
 import { Cotizacion } from '@/types/cotizacion.types'
 import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
 import { SEMAFORO_UI } from '@/lib/utils/semaforo.utils'
+import { formatLeadDateOnly } from '@/lib/utils/lead-date.utils'
 
 const AVATAR_COLORS = [
   'bg-emerald-500', 'bg-blue-500',  'bg-violet-500',
@@ -152,18 +153,12 @@ export function LeadCard({
         {!alertBadge && externalLinkBtn}
       </div>
 
-      {/* Monto de cotización o badge "Por cotizar" */}
-      {cot ? (
+      {/* Monto de la cotización (si existe) */}
+      {cot && (
         <span className="text-sm font-bold text-emerald-600 tabular-nums">
           {formatMonto(cot.monto, cot.tipo)}
         </span>
-      ) : lead.estado === LeadState.Prospecto ? (
-        <span className="inline-flex items-center gap-1.5 rounded-lg
-          bg-gray-100 text-gray-500 text-xs font-medium px-2.5 py-1 self-start">
-          <FileMinus size={12} className="shrink-0" />
-          Por cotizar
-        </span>
-      ) : null}
+      )}
 
       {/* Contacto — encima del separador */}
       {lead.contacto_nombre && (
@@ -195,6 +190,12 @@ export function LeadCard({
           </div>
         </div>
       )}
+
+      {/* Fecha de creación del lead */}
+      <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+        <Calendar size={11} className="shrink-0" />
+        Creado el {formatLeadDateOnly(lead.created_at)}
+      </div>
     </div>
   )
 }

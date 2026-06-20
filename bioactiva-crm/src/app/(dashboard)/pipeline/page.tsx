@@ -2,8 +2,9 @@
 
 import { Suspense, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { AlertCircle, Clock, Loader2, Plus, User } from 'lucide-react'
+import { AlertCircle, Calendar, Clock, Loader2, Plus, User } from 'lucide-react'
 import { SEMAFORO_UI } from '@/lib/utils/semaforo.utils'
+import { formatLeadDateOnly } from '@/lib/utils/lead-date.utils'
 import { useMoverLeadPipeline, usePipelineColumns } from '@/hooks/pipeline/useLeads'
 import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
 import { KanbanBoard } from '@/components/modules/pipeline/KanbanBoard'
@@ -79,6 +80,11 @@ function LeadListItem({ lead, onClick }: { lead: Lead; onClick: (lead: Lead) => 
           <p className="text-xs text-gray-500 truncate">{lead.encargado_nombre}</p>
         </div>
       )}
+
+      <div className="mt-2 flex items-center gap-1.5 text-[10px] text-gray-400">
+        <Calendar size={11} className="shrink-0" />
+        Creado el {formatLeadDateOnly(lead.created_at)}
+      </div>
     </button>
   )
 }
