@@ -353,9 +353,9 @@ export function LeadForm({
                 {...register('id_contacto', {
                   setValueAs: (value) => value ? Number(value) : undefined,
                 })}
-                disabled={!orgSeleccionada}
+                disabled={esEdicion || !orgSeleccionada}
                 className={`${inputClass(!!errors.id_contacto)} cursor-pointer
-                  ${!orgSeleccionada ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  ${esEdicion || !orgSeleccionada ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 <option value="">
                   {orgSeleccionada
@@ -376,7 +376,11 @@ export function LeadForm({
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-400">Puedes vincularlo después desde el detalle del lead.</p>
+              <p className="text-xs text-gray-400">
+                {esEdicion
+                  ? 'La organización y el contacto no se pueden cambiar al editar el lead.'
+                  : 'Puedes vincularlo después desde el detalle del lead.'}
+              </p>
             </div>
           </div>
 
