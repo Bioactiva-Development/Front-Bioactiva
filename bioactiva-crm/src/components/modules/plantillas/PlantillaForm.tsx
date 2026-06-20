@@ -1,15 +1,14 @@
 'use client'
 
-import { useRef } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Save, ArrowLeft, Info, LayoutTemplate, Code2, Settings } from 'lucide-react'
+import { Loader2, Save, ArrowLeft, LayoutTemplate, Code2, Settings } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import {
   plantillaSchema,
   PlantillaFormValues,
 } from '@/lib/validators/plantilla.schema'
-import { Plantilla, VARIABLES_PLANTILLA } from '@/types/plantilla.types'
+import { Plantilla } from '@/types/plantilla.types'
 import { ROUTES } from '@/lib/constants/routes'
 
 interface PlantillaFormProps {
@@ -32,13 +31,11 @@ export function PlantillaForm({
 }: Readonly<PlantillaFormProps>) {
   const router    = useRouter()
   const esEdicion = !!plantilla
-  const cuerpoRef = useRef<HTMLTextAreaElement | null>(null)
 
   const {
     register,
     handleSubmit,
     setValue,
-    getValues,
     control,
     formState: { errors },
   } = useForm<PlantillaFormValues>({
@@ -57,21 +54,6 @@ export function PlantillaForm({
 
   const activoValue = useWatch({ control, name: 'activo' })
 
-  const insertarVariable = (variable: string) => {
-    const textarea = cuerpoRef.current
-    if (!textarea) return
-    const inicio = textarea.selectionStart
-    const fin    = textarea.selectionEnd
-    const cuerpoActual = getValues('cuerpo') ?? ''
-    const nuevoCuerpo =
-      cuerpoActual.slice(0, inicio) + variable + cuerpoActual.slice(fin)
-    setValue('cuerpo', nuevoCuerpo)
-    setTimeout(() => {
-      textarea.focus()
-      textarea.setSelectionRange(inicio + variable.length, inicio + variable.length)
-    }, 0)
-  }
-
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
     transition-colors placeholder:text-gray-400
@@ -79,8 +61,6 @@ export function PlantillaForm({
       ? 'border-red-400 bg-red-50'
       : 'border-gray-200 focus:border-emerald-400 bg-white'
     }`
-
-  const { ref: cuerpoRegRef, ...cuerpoRegRest } = register('cuerpo')
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -119,7 +99,7 @@ export function PlantillaForm({
               <input
                 id="pf-nombre"
                 type="text"
-                placeholder="Ej: Confirmación de reunión"
+                placeholder="Ej: Seguimiento comercial"
                 {...register('nombre')}
                 className={inputClass(!!errors.nombre)}
               />
@@ -135,7 +115,7 @@ export function PlantillaForm({
               <input
                 id="pf-asunto"
                 type="text"
-                placeholder="Ej: Reunión con {{nombre_organizacion}} — {{fecha_actividad}}"
+                placeholder="Ej: Seguimiento de propuesta comercial"
                 {...register('asunto')}
                 className={inputClass(!!errors.asunto)}
               />
@@ -152,31 +132,6 @@ export function PlantillaForm({
               Contenido del mensaje
             </p>
 
-            {/* Panel de variables */}
-            <div className="bg-emerald-50/60 rounded-xl border border-emerald-100 p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <Info size={13} className="text-emerald-500 shrink-0" />
-                <p className="text-xs font-semibold text-emerald-700">Variables disponibles</p>
-                <span className="text-xs text-emerald-500">· haz clic para insertar en el cuerpo</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {VARIABLES_PLANTILLA.map((v) => (
-                  <button
-                    key={v.key}
-                    type="button"
-                    onClick={() => insertarVariable(v.key)}
-                    title={v.descripcion}
-                    className="px-2.5 py-1 rounded-lg border border-emerald-200
-                      bg-white text-emerald-700 text-xs font-mono
-                      hover:bg-emerald-100 hover:border-emerald-300
-                      transition-colors cursor-pointer"
-                  >
-                    {v.key}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="space-y-1.5">
               <label htmlFor="pf-cuerpo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Cuerpo del mensaje <span className="text-red-500">*</span>
@@ -184,12 +139,8 @@ export function PlantillaForm({
               <textarea
                 id="pf-cuerpo"
                 rows={12}
-                placeholder="Escribe el cuerpo del correo aquí. Usa las variables de arriba para personalizar el mensaje."
-                {...cuerpoRegRest}
-                ref={(e) => {
-                  cuerpoRegRef(e)
-                  cuerpoRef.current = e
-                }}
+                placeholder="Escribe aquí el contenido del mensaje."
+                {...register('cuerpo')}
                 className={`${inputClass(!!errors.cuerpo)} resize-y font-mono text-xs leading-relaxed`}
               />
               {errors.cuerpo && (
