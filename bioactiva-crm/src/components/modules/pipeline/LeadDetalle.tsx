@@ -7,6 +7,7 @@ import {
   Briefcase, Calendar, Mail, Phone,
   Plus, MessageSquare, FileText,
   ExternalLink, AlertCircle, DollarSign,
+  Loader2, Save, X,
 } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
 import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
@@ -15,6 +16,7 @@ import { ActividadHistorial } from './ActividadHistorial'
 import { ActividadForm } from './ActividadForm'
 import { LeadEditFocus } from './LeadForm'
 import { useActividades, useCrearActividad } from '@/hooks/pipeline/useActividades'
+import { useActualizarLead } from '@/hooks/pipeline/useLeads'
 import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
 import {
   useCrearRecordatorio,
@@ -83,6 +85,118 @@ function InfoItem({
   )
 }
 
+function CampoContextoEditable({
+  label,
+  valor,
+  placeholder,
+  vacioMensaje,
+  onGuardar,
+}: {
+  label:        string
+  valor?:       string
+  placeholder:  string
+  vacioMensaje: string
+  onGuardar:    (nuevoValor: string) => Promise<void>
+}) {
+  const [editando, setEditando]   = useState(false)
+  const [valorLocal, setValorLocal] = useState(valor ?? '')
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError]         = useState<string | null>(null)
+
+  const iniciar = () => {
+    setValorLocal(valor ?? '')
+    setError(null)
+    setEditando(true)
+  }
+
+  const cancelar = () => {
+    setEditando(false)
+    setError(null)
+  }
+
+  const guardar = async () => {
+    try {
+      setGuardando(true)
+      setError(null)
+      await onGuardar(valorLocal.trim())
+      setEditando(false)
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'No se pudo guardar el cambio.'))
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
+          {label}
+        </p>
+        {!editando && (
+          <button
+            onClick={iniciar}
+            className="inline-flex items-center gap-1 text-xs font-semibold
+              text-emerald-600 hover:text-emerald-700 transition-colors"
+          >
+            <Pencil size={12} />
+            Editar
+          </button>
+        )}
+      </div>
+
+      {editando ? (
+        <div className="space-y-2">
+          <textarea
+            rows={3}
+            value={valorLocal}
+            onChange={(e) => setValorLocal(e.target.value)}
+            placeholder={placeholder}
+            maxLength={500}
+            autoFocus
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200
+              focus:border-emerald-400 bg-white text-sm text-gray-900 outline-none
+              transition-colors placeholder:text-gray-400 resize-none"
+          />
+          {error && <p className="text-red-500 text-xs">{error}</p>}
+          <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={cancelar}
+              disabled={guardando}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                text-xs font-semibold text-gray-500 hover:text-gray-700
+                hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              <X size={13} />
+              Cancelar
+            </button>
+            <button
+              onClick={guardar}
+              disabled={guardando}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                text-xs font-semibold bg-emerald-600 hover:bg-emerald-700
+                disabled:bg-emerald-400 text-white transition-colors"
+            >
+              {guardando ? (
+                <Loader2 size={13} className="animate-spin" />
+              ) : (
+                <Save size={13} />
+              )}
+              Guardar
+            </button>
+          </div>
+        </div>
+      ) : valor ? (
+        <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3">
+          {valor}
+        </p>
+      ) : (
+        <p className="text-sm text-gray-400 italic">{vacioMensaje}</p>
+      )}
+    </div>
+  )
+}
+
 function EmptyPanel({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-10 text-center">
@@ -136,6 +250,7 @@ export function LeadDetalle({
     useCotizacionesPorLead(lead.id)
   const { mutateAsync: crearActividad, isPending: creando } =
     useCrearActividad()
+  const { mutateAsync: actualizarLead } = useActualizarLead(lead.id)
 
   const { mutateAsync: crearRecordatorio, isPending: creandoRecordatorio } =
     useCrearRecordatorio()
@@ -304,14 +419,6 @@ export function LeadDetalle({
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
                 Datos del lead
               </h3>
-              <button
-                onClick={() => onEditar('datos')}
-                className="inline-flex items-center gap-1 text-xs font-semibold
-                  text-emerald-600 hover:text-emerald-700 transition-colors"
-              >
-                <Pencil size={12} />
-                Editar
-              </button>
             </div>
             <div className="space-y-4">
               <InfoItem
@@ -342,40 +449,26 @@ export function LeadDetalle({
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
                 Contexto comercial
               </h3>
-              <button
-                onClick={() => onEditar('contexto')}
-                className="inline-flex items-center gap-1 text-xs font-semibold
-                  text-emerald-600 hover:text-emerald-700 transition-colors"
-              >
-                <Pencil size={12} />
-                Editar
-              </button>
             </div>
             <div className="space-y-4">
-              <div>
-                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">
-                  Comentarios
-                </p>
-                {lead.comentarios ? (
-                  <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3">
-                    {lead.comentarios}
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-400 italic">Sin comentarios registrados.</p>
-                )}
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">
-                  Desafío u oportunidad
-                </p>
-                {lead.desafio_oportunidad ? (
-                  <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3">
-                    {lead.desafio_oportunidad}
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-400 italic">Sin desafío u oportunidad registrado.</p>
-                )}
-              </div>
+              <CampoContextoEditable
+                label="Comentarios"
+                valor={lead.comentarios}
+                placeholder="Notas internas del lead..."
+                vacioMensaje="Sin comentarios registrados."
+                onGuardar={async (comentarios) => {
+                  await actualizarLead({ comentarios })
+                }}
+              />
+              <CampoContextoEditable
+                label="Desafío u oportunidad"
+                valor={lead.desafio_oportunidad}
+                placeholder="Problema concreto o necesidad comercial detectada..."
+                vacioMensaje="Sin desafío u oportunidad registrado."
+                onGuardar={async (desafio_oportunidad) => {
+                  await actualizarLead({ desafio_oportunidad })
+                }}
+              />
             </div>
           </div>
         </div>

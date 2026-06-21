@@ -86,6 +86,7 @@ export default function LeadDetallePage() {
           isLoading={isPending}
           error={errorGuardar}
           focusField={focusField}
+          onVolver={() => { setFocusField(undefined); setEditando(false) }}
         />
       </div>
     )
