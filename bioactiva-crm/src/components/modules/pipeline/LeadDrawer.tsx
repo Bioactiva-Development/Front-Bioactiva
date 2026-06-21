@@ -3,14 +3,18 @@
 import { useRouter } from 'next/navigation'
 import {
   X, ExternalLink, User, AlertTriangle,
+  CalendarClock, FileText, DollarSign,
 } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
 import {
   LeadState,
   TipoActividad,
   EstadoActividad,
+  EstadoCot,
+  TipoMoneda,
 } from '@/types/enums'
 import { useActividades } from '@/hooks/pipeline/useActividades'
+import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
 import { ROUTES } from '@/lib/constants/routes'
 import { getAllowedLeadTransitions } from '@/lib/utils/lead-flow.utils'
 
@@ -57,9 +61,43 @@ const TIPO_ICONOS: Record<TipoActividad, string> = {
   [TipoActividad.Otro]:    '📌',
 }
 
+const COTIZACION_COLORS: Record<EstadoCot, string> = {
+  [EstadoCot.Pendiente]: 'bg-gray-100 text-gray-600',
+  [EstadoCot.Enviada]:   'bg-blue-50 text-blue-700',
+  [EstadoCot.Aceptada]:  'bg-emerald-50 text-emerald-700',
+  [EstadoCot.Rechazada]: 'bg-red-50 text-red-600',
+}
+
+function formatMonto(monto: number, tipo: TipoMoneda) {
+  const simbolo = tipo === TipoMoneda.Soles ? 'S/' : '$'
+  return `${simbolo} ${monto.toLocaleString('es-PE', {
+    minimumFractionDigits: 2,
+  })}`
+}
+
+function EmptySeccion({
+  icono,
+  mensaje,
+}: {
+  icono:   React.ReactNode
+  mensaje: string
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 rounded-xl
+      border border-dashed border-gray-200 bg-gray-50/60 py-6 text-center">
+      <div className="flex h-9 w-9 items-center justify-center rounded-full
+        bg-white text-gray-300 shadow-sm">
+        {icono}
+      </div>
+      <p className="text-xs text-gray-400">{mensaje}</p>
+    </div>
+  )
+}
+
 export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
   const router = useRouter()
-  const { data: actividades = [] } = useActividades(lead.id)
+  const { data: actividades = [] }  = useActividades(lead.id)
+  const { data: cotizaciones = [] } = useCotizacionesPorLead(lead.id)
 
   const formatFecha = (fecha: string) =>
     new Date(fecha).toLocaleDateString('es-PE', {
@@ -159,13 +197,48 @@ export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
             </div>
           )}
 
+          {actividades.length === 0 && cotizaciones.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3
+              rounded-2xl border border-dashed border-gray-200 bg-gray-50/60
+              px-6 py-10 text-center">
+              <div className="flex h-12 w-12 items-center justify-center
+                rounded-full bg-white text-gray-300 shadow-sm">
+                <FileText size={22} />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-gray-600">
+                  Aún no hay movimientos
+                </p>
+                <p className="text-xs text-gray-400">
+                  Este lead todavía no tiene actividades ni cotización
+                  registrada.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  onCerrar()
+                  router.push(ROUTES.lead(lead.id))
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg
+                  px-3 py-1.5 text-xs font-semibold text-emerald-600
+                  hover:bg-emerald-50 transition-colors"
+              >
+                <ExternalLink size={13} />
+                Gestionar lead
+              </button>
+            </div>
+          ) : (
+          <>
           <div>
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">
               Actividades ({actividades.length})
             </p>
 
             {actividades.length === 0 ? (
-              <p className="text-sm text-gray-400 italic">Sin actividades.</p>
+              <EmptySeccion
+                icono={<CalendarClock size={16} />}
+                mensaje="Sin actividades registradas."
+              />
             ) : (
               <div className="space-y-2">
                 {actividades.map((act) => {
@@ -221,6 +294,61 @@ export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
               </div>
             )}
           </div>
+
+          <div>
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">
+              Cotización
+            </p>
+
+            {cotizaciones.length === 0 ? (
+              <EmptySeccion
+                icono={<FileText size={16} />}
+                mensaje="Sin cotización generada."
+              />
+            ) : (
+              <div className="space-y-2">
+                {cotizaciones.map((cot) => (
+                  <button
+                    key={cot.id}
+                    type="button"
+                    onClick={() => {
+                      onCerrar()
+                      router.push(ROUTES.cotizacion(cot.id))
+                    }}
+                    className="w-full flex items-start justify-between gap-2
+                      p-3 rounded-xl border border-gray-100 bg-white text-left
+                      hover:border-emerald-200 hover:shadow-sm transition-all"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-emerald-600">
+                          {cot.codigo ?? `#${cot.id}`}
+                        </span>
+                        <span className={`text-xs font-bold px-1.5 py-0.5
+                          rounded-md uppercase tracking-wide
+                          ${COTIZACION_COLORS[cot.estado]}`}>
+                          {cot.estado}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1 truncate">
+                        {cot.nombre_servicio}
+                      </p>
+                      <p className="text-xs font-bold text-gray-900 mt-1
+                        flex items-center gap-1">
+                        <DollarSign size={11} className="text-gray-400" />
+                        {formatMonto(cot.monto, cot.tipo)}
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-400 shrink-0 ml-2">
+                      {formatFecha(cot.fecha_cot)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          </>
+          )}
         </div>
 
         {/* Cambiar etapa — solo en móvil, solo a estados destino permitidos */}

@@ -56,7 +56,17 @@ export interface LeadCreateDto {
   canalCaptacion?: string
 }
 
-export type LeadUpdateDto = Partial<LeadCreateDto>
+// En update, los campos de texto opcionales admiten null para que el backend
+// los limpie cuando el usuario los vacia (PATCH parcial campo a campo).
+export interface LeadUpdateDto {
+  idOrg?: string
+  servicioInteres?: string
+  idEncargado?: number
+  idContacto?: number | null
+  comentarios?: string | null
+  desafioOportunidad?: string | null
+  canalCaptacion?: string | null
+}
 
 const LEAD_STATE_DOMAIN_TO_BACKEND: Record<LeadState, string> = {
   [LeadState.Prospecto]: 'EN_PROSPECTO',
@@ -76,6 +86,14 @@ const trimOrUndefined = (value?: string | null): string | undefined => {
   if (value == null) return undefined
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : undefined
+}
+
+// Variante para update: un valor vacio se envia como null para que el backend
+// limpie el campo, en lugar de omitirlo.
+const trimOrNull = (value?: string | null): string | null => {
+  if (value == null) return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
 }
 
 const codigoFromLead = (dto: Pick<LeadDtoOut, 'id' | 'createdAt'>) => {
@@ -159,14 +177,19 @@ export const toUpdateLeadDto = (data: Partial<LeadFormData>): LeadUpdateDto => {
   if (data.id_encargado !== undefined) dto.idEncargado = data.id_encargado
   if (data.id_contacto !== undefined) dto.idContacto = data.id_contacto
 
-  const comentarios = trimOrUndefined(data.comentarios)
-  if (comentarios !== undefined) dto.comentarios = comentarios
+  // Solo se envia el campo si el caller lo incluyo. Si viene vacio, se manda null
+  // para que el backend lo limpie.
+  if (data.comentarios !== undefined) {
+    dto.comentarios = trimOrNull(data.comentarios)
+  }
 
-  const desafioOportunidad = trimOrUndefined(data.desafio_oportunidad)
-  if (desafioOportunidad !== undefined) dto.desafioOportunidad = desafioOportunidad
+  if (data.desafio_oportunidad !== undefined) {
+    dto.desafioOportunidad = trimOrNull(data.desafio_oportunidad)
+  }
 
-  const canalCaptacion = trimOrUndefined(data.canal_captacion)
-  if (canalCaptacion !== undefined) dto.canalCaptacion = canalCaptacion
+  if (data.canal_captacion !== undefined) {
+    dto.canalCaptacion = trimOrNull(data.canal_captacion)
+  }
 
   return dto
 }
