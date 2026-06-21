@@ -433,9 +433,6 @@ export function LeadForm({
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs text-gray-400">
-                    Puedes vincularlo después desde el detalle del lead.
-                  </p>
                 </div>
               </>
             )}
