@@ -48,9 +48,9 @@ describe('modules/cotizaciones/CotizacionCard', () => {
     expect(screen.getAllByText('COT-001').length).toBeGreaterThan(0)
   })
 
-  it('renders lead_codigo', () => {
+  it('does not render the lead identifier', () => {
     render(<CotizacionCard cotizacion={baseCotizacion} />)
-    expect(screen.getAllByText('LEAD-001').length).toBeGreaterThan(0)
+    expect(screen.queryByText('LEAD-001')).not.toBeInTheDocument()
   })
 
   it('renders periodo', () => {
@@ -121,9 +121,4 @@ describe('modules/cotizaciones/CotizacionCard', () => {
     }
   })
 
-  it('renders lead id fallback when lead_codigo is missing', () => {
-    const sinCodigo: Cotizacion = { ...baseCotizacion, lead_codigo: undefined }
-    render(<CotizacionCard cotizacion={sinCodigo} />)
-    expect(screen.getAllByText('#1').length).toBeGreaterThan(0)
-  })
 })

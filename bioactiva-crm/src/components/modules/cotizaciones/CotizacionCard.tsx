@@ -75,13 +75,6 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
         </div>
       </td>
 
-      {/* ID Lead — oculto en móvil y tablet, visible en md+ */}
-      <td className="hidden md:table-cell px-4 py-3">
-        <p className="text-sm text-gray-500 font-mono">
-          {cotizacion.lead_codigo ?? `#${cotizacion.id_lead}`}
-        </p>
-      </td>
-
       {/* Período — oculto en móvil, visible en sm+ */}
       <td className="hidden sm:table-cell px-4 py-3">
         <p className="text-sm text-gray-600">
