@@ -185,10 +185,6 @@ export default function DashboardPage() {
   const kpiMonto = (value?: MoneyByCurrency) =>
     cargandoMetricas ? '...' : <MoneyDual value={value} />
 
-  const hoy = useMemo(() => new Date().toLocaleDateString('es-PE', {
-    day: '2-digit', month: 'short', year: 'numeric',
-  }), [])
-
   const handlePeriodo = (key: string) => {
     setPeriodoActivo(key)
     const { inicio, fin } = getPeriodDates(key, anioActivo)
@@ -244,14 +240,10 @@ export default function DashboardPage() {
     <div className="space-y-3">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Dashboard comercial</h1>
           <p className="text-sm text-gray-400 mt-0.5">Métricas del periodo seleccionado</p>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-400">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-          Activo · {hoy}
         </div>
       </div>
 

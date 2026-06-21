@@ -127,6 +127,11 @@ describe('dashboard/page', () => {
     expect(screen.getByText('Métricas del periodo seleccionado')).toBeInTheDocument()
   })
 
+  it('does not render the active status and current date', () => {
+    renderPage()
+    expect(screen.queryByText(/Activo\s*·/)).not.toBeInTheDocument()
+  })
+
   async function abrirFiltros() {
     const filtrosBtn = screen.getByText('Filtros')
     await userEvent.click(filtrosBtn)
