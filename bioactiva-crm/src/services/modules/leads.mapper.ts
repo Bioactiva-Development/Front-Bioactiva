@@ -59,9 +59,7 @@ export interface LeadCreateDto {
 // En update, los campos de texto opcionales admiten null para que el backend
 // los limpie cuando el usuario los vacia (PATCH parcial campo a campo).
 export interface LeadUpdateDto {
-  idOrg?: string
   servicioInteres?: string
-  idEncargado?: number
   idContacto?: number | null
   comentarios?: string | null
   desafioOportunidad?: string | null
@@ -172,9 +170,9 @@ export const toCreateLeadDto = (data: LeadFormData): LeadCreateDto => {
 export const toUpdateLeadDto = (data: Partial<LeadFormData>): LeadUpdateDto => {
   const dto: LeadUpdateDto = {}
 
-  if (data.id_org !== undefined) dto.idOrg = data.id_org
+  // idOrg e idEncargado NO se envian en el update: son inmutables en backend y
+  // mandarlos rompe su logica. La organizacion/encargado se gestionan aparte.
   if (data.servicio_interes !== undefined) dto.servicioInteres = data.servicio_interes
-  if (data.id_encargado !== undefined) dto.idEncargado = data.id_encargado
   if (data.id_contacto !== undefined) dto.idContacto = data.id_contacto
 
   // Solo se envia el campo si el caller lo incluyo. Si viene vacio, se manda null
