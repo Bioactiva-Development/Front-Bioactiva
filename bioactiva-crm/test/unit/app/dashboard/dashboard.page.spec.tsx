@@ -298,12 +298,30 @@ describe('dashboard/page', () => {
     ).toBeInTheDocument()
   })
 
-  it('shows empty state when cotizaciones is empty', () => {
+  it('shows the dashboard empty state when the selected period has no data', () => {
     mockUseCotizaciones.mockReturnValue({ data: { data: [] }, isLoading: false, isError: false })
     renderPage()
     expect(
-      screen.getByText('Sin cotizaciones en el periodo.')
+      screen.getByText('No hay data para este periodo seleccionado')
     ).toBeInTheDocument()
+    expect(screen.queryByText('Resultados comerciales')).not.toBeInTheDocument()
+  })
+
+  it('shows the empty state for a valid single-day period with no data', async () => {
+    renderPage()
+    await abrirFiltros()
+    const currentYear = new Date().getFullYear()
+    const fin = screen.getByLabelText(/fecha fin/i)
+
+    fireEvent.change(fin, { target: { value: `${currentYear}-01-01` } })
+
+    expect(
+      screen.getByText('No hay data para este periodo seleccionado')
+    ).toBeInTheDocument()
+    expect(mockUseDashboardMetrics).toHaveBeenLastCalledWith({
+      startDate: `${currentYear}-01-01T00:00:00.000Z`,
+      endDate: `${currentYear}-01-01T23:59:59.999Z`,
+    })
   })
 
   it('clicking period tab triggers state change', async () => {

@@ -266,6 +266,34 @@ export default function DashboardPage() {
       .filter((item) => item.value > 0)
   }, [cotizacionesResponse?.data, rangoFechas])
 
+  const metricasConValor = metrics
+    ? [
+        metrics.totalLeads,
+        metrics.conversionRate,
+        metrics.avgClosingTimeDays,
+        metrics.proposalToCloseRate,
+        metrics.avgProposalStageDays,
+        metrics.avgActivitiesPerLead,
+        metrics.stalledLeadPercentage,
+        metrics.averageTicketAmount.pen,
+        metrics.averageTicketAmount.usd,
+        metrics.pipelineTotalAmount.pen,
+        metrics.pipelineTotalAmount.usd,
+        metrics.closedRevenue.pen,
+        metrics.closedRevenue.usd,
+      ].some((value) => value !== 0)
+    : false
+  const sinDataPeriodo =
+    !cargandoLeads &&
+    !cargandoCotizaciones &&
+    !cargandoMetricas &&
+    !errorLeads &&
+    !errorCotizaciones &&
+    !errorMetricas &&
+    !metricasConValor &&
+    !pipelineData.some((item) => item.cantidad > 0) &&
+    cotizacionesData.length === 0
+
   return (
     <div className="space-y-3">
 
@@ -397,6 +425,24 @@ export default function DashboardPage() {
           No se pudieron cargar las métricas del dashboard.
         </div>
       )}
+
+      {sinDataPeriodo && (
+        <div
+          role="status"
+          className="flex min-h-52 flex-col items-center justify-center gap-3 rounded-2xl
+            border border-gray-200 bg-white px-6 py-12 text-center shadow-sm"
+        >
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50">
+            <CalendarX size={22} weight="duotone" className="text-emerald-600" />
+          </div>
+          <p className="text-sm font-semibold text-gray-600">
+            No hay data para este periodo seleccionado
+          </p>
+        </div>
+      )}
+
+      {!sinDataPeriodo && (
+        <>
 
       {/* ─── PRIMERA PANTALLA ─── */}
 
@@ -596,6 +642,9 @@ export default function DashboardPage() {
           />
         </div>
       </div>
+
+        </>
+      )}
 
     </div>
   )
