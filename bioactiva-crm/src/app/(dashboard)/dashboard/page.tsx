@@ -42,7 +42,13 @@ interface PeriodoTab {
   sub:    string
 }
 
-const ANIOS                = ['2024', '2025', '2026']
+const ANIO_INICIAL          = 2010
+const ANIO_ACTUAL           = new Date().getFullYear()
+const ANIO_ACTUAL_TEXTO     = String(ANIO_ACTUAL)
+const ANIOS                 = Array.from(
+  { length: ANIO_ACTUAL - ANIO_INICIAL + 1 },
+  (_, index) => String(ANIO_INICIAL + index)
+)
 const DASHBOARD_FETCH_LIMIT = 500
 
 const PIPELINE_ESTADOS = [
@@ -59,15 +65,16 @@ const COTIZACION_ESTADOS = [
   { name: EstadoCot.Rechazada,  color: '#ef4444' },
 ]
 
-const parseDateBoundary = (date: string) => new Date(`${date}T00:00:00`)
+const parseDateBoundary = (date: string, endOfDay = false) =>
+  new Date(`${date}T${endOfDay ? '23:59:59.999' : '00:00:00'}Z`)
 
-const toIsoDateBoundary = (date: string) =>
-  new Date(`${date}T00:00:00.000Z`).toISOString()
+const toIsoDateBoundary = (date: string, endOfDay = false) =>
+  new Date(`${date}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`).toISOString()
 
 const isWithinPeriod = (isoDate: string | undefined, start: Date, end: Date) => {
   if (!isoDate) return false
   const time = new Date(isoDate).getTime()
-  return time >= start.getTime() && time < end.getTime()
+  return time >= start.getTime() && time <= end.getTime()
 }
 
 function KpiCard({ label, valor, descripcion, icono, iconoBg, extra, compact = false, accentBorder = 'border-t-gray-200' }: Readonly<KpiCardProps>) {
@@ -123,12 +130,18 @@ const getPeriodos = (anio: string): PeriodoTab[] => [
 const getPeriodDates = (periodo: string, anio: string) => {
   const year = Number.parseInt(anio)
   switch (periodo) {
-    case 'q1': return { inicio: `${year}-01-01`, fin: `${year}-04-01` }
-    case 'q2': return { inicio: `${year}-04-01`, fin: `${year}-07-01` }
-    case 'q3': return { inicio: `${year}-07-01`, fin: `${year}-10-01` }
-    case 'q4': return { inicio: `${year}-10-01`, fin: `${year + 1}-01-01` }
-    default:   return { inicio: `${year}-01-01`, fin: `${year + 1}-01-01` }
+    case 'q1': return { inicio: `${year}-01-01`, fin: `${year}-03-31` }
+    case 'q2': return { inicio: `${year}-04-01`, fin: `${year}-06-30` }
+    case 'q3': return { inicio: `${year}-07-01`, fin: `${year}-09-30` }
+    case 'q4': return { inicio: `${year}-10-01`, fin: `${year}-12-31` }
+    default:   return { inicio: `${year}-01-01`, fin: `${year}-12-31` }
   }
+}
+
+const limitDateToRange = (date: string, min: string, max: string) => {
+  if (date < min) return min
+  if (date > max) return max
+  return date
 }
 
 const formatPen = (value?: number) =>
@@ -165,9 +178,9 @@ const formatAverage = (value?: number) =>
 
 export default function DashboardPage() {
   const [periodoActivo, setPeriodoActivo] = useState('anio')
-  const [anioActivo, setAnioActivo]       = useState('2026')
-  const [fechaInicio, setFechaInicio]     = useState('2026-01-01')
-  const [fechaFin, setFechaFin]           = useState('2027-01-01')
+  const [anioActivo, setAnioActivo]       = useState(ANIO_ACTUAL_TEXTO)
+  const [fechaInicio, setFechaInicio]     = useState(`${ANIO_ACTUAL}-01-01`)
+  const [fechaFin, setFechaFin]           = useState(`${ANIO_ACTUAL}-12-31`)
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
 
   const { data: leadsResponse, isLoading: cargandoLeads, isError: errorLeads } =
@@ -176,7 +189,7 @@ export default function DashboardPage() {
     useCotizaciones({ page: 1, limit: DASHBOARD_FETCH_LIMIT })
   const dashboardParams = useMemo(() => ({
     startDate: toIsoDateBoundary(fechaInicio),
-    endDate:   toIsoDateBoundary(fechaFin),
+    endDate:   toIsoDateBoundary(fechaFin, true),
   }), [fechaFin, fechaInicio])
   const { data: metrics, isLoading: cargandoMetricas, isError: errorMetricas } =
     useDashboardMetrics(dashboardParams)
@@ -184,6 +197,10 @@ export default function DashboardPage() {
   const kpiValor = (value: string) => cargandoMetricas ? '...' : value
   const kpiMonto = (value?: MoneyByCurrency) =>
     cargandoMetricas ? '...' : <MoneyDual value={value} />
+  const limitesPeriodo = useMemo(
+    () => getPeriodDates(periodoActivo, anioActivo),
+    [anioActivo, periodoActivo]
+  )
 
   const handlePeriodo = (key: string) => {
     setPeriodoActivo(key)
@@ -201,14 +218,27 @@ export default function DashboardPage() {
 
   const handleReiniciar = () => {
     setPeriodoActivo('anio')
-    setAnioActivo('2026')
-    setFechaInicio('2026-01-01')
-    setFechaFin('2027-01-01')
+    setAnioActivo(ANIO_ACTUAL_TEXTO)
+    setFechaInicio(`${ANIO_ACTUAL}-01-01`)
+    setFechaFin(`${ANIO_ACTUAL}-12-31`)
+  }
+
+  const handleFechaInicio = (date: string) => {
+    if (!date) return
+    const fechaLimitada = limitDateToRange(date, limitesPeriodo.inicio, limitesPeriodo.fin)
+    setFechaInicio(fechaLimitada)
+    if (fechaFin < fechaLimitada) setFechaFin(fechaLimitada)
+  }
+
+  const handleFechaFin = (date: string) => {
+    if (!date) return
+    const fechaLimitada = limitDateToRange(date, limitesPeriodo.inicio, limitesPeriodo.fin)
+    setFechaFin(fechaLimitada < fechaInicio ? fechaInicio : fechaLimitada)
   }
 
   const rangoFechas = useMemo(() => ({
     inicio: parseDateBoundary(fechaInicio),
-    fin:    parseDateBoundary(fechaFin),
+    fin:    parseDateBoundary(fechaFin, true),
   }), [fechaFin, fechaInicio])
   const periodos = useMemo(() => getPeriodos(anioActivo), [anioActivo])
 
@@ -322,7 +352,10 @@ export default function DashboardPage() {
                   id="dash-fecha-inicio"
                   type="date"
                   value={fechaInicio}
-                  onChange={(e) => setFechaInicio(e.target.value)}
+                  min={limitesPeriodo.inicio}
+                  max={fechaFin}
+                  onChange={(e) => handleFechaInicio(e.target.value)}
+                  required
                   className="w-full border border-gray-100 rounded-lg px-3 py-2 text-sm
                     outline-none focus:border-emerald-300 text-gray-600 bg-white"
                 />
@@ -336,7 +369,10 @@ export default function DashboardPage() {
                     id="dash-fecha-fin"
                     type="date"
                     value={fechaFin}
-                    onChange={(e) => setFechaFin(e.target.value)}
+                    min={fechaInicio}
+                    max={limitesPeriodo.fin}
+                    onChange={(e) => handleFechaFin(e.target.value)}
+                    required
                     className="w-full border border-gray-100 rounded-lg px-3 py-2 text-sm
                       outline-none focus:border-emerald-300 text-gray-600 bg-white"
                   />

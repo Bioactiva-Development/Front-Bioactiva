@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React from 'react'
@@ -71,7 +71,7 @@ const mockMetrics = {
   closedRevenue: { pen: 180000.0, usd: 48000.0 },
   stalledLeadPercentage: 12.8,
   periodStart: '2026-01-01',
-  periodEnd: '2027-01-01',
+  periodEnd: '2026-12-31',
 }
 
 const defaultLead = {
@@ -137,16 +137,82 @@ describe('dashboard/page', () => {
     await userEvent.click(filtrosBtn)
   }
 
-  it('renders year selector with 2024, 2025, 2026 options', async () => {
+  it('renders years from 2010 through the current year and selects the current year', async () => {
     renderPage()
     await abrirFiltros()
     const select = screen.getByRole('combobox')
+    const currentYear = new Date().getFullYear()
     expect(select).toBeInTheDocument()
     const options = screen.getAllByRole('option')
-    expect(options).toHaveLength(3)
-    expect(options[0]).toHaveValue('2024')
-    expect(options[1]).toHaveValue('2025')
-    expect(options[2]).toHaveValue('2026')
+    expect(options).toHaveLength(currentYear - 2010 + 1)
+    expect(options[0]).toHaveValue('2010')
+    expect(options.at(-1)).toHaveValue(String(currentYear))
+    expect(select).toHaveValue(String(currentYear))
+  })
+
+  it('uses the complete current year as the default date range', async () => {
+    renderPage()
+    await abrirFiltros()
+    const currentYear = new Date().getFullYear()
+    const inicio = screen.getByLabelText(/fecha inicio/i)
+    const fin = screen.getByLabelText(/fecha fin/i)
+
+    expect(inicio).toHaveValue(`${currentYear}-01-01`)
+    expect(inicio).toHaveAttribute('min', `${currentYear}-01-01`)
+    expect(inicio).toHaveAttribute('max', `${currentYear}-12-31`)
+    expect(fin).toHaveValue(`${currentYear}-12-31`)
+    expect(fin).toHaveAttribute('min', `${currentYear}-01-01`)
+    expect(fin).toHaveAttribute('max', `${currentYear}-12-31`)
+  })
+
+  it('limits both dates to the selected quarter', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await abrirFiltros()
+    const currentYear = new Date().getFullYear()
+    await user.click(screen.getByText('1ER TRIMESTRE'))
+    const inicio = screen.getByLabelText(/fecha inicio/i)
+    const fin = screen.getByLabelText(/fecha fin/i)
+
+    expect(inicio).toHaveValue(`${currentYear}-01-01`)
+    expect(inicio).toHaveAttribute('min', `${currentYear}-01-01`)
+    expect(inicio).toHaveAttribute('max', `${currentYear}-03-31`)
+    expect(fin).toHaveValue(`${currentYear}-03-31`)
+    expect(fin).toHaveAttribute('min', `${currentYear}-01-01`)
+    expect(fin).toHaveAttribute('max', `${currentYear}-03-31`)
+  })
+
+  it('keeps the start date less than or equal to the end date', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await abrirFiltros()
+    const currentYear = new Date().getFullYear()
+    await user.click(screen.getByText('1ER TRIMESTRE'))
+    const inicio = screen.getByLabelText(/fecha inicio/i)
+    const fin = screen.getByLabelText(/fecha fin/i)
+
+    fireEvent.change(fin, { target: { value: `${currentYear}-02-15` } })
+    fireEvent.change(inicio, { target: { value: `${currentYear}-03-01` } })
+    expect(inicio).toHaveValue(`${currentYear}-03-01`)
+    expect(fin).toHaveValue(`${currentYear}-03-01`)
+
+    fireEvent.change(fin, { target: { value: `${currentYear}-01-01` } })
+    expect(fin).toHaveValue(`${currentYear}-03-01`)
+  })
+
+  it('clamps manually entered dates to the selected period', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await abrirFiltros()
+    const currentYear = new Date().getFullYear()
+    await user.click(screen.getByText('1ER TRIMESTRE'))
+    const inicio = screen.getByLabelText(/fecha inicio/i)
+    const fin = screen.getByLabelText(/fecha fin/i)
+
+    fireEvent.change(inicio, { target: { value: `${currentYear - 1}-12-31` } })
+    fireEvent.change(fin, { target: { value: `${currentYear}-04-01` } })
+    expect(inicio).toHaveValue(`${currentYear}-01-01`)
+    expect(fin).toHaveValue(`${currentYear}-03-31`)
   })
 
   it('renders period tabs', async () => {
