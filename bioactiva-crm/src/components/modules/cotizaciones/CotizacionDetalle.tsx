@@ -159,7 +159,7 @@ export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionD
                 </button>
               )}
 
-              {(esPendiente || esEnviada) && (
+              {esEnviada && (
                 <>
                   <button
                     onClick={() => handleAccion(() => aceptar(cotizacion.id))}
