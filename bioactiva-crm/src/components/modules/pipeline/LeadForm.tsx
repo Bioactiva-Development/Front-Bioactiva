@@ -319,18 +319,6 @@ export function LeadForm({
 
         {/* Header del formulario */}
         <div className="px-8 py-5 border-b border-gray-100 bg-gray-50/60 flex items-center gap-3">
-          {onVolver && (
-            <button
-              type="button"
-              onClick={onVolver}
-              aria-label="Volver al lead"
-              className="flex items-center justify-center w-9 h-9 rounded-xl
-                border border-gray-200 text-gray-500 hover:text-gray-700
-                hover:bg-gray-50 transition-colors shrink-0"
-            >
-              <ArrowLeft size={16} />
-            </button>
-          )}
           <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
             <Target size={18} className="text-emerald-700" />
           </div>
