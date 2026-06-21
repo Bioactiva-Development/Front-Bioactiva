@@ -136,16 +136,24 @@ export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
 
           <div className="bg-gray-50 rounded-xl p-4 space-y-1">
-            <div className="flex items-center justify-between">
-              <div>
-                {lead.contacto_nombre && (
-                  <p className="text-sm text-emerald-600 font-medium mt-0.5">
-                    {lead.contacto_nombre}
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                {lead.contacto_nombre ? (
+                  <p className="flex items-center gap-1.5 text-sm text-emerald-600
+                    font-medium mt-0.5">
+                    <User size={13} className="shrink-0" />
+                    <span className="truncate">{lead.contacto_nombre}</span>
+                  </p>
+                ) : (
+                  <p className="flex items-center gap-1.5 text-sm text-gray-400
+                    italic mt-0.5">
+                    <User size={13} className="shrink-0" />
+                    Sin contacto asociado
                   </p>
                 )}
               </div>
               <span className={`text-xs font-bold px-3 py-1.5 rounded-lg
-                uppercase tracking-wide ${ESTADO_COLORS[lead.estado]}`}>
+                uppercase tracking-wide shrink-0 ${ESTADO_COLORS[lead.estado]}`}>
                 {lead.estado}
               </span>
             </div>
