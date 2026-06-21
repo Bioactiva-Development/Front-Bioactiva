@@ -32,7 +32,6 @@ jest.mock('lucide-react', () => ({
   ArrowLeft: () => <div data-testid="icon-arrow-left" />,
   Pencil: () => <div data-testid="icon-pencil" />,
   ExternalLink: () => <div data-testid="icon-external-link" />,
-  Printer: () => <div data-testid="icon-printer" />,
   Send: () => <div data-testid="icon-send" />,
   CheckCircle2: () => <div data-testid="icon-check-circle" />,
   XCircle: () => <div data-testid="icon-x-circle" />,
@@ -100,6 +99,11 @@ describe('modules/cotizaciones/CotizacionDetalle', () => {
   it('shows Volver button', () => {
     render(<CotizacionDetalle cotizacion={baseCotizacion} onEditar={jest.fn()} />)
     expect(screen.getByText('Volver')).toBeInTheDocument()
+  })
+
+  it('does not render a print action', () => {
+    render(<CotizacionDetalle cotizacion={baseCotizacion} onEditar={jest.fn()} />)
+    expect(screen.queryByText('Imprimir')).not.toBeInTheDocument()
   })
 
   it('shows Editar button when estado is not terminal', () => {

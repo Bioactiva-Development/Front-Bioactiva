@@ -28,11 +28,13 @@ const baseCotizacion: Cotizacion = {
   monto: 15000,
   tipo: TipoMoneda.Soles,
   estado: EstadoCot.Pendiente,
+  nombre_remitente: 'Luis Torres',
   id_author: 1,
   created_at: '2025-03-01T00:00:00Z',
   updated_at: '2025-03-01T00:00:00Z',
   lead_codigo: 'LEAD-001',
   periodo: 'Q1 2025',
+  contacto_nombre: 'Juan Pérez',
   organizacion_nombre: 'Empresa SAC',
 }
 
@@ -56,7 +58,7 @@ describe('modules/cotizaciones/CotizacionCard', () => {
     expect(screen.getAllByText('Q1 2025').length).toBeGreaterThan(0)
   })
 
-  it('renders dirigido', () => {
+  it('renders contacto_nombre', () => {
     render(<CotizacionCard cotizacion={baseCotizacion} />)
     expect(screen.getAllByText('Juan Pérez').length).toBeGreaterThan(0)
   })
@@ -90,6 +92,11 @@ describe('modules/cotizaciones/CotizacionCard', () => {
   it('renders send button for Pendiente estado', () => {
     render(<CotizacionCard cotizacion={baseCotizacion} />)
     expect(screen.getAllByTitle('Marcar como enviada').length).toBeGreaterThan(0)
+  })
+
+  it('does not render a print action', () => {
+    render(<CotizacionCard cotizacion={baseCotizacion} />)
+    expect(screen.queryByTitle('Imprimir')).not.toBeInTheDocument()
   })
 
   it('hides send button for non-Pendiente estado', () => {

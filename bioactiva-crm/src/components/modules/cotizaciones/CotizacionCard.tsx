@@ -1,6 +1,6 @@
 'use client'
 
-import { ExternalLink, Printer, Mail } from 'lucide-react'
+import { ExternalLink, Mail } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Cotizacion } from '@/types/cotizacion.types'
 import { EstadoCot, TipoMoneda } from '@/types/enums'
@@ -126,14 +126,6 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
 
       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-1">
-          <button
-            title="Imprimir"
-            className="p-2 rounded-lg text-gray-400 hover:text-gray-600
-              hover:bg-gray-50 transition-colors"
-            onClick={() => globalThis.print()}
-          >
-            <Printer size={15} />
-          </button>
           {cotizacion.estado === EstadoCot.Pendiente && (
             <button
               title="Marcar como enviada"
