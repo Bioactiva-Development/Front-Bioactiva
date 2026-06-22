@@ -42,12 +42,23 @@ interface PeriodoTab {
   sub:    string
 }
 
+interface DateFieldProps {
+  id: string
+  value: string
+  min?: string
+  max?: string
+  calendarLabel: string
+  className: string
+  onFocus: () => void
+  onChange: (value: string) => string
+}
+
 const ANIO_INICIAL          = 2010
 const ANIO_ACTUAL           = new Date().getFullYear()
 const ANIO_ACTUAL_TEXTO     = String(ANIO_ACTUAL)
 const ANIOS                 = Array.from(
   { length: ANIO_ACTUAL - ANIO_INICIAL + 1 },
-  (_, index) => String(ANIO_INICIAL + index)
+  (_, index) => String(ANIO_ACTUAL - index)
 )
 const DASHBOARD_FETCH_LIMIT = 500
 
@@ -71,10 +82,106 @@ const parseDateBoundary = (date: string, endOfDay = false) =>
 const toIsoDateBoundary = (date: string, endOfDay = false) =>
   new Date(`${date}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`).toISOString()
 
+const formatDateForDisplay = (date: string) => {
+  const [year, month, day] = date.split('-')
+  return year && month && day ? `${day}/${month}/${year}` : ''
+}
+
+const parseDisplayDate = (date: string) => {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(date)
+  if (!match) return null
+  const [, day, month, year] = match
+  const parsed = new Date(`${year}-${month}-${day}T00:00:00.000Z`)
+  if (
+    parsed.getUTCFullYear() !== Number(year) ||
+    parsed.getUTCMonth() + 1 !== Number(month) ||
+    parsed.getUTCDate() !== Number(day)
+  ) return null
+  return `${year}-${month}-${day}`
+}
+
+const formatTypedDate = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 8)
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)]
+    .filter(Boolean)
+    .join('/')
+}
+
 const isWithinPeriod = (isoDate: string | undefined, start: Date, end: Date) => {
   if (!isoDate) return false
   const time = new Date(isoDate).getTime()
   return time >= start.getTime() && time <= end.getTime()
+}
+
+function DateField({
+  id,
+  value,
+  min,
+  max,
+  calendarLabel,
+  className,
+  onFocus,
+  onChange,
+}: Readonly<DateFieldProps>) {
+  const [displayValue, setDisplayValue] = useState(formatDateForDisplay(value))
+
+  const commitDisplayValue = (nextDisplayValue: string) => {
+    const parsed = parseDisplayDate(nextDisplayValue)
+    if (parsed) {
+      const committed = onChange(parsed)
+      if (committed !== parsed) {
+        setDisplayValue(formatDateForDisplay(committed))
+      }
+      return true
+    }
+    return false
+  }
+
+  const handleTextChange = (nextValue: string) => {
+    const formatted = formatTypedDate(nextValue)
+    setDisplayValue(formatted)
+    commitDisplayValue(formatted)
+  }
+
+  const invalidDisplay = displayValue.length === 10 && !parseDisplayDate(displayValue)
+
+  return (
+    <div className="relative">
+      <input
+        id={id}
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        maxLength={10}
+        placeholder="dd/mm/aaaa"
+        value={displayValue}
+        aria-invalid={invalidDisplay}
+        onFocus={onFocus}
+        onChange={(event) => handleTextChange(event.target.value)}
+        onBlur={() => {
+          if (!commitDisplayValue(displayValue)) {
+            setDisplayValue(formatDateForDisplay(value))
+          }
+        }}
+        className={`${className} pr-11`}
+      />
+      <input
+        type="date"
+        value={value}
+        min={min}
+        max={max}
+        aria-label={calendarLabel}
+        onFocus={onFocus}
+        onChange={(event) => onChange(event.target.value)}
+        className="absolute right-0 top-0 h-full w-11 cursor-pointer opacity-0"
+      />
+      <Calendar
+        size={16}
+        aria-hidden="true"
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+      />
+    </div>
+  )
 }
 
 function KpiCard({ label, valor, descripcion, icono, iconoBg, extra, compact = false, accentBorder = 'border-t-gray-200' }: Readonly<KpiCardProps>) {
@@ -138,12 +245,6 @@ const getPeriodDates = (periodo: string, anio: string) => {
   }
 }
 
-const limitDateToRange = (date: string, min: string, max: string) => {
-  if (date < min) return min
-  if (date > max) return max
-  return date
-}
-
 const formatPen = (value?: number) =>
   `S/ ${(value ?? 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -197,11 +298,6 @@ export default function DashboardPage() {
   const kpiValor = (value: string) => cargandoMetricas ? '...' : value
   const kpiMonto = (value?: MoneyByCurrency) =>
     cargandoMetricas ? '...' : <MoneyDual value={value} />
-  const limitesPeriodo = useMemo(
-    () => getPeriodDates(periodoActivo, anioActivo),
-    [anioActivo, periodoActivo]
-  )
-
   const handlePeriodo = (key: string) => {
     setPeriodoActivo(key)
     const { inicio, fin } = getPeriodDates(key, anioActivo)
@@ -211,6 +307,7 @@ export default function DashboardPage() {
 
   const handleAnio = (anio: string) => {
     setAnioActivo(anio)
+    if (periodoActivo === 'custom') return
     const { inicio, fin } = getPeriodDates(periodoActivo, anio)
     setFechaInicio(inicio)
     setFechaFin(fin)
@@ -224,23 +321,31 @@ export default function DashboardPage() {
   }
 
   const handleFechaInicio = (date: string) => {
-    if (!date) return
-    const fechaLimitada = limitDateToRange(date, limitesPeriodo.inicio, limitesPeriodo.fin)
-    setFechaInicio(fechaLimitada)
-    if (fechaFin < fechaLimitada) setFechaFin(fechaLimitada)
+    if (!date) return fechaInicio
+    setPeriodoActivo('custom')
+    setFechaInicio(date)
+    if (fechaFin < date) setFechaFin(date)
+    return date
   }
 
   const handleFechaFin = (date: string) => {
-    if (!date) return
-    const fechaLimitada = limitDateToRange(date, limitesPeriodo.inicio, limitesPeriodo.fin)
-    setFechaFin(fechaLimitada < fechaInicio ? fechaInicio : fechaLimitada)
+    if (!date) return fechaFin
+    setPeriodoActivo('custom')
+    const nextDate = date < fechaInicio ? fechaInicio : date
+    setFechaFin(nextDate)
+    return nextDate
   }
+
+  const handleFechaFocus = () => setPeriodoActivo('custom')
 
   const rangoFechas = useMemo(() => ({
     inicio: parseDateBoundary(fechaInicio),
     fin:    parseDateBoundary(fechaFin, true),
   }), [fechaFin, fechaInicio])
   const periodos = useMemo(() => getPeriodos(anioActivo), [anioActivo])
+  const periodoSeleccionado = periodoActivo === 'custom'
+    ? 'RANGO PERSONALIZADO'
+    : `${periodos.find((periodo) => periodo.key === periodoActivo)?.label ?? 'AÑO COMPLETO'} ${anioActivo}`
 
   const pipelineData = useMemo(() => {
     const leadsPeriodo = (leadsResponse?.data ?? []).filter((lead) =>
@@ -315,7 +420,7 @@ export default function DashboardPage() {
             <Filter size={14} className="text-gray-400" />
             <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Filtros</span>
             <span className="text-xs text-gray-400">
-              · {periodos.find(p => p.key === periodoActivo)?.label ?? 'AÑO COMPLETO'} {anioActivo}
+              · {periodoSeleccionado}
             </span>
           </div>
           {filtrosAbiertos
@@ -373,36 +478,54 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-3 items-end">
               <div className="space-y-1">
-                <label htmlFor="dash-fecha-inicio" className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+                <label
+                  htmlFor="dash-fecha-inicio"
+                  className={`text-[11px] font-medium uppercase tracking-wide transition-colors ${
+                    periodoActivo === 'custom' ? 'text-emerald-600' : 'text-gray-400'
+                  }`}
+                >
                   Fecha inicio
                 </label>
-                <input
+                <DateField
+                  key={fechaInicio}
                   id="dash-fecha-inicio"
-                  type="date"
                   value={fechaInicio}
-                  min={limitesPeriodo.inicio}
                   max={fechaFin}
-                  onChange={(e) => handleFechaInicio(e.target.value)}
-                  required
-                  className="w-full border border-gray-100 rounded-lg px-3 py-2 text-sm
-                    outline-none focus:border-emerald-300 text-gray-600 bg-white"
+                  calendarLabel="Abrir calendario inicial"
+                  onFocus={handleFechaFocus}
+                  onChange={handleFechaInicio}
+                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-600 outline-none
+                    transition-colors focus:border-emerald-400 ${
+                      periodoActivo === 'custom'
+                        ? 'border-emerald-500 bg-emerald-50/50 ring-1 ring-emerald-100'
+                        : 'border-gray-100 bg-white'
+                    }`}
                 />
               </div>
               <div className="flex items-end gap-3">
                 <div className="flex-1 space-y-1">
-                  <label htmlFor="dash-fecha-fin" className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+                  <label
+                    htmlFor="dash-fecha-fin"
+                    className={`text-[11px] font-medium uppercase tracking-wide transition-colors ${
+                      periodoActivo === 'custom' ? 'text-emerald-600' : 'text-gray-400'
+                    }`}
+                  >
                     Fecha fin
                   </label>
-                  <input
+                  <DateField
+                    key={fechaFin}
                     id="dash-fecha-fin"
-                    type="date"
                     value={fechaFin}
                     min={fechaInicio}
-                    max={limitesPeriodo.fin}
-                    onChange={(e) => handleFechaFin(e.target.value)}
-                    required
-                    className="w-full border border-gray-100 rounded-lg px-3 py-2 text-sm
-                      outline-none focus:border-emerald-300 text-gray-600 bg-white"
+                    calendarLabel="Abrir calendario final"
+                    onFocus={handleFechaFocus}
+                    onChange={handleFechaFin}
+                    className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-600 outline-none
+                      transition-colors focus:border-emerald-400 ${
+                        periodoActivo === 'custom'
+                          ? 'border-emerald-500 bg-emerald-50/50 ring-1 ring-emerald-100'
+                          : 'border-gray-100 bg-white'
+                      }`}
                   />
                 </div>
               </div>
@@ -450,7 +573,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between pt-1">
         <h2 className="text-base font-bold text-gray-800">Resultados comerciales</h2>
         <span className="text-[11px] text-gray-400 uppercase tracking-wide">
-          {periodos.find(p => p.key === periodoActivo)?.label} {anioActivo}
+          {periodoSeleccionado}
         </span>
       </div>
 

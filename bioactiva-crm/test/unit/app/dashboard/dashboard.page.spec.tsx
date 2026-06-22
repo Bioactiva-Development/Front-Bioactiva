@@ -137,7 +137,7 @@ describe('dashboard/page', () => {
     await userEvent.click(filtrosBtn)
   }
 
-  it('renders years from 2010 through the current year and selects the current year', async () => {
+  it('renders years from the current year down to 2010 and selects the current year', async () => {
     renderPage()
     await abrirFiltros()
     const select = screen.getByRole('combobox')
@@ -145,8 +145,8 @@ describe('dashboard/page', () => {
     expect(select).toBeInTheDocument()
     const options = screen.getAllByRole('option')
     expect(options).toHaveLength(currentYear - 2010 + 1)
-    expect(options[0]).toHaveValue('2010')
-    expect(options.at(-1)).toHaveValue(String(currentYear))
+    expect(options[0]).toHaveValue(String(currentYear))
+    expect(options.at(-1)).toHaveValue('2010')
     expect(select).toHaveValue(String(currentYear))
   })
 
@@ -157,15 +157,11 @@ describe('dashboard/page', () => {
     const inicio = screen.getByLabelText(/fecha inicio/i)
     const fin = screen.getByLabelText(/fecha fin/i)
 
-    expect(inicio).toHaveValue(`${currentYear}-01-01`)
-    expect(inicio).toHaveAttribute('min', `${currentYear}-01-01`)
-    expect(inicio).toHaveAttribute('max', `${currentYear}-12-31`)
-    expect(fin).toHaveValue(`${currentYear}-12-31`)
-    expect(fin).toHaveAttribute('min', `${currentYear}-01-01`)
-    expect(fin).toHaveAttribute('max', `${currentYear}-12-31`)
+    expect(inicio).toHaveValue(`01/01/${currentYear}`)
+    expect(fin).toHaveValue(`31/12/${currentYear}`)
   })
 
-  it('limits both dates to the selected quarter', async () => {
+  it('fills both dates when a predefined quarter is selected', async () => {
     const user = userEvent.setup()
     renderPage()
     await abrirFiltros()
@@ -174,12 +170,8 @@ describe('dashboard/page', () => {
     const inicio = screen.getByLabelText(/fecha inicio/i)
     const fin = screen.getByLabelText(/fecha fin/i)
 
-    expect(inicio).toHaveValue(`${currentYear}-01-01`)
-    expect(inicio).toHaveAttribute('min', `${currentYear}-01-01`)
-    expect(inicio).toHaveAttribute('max', `${currentYear}-03-31`)
-    expect(fin).toHaveValue(`${currentYear}-03-31`)
-    expect(fin).toHaveAttribute('min', `${currentYear}-01-01`)
-    expect(fin).toHaveAttribute('max', `${currentYear}-03-31`)
+    expect(inicio).toHaveValue(`01/01/${currentYear}`)
+    expect(fin).toHaveValue(`31/03/${currentYear}`)
   })
 
   it('keeps the start date less than or equal to the end date', async () => {
@@ -191,16 +183,18 @@ describe('dashboard/page', () => {
     const inicio = screen.getByLabelText(/fecha inicio/i)
     const fin = screen.getByLabelText(/fecha fin/i)
 
-    fireEvent.change(fin, { target: { value: `${currentYear}-02-15` } })
-    fireEvent.change(inicio, { target: { value: `${currentYear}-03-01` } })
-    expect(inicio).toHaveValue(`${currentYear}-03-01`)
-    expect(fin).toHaveValue(`${currentYear}-03-01`)
+    fireEvent.change(fin, { target: { value: `15/02/${currentYear}` } })
+    fireEvent.change(inicio, { target: { value: `01/03/${currentYear}` } })
+    expect(screen.getByLabelText(/fecha inicio/i)).toHaveValue(`01/03/${currentYear}`)
+    expect(screen.getByLabelText(/fecha fin/i)).toHaveValue(`01/03/${currentYear}`)
 
-    fireEvent.change(fin, { target: { value: `${currentYear}-01-01` } })
-    expect(fin).toHaveValue(`${currentYear}-03-01`)
+    fireEvent.change(screen.getByLabelText(/fecha fin/i), {
+      target: { value: `01/01/${currentYear}` },
+    })
+    expect(screen.getByLabelText(/fecha fin/i)).toHaveValue(`01/03/${currentYear}`)
   })
 
-  it('clamps manually entered dates to the selected period', async () => {
+  it('activates an independent custom range when either date is edited', async () => {
     const user = userEvent.setup()
     renderPage()
     await abrirFiltros()
@@ -209,10 +203,15 @@ describe('dashboard/page', () => {
     const inicio = screen.getByLabelText(/fecha inicio/i)
     const fin = screen.getByLabelText(/fecha fin/i)
 
-    fireEvent.change(inicio, { target: { value: `${currentYear - 1}-12-31` } })
-    fireEvent.change(fin, { target: { value: `${currentYear}-04-01` } })
-    expect(inicio).toHaveValue(`${currentYear}-01-01`)
-    expect(fin).toHaveValue(`${currentYear}-03-31`)
+    fireEvent.focus(inicio)
+    expect(inicio.className).toContain('border-emerald-500')
+    expect(fin.className).toContain('border-emerald-500')
+    expect(getActiveTabText()).toBeNull()
+
+    fireEvent.change(fin, { target: { value: `01/04/${currentYear}` } })
+    expect(inicio).toHaveValue(`01/01/${currentYear}`)
+    expect(fin).toHaveValue(`01/04/${currentYear}`)
+    expect(screen.getByText(/RANGO PERSONALIZADO/)).toBeInTheDocument()
   })
 
   it('renders period tabs', async () => {
@@ -313,7 +312,7 @@ describe('dashboard/page', () => {
     const currentYear = new Date().getFullYear()
     const fin = screen.getByLabelText(/fecha fin/i)
 
-    fireEvent.change(fin, { target: { value: `${currentYear}-01-01` } })
+    fireEvent.change(fin, { target: { value: `01/01/${currentYear}` } })
 
     expect(
       screen.getByText('No hay data para este periodo seleccionado')
