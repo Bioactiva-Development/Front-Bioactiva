@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React from 'react'
@@ -71,7 +71,7 @@ const mockMetrics = {
   closedRevenue: { pen: 180000.0, usd: 48000.0 },
   stalledLeadPercentage: 12.8,
   periodStart: '2026-01-01',
-  periodEnd: '2027-01-01',
+  periodEnd: '2026-12-31',
 }
 
 const defaultLead = {
@@ -127,21 +127,91 @@ describe('dashboard/page', () => {
     expect(screen.getByText('Métricas del periodo seleccionado')).toBeInTheDocument()
   })
 
+  it('does not render the active status and current date', () => {
+    renderPage()
+    expect(screen.queryByText(/Activo\s*·/)).not.toBeInTheDocument()
+  })
+
   async function abrirFiltros() {
     const filtrosBtn = screen.getByText('Filtros')
     await userEvent.click(filtrosBtn)
   }
 
-  it('renders year selector with 2024, 2025, 2026 options', async () => {
+  it('renders years from the current year down to 2020 and selects the current year', async () => {
     renderPage()
     await abrirFiltros()
     const select = screen.getByRole('combobox')
+    const currentYear = new Date().getFullYear()
     expect(select).toBeInTheDocument()
     const options = screen.getAllByRole('option')
-    expect(options).toHaveLength(3)
-    expect(options[0]).toHaveValue('2024')
-    expect(options[1]).toHaveValue('2025')
-    expect(options[2]).toHaveValue('2026')
+    expect(options).toHaveLength(currentYear - 2020 + 1)
+    expect(options[0]).toHaveValue(String(currentYear))
+    expect(options.at(-1)).toHaveValue('2020')
+    expect(select).toHaveValue(String(currentYear))
+  })
+
+  it('uses the complete current year as the default date range', async () => {
+    renderPage()
+    await abrirFiltros()
+    const currentYear = new Date().getFullYear()
+    const inicio = screen.getByLabelText(/fecha inicio/i)
+    const fin = screen.getByLabelText(/fecha fin/i)
+
+    expect(inicio).toHaveValue(`01/01/${currentYear}`)
+    expect(fin).toHaveValue(`31/12/${currentYear}`)
+  })
+
+  it('fills both dates when a predefined quarter is selected', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await abrirFiltros()
+    const currentYear = new Date().getFullYear()
+    await user.click(screen.getByText('1ER TRIMESTRE'))
+    const inicio = screen.getByLabelText(/fecha inicio/i)
+    const fin = screen.getByLabelText(/fecha fin/i)
+
+    expect(inicio).toHaveValue(`01/01/${currentYear}`)
+    expect(fin).toHaveValue(`31/03/${currentYear}`)
+  })
+
+  it('keeps the start date less than or equal to the end date', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await abrirFiltros()
+    const currentYear = new Date().getFullYear()
+    await user.click(screen.getByText('1ER TRIMESTRE'))
+    const inicio = screen.getByLabelText(/fecha inicio/i)
+    const fin = screen.getByLabelText(/fecha fin/i)
+
+    fireEvent.change(fin, { target: { value: `15/02/${currentYear}` } })
+    fireEvent.change(inicio, { target: { value: `01/03/${currentYear}` } })
+    expect(screen.getByLabelText(/fecha inicio/i)).toHaveValue(`01/03/${currentYear}`)
+    expect(screen.getByLabelText(/fecha fin/i)).toHaveValue(`01/03/${currentYear}`)
+
+    fireEvent.change(screen.getByLabelText(/fecha fin/i), {
+      target: { value: `01/01/${currentYear}` },
+    })
+    expect(screen.getByLabelText(/fecha fin/i)).toHaveValue(`01/03/${currentYear}`)
+  })
+
+  it('activates an independent custom range when either date is edited', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await abrirFiltros()
+    const currentYear = new Date().getFullYear()
+    await user.click(screen.getByText('1ER TRIMESTRE'))
+    const inicio = screen.getByLabelText(/fecha inicio/i)
+    const fin = screen.getByLabelText(/fecha fin/i)
+
+    fireEvent.focus(inicio)
+    expect(inicio.className).toContain('border-emerald-500')
+    expect(fin.className).toContain('border-emerald-500')
+    expect(getActiveTabText()).toBeNull()
+
+    fireEvent.change(fin, { target: { value: `01/04/${currentYear}` } })
+    expect(inicio).toHaveValue(`01/01/${currentYear}`)
+    expect(fin).toHaveValue(`01/04/${currentYear}`)
+    expect(screen.getByText(/RANGO PERSONALIZADO/)).toBeInTheDocument()
   })
 
   it('renders period tabs', async () => {
@@ -227,12 +297,30 @@ describe('dashboard/page', () => {
     ).toBeInTheDocument()
   })
 
-  it('shows empty state when cotizaciones is empty', () => {
+  it('shows the dashboard empty state when the selected period has no data', () => {
     mockUseCotizaciones.mockReturnValue({ data: { data: [] }, isLoading: false, isError: false })
     renderPage()
     expect(
-      screen.getByText('Sin cotizaciones en el periodo.')
+      screen.getByText('No hay data para este periodo seleccionado')
     ).toBeInTheDocument()
+    expect(screen.queryByText('Resultados comerciales')).not.toBeInTheDocument()
+  })
+
+  it('shows the empty state for a valid single-day period with no data', async () => {
+    renderPage()
+    await abrirFiltros()
+    const currentYear = new Date().getFullYear()
+    const fin = screen.getByLabelText(/fecha fin/i)
+
+    fireEvent.change(fin, { target: { value: `01/01/${currentYear}` } })
+
+    expect(
+      screen.getByText('No hay data para este periodo seleccionado')
+    ).toBeInTheDocument()
+    expect(mockUseDashboardMetrics).toHaveBeenLastCalledWith({
+      startDate: `${currentYear}-01-01T00:00:00.000Z`,
+      endDate: `${currentYear}-01-01T23:59:59.999Z`,
+    })
   })
 
   it('clicking period tab triggers state change', async () => {

@@ -64,6 +64,7 @@ export function CotizacionFiltros({
       <OrgBuscador
         value={filtros.id_org}
         onSelect={handleOrg}
+        placeholder="Buscar por organización"
       />
     </div>
   )

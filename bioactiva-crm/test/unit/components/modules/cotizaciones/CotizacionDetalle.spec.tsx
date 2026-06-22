@@ -32,7 +32,6 @@ jest.mock('lucide-react', () => ({
   ArrowLeft: () => <div data-testid="icon-arrow-left" />,
   Pencil: () => <div data-testid="icon-pencil" />,
   ExternalLink: () => <div data-testid="icon-external-link" />,
-  Printer: () => <div data-testid="icon-printer" />,
   Send: () => <div data-testid="icon-send" />,
   CheckCircle2: () => <div data-testid="icon-check-circle" />,
   XCircle: () => <div data-testid="icon-x-circle" />,
@@ -102,6 +101,11 @@ describe('modules/cotizaciones/CotizacionDetalle', () => {
     expect(screen.getByText('Volver')).toBeInTheDocument()
   })
 
+  it('does not render a print action', () => {
+    render(<CotizacionDetalle cotizacion={baseCotizacion} onEditar={jest.fn()} />)
+    expect(screen.queryByText('Imprimir')).not.toBeInTheDocument()
+  })
+
   it('shows Editar button when estado is not terminal', () => {
     render(<CotizacionDetalle cotizacion={baseCotizacion} onEditar={jest.fn()} />)
     expect(screen.getByText('Editar')).toBeInTheDocument()
@@ -116,28 +120,29 @@ describe('modules/cotizaciones/CotizacionDetalle', () => {
   it('shows Enviar button when estado is Pendiente', () => {
     render(<CotizacionDetalle cotizacion={baseCotizacion} onEditar={jest.fn()} />)
     expect(screen.getByText('Marcar como enviada')).toBeInTheDocument()
+    expect(screen.queryByText('Aceptar')).not.toBeInTheDocument()
+    expect(screen.queryByText('Rechazar')).not.toBeInTheDocument()
   })
 
-  it('does NOT show Enviar button when estado is Rechazada', () => {
+  it('shows only Aceptar and Rechazar when estado is Enviada', () => {
+    const enviada: Cotizacion = { ...baseCotizacion, estado: EstadoCot.Enviada }
+    render(<CotizacionDetalle cotizacion={enviada} onEditar={jest.fn()} />)
+    expect(screen.queryByText('Marcar como enviada')).not.toBeInTheDocument()
+    expect(screen.getByText('Aceptar')).toBeInTheDocument()
+    expect(screen.getByText('Rechazar')).toBeInTheDocument()
+  })
+
+  it('does not show lifecycle actions for Rechazada', () => {
     const rechazada: Cotizacion = { ...baseCotizacion, estado: EstadoCot.Rechazada }
     render(<CotizacionDetalle cotizacion={rechazada} onEditar={jest.fn()} />)
     expect(screen.queryByText('Marcar como enviada')).not.toBeInTheDocument()
-  })
-
-  it('shows "estado terminal" message for Rechazada', () => {
-    const rechazada: Cotizacion = { ...baseCotizacion, estado: EstadoCot.Rechazada }
-    render(<CotizacionDetalle cotizacion={rechazada} onEditar={jest.fn()} />)
+    expect(screen.queryByText('Aceptar')).not.toBeInTheDocument()
+    expect(screen.queryByText('Rechazar')).not.toBeInTheDocument()
     expect(
       screen.getByText(
         'Esta cotización está en estado terminal y no puede modificarse.'
       )
     ).toBeInTheDocument()
-  })
-
-  it('Aceptar and Rechazar buttons rendered for Pendiente', () => {
-    render(<CotizacionDetalle cotizacion={baseCotizacion} onEditar={jest.fn()} />)
-    expect(screen.getByText('Aceptar')).toBeInTheDocument()
-    expect(screen.getByText('Rechazar')).toBeInTheDocument()
   })
 
   it('clicking Enviar calls enviar mutateAsync', async () => {
@@ -149,14 +154,16 @@ describe('modules/cotizaciones/CotizacionDetalle', () => {
 
   it('clicking Aceptar calls aceptar mutateAsync', async () => {
     mockAceptar.mockResolvedValue(undefined)
-    render(<CotizacionDetalle cotizacion={baseCotizacion} onEditar={jest.fn()} />)
+    const enviada: Cotizacion = { ...baseCotizacion, estado: EstadoCot.Enviada }
+    render(<CotizacionDetalle cotizacion={enviada} onEditar={jest.fn()} />)
     await userEvent.click(screen.getByText('Aceptar'))
     expect(mockAceptar).toHaveBeenCalledWith(1)
   })
 
   it('clicking Rechazar calls rechazar mutateAsync', async () => {
     mockRechazar.mockResolvedValue(undefined)
-    render(<CotizacionDetalle cotizacion={baseCotizacion} onEditar={jest.fn()} />)
+    const enviada: Cotizacion = { ...baseCotizacion, estado: EstadoCot.Enviada }
+    render(<CotizacionDetalle cotizacion={enviada} onEditar={jest.fn()} />)
     await userEvent.click(screen.getByText('Rechazar'))
     expect(mockRechazar).toHaveBeenCalledWith(1)
   })
