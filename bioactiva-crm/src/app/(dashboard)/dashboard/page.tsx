@@ -53,7 +53,7 @@ interface DateFieldProps {
   onChange: (value: string) => string
 }
 
-const ANIO_INICIAL          = 2010
+const ANIO_INICIAL          = 2020
 const ANIO_ACTUAL           = new Date().getFullYear()
 const ANIO_ACTUAL_TEXTO     = String(ANIO_ACTUAL)
 const ANIOS                 = Array.from(

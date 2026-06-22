@@ -137,16 +137,16 @@ describe('dashboard/page', () => {
     await userEvent.click(filtrosBtn)
   }
 
-  it('renders years from the current year down to 2010 and selects the current year', async () => {
+  it('renders years from the current year down to 2020 and selects the current year', async () => {
     renderPage()
     await abrirFiltros()
     const select = screen.getByRole('combobox')
     const currentYear = new Date().getFullYear()
     expect(select).toBeInTheDocument()
     const options = screen.getAllByRole('option')
-    expect(options).toHaveLength(currentYear - 2010 + 1)
+    expect(options).toHaveLength(currentYear - 2020 + 1)
     expect(options[0]).toHaveValue(String(currentYear))
-    expect(options.at(-1)).toHaveValue('2010')
+    expect(options.at(-1)).toHaveValue('2020')
     expect(select).toHaveValue(String(currentYear))
   })
 
