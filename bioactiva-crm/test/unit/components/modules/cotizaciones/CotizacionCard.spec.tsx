@@ -18,6 +18,7 @@ const baseCotizacion: Cotizacion = {
   id_lead: 1,
   id_remitente: 1,
   fecha_cot: '2025-03-01',
+  contacto_nombre: 'Juan Pérez',
   dirigido: 'Juan Pérez',
   nombre_servicio: 'Consultoría I+D',
   monto: 15000,
@@ -47,14 +48,17 @@ describe('modules/cotizaciones/CotizacionCard', () => {
     jest.clearAllMocks()
   })
 
+  const renderCard = (cotizacion: Cotizacion) =>
+    render(<table><tbody><CotizacionCard cotizacion={cotizacion} /></tbody></table>)
+
   it('renders codigo', () => {
     renderCard(baseCotizacion)
     expect(screen.getAllByText('COT-001').length).toBeGreaterThan(0)
   })
 
-  it('does not render the lead identifier', () => {
+  it('renders lead_codigo', () => {
     renderCard(baseCotizacion)
-    expect(screen.queryByText('LEAD-001')).not.toBeInTheDocument()
+    expect(screen.getAllByText('LEAD-001').length).toBeGreaterThan(0)
   })
 
   it('renders periodo', () => {
@@ -62,10 +66,10 @@ describe('modules/cotizaciones/CotizacionCard', () => {
     expect(screen.getAllByText('Q1 2025').length).toBeGreaterThan(0)
   })
 
-  it('renders contacto_nombre', () => {
+  it('renders dirigido', () => {
     renderCard(baseCotizacion)
     expect(screen.getAllByText('Juan Pérez').length).toBeGreaterThan(0)
-  })
+  })split list
 
   it('renders organizacion_nombre', () => {
     renderCard(baseCotizacion)
@@ -93,22 +97,21 @@ describe('modules/cotizaciones/CotizacionCard', () => {
     expect(screen.getAllByText('Pendiente').length).toBeGreaterThan(0)
   })
 
-  it('renders Ver detalle as the only available action', () => {
+  it('renders send button for Pendiente estado', () => {
     renderCard(baseCotizacion)
-    expect(screen.getByTitle('Ver detalle')).toBeInTheDocument()
+    expect(screen.getAllByTitle('Marcar como enviada').length).toBeGreaterThan(0)
+  })
+
+  it('hides send button for non-Pendiente estado', () => {
+    const enviada: Cotizacion = { ...baseCotizacion, estado: EstadoCot.Enviada }
+    renderCard(enviada)
     expect(screen.queryByTitle('Marcar como enviada')).not.toBeInTheDocument()
-    expect(screen.getAllByRole('button')).toHaveLength(1)
   })
 
-  it('does not render a print action', () => {
+  it('calls enviar when send button is clicked', async () => {
     renderCard(baseCotizacion)
-    expect(screen.queryByTitle('Imprimir')).not.toBeInTheDocument()
-  })
-
-  it('opens the quotation detail from the action button', async () => {
-    renderCard(baseCotizacion)
-    await userEvent.click(screen.getByTitle('Ver detalle'))
-    expect(mockRouterPush).toHaveBeenCalledWith('/cotizaciones/1')
+    await userEvent.click(screen.getAllByTitle('Marcar como enviada')[0])
+    expect(mockEnviar).toHaveBeenCalledWith(1)
   })
 
   it('calls router.push when row is clicked', async () => {
@@ -121,4 +124,9 @@ describe('modules/cotizaciones/CotizacionCard', () => {
     }
   })
 
+  it('renders lead id fallback when lead_codigo is missing', () => {
+    const sinCodigo: Cotizacion = { ...baseCotizacion, lead_codigo: undefined }
+    renderCard(sinCodigo)
+    expect(screen.getAllByText('#1').length).toBeGreaterThan(0)
+  })
 })

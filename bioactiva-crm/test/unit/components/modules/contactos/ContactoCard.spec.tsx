@@ -73,15 +73,15 @@ describe('modules/contactos/ContactoCard', () => {
     expect(screen.getAllByText('—').length).toBeGreaterThan(0)
   })
 
-  it('shows Activo badge for VIGENTE estado_correo', () => {
+  it('shows Vigente badge for VIGENTE estado_correo', () => {
     render(<ContactoCard contacto={baseContacto} />)
-    expect(screen.getAllByText('Activo').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Vigente').length).toBeGreaterThan(0)
   })
 
-  it('shows Inactivo badge for VENCIDO estado_correo', () => {
+  it('shows Vencido badge for VENCIDO estado_correo', () => {
     const c: Contacto = { ...baseContacto, estado_correo: 'VENCIDO' }
     render(<ContactoCard contacto={c} />)
-    expect(screen.getAllByText('Inactivo').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Vencido').length).toBeGreaterThan(0)
   })
 
   it('calls router.push when clicked', async () => {

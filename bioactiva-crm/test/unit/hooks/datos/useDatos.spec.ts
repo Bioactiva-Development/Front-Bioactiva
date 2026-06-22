@@ -1,5 +1,9 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 
+jest.mock('@/lib/constants/config', () => ({
+  USE_MOCK: true,
+}))
+
 const mockPreviewImport = jest.fn()
 const mockConfirmarImport = jest.fn()
 const mockExportar = jest.fn()
@@ -132,7 +136,7 @@ describe('datos/useDatos', () => {
 
       let success: boolean
       await act(async () => {
-        success = await result.current.exportar({ entidad: 'contactos', busqueda: '' })
+        success = await result.current.exportar({ entidad: 'contactos' })
       })
 
       expect(success!).toBe(true)
@@ -147,7 +151,7 @@ describe('datos/useDatos', () => {
 
       let success: boolean
       await act(async () => {
-        success = await result.current.exportar({ entidad: 'contactos', busqueda: '' })
+        success = await result.current.exportar({ entidad: 'contactos' })
       })
 
       expect(success!).toBe(false)
@@ -161,7 +165,7 @@ describe('datos/useDatos', () => {
 
       let success: boolean
       await act(async () => {
-        success = await result.current.exportar({ entidad: 'contactos', busqueda: '' })
+        success = await result.current.exportar({ entidad: 'contactos' })
       })
 
       expect(success!).toBe(false)
@@ -176,7 +180,7 @@ describe('datos/useDatos', () => {
       const { result } = renderHook(() => useDatos())
 
       await act(async () => {
-        await result.current.actualizarConteo({ entidad: 'leads', busqueda: '' })
+        await result.current.actualizarConteo({ entidad: 'leads' })
       })
 
       expect(result.current.conteo).toEqual({ total: 50 })
@@ -188,7 +192,7 @@ describe('datos/useDatos', () => {
       const { result } = renderHook(() => useDatos())
 
       await act(async () => {
-        await result.current.actualizarConteo({ entidad: 'leads', busqueda: '' })
+        await result.current.actualizarConteo({ entidad: 'leads' })
       })
 
       expect(result.current.conteo).toBeNull()

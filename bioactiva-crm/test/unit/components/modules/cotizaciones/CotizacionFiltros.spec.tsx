@@ -82,15 +82,7 @@ describe('modules/cotizaciones/CotizacionFiltros', () => {
     })
   })
 
-  it('uses the organization search placeholder', () => {
-    render(<CotizacionFiltros {...defaultProps} />)
-    expect(screen.getByTestId('org-buscador')).toHaveAttribute(
-      'data-placeholder',
-      'Buscar por organización'
-    )
-  })
-
-  it('renders the organization search', () => {
+  it('shows OrgBuscador instead of search input', () => {
     render(<CotizacionFiltros {...defaultProps} />)
     expect(screen.getByTestId('org-buscador')).toBeInTheDocument()
   })

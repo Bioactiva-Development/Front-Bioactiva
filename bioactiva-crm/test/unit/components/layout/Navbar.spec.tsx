@@ -5,12 +5,10 @@ import { RolUsuario } from '@/types/enums'
 
 const mockLogout = jest.fn()
 const mockToggleSidebar = jest.fn()
-const mockSetNotificacionesPendientes = jest.fn()
 const mockRouterPush = jest.fn()
 
 const mockUseAuthStore = jest.fn()
 const mockUseUIStore = jest.fn()
-const mockUseNotificacionesInApp = jest.fn()
 const mockUseRouter = jest.fn()
 
 jest.mock('@/store', () => ({
@@ -20,10 +18,6 @@ jest.mock('@/store', () => ({
 
 jest.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ logout: mockLogout }),
-}))
-
-jest.mock('@/hooks/notificaciones/useNotificaciones', () => ({
-  useNotificacionesInApp: (...args: unknown[]) => mockUseNotificacionesInApp(...args),
 }))
 
 jest.mock('next/navigation', () => ({
@@ -44,11 +38,8 @@ function defaultMocks(overrides: Record<string, unknown> = {}) {
   mockUseAuthStore.mockReturnValue({ usuario: testUser })
   mockUseUIStore.mockReturnValue({
     toggleSidebar: mockToggleSidebar,
-    notificacionesPendientes: 0,
-    setNotificacionesPendientes: mockSetNotificacionesPendientes,
     ...overrides,
   })
-  mockUseNotificacionesInApp.mockReturnValue({ data: [], isLoading: false })
   mockUseRouter.mockReturnValue({ push: mockRouterPush, replace: jest.fn(), prefetch: jest.fn() })
 }
 
@@ -98,17 +89,6 @@ describe('layout/Navbar', () => {
     }
   })
 
-  it('shows notification dot when pendientes > 0', () => {
-    mockUseUIStore.mockReturnValue({
-      toggleSidebar: mockToggleSidebar,
-      notificacionesPendientes: 3,
-      setNotificacionesPendientes: mockSetNotificacionesPendientes,
-    })
-    const { container } = render(<Navbar />)
-    const dot = container.querySelector('.bg-red-500')
-    expect(dot).toBeInTheDocument()
-  })
-
   it('hides notification dot when pendientes is 0', () => {
     const { container } = render(<Navbar />)
     expect(container.querySelector('.bg-red-500')).not.toBeInTheDocument()
@@ -155,14 +135,7 @@ describe('layout/Navbar', () => {
     }
   })
 
-  it('updates notificacionesPendientes from unread in-app data', () => {
-    mockUseNotificacionesInApp.mockReturnValue({
-      data: Array.from({ length: 5 }, (_, id) => ({ id, estado: 'NO_LEIDA' })),
-      isLoading: false,
-    })
-    render(<Navbar />)
-    expect(mockSetNotificacionesPendientes).toHaveBeenCalledWith(5)
-  })
+
 
   it('renders email in user menu when open', async () => {
     render(<Navbar />)

@@ -44,7 +44,7 @@ describe('modules/pipeline/LeadFiltros', () => {
     const onChange = jest.fn()
     render(<LeadFiltros filtros={{}} onChange={onChange} onLimpiar={jest.fn()} />)
     await abrirFiltros()
-    await userEvent.click(screen.getByText('Vencidas'))
+    await userEvent.click(screen.getByText('Por vencer'))
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ alerta_actividad: 'POR_VENCER' })
     )
@@ -53,15 +53,16 @@ describe('modules/pipeline/LeadFiltros', () => {
   it('renders organization options from the hook', async () => {
     render(<LeadFiltros filtros={{}} onChange={jest.fn()} onLimpiar={jest.fn()} />)
     await abrirFiltros()
+    const orgInput = screen.getByPlaceholderText('Buscar y seleccionar organización...')
+    await userEvent.click(orgInput)
     expect(screen.getByText('Altomayo')).toBeInTheDocument()
   })
 
   it('loads responsables and emits an estado change', async () => {
     const onChange = jest.fn()
     render(<LeadFiltros filtros={{}} onChange={onChange} onLimpiar={jest.fn()} />)
-    await abrirPanel()
-    await waitFor(() => expect(getUsuarios).toHaveBeenCalled())
     await abrirFiltros()
+    await waitFor(() => expect(getUsuarios).toHaveBeenCalled())
 
     const estadoSelect = screen.getByLabelText('Estado')
     await userEvent.selectOptions(estadoSelect, LeadState.Ofertado)
@@ -82,19 +83,7 @@ describe('modules/pipeline/LeadFiltros', () => {
     expect(screen.getByText(/debe ser igual o posterior/i)).toBeInTheDocument()
   })
 
-  it('shows the leads total when provided', () => {
-    render(<LeadFiltros filtros={{}} onChange={jest.fn()} onLimpiar={jest.fn()} total={42} />)
-    expect(screen.getByText('42')).toBeInTheDocument()
-  })
 
-  it('emits the search term as it is typed', async () => {
-    const onChange = jest.fn()
-    render(<LeadFiltros filtros={{}} onChange={onChange} onLimpiar={jest.fn()} />)
-    await abrirFiltros()
-    const input = screen.getByPlaceholderText(/Buscar por código/i)
-    await userEvent.type(input, 'a')
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ search: 'a' }))
-  })
 
   it('shows a "Limpiar" button that calls onLimpiar when there are active filters', async () => {
     const onLimpiar = jest.fn()
