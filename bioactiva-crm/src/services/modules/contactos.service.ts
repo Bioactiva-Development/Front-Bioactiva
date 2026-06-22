@@ -96,9 +96,10 @@ export const contactosService = {
         if (USE_MOCK) return mockGetContactos(filtros)
 
         const params: Record<string, unknown> = {}
-        if (filtros?.search)         params.search         = filtros.search
-        if (filtros?.page)           params.page           = filtros.page
-        if (filtros?.limit)          params.limit          = filtros.limit
+        if (filtros?.search)           params.search         = filtros.search
+        if (filtros?.idOrganizacion)   params.idOrganization = filtros.idOrganizacion
+        if (filtros?.page)             params.page           = filtros.page
+        if (filtros?.limit)            params.limit          = filtros.limit
 
         const response = await apiClient.get<ContactosBackendResponse>(
             ENDPOINTS.contactos.list,
