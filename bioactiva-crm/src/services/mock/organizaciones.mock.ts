@@ -10,6 +10,7 @@ import{
     CotizacionResumida,
     OrganizacionConRelaciones,
 } from '@/types/organizacion.types';
+import { MOCK_CONTACTOS as MOCK_CONTACTOS_LIST } from './contactos.mock';
 
 
 
@@ -108,22 +109,6 @@ const MOCK_ORGANIZACIONES: Organizacion[] = [
 ]
 
 
-const MOCK_CONTACTOS: Record<string, ContactoResumido[]> = {
-  'org-001': [
-    { id: 1, nombres: 'Ricardo',  apellidos: 'Perales Tuesta',  vocativo: 'Sr',   cargo: 'Gerente de Proyectos',          correo: 'rperales@altomayo.com.pe',  telefono: '997 654 321' },
-    { id: 2, nombres: 'Lucía',    apellidos: 'Huanca Ríos',     vocativo: 'Sra',  cargo: 'Jefa de Innovación',            correo: 'lhuanca@altomayo.com.pe',   telefono: '991 234 567' },
-    { id: 3, nombres: 'Héctor',   apellidos: 'Sánchez Ruiz',    vocativo: 'Sr',   cargo: 'Gerente Comercial',             correo: 'hsanchez@altomayo.com.pe',  telefono: '993 111 456' },
-    { id: 4, nombres: 'Patricia', apellidos: 'Ccopa Mamani',    vocativo: 'Sra',  cargo: 'Gerente de Operaciones',        correo: 'pccopa@altomayo.com.pe',    telefono: '945 887 234' },
-    { id: 5, nombres: 'Javier',   apellidos: 'Medina Tapia',    vocativo: 'Sr',   cargo: 'Jefe de Calidad',               correo: 'jmedina@altomayo.com.pe',   telefono: '912 345 678' },
-    { id: 6, nombres: 'Valeria',  apellidos: 'Torres Aquino',   vocativo: 'Srta', cargo: 'Coordinadora de Proyectos I+D', correo: 'vtorres@altomayo.com.pe',   telefono: '998 302 177' },
-    { id: 7, nombres: 'Miguel',   apellidos: 'Flores Quispe',   vocativo: 'Sr',   cargo: 'Analista de Innovación',        correo: 'mflores@altomayo.com.pe',   telefono: '987 654 321' },
-    { id: 8, nombres: 'Carmen',   apellidos: 'Díaz Llanos',     vocativo: 'Sra',  cargo: 'Directora de Sostenibilidad',   correo: 'cdiaz@altomayo.com.pe',     telefono: '976 543 210' },
-  ],
-  'org-002': [
-    { id: 9,  nombres: 'Fernando', apellidos: 'Castro Rojas',  vocativo: 'Sr',  cargo: 'Director General',  correo: 'fcastro@cacaodearoma.pe',  telefono: '965 432 109' },
-    { id: 10, nombres: 'Ana',      apellidos: 'Quispe Mamani', vocativo: 'Sra', cargo: 'Jefa de Proyectos', correo: 'aquispe@cacaodearoma.pe',  telefono: '954 321 098' },
-  ],
-}
 
 const MOCK_LEADS_POR_ORG: Record<string, LeadResumido[]> = {
   'org-001': [
@@ -408,7 +393,17 @@ export const mockGetOrganizacionConRelaciones = async (
     throw Object.assign(new Error('Organización no encontrada.'), { status: 404 })
   }
 
-  const todosContactos = MOCK_CONTACTOS[id] ?? []
+  const todosContactos: ContactoResumido[] = MOCK_CONTACTOS_LIST
+    .filter((c) => c.idOrganizacion === id)
+    .map((c) => ({
+      id:       c.id,
+      nombres:  c.nombres,
+      apellidos: c.apellidos ?? '',
+      vocativo:  c.vocativo,
+      cargo:     c.cargo    ?? undefined,
+      correo:    c.correo,
+      telefono:  c.telefono ?? undefined,
+    }))
   return {
     ...org,
     contactos:      todosContactos.slice(0, 6),

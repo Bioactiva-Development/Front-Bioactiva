@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, Users, X } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useContactos } from '@/hooks/contactos/useContactos'
 import { ContactoFiltros } from '@/components/modules/contactos/ContactoFiltros'
@@ -9,6 +9,7 @@ import { ContactoCard } from '@/components/modules/contactos/ContactoCard'
 import { ContactoFiltros as FiltrosType } from '@/types/contacto.types'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { useDebounce } from '@/hooks/shared/useDebounce'
+import { ROUTES } from '@/lib/constants/routes'
 
 const ITEMS_POR_PAGINA = 10
 
@@ -16,20 +17,19 @@ export default function ContactosPage() {
   const router       = useRouter()
   const searchParams = useSearchParams()
 
-  const [filtros, setFiltros] = useState<FiltrosType>({})
+  const orgId     = searchParams.get('organizacion') ?? undefined
+  const orgNombre = searchParams.get('orgNombre')    ?? undefined
+
+  const [filtros, setFiltros] = useState<FiltrosType>({ idOrganizacion: orgId })
   const [pagina, setPagina]   = useState(1)
 
   const searchDebounced = useDebounce(filtros.search ?? '', 400)
 
-  // Resetear página cuando cambian los filtros
-  useEffect(() => {
-    setPagina(1)
-  }, [searchDebounced])
-
   const { data, isLoading, isError } = useContactos({
-    search:         searchDebounced || undefined,
-    page:           pagina,
-    limit:          ITEMS_POR_PAGINA,
+    search:          searchDebounced || undefined,
+    idOrganizacion:  filtros.idOrganizacion,
+    page:            pagina,
+    limit:           ITEMS_POR_PAGINA,
   })
 
   const contactos    = data?.data       ?? []
@@ -37,8 +37,15 @@ export default function ContactosPage() {
   const totalPaginas = data?.totalPages ?? Math.ceil(total / ITEMS_POR_PAGINA)
 
   const handleLimpiarFiltros = () => {
+    // Solo limpia la búsqueda por texto; preserva el filtro de organización
+    setFiltros((prev) => ({ idOrganizacion: prev.idOrganizacion }))
+    setPagina(1)
+  }
+
+  const handleQuitarFiltroOrg = () => {
     setFiltros({})
     setPagina(1)
+    router.replace(ROUTES.contactos)
   }
 
   return (
@@ -60,9 +67,28 @@ export default function ContactosPage() {
 
       <ContactoFiltros
         filtros={filtros}
-        onChange={(f) => setFiltros(f)}
+        onChange={(f) => { setFiltros(f); setPagina(1) }}
         onLimpiar={handleLimpiarFiltros}
       />
+
+      {filtros.idOrganizacion && (
+        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200
+          rounded-xl px-4 py-2.5 text-sm text-emerald-700">
+          <Users size={14} className="shrink-0" />
+          <span>
+            Contactos asociados a{' '}
+            <strong>{orgNombre ?? 'la organización'}</strong>
+          </span>
+          <button
+            onClick={handleQuitarFiltroOrg}
+            className="ml-auto flex items-center gap-1 text-xs text-red-500
+              hover:text-red-700 transition-colors"
+          >
+            <X size={13} />
+            Quitar filtro
+          </button>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
