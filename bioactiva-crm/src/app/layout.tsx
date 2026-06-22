@@ -18,6 +18,12 @@ export const metadata: Metadata = {
   description: 'Sistema de gestión comercial BioActiva',
 }
 
+// La CSP estricta usa un nonce por request (definido en src/proxy.ts). El nonce
+// solo puede inyectarse en render dinamico; por eso se fuerza el render dinamico
+// de todas las rutas para que los scripts/estilos de Next lleven el nonce y no
+// sean bloqueados por la politica.
+export const dynamic = 'force-dynamic'
+
 export default function RootLayout({
   children,
 }: Readonly<{

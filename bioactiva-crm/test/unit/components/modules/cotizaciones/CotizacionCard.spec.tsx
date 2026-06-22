@@ -5,16 +5,11 @@ import { Cotizacion } from '@/types/cotizacion.types'
 import { EstadoCot, TipoMoneda } from '@/types/enums'
 
 const mockRouterPush = jest.fn()
-const mockEnviar = jest.fn()
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockRouterPush, replace: jest.fn(), prefetch: jest.fn() }),
   usePathname: jest.fn(),
   useSearchParams: () => new URLSearchParams(),
-}))
-
-jest.mock('@/hooks/cotizaciones/useCotizaciones', () => ({
-  useEnviarCotizacion: () => ({ mutateAsync: mockEnviar, isPending: false }),
 }))
 
 const baseCotizacion: Cotizacion = {
@@ -29,13 +24,24 @@ const baseCotizacion: Cotizacion = {
   monto: 15000,
   tipo: TipoMoneda.Soles,
   estado: EstadoCot.Pendiente,
+  nombre_remitente: 'Luis Torres',
   id_author: 1,
   created_at: '2025-03-01T00:00:00Z',
   updated_at: '2025-03-01T00:00:00Z',
   lead_codigo: 'LEAD-001',
   periodo: 'Q1 2025',
+  contacto_nombre: 'Juan Pérez',
   organizacion_nombre: 'Empresa SAC',
 }
+
+const renderCard = (cotizacion: Cotizacion) =>
+  render(
+    <table>
+      <tbody>
+        <CotizacionCard cotizacion={cotizacion} />
+      </tbody>
+    </table>
+  )
 
 describe('modules/cotizaciones/CotizacionCard', () => {
   beforeEach(() => {
@@ -63,7 +69,7 @@ describe('modules/cotizaciones/CotizacionCard', () => {
   it('renders dirigido', () => {
     renderCard(baseCotizacion)
     expect(screen.getAllByText('Juan Pérez').length).toBeGreaterThan(0)
-  })
+  })split list
 
   it('renders organizacion_nombre', () => {
     renderCard(baseCotizacion)

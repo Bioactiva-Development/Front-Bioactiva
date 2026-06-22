@@ -30,8 +30,17 @@ export const recordatorioSchema = z.object({
 
 export type RecordatorioFormValues = z.infer<typeof recordatorioSchema>
 
+const fechaEnvioSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha de envío es obligatoria')
+
+const horaEnvioSchema = z
+  .string()
+  .regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, 'La hora de envío es obligatoria')
+
 const mensajeSeguimientoSchema = z.object({
-  minutosAntes: minutosAntesSchema,
+  fechaEnvio: fechaEnvioSchema,
+  horaEnvio: horaEnvioSchema,
   idTemplate: templateIdSchema,
   asunto: z
     .string()
@@ -48,11 +57,12 @@ const instanciaSeguimientoSchema = z
   })
   .refine(
     ({ internal, external }) =>
-      internal.minutosAntes > external.minutosAntes,
+      `${internal.fechaEnvio}T${internal.horaEnvio}` <
+      `${external.fechaEnvio}T${external.horaEnvio}`,
     {
       message:
-        'El correo interno debe tener más anticipación que el correo al cliente',
-      path: ['external', 'minutosAntes'],
+        'La fecha y hora de envío para el usuario debe ser anterior a la fecha y hora de envío para el contacto',
+      path: ['external', 'fechaEnvio'],
     }
   )
 

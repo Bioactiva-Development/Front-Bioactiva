@@ -10,11 +10,17 @@ jest.mock('@/components/ui/OrgBuscador/OrgBuscador', () => ({
   OrgBuscador: ({
     value,
     onSelect,
+    placeholder,
   }: {
     value?: string
     onSelect: (idOrg: string | undefined) => void
+    placeholder?: string
   }) => (
-    <button data-testid="org-buscador" onClick={() => onSelect('org-1')}>
+    <button
+      data-testid="org-buscador"
+      data-placeholder={placeholder}
+      onClick={() => onSelect('org-1')}
+    >
       org:{value ?? 'none'}
     </button>
   ),

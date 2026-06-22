@@ -12,7 +12,7 @@ interface OrgBuscadorProps {
   inputClassName?: string
 }
 
-const DEFAULT_INPUT_CLASS = `w-full pl-8 pr-8 py-2 rounded-xl border border-gray-200
+const DEFAULT_INPUT_CLASS = `w-full pl-8 pr-10 py-2 rounded-xl border border-gray-200
   bg-white text-sm text-gray-700 outline-none focus:border-emerald-400
   placeholder:text-gray-400`
 
@@ -75,10 +75,12 @@ export function OrgBuscador({
           type="button"
           onClick={limpiar}
           aria-label="Quitar organización"
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300
-            hover:text-gray-500 cursor-pointer"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1
+            bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600
+            focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-emerald-500
+            transition-colors cursor-pointer"
         >
-          <X size={14} />
+          <X size={15} strokeWidth={2.5} />
         </button>
       )}
 

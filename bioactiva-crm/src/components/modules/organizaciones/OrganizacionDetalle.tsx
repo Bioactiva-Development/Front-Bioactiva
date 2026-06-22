@@ -243,7 +243,7 @@ export function OrganizacionDetalle({
           {organizacion.totalContactos > 0 && (
             <button
               onClick={() => router.push(
-                `${ROUTES.contactos}?organizacion=${organizacion.id}`
+                `${ROUTES.contactos}?organizacion=${organizacion.id}&orgNombre=${encodeURIComponent(organizacion.nombre)}`
               )}
               className="text-xs text-emerald-600 hover:underline font-semibold
                 flex items-center gap-1"
@@ -317,7 +317,7 @@ export function OrganizacionDetalle({
             {contactosRestantes > 0 && (
               <button
                 onClick={() => router.push(
-                  `${ROUTES.contactos}?organizacion=${organizacion.id}`
+                  `${ROUTES.contactos}?organizacion=${organizacion.id}&orgNombre=${encodeURIComponent(organizacion.nombre)}`
                 )}
                 className="mt-3 w-full py-2.5 rounded-xl border border-dashed
                   border-emerald-200 text-sm text-emerald-600 hover:bg-emerald-50

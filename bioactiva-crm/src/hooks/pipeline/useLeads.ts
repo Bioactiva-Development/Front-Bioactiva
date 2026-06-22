@@ -67,6 +67,10 @@ export interface PipelineColumn {
 
 // Una columna del pipeline (un estado) con paginación incremental ("cargar más").
 function useLeadColumn(estado: LeadState, filtros?: LeadFiltros): PipelineColumn {
+  // El filtro global de estado decide qué columna se muestra: si se eligió un
+  // estado distinto al de esta columna, la columna queda vacía (no se consulta).
+  const habilitada = !filtros?.estado || filtros.estado === estado
+
   const query = useInfiniteQuery({
     queryKey: QUERY_KEYS.leads.column(estado, filtros),
     queryFn: ({ pageParam }) =>
@@ -75,7 +79,20 @@ function useLeadColumn(estado: LeadState, filtros?: LeadFiltros): PipelineColumn
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     staleTime: 1000 * 60 * 2,
+    enabled: habilitada,
   })
+
+  if (!habilitada) {
+    return {
+      leads: [],
+      total: 0,
+      isLoading: false,
+      isError: false,
+      hasMore: false,
+      loadingMore: false,
+      cargarMas: () => {},
+    }
+  }
 
   return {
     leads: query.data?.pages.flatMap((page) => page.data) ?? [],

@@ -5,7 +5,7 @@ import {
     ContactosResponse,
 } from '@/types/contacto.types'
 
-const MOCK_CONTACTOS: Contacto[] = [
+export const MOCK_CONTACTOS: Contacto[] = [
     {
         id:                  1,
         nombres:             'Ricardo',
