@@ -37,13 +37,15 @@ describe('notificacion schemas', () => {
 
   const instancia = {
     internal: {
-      minutosAntes: 60,
+      fechaEnvio: '2026-06-20',
+      horaEnvio: '10:00',
       idTemplate: 0,
       asunto: 'Interno',
       cuerpo: 'Preparar',
     },
     external: {
-      minutosAntes: 30,
+      fechaEnvio: '2026-06-20',
+      horaEnvio: '11:00',
       idTemplate: 0,
       asunto: 'Cliente',
       cuerpo: 'Seguimiento',
@@ -66,35 +68,48 @@ describe('notificacion schemas', () => {
       instancias: [
         instancia,
         {
-          internal: { ...instancia.internal, minutosAntes: 60 },
-          external: { ...instancia.external, minutosAntes: 15 },
+          internal: { ...instancia.internal, horaEnvio: '12:00' },
+          external: { ...instancia.external, horaEnvio: '13:00' },
         },
       ],
     })).toThrow('El seguimiento debe tener exactamente una instancia')
   })
 
-  it('rejects unsupported follow-up anticipation', () => {
+  it('requires a valid follow-up send date and time', () => {
     expect(() => seguimientoSchema.parse({
       idLead: 10,
       correoCliente: 'cliente@example.com',
       instancias: [{
         ...instancia,
-        internal: { ...instancia.internal, minutosAntes: 45 },
+        internal: { ...instancia.internal, fechaEnvio: '', horaEnvio: '' },
       }],
-    })).toThrow('Seleccione 15 minutos, 30 minutos o 1 hora')
+    })).toThrow('La fecha de envío es obligatoria')
   })
 
-  it('requires more anticipation for the internal email', () => {
+  it('requires the user email to be sent before the contact email', () => {
     expect(() => seguimientoSchema.parse({
       idLead: 10,
       correoCliente: 'cliente@example.com',
       instancias: [{
         ...instancia,
-        internal: { ...instancia.internal, minutosAntes: 30 },
-        external: { ...instancia.external, minutosAntes: 60 },
+        internal: { ...instancia.internal, horaEnvio: '11:00' },
+        external: { ...instancia.external, horaEnvio: '10:00' },
       }],
     })).toThrow(
-      'El correo interno debe tener más anticipación que el correo al cliente'
+      'La fecha y hora de envío para el usuario debe ser anterior a la fecha y hora de envío para el contacto'
+    )
+  })
+
+  it('rejects equal send date-times for user and contact', () => {
+    expect(() => seguimientoSchema.parse({
+      idLead: 10,
+      correoCliente: 'cliente@example.com',
+      instancias: [{
+        ...instancia,
+        external: { ...instancia.external, horaEnvio: '10:00' },
+      }],
+    })).toThrow(
+      'La fecha y hora de envío para el usuario debe ser anterior a la fecha y hora de envío para el contacto'
     )
   })
 })
