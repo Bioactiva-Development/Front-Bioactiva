@@ -176,7 +176,15 @@ export const mockListInvitaciones = async (
     const start = (page - 1) * limit
     const data = filtered.slice(start, start + limit)
 
-    return { data, total: filtered.length, page, limit }
+    return {
+        data,
+        meta: {
+            page,
+            limit,
+            total: filtered.length,
+            totalPages: Math.ceil(filtered.length / limit) || 1,
+        },
+    }
 }
 
 export const mockCreateInvitacion = async (correo: string, rol: number): Promise<Invitacion> => {
