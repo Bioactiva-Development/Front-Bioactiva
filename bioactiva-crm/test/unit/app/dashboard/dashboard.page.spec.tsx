@@ -19,15 +19,15 @@ jest.mock('@/hooks/dashboard/useDashboardMetrics', () => ({
   useDashboardMetrics: (...args: unknown[]) => mockUseDashboardMetrics(...args),
 }))
 
-jest.mock('@phosphor-icons/react/dist/csr/Target', () => ({ Target: () => null }), { virtual: true })
-jest.mock('@phosphor-icons/react/dist/csr/Percent', () => ({ Percent: () => null }), { virtual: true })
-jest.mock('@phosphor-icons/react/dist/csr/Clock', () => ({ Clock: () => null }), { virtual: true })
-jest.mock('@phosphor-icons/react/dist/csr/Hourglass', () => ({ Hourglass: () => null }), { virtual: true })
-jest.mock('@phosphor-icons/react/dist/csr/Pulse', () => ({ Pulse: () => null }), { virtual: true })
-jest.mock('@phosphor-icons/react/dist/csr/CurrencyDollar', () => ({ CurrencyDollar: () => null }), { virtual: true })
-jest.mock('@phosphor-icons/react/dist/csr/TrendUp', () => ({ TrendUp: () => null }), { virtual: true })
-jest.mock('@phosphor-icons/react/dist/csr/CalendarX', () => ({ CalendarX: () => null }), { virtual: true })
-jest.mock('@phosphor-icons/react/dist/csr/ChartLineUp', () => ({ ChartLineUp: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/Target', () => ({ TargetIcon: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/Percent', () => ({ PercentIcon: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/Clock', () => ({ ClockIcon: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/Hourglass', () => ({ HourglassIcon: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/Pulse', () => ({ PulseIcon: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/CurrencyDollar', () => ({ CurrencyDollarIcon: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/TrendUp', () => ({ TrendUpIcon: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/CalendarX', () => ({ CalendarXIcon: () => null }), { virtual: true })
+jest.mock('@phosphor-icons/react/dist/csr/ChartLineUp', () => ({ ChartLineUpIcon: () => null }), { virtual: true })
 
 jest.mock('lucide-react', () => {
   const icons = {

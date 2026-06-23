@@ -78,7 +78,7 @@ describe('modules/organizaciones/OrganizacionCard', () => {
 
   it('renders tamano badge with formatTamano', () => {
     render(<OrganizacionCard organizacion={baseOrg} />)
-    expect(screen.getAllByText('Mediana').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Mediano').length).toBeGreaterThan(0)
   })
 
   it('renders sub_area', () => {
