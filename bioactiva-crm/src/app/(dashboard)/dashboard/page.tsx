@@ -5,10 +5,15 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, PieChart, Pie, Legend
 } from 'recharts'
-import {
-  TargetIcon, PercentIcon, ClockIcon, HourglassIcon, PulseIcon,
-  CurrencyDollarIcon, TrendUpIcon, CalendarXIcon, ChartLineUpIcon,
-} from '@phosphor-icons/react'
+import { TargetIcon }        from '@phosphor-icons/react/dist/csr/Target'
+import { PercentIcon }        from '@phosphor-icons/react/dist/csr/Percent'
+import { ClockIcon }          from '@phosphor-icons/react/dist/csr/Clock'
+import { HourglassIcon }      from '@phosphor-icons/react/dist/csr/Hourglass'
+import { PulseIcon }          from '@phosphor-icons/react/dist/csr/Pulse'
+import { CurrencyDollarIcon } from '@phosphor-icons/react/dist/csr/CurrencyDollar'
+import { TrendUpIcon }        from '@phosphor-icons/react/dist/csr/TrendUp'
+import { CalendarXIcon }      from '@phosphor-icons/react/dist/csr/CalendarX'
+import { ChartLineUpIcon }    from '@phosphor-icons/react/dist/csr/ChartLineUp'
 import {
   RefreshCw, ChevronDown, ChevronUp, Filter, Calendar,
 } from 'lucide-react'
