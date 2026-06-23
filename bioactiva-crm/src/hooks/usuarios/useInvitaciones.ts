@@ -30,7 +30,7 @@ export function useInvitaciones(params?: ListInvitacionesParams) {
 
     return {
         invitaciones: listQuery.data?.data ?? [],
-        total: listQuery.data?.total ?? 0,
+        total: listQuery.data?.meta?.total ?? 0,
         isLoading: listQuery.isLoading,
         isError: listQuery.isError,
 

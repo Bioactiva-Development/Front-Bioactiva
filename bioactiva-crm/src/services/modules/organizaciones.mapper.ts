@@ -91,30 +91,16 @@ export interface SunatRucDto {
 // Enums dominio <-> backend
 // ---------------------------------------------------------------------------
 
-/**
- * Enum EnterpriseType del backend (confirmado por el endpoint POST /organizations):
- * ACADEMIA | EMPRESA_INTERNACIONAL | EMPRESA_NACIONAL | GOBIERNO_NACIONAL
- * | INDEPENDIENTE | ONG | ORGANISMO_INTERNACIONAL
- *
- * El frontend solo modela 4 tipos según el Documento de Análisis y Diseño v1.6
- */
-const TIPO_DOMAIN_TO_BACKEND: Record<TipoEmpresa, string> = {
-  [TipoEmpresa.Academia]: 'ACADEMIA',
-  [TipoEmpresa.EmpresaInternacional]: 'EMPRESA_INTERNACIONAL',
-  [TipoEmpresa.EmpresaNacional]: 'EMPRESA_NACIONAL',
-  [TipoEmpresa.GobiernoNacional]: 'GOBIERNO_NACIONAL',
-  [TipoEmpresa.Independiente]: 'INDEPENDIENTE',
-  [TipoEmpresa.ONG]: 'ONG',
-  [TipoEmpresa.OrganismoInternacional]: 'ORGANISMO_INTERNACIONAL',
-}
-
+// Los valores de TipoEmpresa coinciden 1:1 con los del backend, por lo que
+// el mapeo es identidad. El mapa inverso existe para protegerse de valores
+// inesperados usando un fallback seguro.
 const TIPO_BACKEND_TO_DOMAIN: Record<string, TipoEmpresa> = {
-  ACADEMIA: TipoEmpresa.Academia,
-  EMPRESA_INTERNACIONAL: TipoEmpresa.EmpresaInternacional,
-  EMPRESA_NACIONAL: TipoEmpresa.EmpresaNacional,
-  GOBIERNO_NACIONAL: TipoEmpresa.GobiernoNacional,
-  INDEPENDIENTE: TipoEmpresa.Independiente,
-  ONG: TipoEmpresa.ONG,
+  ACADEMIA:                TipoEmpresa.Academia,
+  EMPRESA_INTERNACIONAL:   TipoEmpresa.EmpresaInternacional,
+  EMPRESA_NACIONAL:        TipoEmpresa.EmpresaNacional,
+  GOBIERNO_NACIONAL:       TipoEmpresa.GobiernoNacional,
+  INDEPENDIENTE:           TipoEmpresa.Independiente,
+  ONG:                     TipoEmpresa.ONG,
   ORGANISMO_INTERNACIONAL: TipoEmpresa.OrganismoInternacional,
 }
 
@@ -162,7 +148,7 @@ export const toOrganizacionQueryParams = (
   if (term) params.term = term
   if (filtros.sector) params.sector = SECTOR_DOMAIN_TO_BACKEND[filtros.sector]
   if (filtros.tamano) params.tamano = TAMANO_DOMAIN_TO_BACKEND[filtros.tamano]
-  if (filtros.tipo) params.tipo = TIPO_DOMAIN_TO_BACKEND[filtros.tipo]
+  if (filtros.tipo) params.tipo = filtros.tipo
   if (filtros.page) params.page = filtros.page
   if (filtros.limit) params.limit = filtros.limit
 
@@ -214,7 +200,7 @@ export const toCreateOrganizacionDto = (
     codigoCliente: data.codigo_cliente ?? '',
     nombre: data.nombre,
     nombreComercial: data.nombre_comercial?.trim() || data.nombre,
-    tipo: TIPO_DOMAIN_TO_BACKEND[data.tipo],
+    tipo: data.tipo,
     tamano: TAMANO_DOMAIN_TO_BACKEND[data.tamano],
     idAuthor,
   }
@@ -247,7 +233,7 @@ export const toUpdateOrganizacionDto = (
   if (data.codigo_cliente !== undefined) dto.codigoCliente = data.codigo_cliente
   if (data.nombre !== undefined) dto.nombre = data.nombre
   if (data.nombre_comercial !== undefined) dto.nombreComercial = data.nombre_comercial
-  if (data.tipo !== undefined) dto.tipo = TIPO_DOMAIN_TO_BACKEND[data.tipo]
+  if (data.tipo !== undefined) dto.tipo = data.tipo
   if (data.tamano !== undefined) dto.tamano = TAMANO_DOMAIN_TO_BACKEND[data.tamano]
 
   // Opcionales: solo enviar si tienen contenido real.

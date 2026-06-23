@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  FileX,
   Mail,
   Pencil,
   Trash2,
@@ -58,7 +59,9 @@ export function NotificacionAlerta({
   const router = useRouter()
   const { mutateAsync: marcarLeida } = useMarcarLeida()
   const esNoLeida = notificacion.estado === 'NO_LEIDA'
+  const esImportError = notificacion.titulo === 'Error de importación'
   const esLeadSinMovimiento =
+    !esImportError &&
     notificacion.idLead !== null &&
     notificacion.idActividad === null &&
     /lead sin movimiento/i.test(notificacion.titulo)
@@ -69,36 +72,52 @@ export function NotificacionAlerta({
     if (notificacion.idLead) router.push(ROUTES.lead(notificacion.idLead))
   }
 
+  const containerClass = esNoLeida
+    ? esImportError
+      ? 'border-orange-200 bg-orange-50 hover:bg-orange-100'
+      : 'border-red-100 bg-red-50 hover:bg-red-100'
+    : 'border-gray-100 bg-white hover:bg-gray-50'
+
+  const iconBgClass = esNoLeida
+    ? esImportError ? 'bg-orange-100' : 'bg-red-100'
+    : 'bg-gray-100'
+
+  const titleClass = esNoLeida
+    ? esImportError ? 'text-orange-700' : 'text-red-700'
+    : 'text-gray-700'
+
+  const dotClass = esImportError ? 'bg-orange-500' : 'bg-red-500'
+
   return (
     <button
       type="button"
       onClick={handleClick}
-      className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors ${
-        esNoLeida
-          ? 'border-red-100 bg-red-50 hover:bg-red-100'
-          : 'border-gray-100 bg-white hover:bg-gray-50'
-      }`}
+      className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors ${containerClass}`}
     >
-      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-        esNoLeida ? 'bg-red-100' : 'bg-gray-100'
-      }`}>
-        <AlertTriangle size={15} className={esNoLeida ? 'text-red-500' : 'text-gray-400'} />
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBgClass}`}>
+        {esImportError
+          ? <FileX size={15} className={esNoLeida ? 'text-orange-500' : 'text-gray-400'} />
+          : <AlertTriangle size={15} className={esNoLeida ? 'text-red-500' : 'text-gray-400'} />
+        }
       </span>
       <span className="min-w-0 flex-1">
-        <span className={`block truncate text-sm font-semibold ${
-          esNoLeida ? 'text-red-700' : 'text-gray-700'
-        }`}>
+        <span className={`block truncate text-sm font-semibold ${titleClass}`}>
           {notificacion.titulo}
         </span>
+        {esImportError && esNoLeida && (
+          <span className="mt-1 inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-orange-700">
+            Ningún dato fue importado
+          </span>
+        )}
         {esLeadSinMovimiento && (
           <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
             Alerta automatica 30+ dias
           </span>
         )}
-        <span className="mt-1 block text-xs text-gray-500">{notificacion.mensaje}</span>
+        <span className="mt-1 block text-xs text-gray-500 whitespace-pre-wrap">{notificacion.mensaje}</span>
         <span className="mt-1 block text-xs text-gray-400">{tiempo}</span>
       </span>
-      {esNoLeida && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-red-500" />}
+      {esNoLeida && <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${dotClass}`} />}
     </button>
   )
 }

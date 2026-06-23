@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, Filter, X } from 'lucide-react'
 import { LeadFiltros as FiltrosType, ActivityAlert } from '@/types/lead.types'
-import { EstadoUsuario, LeadState, Sector } from '@/types/enums'
+import { EstadoUsuario, LeadState, Sector, TipoEmpresa } from '@/types/enums'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { UsuarioListItem } from '@/types/usuario.types'
 import { OrgBuscador } from '@/components/ui/OrgBuscador/OrgBuscador'
-import { formatSector } from '@/lib/utils/organizacion.utils'
+import { formatSector, formatTipo } from '@/lib/utils/organizacion.utils'
 
 // Estilo del buscador de organización acorde al panel de filtros del pipeline.
 const ORG_INPUT_CLASS = `w-full pl-8 pr-8 py-1.5 rounded-lg border border-gray-100
@@ -54,6 +54,7 @@ const sanitizeFiltros = (filtros: FiltrosType): FiltrosType => ({
   id_encargado: filtros.id_encargado,
   id_org: filtros.id_org,
   sector: filtros.sector,
+  tipo_org: filtros.tipo_org,
   alerta_actividad: filtros.alerta_actividad,
   fecha_desde: filtros.fecha_desde,
   fecha_hasta: filtros.fecha_hasta,
@@ -97,6 +98,7 @@ export function LeadFiltros({
     filtrosBasicos.id_encargado ||
     filtrosBasicos.id_org ||
     filtrosBasicos.sector ||
+    filtrosBasicos.tipo_org ||
     filtrosBasicos.alerta_actividad ||
     filtrosBasicos.fecha_desde ||
     filtrosBasicos.fecha_hasta
@@ -177,7 +179,7 @@ export function LeadFiltros({
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
             <div className="space-y-1">
               <label htmlFor="lflt-estado" className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Estado</label>
               <select
@@ -236,6 +238,26 @@ export function LeadFiltros({
                 <option value="">Todos los sectores</option>
                 {Object.values(Sector).map((s) => (
                   <option key={s} value={s}>{formatSector(s)}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="lflt-tipo-org" className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Tipo de org.</label>
+              <select
+                id="lflt-tipo-org"
+                value={filtrosBasicos.tipo_org ?? ''}
+                onChange={(e) => updateFiltros({
+                  ...filtrosBasicos,
+                  tipo_org: e.target.value ? (e.target.value as TipoEmpresa) : undefined,
+                })}
+                className="w-full px-3 py-1.5 rounded-lg border border-gray-100
+                  bg-white text-sm text-gray-600 outline-none focus:border-emerald-300
+                  cursor-pointer"
+              >
+                <option value="">Todos los tipos</option>
+                {Object.values(TipoEmpresa).map((t) => (
+                  <option key={t} value={t}>{formatTipo(t)}</option>
                 ))}
               </select>
             </div>

@@ -42,13 +42,13 @@ export enum TipoMoneda {
 }
 
 export enum TipoEmpresa {
-    Academia = 'Academia',
-    EmpresaInternacional = 'Empresa internacional',
-    EmpresaNacional = 'Empresa nacional',
-    GobiernoNacional = 'Gobierno nacional',
-    Independiente = 'Independiente',
-    ONG = 'ONG',
-    OrganismoInternacional = 'Organismo internacional',
+    Academia               = 'ACADEMIA',
+    EmpresaInternacional   = 'EMPRESA_INTERNACIONAL',
+    EmpresaNacional        = 'EMPRESA_NACIONAL',
+    GobiernoNacional       = 'GOBIERNO_NACIONAL',
+    Independiente          = 'INDEPENDIENTE',
+    ONG                    = 'ONG',
+    OrganismoInternacional = 'ORGANISMO_INTERNACIONAL',
 }
 
 export enum TamanoEmpresa {

@@ -233,6 +233,7 @@ describe('organizaciones/organizaciones.mapper', () => {
           nombre_comercial: 'Test',
           tipo: TipoEmpresa.EmpresaNacional,
           tamano: TamanoEmpresa.Micro,
+          sector: Sector.OTROS,
         },
         1
       )
@@ -240,7 +241,7 @@ describe('organizaciones/organizaciones.mapper', () => {
       expect(result.codigoCliente).toBe('')
     })
 
-    it('omits sector from DTO when not provided', () => {
+    it('includes sector in DTO when provided', () => {
       const result = toCreateOrganizacionDto(
         {
           nombre: 'Test',
@@ -248,11 +249,12 @@ describe('organizaciones/organizaciones.mapper', () => {
           codigo_cliente: 'TST-001',
           tipo: TipoEmpresa.EmpresaNacional,
           tamano: TamanoEmpresa.Micro,
+          sector: Sector.TECNOLOGIA,
         },
         1
       )
 
-      expect(result.sector).toBeUndefined()
+      expect(result.sector).toBe('TECNOLOGIA')
     })
   })
 
@@ -326,10 +328,10 @@ describe('organizaciones/organizaciones.mapper', () => {
       expect(result.idContactoActivo).toBe(0)
     })
 
-    it('omits id_contacto_activo when it is null', () => {
+    it('omits id_contacto_activo when it is undefined', () => {
       const result = toUpdateOrganizacionDto({
         nombre: 'Test',
-        id_contacto_activo: null,
+        id_contacto_activo: undefined,
       })
       expect(result.idContactoActivo).toBeUndefined()
     })

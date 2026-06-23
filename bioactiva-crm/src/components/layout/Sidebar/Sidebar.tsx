@@ -145,11 +145,7 @@ export function Sidebar() {
         {/* Cabecera */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 text-white" fill="currentColor">
-                <path d="M17 8C8 10 5.9 16.17 3.82 19.54a1 1 0 001.66 1.06C7 18.8 9.62 17 12 17c4 0 5-2 5-2s-1 2-1 6h2c0-4 1.5-6 3-6s2 1 2 3h2c0-3-1.5-5-3-5s-3 1.3-3 2c0 0 1-4-2-7z"/>
-              </svg>
-            </div>
+            <img src="/BAlogo.svg" alt="BioActiva" className="h-7 w-auto shrink-0" />
             <span className="text-sm font-bold text-gray-900">BioActiva CRM</span>
           </div>
           <button
@@ -228,11 +224,7 @@ export function Sidebar() {
           flex items-center gap-3 px-4 py-5 border-b border-gray-100
           ${sidebarCollapsed ? 'justify-center' : ''}
         `}>
-          <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center shrink-0">
-            <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="currentColor">
-              <path d="M17 8C8 10 5.9 16.17 3.82 19.54a1 1 0 001.66 1.06C7 18.8 9.62 17 12 17c4 0 5-2 5-2s-1 2-1 6h2c0-4 1.5-6 3-6s2 1 2 3h2c0-3-1.5-5-3-5s-3 1.3-3 2c0 0 1-4-2-7z"/>
-            </svg>
-          </div>
+          <img src="/BAlogo.svg" alt="BioActiva" className="h-8 w-auto shrink-0" />
           {!sidebarCollapsed && (
             <div>
               <p className="text-sm font-bold text-gray-900">BioActiva</p>

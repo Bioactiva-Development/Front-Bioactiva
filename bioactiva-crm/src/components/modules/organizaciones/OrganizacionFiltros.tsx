@@ -5,7 +5,7 @@ import { Search, X } from 'lucide-react'
 import { TipoEmpresa, TamanoEmpresa, Sector } from '@/types/enums'
 import { OrganizacionFiltros as FiltrosType } from '@/types/organizacion.types'
 import { useDebounce } from '@/hooks/shared/useDebounce'
-import { formatSector, formatTamano } from '@/lib/utils/organizacion.utils'
+import { formatSector, formatTamano, formatTipo } from '@/lib/utils/organizacion.utils'
 
 interface OrganizacionFiltrosProps {
   filtros:   FiltrosType
@@ -31,11 +31,16 @@ const TAMANO_LABELS = new Map<string, TamanoEmpresa>([
 ])
 
 const TIPO_LABELS = new Map<string, TipoEmpresa>([
-  ['academia',      TipoEmpresa.Academia],
-  ['gobierno',      TipoEmpresa.GobiernoNacional],
-  ['independiente', TipoEmpresa.Independiente],
-  ['ong',           TipoEmpresa.ONG],
-  ['organismo',     TipoEmpresa.OrganismoInternacional],
+  ['academia',              TipoEmpresa.Academia],
+  ['empresa internacional', TipoEmpresa.EmpresaInternacional],
+  ['internacional',         TipoEmpresa.EmpresaInternacional],
+  ['empresa nacional',      TipoEmpresa.EmpresaNacional],
+  ['nacional',              TipoEmpresa.EmpresaNacional],
+  ['gobierno',              TipoEmpresa.GobiernoNacional],
+  ['gobierno nacional',     TipoEmpresa.GobiernoNacional],
+  ['independiente',         TipoEmpresa.Independiente],
+  ['ong',                   TipoEmpresa.ONG],
+  ['organismo',             TipoEmpresa.OrganismoInternacional],
 ])
 
 /** Retorna el Sector cuyo label normalizado contiene `word` como palabra completa. */
@@ -206,7 +211,7 @@ export function OrganizacionFiltros({
         >
           <option value="">Todos los tipos</option>
           {Object.values(TipoEmpresa).map((t) => (
-            <option key={t} value={t}>{t}</option>
+            <option key={t} value={t}>{formatTipo(t)}</option>
           ))}
         </select>
 
