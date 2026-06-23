@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, Filter, X } from 'lucide-react'
-import { LeadFiltros as FiltrosType, ActivityAlertFilter } from '@/types/lead.types'
+import { LeadFiltros as FiltrosType, ActivityAlert } from '@/types/lead.types'
 import { EstadoUsuario, LeadState, Sector, TipoEmpresa } from '@/types/enums'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { UsuarioListItem } from '@/types/usuario.types'
@@ -34,7 +34,7 @@ const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
 // campo activityAlert del lead. "Todas" = sin filtro. Severidad de menor a mayor:
 // SIN_ACTIVIDADES < PENDIENTE < EN_RIESGO < POR_VENCER.
 const SEMAFORO_OPCIONES: {
-  value: ActivityAlertFilter | undefined
+  value: ActivityAlert | undefined
   label: string
   dots: string[]
 }[] = [

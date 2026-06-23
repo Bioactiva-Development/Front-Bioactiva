@@ -128,7 +128,7 @@ describe('organizaciones/organizacion.schema', () => {
       nombre: 'Test',
       nombre_comercial: 'Test',
       codigo_cliente: 'TST-001',
-  tipo: TipoEmpresa.EmpresaNacional,
+      tipo: TipoEmpresa.EmpresaNacional,
       tamano: TamanoEmpresa.Micro,
       sector: Sector.OTROS,
     })

@@ -53,8 +53,8 @@ export enum TipoEmpresa {
 
 export enum TamanoEmpresa {
     Micro = 'Micro',
-    Pequena = 'Pequena',
-    Mediana = 'Mediana',
+    Pequeno = 'Pequeno',
+    Mediano = 'Mediano',
     Grande = 'Grande',
 }
 

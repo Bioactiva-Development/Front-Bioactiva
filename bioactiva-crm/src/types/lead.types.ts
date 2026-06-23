@@ -12,10 +12,6 @@ export type ActivityAlert =
   | 'EN_RIESGO'
   | 'POR_VENCER'
 
-// Filtro de alerta de actividades (GET /leads?alertaActividad=...). Acepta los
-// mismos valores que el campo de respuesta. Omitir el param trae todos los
-// leads; valores inválidos => 400.
-export type ActivityAlertFilter = ActivityAlert
 
 export interface Lead {
   id:number
@@ -56,7 +52,7 @@ export interface LeadFiltros {
   canal_captacion?: string
   solo_alerta?: boolean
   // Filtro de semáforo de actividades (backend: alertaActividad).
-  alerta_actividad?: ActivityAlertFilter
+  alerta_actividad?: ActivityAlert
   // Filtran por fecha de creación del lead (createdAt). ISO 8601.
   fecha_desde?: string
   fecha_hasta?: string

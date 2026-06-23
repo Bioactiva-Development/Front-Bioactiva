@@ -25,10 +25,8 @@ const SECTOR_LABELS = new Map<string, Sector>(
 
 const TAMANO_LABELS = new Map<string, TamanoEmpresa>([
   ['micro',   TamanoEmpresa.Micro],
-  ['pequena', TamanoEmpresa.Pequena],
-  ['pequeno', TamanoEmpresa.Pequena],
-  ['mediana', TamanoEmpresa.Mediana],
-  ['mediano', TamanoEmpresa.Mediana],
+  ['pequeno', TamanoEmpresa.Pequeno],
+  ['mediano', TamanoEmpresa.Mediano],
   ['grande',  TamanoEmpresa.Grande],
 ])
 

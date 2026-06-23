@@ -12,7 +12,7 @@ import { LeadFiltros } from '@/components/modules/pipeline/LeadFiltros'
 import { LeadDrawer } from '@/components/modules/pipeline/LeadDrawer'
 import { LeadFiltros as FiltrosType, Lead } from '@/types/lead.types'
 import { EstadoCot, LeadState, Sector, TipoEmpresa, TipoMoneda } from '@/types/enums'
-import { ActivityAlertFilter } from '@/types/lead.types'
+import { ActivityAlert } from '@/types/lead.types'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 
 const COLUMNAS_MOVIL = [
@@ -123,12 +123,12 @@ function filtrosFromParams(sp: URLSearchParams): FiltrosType {
   const fechaHasta = sp.get('fechaHasta')
   if (fechaHasta) filtros.fecha_hasta = fechaHasta
 
-  const ALERTAS: ActivityAlertFilter[] = [
+  const ALERTAS: ActivityAlert[] = [
     'SIN_ACTIVIDADES', 'PENDIENTE', 'EN_RIESGO', 'POR_VENCER',
   ]
   const alerta = sp.get('alertaActividad')
   if (alerta && (ALERTAS as string[]).includes(alerta)) {
-    filtros.alerta_actividad = alerta as ActivityAlertFilter
+    filtros.alerta_actividad = alerta as ActivityAlert
   }
 
   return filtros

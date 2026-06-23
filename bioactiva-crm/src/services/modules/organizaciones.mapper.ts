@@ -106,15 +106,15 @@ const TIPO_BACKEND_TO_DOMAIN: Record<string, TipoEmpresa> = {
 
 const TAMANO_DOMAIN_TO_BACKEND: Record<TamanoEmpresa, string> = {
   [TamanoEmpresa.Micro]: 'MICRO',
-  [TamanoEmpresa.Pequena]: 'PEQUENO',
-  [TamanoEmpresa.Mediana]: 'MEDIANO',
+  [TamanoEmpresa.Pequeno]: 'PEQUENO',
+  [TamanoEmpresa.Mediano]: 'MEDIANO',
   [TamanoEmpresa.Grande]: 'GRANDE',
 }
 
 const TAMANO_BACKEND_TO_DOMAIN: Record<string, TamanoEmpresa> = {
   MICRO: TamanoEmpresa.Micro,
-  PEQUENO: TamanoEmpresa.Pequena,
-  MEDIANO: TamanoEmpresa.Mediana,
+  PEQUENO: TamanoEmpresa.Pequeno,
+  MEDIANO: TamanoEmpresa.Mediano,
   GRANDE: TamanoEmpresa.Grande,
 }
 

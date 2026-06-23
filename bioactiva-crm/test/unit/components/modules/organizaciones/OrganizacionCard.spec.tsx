@@ -33,7 +33,7 @@ const baseOrg: Organizacion = {
   ruc: '20123456789',
   tipo: TipoEmpresa.EmpresaNacional,
   sector: Sector.TECNOLOGIA,
-  tamano: TamanoEmpresa.Mediana,
+  tamano: TamanoEmpresa.Mediano,
   actividad_economica: 'Software',
   id_author: 1,
   created_at: '2024-01-01',
