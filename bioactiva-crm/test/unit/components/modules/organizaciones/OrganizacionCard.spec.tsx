@@ -31,7 +31,7 @@ const baseOrg: Organizacion = {
   nombre_comercial: 'Empresa SAC',
   sub_area: 'Lima',
   ruc: '20123456789',
-  tipo: TipoEmpresa.Privada,
+  tipo: TipoEmpresa.EmpresaNacional,
   sector: Sector.TECNOLOGIA,
   tamano: TamanoEmpresa.Mediana,
   actividad_economica: 'Software',

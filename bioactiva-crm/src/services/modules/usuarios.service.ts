@@ -196,7 +196,7 @@ export const usuariosService = {
     listInvitaciones: async (params?: ListInvitacionesParams): Promise<ListInvitacionesResponse> => {
         if (USE_MOCK) return mockListInvitaciones(params)
         const { data: body } = await apiClient.get(ENDPOINTS.invitaciones.list, { params })
-        const rawList: InvitacionRaw[] = body?.data ?? []
+        const rawList: InvitacionRaw[] = Array.isArray(body) ? body : (body?.data ?? [])
         const data = rawList.map(mapInvitacionRaw)
         const meta = body?.meta ?? {
             page: params?.page ?? 1,
