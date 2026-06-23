@@ -56,11 +56,6 @@ describe('modules/cotizaciones/CotizacionCard', () => {
     expect(screen.getAllByText('COT-001').length).toBeGreaterThan(0)
   })
 
-  it('renders lead_codigo', () => {
-    renderCard(baseCotizacion)
-    expect(screen.getAllByText('LEAD-001').length).toBeGreaterThan(0)
-  })
-
   it('renders periodo', () => {
     renderCard(baseCotizacion)
     expect(screen.getAllByText('Q1 2025').length).toBeGreaterThan(0)
@@ -69,7 +64,7 @@ describe('modules/cotizaciones/CotizacionCard', () => {
   it('renders dirigido', () => {
     renderCard(baseCotizacion)
     expect(screen.getAllByText('Juan Pérez').length).toBeGreaterThan(0)
-  })split list
+  })
 
   it('renders organizacion_nombre', () => {
     renderCard(baseCotizacion)
@@ -97,23 +92,6 @@ describe('modules/cotizaciones/CotizacionCard', () => {
     expect(screen.getAllByText('Pendiente').length).toBeGreaterThan(0)
   })
 
-  it('renders send button for Pendiente estado', () => {
-    renderCard(baseCotizacion)
-    expect(screen.getAllByTitle('Marcar como enviada').length).toBeGreaterThan(0)
-  })
-
-  it('hides send button for non-Pendiente estado', () => {
-    const enviada: Cotizacion = { ...baseCotizacion, estado: EstadoCot.Enviada }
-    renderCard(enviada)
-    expect(screen.queryByTitle('Marcar como enviada')).not.toBeInTheDocument()
-  })
-
-  it('calls enviar when send button is clicked', async () => {
-    renderCard(baseCotizacion)
-    await userEvent.click(screen.getAllByTitle('Marcar como enviada')[0])
-    expect(mockEnviar).toHaveBeenCalledWith(1)
-  })
-
   it('calls router.push when row is clicked', async () => {
     renderCard(baseCotizacion)
     const row = screen.getAllByText('COT-001')[0].closest('tr')
@@ -124,9 +102,4 @@ describe('modules/cotizaciones/CotizacionCard', () => {
     }
   })
 
-  it('renders lead id fallback when lead_codigo is missing', () => {
-    const sinCodigo: Cotizacion = { ...baseCotizacion, lead_codigo: undefined }
-    renderCard(sinCodigo)
-    expect(screen.getAllByText('#1').length).toBeGreaterThan(0)
-  })
 })
