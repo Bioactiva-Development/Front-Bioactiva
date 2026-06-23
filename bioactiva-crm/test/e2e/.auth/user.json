@@ -2,43 +2,43 @@
   "cookies": [
     {
       "name": "refreshToken",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwidG9rZW5WZXJzaW9uIjoyNiwiaWF0IjoxNzgyMTc2NzUzLCJleHAiOjE3ODI3ODE1NTMsImF1ZCI6ImJhY2stYmlvYWN0aXZhLXdlYiIsImlzcyI6ImJhY2stYmlvYWN0aXZhIn0.iGEOFIwoUL9q8lIx_mCR3skB3898RLytGd6OWv-Y0O0",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwidG9rZW5WZXJzaW9uIjo0LCJpYXQiOjE3ODIyMzEyNjUsImV4cCI6MTc4MjgzNjA2NSwiYXVkIjoiYmFjay1iaW9hY3RpdmEtd2ViIiwiaXNzIjoiYmFjay1iaW9hY3RpdmEifQ.bYzNiYpBXXItBIJcDiLRr0GMeIpmVY5cD4wN3oTE4Us",
       "domain": "backend-bioactiva.ingsoftware.lat",
       "path": "/auth/refresh",
-      "expires": 1782781553.167645,
+      "expires": 1782836065.974504,
       "httpOnly": true,
       "secure": true,
       "sameSite": "None"
     },
     {
       "name": "_GRECAPTCHA",
-      "value": "09AKhCRwi4k0wQImFjlD8CLNW0em4G9qBnmwbBm93Yp8yDbvmmB701V2LAxabOa6M2owAPPXQNLDWXH0P19m_Nyck",
+      "value": "09AKhCRwi-_7sMRFsIz13uUjTBoWMPCuF_JurPo6y0hXH_U7uHraoVAFbeFu6qTA9V_OgWYfuYH0k0W85TwPgZxCw",
       "domain": "www.google.com",
       "path": "/recaptcha",
-      "expires": 1797728746.209284,
+      "expires": 1797783261.251011,
       "httpOnly": true,
       "secure": true,
       "sameSite": "None"
     },
     {
       "name": "bioactiva_token",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiY29ycmVvIjoieXVyaS5lc2NvYmFyQHV0ZWMuZWR1LnBlIiwibm9tYnJlcyI6Inl1cmkgYWJlbCIsImFwZWxsaWRvcyI6ImVzY29iYXIgcGVyZXoiLCJyb2xlIjoxLCJlc3RhZG8iOjEsInRva2VuVmVyc2lvbiI6MjYsImlhdCI6MTc4MjE3Njc1MywiZXhwIjoxNzgyMTc3NjUzLCJhdWQiOiJiYWNrLWJpb2FjdGl2YS13ZWIiLCJpc3MiOiJiYWNrLWJpb2FjdGl2YSJ9.iD5HGVGzOcmPc8Ah1cJttDnTOcbbYiewuo_oLBXkRqA",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiY29ycmVvIjoieXVyaS5lc2NvYmFyQHV0ZWMuZWR1LnBlIiwibm9tYnJlcyI6Inl1cmkgYWJlbCIsImFwZWxsaWRvcyI6Inl1cmkuZXNjb2JhckB1dGVjLmVkdS5wZSIsInJvbGUiOjEsImVzdGFkbyI6MSwidG9rZW5WZXJzaW9uIjo0LCJpYXQiOjE3ODIyMzEyNjUsImV4cCI6MTc4MjIzMjE2NSwiYXVkIjoiYmFjay1iaW9hY3RpdmEtd2ViIiwiaXNzIjoiYmFjay1iaW9hY3RpdmEifQ.tVugFmzJkvI5s6SZoZNJ4cJpDmPg3nhaFTTl83Z0SI0",
       "domain": "bioactiva.ingsoftware.lat",
       "path": "/",
-      "expires": 1782205554.577626,
+      "expires": 1782260067.227625,
       "httpOnly": false,
       "secure": false,
-      "sameSite": "Strict"
+      "sameSite": "Lax"
     },
     {
       "name": "bioactiva_rol",
       "value": "Trabajador",
       "domain": "bioactiva.ingsoftware.lat",
       "path": "/",
-      "expires": 1782205554.577852,
+      "expires": 1782260067.227783,
       "httpOnly": false,
       "secure": false,
-      "sameSite": "Strict"
+      "sameSite": "Lax"
     }
   ],
   "origins": [
@@ -47,19 +47,19 @@
       "localStorage": [
         {
           "name": "bioactiva_token",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiY29ycmVvIjoieXVyaS5lc2NvYmFyQHV0ZWMuZWR1LnBlIiwibm9tYnJlcyI6Inl1cmkgYWJlbCIsImFwZWxsaWRvcyI6ImVzY29iYXIgcGVyZXoiLCJyb2xlIjoxLCJlc3RhZG8iOjEsInRva2VuVmVyc2lvbiI6MjYsImlhdCI6MTc4MjE3Njc1MywiZXhwIjoxNzgyMTc3NjUzLCJhdWQiOiJiYWNrLWJpb2FjdGl2YS13ZWIiLCJpc3MiOiJiYWNrLWJpb2FjdGl2YSJ9.iD5HGVGzOcmPc8Ah1cJttDnTOcbbYiewuo_oLBXkRqA"
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiY29ycmVvIjoieXVyaS5lc2NvYmFyQHV0ZWMuZWR1LnBlIiwibm9tYnJlcyI6Inl1cmkgYWJlbCIsImFwZWxsaWRvcyI6Inl1cmkuZXNjb2JhckB1dGVjLmVkdS5wZSIsInJvbGUiOjEsImVzdGFkbyI6MSwidG9rZW5WZXJzaW9uIjo0LCJpYXQiOjE3ODIyMzEyNjUsImV4cCI6MTc4MjIzMjE2NSwiYXVkIjoiYmFjay1iaW9hY3RpdmEtd2ViIiwiaXNzIjoiYmFjay1iaW9hY3RpdmEifQ.tVugFmzJkvI5s6SZoZNJ4cJpDmPg3nhaFTTl83Z0SI0"
         },
         {
           "name": "bioactiva_user",
-          "value": "{\"id\":5,\"nombres\":\"yuri abel\",\"apellidos\":\"escobar perez\",\"correo\":\"yuri.escobar@utec.edu.pe\",\"rol\":\"Trabajador\",\"estado\":\"Activo\",\"created_at\":\"2026-06-18T04:21:37.406Z\",\"updated_at\":\"2026-06-23T01:05:53.269Z\"}"
+          "value": "{\"id\":3,\"nombres\":\"yuri abel\",\"apellidos\":\"yuri.escobar@utec.edu.pe\",\"correo\":\"yuri.escobar@utec.edu.pe\",\"rol\":\"Trabajador\",\"estado\":\"Activo\",\"created_at\":\"2026-06-23T04:59:24.301Z\",\"updated_at\":\"2026-06-23T16:14:25.846Z\"}"
         },
         {
           "name": "_grecaptcha",
-          "value": "09AKhCRwjz6aP-237GIqhIc-S22ScQIIU4qH6kS0IdMceNf__7rViquLHgdLZ4nLXfhPq2GKm61gqJz10PBpMf1OkdA-3l80qGP4YPhhRKL5kHZFVD6xPPtXwScaj_TQRd"
+          "value": "09AKhCRwhseuYgvkuuozXYb_kQpsZk8iGomrybFYPFiqs9JgzWhmvEq87zrxWyiirXmCGBHTdLhFzNjp7Xsld1KeZwvM0PHprArhFC6avCevWAQxTt2Tg32yDvVZE6KVfz"
         },
         {
           "name": "bioactiva-auth",
-          "value": "{\"state\":{\"accessToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiY29ycmVvIjoieXVyaS5lc2NvYmFyQHV0ZWMuZWR1LnBlIiwibm9tYnJlcyI6Inl1cmkgYWJlbCIsImFwZWxsaWRvcyI6ImVzY29iYXIgcGVyZXoiLCJyb2xlIjoxLCJlc3RhZG8iOjEsInRva2VuVmVyc2lvbiI6MjYsImlhdCI6MTc4MjE3Njc1MywiZXhwIjoxNzgyMTc3NjUzLCJhdWQiOiJiYWNrLWJpb2FjdGl2YS13ZWIiLCJpc3MiOiJiYWNrLWJpb2FjdGl2YSJ9.iD5HGVGzOcmPc8Ah1cJttDnTOcbbYiewuo_oLBXkRqA\",\"tokenExpiresAt\":1782177653626,\"usuario\":{\"id\":5,\"nombres\":\"yuri abel\",\"apellidos\":\"escobar perez\",\"correo\":\"yuri.escobar@utec.edu.pe\",\"rol\":\"Trabajador\",\"estado\":\"Activo\",\"created_at\":\"2026-06-18T04:21:37.406Z\",\"updated_at\":\"2026-06-23T01:05:53.269Z\"},\"isAuthenticated\":true},\"version\":0}"
+          "value": "{\"state\":{\"accessToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiY29ycmVvIjoieXVyaS5lc2NvYmFyQHV0ZWMuZWR1LnBlIiwibm9tYnJlcyI6Inl1cmkgYWJlbCIsImFwZWxsaWRvcyI6Inl1cmkuZXNjb2JhckB1dGVjLmVkdS5wZSIsInJvbGUiOjEsImVzdGFkbyI6MSwidG9rZW5WZXJzaW9uIjo0LCJpYXQiOjE3ODIyMzEyNjUsImV4cCI6MTc4MjIzMjE2NSwiYXVkIjoiYmFjay1iaW9hY3RpdmEtd2ViIiwiaXNzIjoiYmFjay1iaW9hY3RpdmEifQ.tVugFmzJkvI5s6SZoZNJ4cJpDmPg3nhaFTTl83Z0SI0\",\"tokenExpiresAt\":1782232166367,\"usuario\":{\"id\":3,\"nombres\":\"yuri abel\",\"apellidos\":\"yuri.escobar@utec.edu.pe\",\"correo\":\"yuri.escobar@utec.edu.pe\",\"rol\":\"Trabajador\",\"estado\":\"Activo\",\"created_at\":\"2026-06-23T04:59:24.301Z\",\"updated_at\":\"2026-06-23T16:14:25.846Z\"},\"isAuthenticated\":true},\"version\":0}"
         }
       ]
     },
@@ -68,11 +68,11 @@
       "localStorage": [
         {
           "name": "rc::a",
-          "value": "d2V3ZTZ5ZmRteTNl"
+          "value": "MWxscmpuYTFzdjR0ZjY="
         },
         {
           "name": "rc::f",
-          "value": "0aAD5oO36BiBQ8joqsuJMmbkZykspVpHwIHcn3VY5epGAbefX6ziJm3koPhlT0-R8qymILBPM"
+          "value": "0aAD5oO3690sb0REk8n0-Ssmn16-phzBw7H5-DmVX-0rHIaZNtHlEGMqPuRgATYZ7BZ6O4pYI"
         }
       ]
     }
