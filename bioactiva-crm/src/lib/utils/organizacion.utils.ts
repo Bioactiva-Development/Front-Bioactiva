@@ -1,3 +1,18 @@
+const TIPO_LABELS: Record<string, string> = {
+    ACADEMIA:                'Academia',
+    EMPRESA_INTERNACIONAL:   'Empresa Internacional',
+    EMPRESA_NACIONAL:        'Empresa Nacional',
+    GOBIERNO_NACIONAL:       'Gobierno Nacional',
+    INDEPENDIENTE:           'Independiente',
+    ONG:                     'ONG',
+    ORGANISMO_INTERNACIONAL: 'Organismo Internacional',
+}
+
+/** Convierte "EMPRESA_NACIONAL" → "Empresa Nacional" para mostrar en UI. */
+export function formatTipo(tipo: string): string {
+    return TIPO_LABELS[tipo] ?? tipo
+}
+
 /** Convierte "BANCA_Y_SEGUROS" → "Banca y seguros" para mostrar en UI. */
 export function formatSector(sector: string): string {
     const words = sector.replaceAll('_', ' ').toLowerCase().split(' ')

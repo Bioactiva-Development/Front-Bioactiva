@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, DragEvent, ChangeEvent } from 'react'
 import {
     UploadCloud, FileSpreadsheet, X, CheckCircle, AlertCircle,
-    Loader2, Download, FileDown, TriangleAlert,
+    Loader2, Download, FileDown, TriangleAlert, XCircle,
 } from 'lucide-react'
 import { useDatos } from '@/hooks/datos/useDatos'
 import { formatFileSize, MAX_FILE_SIZE_BYTES } from '@/lib/utils/csv.utils'
@@ -307,24 +307,48 @@ export function ImportarStepper() {
                     ) : jobStatus.state === 'failed' ? (
                         <>
                             <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
-                                <AlertCircle size={32} className="text-red-500" />
+                                <XCircle size={32} className="text-red-500" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-gray-800">Importación fallida</h3>
-                                <p className="text-sm text-gray-500 mt-1">{jobStatus.failedReason ?? 'Error desconocido.'}</p>
+                                <h3 className="text-lg font-bold text-gray-800">No se importaron los datos</h3>
+                                <p className="text-sm text-gray-500 mt-1">Ningún registro fue guardado. Corrige los errores y vuelve a intentarlo.</p>
                             </div>
+
+                            {/* Errores estructurados del job (si el backend los devuelve en result) */}
+                            {(jobStatus.result?.validation?.errors.length ?? 0) > 0 ? (
+                                <div className="w-full max-w-sm space-y-1.5 text-left">
+                                    <p className="text-xs font-semibold text-red-600">
+                                        {jobStatus.result!.validation.errors.length} error{jobStatus.result!.validation.errors.length > 1 ? 'es' : ''} detectado{jobStatus.result!.validation.errors.length > 1 ? 's' : ''}:
+                                    </p>
+                                    <ul className="space-y-1 max-h-40 overflow-y-auto">
+                                        {jobStatus.result!.validation.errors.slice(0, 10).map((e, i) => (
+                                            <li key={i} className="text-xs text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                                                <span className="font-semibold">[{e.sheet} · fila {e.row}]</span> {e.message}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ) : jobStatus.failedReason ? (
+                                <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3 w-full max-w-sm text-left">
+                                    {jobStatus.failedReason}
+                                </p>
+                            ) : null}
+
                             <button onClick={handleReiniciar} className="flex items-center gap-2 px-6 py-2.5 rounded-xl border-2 border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors">
-                                Intentar de nuevo
+                                Corregir y volver a intentar
                             </button>
                         </>
-                    ) : (
+                    ) : (jobStatus.result?.summary.skipped.length ?? 0) > 0 ? (
                         <>
-                            <div className="w-16 h-16 rounded-full bg-[#F1FFEC] flex items-center justify-center">
-                                <CheckCircle size={32} className="text-[#1C7E3C]" />
+                            <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center">
+                                <TriangleAlert size={32} className="text-amber-500" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-gray-800">¡Importación completada!</h3>
-                                <p className="text-sm text-gray-500 mt-1">{totalInsertados} registros insertados en total.</p>
+                                <h3 className="text-lg font-bold text-gray-800">Importación parcial</h3>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    {totalInsertados} registro{totalInsertados !== 1 ? 's' : ''} importado{totalInsertados !== 1 ? 's' : ''},
+                                    {' '}{jobStatus.result!.summary.skipped.length} fila{jobStatus.result!.summary.skipped.length !== 1 ? 's' : ''} no pudieron procesarse.
+                                </p>
                             </div>
 
                             {/* Detalle insertados */}
@@ -339,17 +363,40 @@ export function ImportarStepper() {
                                 </div>
                             )}
 
-                            {/* Skipped */}
-                            {(jobStatus.result?.summary.skipped.length ?? 0) > 0 && (
-                                <div className="w-full max-w-sm space-y-1.5">
-                                    <p className="text-xs font-semibold text-amber-600 text-left">{jobStatus.result!.summary.skipped.length} filas omitidas</p>
-                                    <ul className="space-y-1 max-h-28 overflow-y-auto">
-                                        {jobStatus.result!.summary.skipped.map((s, i) => (
-                                            <li key={i} className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-1.5 text-left">
-                                                <span className="font-semibold">{s.sheet} F{s.row}:</span> {s.message}
-                                            </li>
-                                        ))}
-                                    </ul>
+                            {/* Filas que no entraron */}
+                            <div className="w-full max-w-sm space-y-1.5 text-left">
+                                <p className="text-xs font-semibold text-amber-600">Filas no importadas:</p>
+                                <ul className="space-y-1 max-h-36 overflow-y-auto">
+                                    {jobStatus.result!.summary.skipped.map((s, i) => (
+                                        <li key={i} className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                                            <span className="font-semibold">[{s.sheet} · fila {s.row}]</span> {s.message}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <button onClick={handleReiniciar} className="flex items-center gap-2 px-6 py-2.5 rounded-xl border-2 border-[#1C7E3C] text-[#1C7E3C] text-sm font-semibold hover:bg-[#F1FFEC] transition-colors">
+                                Importar otro archivo
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <div className="w-16 h-16 rounded-full bg-[#F1FFEC] flex items-center justify-center">
+                                <CheckCircle size={32} className="text-[#1C7E3C]" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-800">¡Importación completada!</h3>
+                                <p className="text-sm text-gray-500 mt-1">{totalInsertados} registros insertados en total.</p>
+                            </div>
+
+                            {jobStatus.result && (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-sm">
+                                    {(Object.entries(jobStatus.result.summary.inserted) as [string, number][]).map(([k, v]) => (
+                                        <div key={k} className="rounded-xl bg-[#F1FFEC] border border-[#BCF7B3] p-3 text-center">
+                                            <p className="text-xl font-bold text-[#1C7E3C]">{v}</p>
+                                            <p className="text-xs text-gray-500 mt-0.5 capitalize">{k}</p>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
 

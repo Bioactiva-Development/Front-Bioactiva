@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Pencil, ExternalLink,
   Send, CheckCircle2, XCircle, Loader2,
-  DollarSign,
+  DollarSign, Building2,
 } from 'lucide-react'
 import { Cotizacion } from '@/types/cotizacion.types'
 import { EstadoCot, TipoMoneda } from '@/types/enums'
@@ -81,15 +81,26 @@ export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionD
         <div className="flex items-start justify-between flex-wrap gap-4">
 
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push(ROUTES.cotizaciones)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
-                text-gray-500 hover:text-gray-700 hover:bg-gray-50
-                border border-gray-200 transition-colors shrink-0"
-            >
-              <ArrowLeft size={14} />
-              Volver
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => router.push(ROUTES.cotizaciones)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
+                  text-gray-500 hover:text-gray-700 hover:bg-gray-50
+                  border border-gray-200 transition-colors shrink-0"
+              >
+                <ArrowLeft size={14} />
+                Volver
+              </button>
+              <button
+                onClick={() => router.push(ROUTES.lead(cotizacion.id_lead))}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
+                  text-gray-500 hover:text-gray-700 hover:bg-gray-50
+                  border border-gray-200 transition-colors shrink-0"
+              >
+                <Building2 size={14} />
+                Ver lead
+              </button>
+            </div>
 
             <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center
               justify-center shrink-0">

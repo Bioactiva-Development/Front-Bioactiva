@@ -237,6 +237,7 @@ export function LeadDetalle({
   const [mostrarForm, setMostrarForm]   = useState(initialAction === 'actividad')
   const [errorActividad, setErrorActividad] = useState<string | null>(null)
   const [actividadBloqueada, setActividadBloqueada] = useState<string | null>(null)
+  const [cotizacionBloqueada, setCotizacionBloqueada] = useState<string | null>(null)
   const [notificacionMode, setNotificacionMode] = useState<
     'recordatorio' | 'seguimiento' | null
   >(null)
@@ -590,16 +591,35 @@ export function LeadDetalle({
                 cuando ya existe una. */}
             {cotizaciones.length === 0 && (
               <button
-                onClick={() => router.push(`/cotizaciones/nueva?lead=${lead.id}`)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
-                  font-semibold bg-emerald-600 hover:bg-emerald-700
-                  text-white transition-colors shrink-0"
+                onClick={() => {
+                  if (pendingActivity) {
+                    setCotizacionBloqueada(
+                      `Debes completar "${pendingActivity.nombre_actividad}" antes de crear una cotización.`
+                    )
+                    return
+                  }
+                  router.push(`/cotizaciones/nueva?lead=${lead.id}`)
+                }}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm
+                  font-semibold transition-colors shrink-0
+                  ${pendingActivity
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  }`}
               >
                 <Plus size={14} />
                 Nueva cotización
               </button>
             )}
           </div>
+
+          {cotizacionBloqueada && (
+            <div className="mb-4 flex items-start gap-2 rounded-xl
+              border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              <p>{cotizacionBloqueada}</p>
+            </div>
+          )}
 
           {loadingCotizaciones ? (
             <div className="flex items-center justify-center py-8">

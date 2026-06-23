@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'BioActiva CRM',
   description: 'Sistema de gestión comercial BioActiva',
+  icons: {
+    icon: '/BAlogo.svg',
+  },
 }
 
 // La CSP estricta usa un nonce por request (definido en src/proxy.ts). El nonce

@@ -58,7 +58,7 @@ function NuevaCotizacionContent() {
       setError(null)
       await crear(data)
       await new Promise((resolve) => setTimeout(resolve, 100))
-      router.push(ROUTES.cotizaciones)
+      router.push(ROUTES.lead(leadIdInicial!))
     } catch (err: unknown) {
       setError(mensajeCrearCotizacionError(err))
     }
@@ -118,6 +118,7 @@ function NuevaCotizacionContent() {
           isLoading={isPending}
           error={error}
           leadIdInicial={leadIdInicial}
+          rutaVolver={ROUTES.lead(leadIdInicial!)}
         />
       )}
     </div>
