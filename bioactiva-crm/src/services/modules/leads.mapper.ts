@@ -135,6 +135,8 @@ export const toLeadQueryParams = (filtros?: LeadFiltros) => {
   if (filtros?.id_org) params.idOrg = filtros.id_org
   // Sector de la organización vinculada (valor del enum Sector, ej. TECNOLOGIA).
   if (filtros?.sector) params.sector = filtros.sector
+  // Tipo de organización vinculada (valor del enum TipoEmpresa, ej. EMPRESA_NACIONAL).
+  if (filtros?.tipo_org) params.tipo = filtros.tipo_org
   if (filtros?.search) params.search = filtros.search
   // Enum TODAS | POR_VENCER | VENCIDAS. Se omite para traer todos los leads.
   if (filtros?.alerta_actividad) params.alertaActividad = filtros.alerta_actividad
