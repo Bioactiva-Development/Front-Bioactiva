@@ -62,8 +62,8 @@ describe('actividades.mapper', () => {
     })).toEqual({
       idLead: 10,
       nombreActividad: 'Discovery call',
-      fechaInicio: new Date('2026-06-10T14:00').toISOString(),
-      fechaFin: new Date('2026-06-10T15:00').toISOString(),
+      fechaInicio: new Date(Date.UTC(2026, 5, 10, 19, 0, 0)).toISOString(),
+      fechaFin: new Date(Date.UTC(2026, 5, 10, 20, 0, 0)).toISOString(),
       tipo: 'LLAMADA',
       notas: 'Discuss requirements',
     })
@@ -74,7 +74,7 @@ describe('actividades.mapper', () => {
       estado: EstadoActividad.Completada,
     })).toEqual({
       nombreActividad: 'Follow-up call',
-      fechaFin: new Date('2026-06-10T16:00').toISOString(),
+      fechaFin: new Date(Date.UTC(2026, 5, 10, 21, 0, 0)).toISOString(),
     })
   })
 })
