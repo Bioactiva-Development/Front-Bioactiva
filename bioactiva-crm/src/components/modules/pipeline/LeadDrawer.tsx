@@ -222,18 +222,6 @@ export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
                   registrada.
                 </p>
               </div>
-              <button
-                onClick={() => {
-                  onCerrar()
-                  router.push(ROUTES.lead(lead.id))
-                }}
-                className="inline-flex items-center gap-1.5 rounded-lg
-                  px-3 py-1.5 text-xs font-semibold text-emerald-600
-                  hover:bg-emerald-50 transition-colors"
-              >
-                <ExternalLink size={13} />
-                Gestionar lead
-              </button>
             </div>
           ) : (
           <>

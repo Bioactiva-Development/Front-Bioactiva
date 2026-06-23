@@ -17,7 +17,7 @@ const VALID_DATA = {
   nombre_comercial: 'Altomayo',
   codigo_cliente: 'ALT-001',
   ruc: '20601258529',
-  tipo: TipoEmpresa.Privada,
+  tipo: TipoEmpresa.EmpresaNacional,
   tamano: TamanoEmpresa.Grande,
   sector: Sector.AGROALIMENTARIA,
 }
@@ -128,13 +128,13 @@ describe('organizaciones/organizacion.schema', () => {
       nombre: 'Test',
       nombre_comercial: 'Test',
       codigo_cliente: 'TST-001',
-      tipo: TipoEmpresa.Privada,
+  tipo: TipoEmpresa.EmpresaNacional,
       tamano: TamanoEmpresa.Micro,
       sector: Sector.OTROS,
     })
     expect(result.nombre).toBe('Test')
     expect(result.codigo_cliente).toBe('TST-001')
-    expect(result.tipo).toBe(TipoEmpresa.Privada)
+    expect(result.tipo).toBe(TipoEmpresa.EmpresaNacional)
     expect(result.tamano).toBe(TamanoEmpresa.Micro)
     expect(result.sector).toBe(Sector.OTROS)
   })

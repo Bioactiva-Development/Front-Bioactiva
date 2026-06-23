@@ -4,19 +4,20 @@ import { useState } from 'react'
 import {
   Mail, Phone, Users, HelpCircle,
   CheckCircle2, Clock, XCircle,
-  ChevronDown, ChevronUp, Send,
+  ChevronDown, ChevronUp,
   AlertTriangle,
-  Bell, Save, Loader2,
-  CalendarPlus, ExternalLink,
+  Save, Loader2, CalendarPlus, ExternalLink, Trash2,
 } from 'lucide-react'
+import { ModalShell, ModalHeader } from '@/components/ui'
 import { Actividad } from '@/types/actividad.types'
 import { TipoActividad, EstadoActividad } from '@/types/enums'
 import {
   useCompletarActividad,
   useEditarNotasActividad,
-  useCrearEventoCalendario,
+  useEliminarActividad,
 } from '@/hooks/pipeline/useActividades'
 import { getErrorMessage } from '@/lib/utils/error.utils'
+import { APP_TIME_ZONE } from '@/lib/utils/timezone.utils'
 
 interface ActividadHistorialProps {
   leadId:      number
@@ -79,27 +80,25 @@ function ActividadItem({
   onProgramarRecordatorio?: (actividad: Actividad) => void
   onProgramarSeguimiento?: (actividad: Actividad) => void
 }) {
-  const [expandido,    setExpandido]    = useState(false)
-  const [notasEdit, setNotasEdit] = useState(actividad.notas ?? '')
-  const [notasError, setNotasError] = useState<string | null>(null)
+  const [expandido,       setExpandido]       = useState(false)
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false)
+  const [notasEdit,       setNotasEdit]       = useState(actividad.notas ?? '')
+  const [notasError,      setNotasError]      = useState<string | null>(null)
 
   const { mutateAsync: completar, isPending: completando } =
     useCompletarActividad(leadId)
   const { mutateAsync: guardarNotas, isPending: guardandoNotas } =
     useEditarNotasActividad(leadId)
-  const { mutateAsync: crearEvento, isPending: creandoEvento } =
-    useCrearEventoCalendario(leadId)
+  const { mutateAsync: eliminar, isPending: eliminando } =
+    useEliminarActividad(leadId)
 
   const esPendiente = actividad.estado === EstadoActividad.Pendiente
   const esTerminal  = actividad.estado === EstadoActividad.Completada ||
                       actividad.estado === EstadoActividad.Cancelada
-  const puedeCrearEvento =
-    esPendiente &&
-    actividad.tipo === TipoActividad.Reunion &&
-    !actividad.outlook_event_id
 
   const formatFecha = (fecha: string) =>
-    new Date(fecha).toLocaleDateString('es-PE', {
+    new Date(fecha).toLocaleString('es-PE', {
+      timeZone: APP_TIME_ZONE,
       day:    '2-digit',
       month:  'short',
       year:   'numeric',
@@ -158,51 +157,29 @@ function ActividadItem({
           <div className="flex items-center gap-1 shrink-0">
             {esPendiente && (
               <>
-              <button
-                type="button"
-                onClick={() => onProgramarRecordatorio?.(actividad)}
-                title="Programar recordatorio"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
-                  hover:bg-emerald-50 transition-colors"
-              >
-                <Bell size={14} />
-              </button>
-              {puedeCrearEvento && (
                 <button
-                  type="button"
-                  onClick={() => crearEvento(actividad.id)}
-                  disabled={creandoEvento}
-                  title="Crear evento Outlook/Teams"
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600
-                    hover:bg-blue-50 transition-colors disabled:opacity-40"
+                  onClick={handleCompletar}
+                  disabled={completando || eliminando}
+                  title="Marcar como completada"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                    text-xs font-semibold text-emerald-600 hover:bg-emerald-50
+                    border border-emerald-200 transition-colors
+                    disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <CalendarPlus size={14} />
+                  <CheckCircle2 size={13} />
+                  Completar
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => onProgramarSeguimiento?.(actividad)}
-                title="Programar seguimiento"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600
-                  hover:bg-emerald-50 transition-colors"
-              >
-                <Send size={14} />
-              </button>
+                <button
+                  onClick={() => setConfirmarEliminar(true)}
+                  disabled={eliminando || completando}
+                  title="Eliminar actividad"
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-500
+                    hover:bg-red-50 transition-colors
+                    disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Trash2 size={14} />
+                </button>
               </>
-            )}
-            {esPendiente && (
-              <button
-                onClick={handleCompletar}
-                disabled={completando}
-                title="Marcar como completada"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                  text-xs font-semibold text-emerald-600 hover:bg-emerald-50
-                  border border-emerald-200 transition-colors
-                  disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <CheckCircle2 size={13} />
-                Completar
-              </button>
             )}
             <button
               onClick={() => setExpandido(!expandido)}
@@ -299,6 +276,47 @@ function ActividadItem({
             </button>
           </div>
         </div>
+      )}
+      {confirmarEliminar && (
+        <ModalShell onClose={() => setConfirmarEliminar(false)} maxWidth="sm">
+          <ModalHeader
+            icon={<AlertTriangle size={18} className="text-red-500" />}
+            iconBg="bg-red-50"
+            title="Eliminar actividad"
+            onClose={() => setConfirmarEliminar(false)}
+          />
+          <div className="px-6 py-5 space-y-4">
+            <p className="text-sm text-gray-600">
+              ¿Estás seguro de que deseas eliminar{' '}
+              <span className="font-semibold text-gray-900">
+                {actividad.nombre_actividad}
+              </span>
+              ? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmarEliminar(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await eliminar(actividad.id)
+                  setConfirmarEliminar(false)
+                }}
+                disabled={eliminando}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 disabled:bg-red-200 disabled:cursor-not-allowed rounded-xl transition-colors"
+              >
+                {eliminando
+                  ? <><Loader2 size={14} className="animate-spin" />Eliminando...</>
+                  : 'Sí, eliminar'}
+              </button>
+            </div>
+          </div>
+        </ModalShell>
       )}
     </div>
   )

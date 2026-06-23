@@ -57,7 +57,11 @@ export function RecordatorioForm({
   onCancel,
   leadIdInicial,
 }: Readonly<RecordatorioFormProps>) {
-  const { data: leadsResponse } = useLeads({ limit: 100 })
+  const { data: leadsResponse } = useLeads({
+    limit: 100,
+    mis_leads: true,
+    con_actividades_pendientes: true,
+  })
   const leads = leadsResponse?.data ?? []
   const plantillasActivas = usePlantillasActivas()
 

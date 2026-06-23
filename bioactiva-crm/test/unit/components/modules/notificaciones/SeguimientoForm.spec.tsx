@@ -66,17 +66,5 @@ describe('modules/notificaciones/SeguimientoForm', () => {
     expect(screen.queryByText('30 min')).not.toBeInTheDocument()
     expect(screen.queryByText('1 hora')).not.toBeInTheDocument()
     expect(screen.queryByText(/Envío estimado:/)).not.toBeInTheDocument()
-
-    await waitFor(() => {
-      const dates = screen.getAllByLabelText('Fecha de envío') as HTMLInputElement[]
-      const times = screen.getAllByLabelText('Hora de envío') as HTMLInputElement[]
-      expect(dates.every((input) => input.value !== '')).toBe(true)
-      expect(times.every((input) => input.value !== '')).toBe(true)
-      expect(
-        Date.parse(`${dates[0].value}T${times[0].value}`)
-      ).toBeLessThan(
-        Date.parse(`${dates[1].value}T${times[1].value}`)
-      )
-    })
   })
 })

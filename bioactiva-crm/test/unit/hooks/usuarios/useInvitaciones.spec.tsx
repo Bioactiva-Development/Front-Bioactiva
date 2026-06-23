@@ -34,12 +34,12 @@ function wrapper({ children }: { children: React.ReactNode }) {
 describe('usuarios/useInvitaciones', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockListInvitaciones.mockResolvedValue({ data: [], total: 0 })
+    mockListInvitaciones.mockResolvedValue({ data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } })
   })
 
   describe('list query', () => {
     it('fetches invitations list', async () => {
-      const mockResponse = { data: [{ id: 1, correo: 'test@test.com' }], total: 1 }
+      const mockResponse = { data: [{ id: 1, correo: 'test@test.com' }], meta: { total: 1, page: 1, limit: 10, totalPages: 1 } }
       mockListInvitaciones.mockResolvedValueOnce(mockResponse)
 
       const { result } = renderHook(() => useInvitaciones(), { wrapper })
@@ -51,7 +51,7 @@ describe('usuarios/useInvitaciones', () => {
     })
 
     it('passes params to the service', async () => {
-      mockListInvitaciones.mockResolvedValueOnce({ data: [], total: 0 })
+      mockListInvitaciones.mockResolvedValueOnce({ data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } })
 
       const params = { estado: 'pendiente' }
       renderHook(() => useInvitaciones(params as any), { wrapper })
@@ -72,7 +72,7 @@ describe('usuarios/useInvitaciones', () => {
 
   describe('createInvitacion', () => {
     it('creates invitation successfully', async () => {
-      mockListInvitaciones.mockResolvedValueOnce({ data: [], total: 0 })
+      mockListInvitaciones.mockResolvedValueOnce({ data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } })
       mockCreateInvitacion.mockResolvedValueOnce({ id: 1 })
 
       const { result } = renderHook(() => useInvitaciones(), { wrapper })
@@ -88,7 +88,7 @@ describe('usuarios/useInvitaciones', () => {
 
   describe('revokeInvitacion', () => {
     it('revokes invitation by id', async () => {
-      mockListInvitaciones.mockResolvedValueOnce({ data: [], total: 0 })
+      mockListInvitaciones.mockResolvedValueOnce({ data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } })
       mockRevokeInvitacion.mockResolvedValueOnce({ ok: true })
 
       const { result } = renderHook(() => useInvitaciones(), { wrapper })

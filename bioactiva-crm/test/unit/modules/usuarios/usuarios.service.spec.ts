@@ -244,16 +244,16 @@ describe('usuarios/usuarios.service (API mode)', () => {
       expect(result.data[0].estado).toBe(EstadoToken.Pendiente)
     })
 
-    it('handles { data: [...], total, page, limit } response', async () => {
+    it('handles { data: [...], meta: { total, page, limit } } response', async () => {
       getMock.mockResolvedValueOnce({
-        data: { data: [rawInvitacion], total: 1, page: 1, limit: 10 },
+        data: { data: [rawInvitacion], meta: { total: 1, page: 1, limit: 10, totalPages: 1 } },
       })
 
       const result = await usuariosService.listInvitaciones()
 
       expect(result.data).toHaveLength(1)
-      expect(result.total).toBe(1)
-      expect(result.page).toBe(1)
+      expect(result.meta.total).toBe(1)
+      expect(result.meta.page).toBe(1)
     })
 
     it('passes params to the endpoint', async () => {
@@ -268,11 +268,13 @@ describe('usuarios/usuarios.service (API mode)', () => {
 
     it('maps estado 0→Pendiente, 1→Consumido, 2→Expirado', async () => {
       getMock.mockResolvedValueOnce({
-        data: [
-          { ...rawInvitacion, id: 1, estado: 0 },
-          { ...rawInvitacion, id: 2, estado: 1 },
-          { ...rawInvitacion, id: 3, estado: 2 },
-        ],
+        data: {
+          data: [
+            { ...rawInvitacion, id: 1, estado: 0 },
+            { ...rawInvitacion, id: 2, estado: 1 },
+            { ...rawInvitacion, id: 3, estado: 2 },
+          ],
+        },
       })
 
       const result = await usuariosService.listInvitaciones()
@@ -283,7 +285,7 @@ describe('usuarios/usuarios.service (API mode)', () => {
     })
 
     it('falls back to expired_at when expires_at is missing', async () => {
-      getMock.mockResolvedValueOnce({ data: [{ ...rawInvitacion, expires_at: undefined }] })
+      getMock.mockResolvedValueOnce({ data: { data: [{ ...rawInvitacion, expires_at: undefined }] } })
 
       const result = await usuariosService.listInvitaciones()
 

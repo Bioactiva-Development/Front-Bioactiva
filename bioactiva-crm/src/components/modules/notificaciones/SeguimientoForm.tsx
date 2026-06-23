@@ -121,7 +121,11 @@ export function SeguimientoForm({
 }: Readonly<SeguimientoFormProps>) {
   const editando = Boolean(notificacionInicial)
   const instanciaInicial = getInstanciaInicial(notificacionInicial)
-  const { data: leadsResponse } = useLeads({ limit: 100 })
+  const { data: leadsResponse } = useLeads({
+    limit: 100,
+    mis_leads: true,
+    con_actividades_pendientes: true,
+  })
   const leads = leadsResponse?.data ?? []
   const plantillasQuery = usePlantillasActivas()
   const plantillas = plantillasQuery.data ?? []
@@ -228,19 +232,6 @@ export function SeguimientoForm({
       notificacionInicial?.correoCliente ?? correoPrincipal
     )
   }, [contacto?.id, correoPrincipal, notificacionInicial?.correoCliente, setValue])
-
-  useEffect(() => {
-    if (!actividadActiva || notificacionInicial) return
-    const fin = new Date(actividadActiva.fecha_fin).getTime()
-    if (!Number.isFinite(fin)) return
-
-    const internal = getFechaHoraInputs(new Date(fin - 60 * 60_000).toISOString())
-    const external = getFechaHoraInputs(new Date(fin - 30 * 60_000).toISOString())
-    setValue('instancias.0.internal.fechaEnvio', internal.fechaEnvio)
-    setValue('instancias.0.internal.horaEnvio', internal.horaEnvio)
-    setValue('instancias.0.external.fechaEnvio', external.fechaEnvio)
-    setValue('instancias.0.external.horaEnvio', external.horaEnvio)
-  }, [actividadActiva, notificacionInicial, setValue])
 
   const inputClass = (hasError: boolean, readOnly = false) =>
     `w-full rounded-xl border px-3 py-2.5 text-sm text-gray-900 outline-none ${

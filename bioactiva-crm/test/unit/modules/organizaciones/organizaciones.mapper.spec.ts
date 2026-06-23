@@ -53,7 +53,7 @@ describe('organizaciones/organizaciones.mapper', () => {
         nombre_comercial: 'Altomayo',
         sub_area: undefined,
         ruc: '20601258529',
-        tipo: TipoEmpresa.Privada,
+        tipo: TipoEmpresa.EmpresaNacional,
         linkedin: undefined,
         ubicacion: 'Lima, Peru',
         sector: Sector.AGROALIMENTARIA,
@@ -95,9 +95,9 @@ describe('organizaciones/organizaciones.mapper', () => {
       expect(result.actividad_economica).toBeUndefined()
     })
 
-    it('falls back to Privada for unknown tipo', () => {
+    it('falls back to EmpresaNacional for unknown tipo', () => {
       const result = fromOrganizacionDto({ ...dto, tipo: 'UNKNOWN_TYPE' })
-      expect(result.tipo).toBe(TipoEmpresa.Privada)
+      expect(result.tipo).toBe(TipoEmpresa.EmpresaNacional)
     })
 
     it('falls back to Micro for unknown tamano', () => {
@@ -107,13 +107,13 @@ describe('organizaciones/organizaciones.mapper', () => {
 
     it('maps all backend tipo values', () => {
       const casos: [string, TipoEmpresa][] = [
-        ['ACADEMIA', TipoEmpresa.Publica],
-        ['EMPRESA_INTERNACIONAL', TipoEmpresa.Privada],
-        ['EMPRESA_NACIONAL', TipoEmpresa.Privada],
-        ['GOBIERNO_NACIONAL', TipoEmpresa.Publica],
-        ['INDEPENDIENTE', TipoEmpresa.Privada],
+        ['ACADEMIA', TipoEmpresa.Academia],
+        ['EMPRESA_INTERNACIONAL', TipoEmpresa.EmpresaInternacional],
+        ['EMPRESA_NACIONAL', TipoEmpresa.EmpresaNacional],
+        ['GOBIERNO_NACIONAL', TipoEmpresa.GobiernoNacional],
+        ['INDEPENDIENTE', TipoEmpresa.Independiente],
         ['ONG', TipoEmpresa.ONG],
-        ['ORGANISMO_INTERNACIONAL', TipoEmpresa.Mixta],
+        ['ORGANISMO_INTERNACIONAL', TipoEmpresa.OrganismoInternacional],
       ]
       casos.forEach(([backend, domain]) => {
         expect(fromOrganizacionDto({ ...dto, tipo: backend }).tipo).toBe(domain)
@@ -141,7 +141,7 @@ describe('organizaciones/organizaciones.mapper', () => {
           nombre_comercial: 'Altomayo',
           codigo_cliente: 'ALT-001',
           ruc: '20601258529',
-          tipo: TipoEmpresa.Privada,
+          tipo: TipoEmpresa.EmpresaNacional,
           tamano: TamanoEmpresa.Grande,
           sector: Sector.AGROALIMENTARIA,
         },
@@ -164,7 +164,7 @@ describe('organizaciones/organizaciones.mapper', () => {
           nombre: 'Test',
           nombre_comercial: 'Test',
           codigo_cliente: 'TST-001',
-          tipo: TipoEmpresa.Privada,
+          tipo: TipoEmpresa.EmpresaNacional,
           tamano: TamanoEmpresa.Micro,
           sector: Sector.OTROS,
           sub_area: 'Innovación',
@@ -195,7 +195,7 @@ describe('organizaciones/organizaciones.mapper', () => {
           nombre: 'Test',
           nombre_comercial: 'Test',
           codigo_cliente: 'TST-001',
-          tipo: TipoEmpresa.Privada,
+          tipo: TipoEmpresa.EmpresaNacional,
           tamano: TamanoEmpresa.Micro,
           sector: Sector.OTROS,
           sub_area: '',
@@ -216,7 +216,7 @@ describe('organizaciones/organizaciones.mapper', () => {
           nombre: 'Altomayo',
           nombre_comercial: '',
           codigo_cliente: 'ALT-001',
-          tipo: TipoEmpresa.Privada,
+          tipo: TipoEmpresa.EmpresaNacional,
           tamano: TamanoEmpresa.Grande,
           sector: Sector.AGROALIMENTARIA,
         },
@@ -231,7 +231,7 @@ describe('organizaciones/organizaciones.mapper', () => {
         {
           nombre: 'Test',
           nombre_comercial: 'Test',
-          tipo: TipoEmpresa.Privada,
+          tipo: TipoEmpresa.EmpresaNacional,
           tamano: TamanoEmpresa.Micro,
         },
         1
@@ -246,7 +246,7 @@ describe('organizaciones/organizaciones.mapper', () => {
           nombre: 'Test',
           nombre_comercial: 'Test',
           codigo_cliente: 'TST-001',
-          tipo: TipoEmpresa.Privada,
+          tipo: TipoEmpresa.EmpresaNacional,
           tamano: TamanoEmpresa.Micro,
         },
         1
@@ -428,7 +428,7 @@ describe('organizaciones/organizaciones.mapper', () => {
         toOrganizacionQueryParams({
           sector: Sector.TECNOLOGIA,
           tamano: TamanoEmpresa.Pequena,
-          tipo: TipoEmpresa.Privada,
+          tipo: TipoEmpresa.EmpresaNacional,
         })
       ).toEqual({
         sector: Sector.TECNOLOGIA,

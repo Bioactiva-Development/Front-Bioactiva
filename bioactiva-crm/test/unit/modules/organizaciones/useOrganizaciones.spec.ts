@@ -133,7 +133,7 @@ describe('organizaciones/useOrganizaciones', () => {
           nombre: 'Nueva Org',
           nombre_comercial: 'Nueva Org',
           codigo_cliente: 'NVA-001',
-          tipo: TipoEmpresa.Privada,
+          tipo: TipoEmpresa.EmpresaNacional,
           tamano: TamanoEmpresa.Micro,
           sector: Sector.OTROS,
         })
@@ -157,7 +157,7 @@ describe('organizaciones/useOrganizaciones', () => {
           nombre: 'Nueva Org',
           nombre_comercial: 'Nueva Org',
           codigo_cliente: 'NVA-001',
-          tipo: TipoEmpresa.Privada,
+          tipo: TipoEmpresa.EmpresaNacional,
           tamano: TamanoEmpresa.Micro,
           sector: Sector.OTROS,
         })

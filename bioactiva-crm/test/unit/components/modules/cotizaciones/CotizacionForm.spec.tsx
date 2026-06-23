@@ -108,12 +108,12 @@ describe('modules/cotizaciones/CotizacionForm', () => {
       expect(screen.getByText('Guardar cotización')).toBeInTheDocument()
     })
 
-    it('renders "Volver a Cotizaciones" button', () => {
+    it('renders "Volver" button', () => {
       render(
         <CotizacionForm onSubmit={jest.fn()} isLoading={false} />
       )
 
-      expect(screen.getByText('Volver a Cotizaciones')).toBeInTheDocument()
+      expect(screen.getByText('Volver')).toBeInTheDocument()
     })
 
     it('renders fecha_cot input as readOnly', () => {
@@ -225,7 +225,7 @@ describe('modules/cotizaciones/CotizacionForm', () => {
         <CotizacionForm onSubmit={jest.fn()} isLoading={false} />
       )
 
-      await userEvent.click(screen.getByText('Volver a Cotizaciones'))
+      await userEvent.click(screen.getByText('Volver'))
 
       const navModule = jest.requireMock('next/navigation') as {
         useRouter: jest.Mock

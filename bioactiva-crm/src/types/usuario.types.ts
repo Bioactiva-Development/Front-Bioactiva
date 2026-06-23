@@ -109,9 +109,14 @@ export interface ListInvitacionesParams {
     estado?: number
 }
 
-export interface ListInvitacionesResponse {
-    data: Invitacion[]
-    total: number
+export interface ListInvitacionesMeta {
     page: number
     limit: number
+    total: number
+    totalPages: number
+}
+
+export interface ListInvitacionesResponse {
+    data: Invitacion[]
+    meta: ListInvitacionesMeta
 }

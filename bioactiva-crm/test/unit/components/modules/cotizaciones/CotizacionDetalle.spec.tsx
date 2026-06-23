@@ -37,6 +37,7 @@ jest.mock('lucide-react', () => ({
   XCircle: () => <div data-testid="icon-x-circle" />,
   Loader2: () => <div data-testid="icon-loader" />,
   DollarSign: () => <div data-testid="icon-dollar" />,
+  Building2: () => <div data-testid="icon-building" />,
 }))
 
 const baseCotizacion: Cotizacion = {
@@ -66,9 +67,9 @@ describe('modules/cotizaciones/CotizacionDetalle', () => {
     expect(screen.getAllByText('COT-001').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('renders lead id "#1"', () => {
+  it('renders "Ver lead" button', () => {
     render(<CotizacionDetalle cotizacion={baseCotizacion} onEditar={jest.fn()} />)
-    expect(screen.getAllByText('#1').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('Ver lead')).toBeInTheDocument()
   })
 
   it('renders nombre_servicio', () => {

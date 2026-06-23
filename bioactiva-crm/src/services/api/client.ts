@@ -18,8 +18,8 @@ let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown
 function forceLogout(): void {
     if (globalThis.window === undefined) return
     useAuthStore.getState().clearSession()
-    document.cookie = `${COOKIE_TOKEN}=; path=/; max-age=0; SameSite=Strict`
-    document.cookie = `${COOKIE_ROL}=; path=/; max-age=0; SameSite=Strict`
+    document.cookie = `${COOKIE_TOKEN}=; path=/; max-age=0; SameSite=Lax`
+    document.cookie = `${COOKIE_ROL}=; path=/; max-age=0; SameSite=Lax`
     // Si ya estamos en /login no redirigimos de nuevo (evita parpadeos / bucles).
     if (globalThis.location.pathname.startsWith(ROUTES.auth.login)) return
     // Mantis #271/#104: señalizamos a /login que la sesión caducó o fue

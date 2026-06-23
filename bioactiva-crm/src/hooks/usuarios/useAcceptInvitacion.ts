@@ -14,7 +14,7 @@ import { usuarioFromAccessToken } from '@/lib/utils/auth.mappers'
 const MAX_AGE = 8 * 60 * 60
 
 function setCookie(name: string, value: string): void {
-    document.cookie = `${name}=${value}; path=/; max-age=${MAX_AGE}; SameSite=Strict`
+    document.cookie = `${name}=${value}; path=/; max-age=${MAX_AGE}; SameSite=Lax`
 }
 
 export function useAcceptInvitacion() {

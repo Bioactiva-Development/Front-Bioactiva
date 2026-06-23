@@ -43,10 +43,8 @@ export function ForgotPasswordForm() {
 
 
                 <div className="bg-[#1C7E3C] px-8 py-6 flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                        <svg viewBox="0 0 24 24" className="w-6 h-6 text-white" fill="currentColor">
-                            <path d="M17 8C8 10 5.9 16.17 3.82 19.54a1 1 0 001.66 1.06C7 18.8 9.62 17 12 17c4 0 5-2 5-2s-1 2-1 6h2c0-4 1.5-6 3-6s2 1 2 3h2c0-3-1.5-5-3-5s-3 1.3-3 2c0 0 1-4-2-7z" />
-                        </svg>
+                    <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shrink-0">
+                        <img src="/BAlogo.svg" alt="BioActiva" className="w-full h-full object-contain" />
                     </div>
                     <h1 className="text-white text-xl font-bold">Bioactiva CRM</h1>
                 </div>

@@ -1,4 +1,4 @@
-import { LeadState, Sector } from './enums'
+import { LeadState, Sector, TipoEmpresa } from './enums'
 
 // Semáforo de actividades del lead (backend: activityAlert).
 // Severidad de menor a mayor: SIN_ACTIVIDADES < PENDIENTE < EN_RIESGO < POR_VENCER.
@@ -51,6 +51,8 @@ export interface LeadFiltros {
   id_org?: string
   // Filtra por el sector de la organización vinculada (GET /leads?sector=).
   sector?: Sector
+  // Filtra por el tipo de organización vinculada (GET /leads?tipo=).
+  tipo_org?: TipoEmpresa
   canal_captacion?: string
   solo_alerta?: boolean
   // Filtro de semáforo de actividades (backend: alertaActividad).
@@ -58,6 +60,10 @@ export interface LeadFiltros {
   // Filtran por fecha de creación del lead (createdAt). ISO 8601.
   fecha_desde?: string
   fecha_hasta?: string
+  // Si true, devuelve solo los leads asignados al usuario autenticado.
+  mis_leads?: boolean
+  // Si true, devuelve solo los leads con al menos una actividad pendiente.
+  con_actividades_pendientes?: boolean
   page?: number
   limit?: number
 }
