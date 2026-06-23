@@ -1,11 +1,11 @@
 const TIPO_LABELS: Record<string, string> = {
     ACADEMIA:                'Academia',
-    EMPRESA_INTERNACIONAL:   'Empresa Internacional',
-    EMPRESA_NACIONAL:        'Empresa Nacional',
-    GOBIERNO_NACIONAL:       'Gobierno Nacional',
+    EMPRESA_INTERNACIONAL:   'Empresa internacional',
+    EMPRESA_NACIONAL:        'Empresa nacional',
+    GOBIERNO_NACIONAL:       'Gobierno nacional',
     INDEPENDIENTE:           'Independiente',
     ONG:                     'ONG',
-    ORGANISMO_INTERNACIONAL: 'Organismo Internacional',
+    ORGANISMO_INTERNACIONAL: 'Organismo internacional',
 }
 
 /** Convierte "EMPRESA_NACIONAL" → "Empresa Nacional" para mostrar en UI. */
@@ -21,8 +21,8 @@ export function formatSector(sector: string): string {
 
 const TAMANO_LABELS: Record<string, string> = {
     Micro:   'Micro',
-    Pequena: 'Pequeña',
-    Mediana: 'Mediana',
+    Pequeno: 'Pequeño',
+    Mediano: 'Mediano',
     Grande:  'Grande',
 }
 
