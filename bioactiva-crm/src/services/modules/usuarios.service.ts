@@ -196,17 +196,15 @@ export const usuariosService = {
     listInvitaciones: async (params?: ListInvitacionesParams): Promise<ListInvitacionesResponse> => {
         if (USE_MOCK) return mockListInvitaciones(params)
         const { data: body } = await apiClient.get(ENDPOINTS.invitaciones.list, { params })
-        // El backend puede responder como array plano `[...]` o envuelto en
-        // `{ data: [...], total, page, limit }`. Se toleran ambas formas.
-        const rawList: InvitacionRaw[] = Array.isArray(body)
-            ? body
-            : (body?.data ?? body?.invitaciones ?? [])
+        const rawList: InvitacionRaw[] = Array.isArray(body) ? body : (body?.data ?? [])
         const data = rawList.map(mapInvitacionRaw)
-        const meta = (Array.isArray(body) ? {} : (body ?? {})) as Record<string, unknown>
-        const total = Number(meta.total ?? (meta.meta as { total?: number })?.total ?? data.length)
-        const page = Number(meta.page ?? params?.page ?? 1)
-        const limit = Number(meta.limit ?? params?.limit ?? data.length)
-        return { data, total, page, limit }
+        const meta = body?.meta ?? {
+            page: params?.page ?? 1,
+            limit: params?.limit ?? 10,
+            total: data.length,
+            totalPages: 1,
+        }
+        return { data, meta }
     },
 
     createInvitacion: async (correo: string, rol: number): Promise<Invitacion> => {

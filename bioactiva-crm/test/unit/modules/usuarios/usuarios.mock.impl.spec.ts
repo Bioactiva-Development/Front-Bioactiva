@@ -101,7 +101,7 @@ describe('usuarios/usuarios.mock (implementation)', () => {
       const result = await mockListInvitaciones()
 
       expect(result.data.length).toBeGreaterThan(0)
-      expect(result.total).toBeGreaterThan(0)
+      expect(result.meta.total).toBeGreaterThan(0)
     })
 
     it('filters by term', async () => {

@@ -42,10 +42,13 @@ export enum TipoMoneda {
 }
 
 export enum TipoEmpresa {
-    Privada = 'Privada',
-    Publica = 'Publica',
-    ONG = 'ONG',
-    Mixta = 'Mixta',
+    Academia               = 'ACADEMIA',
+    EmpresaInternacional   = 'EMPRESA_INTERNACIONAL',
+    EmpresaNacional        = 'EMPRESA_NACIONAL',
+    GobiernoNacional       = 'GOBIERNO_NACIONAL',
+    Independiente          = 'INDEPENDIENTE',
+    ONG                    = 'ONG',
+    OrganismoInternacional = 'ORGANISMO_INTERNACIONAL',
 }
 
 export enum TamanoEmpresa {
