@@ -1,0 +1,80 @@
+{
+  "cookies": [
+    {
+      "name": "refreshToken",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwidG9rZW5WZXJzaW9uIjoyNiwiaWF0IjoxNzgyMTc2NzUzLCJleHAiOjE3ODI3ODE1NTMsImF1ZCI6ImJhY2stYmlvYWN0aXZhLXdlYiIsImlzcyI6ImJhY2stYmlvYWN0aXZhIn0.iGEOFIwoUL9q8lIx_mCR3skB3898RLytGd6OWv-Y0O0",
+      "domain": "backend-bioactiva.ingsoftware.lat",
+      "path": "/auth/refresh",
+      "expires": 1782781553.167645,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_GRECAPTCHA",
+      "value": "09AKhCRwi4k0wQImFjlD8CLNW0em4G9qBnmwbBm93Yp8yDbvmmB701V2LAxabOa6M2owAPPXQNLDWXH0P19m_Nyck",
+      "domain": "www.google.com",
+      "path": "/recaptcha",
+      "expires": 1797728746.209284,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "bioactiva_token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiY29ycmVvIjoieXVyaS5lc2NvYmFyQHV0ZWMuZWR1LnBlIiwibm9tYnJlcyI6Inl1cmkgYWJlbCIsImFwZWxsaWRvcyI6ImVzY29iYXIgcGVyZXoiLCJyb2xlIjoxLCJlc3RhZG8iOjEsInRva2VuVmVyc2lvbiI6MjYsImlhdCI6MTc4MjE3Njc1MywiZXhwIjoxNzgyMTc3NjUzLCJhdWQiOiJiYWNrLWJpb2FjdGl2YS13ZWIiLCJpc3MiOiJiYWNrLWJpb2FjdGl2YSJ9.iD5HGVGzOcmPc8Ah1cJttDnTOcbbYiewuo_oLBXkRqA",
+      "domain": "bioactiva.ingsoftware.lat",
+      "path": "/",
+      "expires": 1782205554.577626,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Strict"
+    },
+    {
+      "name": "bioactiva_rol",
+      "value": "Trabajador",
+      "domain": "bioactiva.ingsoftware.lat",
+      "path": "/",
+      "expires": 1782205554.577852,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Strict"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://bioactiva.ingsoftware.lat",
+      "localStorage": [
+        {
+          "name": "bioactiva_token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiY29ycmVvIjoieXVyaS5lc2NvYmFyQHV0ZWMuZWR1LnBlIiwibm9tYnJlcyI6Inl1cmkgYWJlbCIsImFwZWxsaWRvcyI6ImVzY29iYXIgcGVyZXoiLCJyb2xlIjoxLCJlc3RhZG8iOjEsInRva2VuVmVyc2lvbiI6MjYsImlhdCI6MTc4MjE3Njc1MywiZXhwIjoxNzgyMTc3NjUzLCJhdWQiOiJiYWNrLWJpb2FjdGl2YS13ZWIiLCJpc3MiOiJiYWNrLWJpb2FjdGl2YSJ9.iD5HGVGzOcmPc8Ah1cJttDnTOcbbYiewuo_oLBXkRqA"
+        },
+        {
+          "name": "bioactiva_user",
+          "value": "{\"id\":5,\"nombres\":\"yuri abel\",\"apellidos\":\"escobar perez\",\"correo\":\"yuri.escobar@utec.edu.pe\",\"rol\":\"Trabajador\",\"estado\":\"Activo\",\"created_at\":\"2026-06-18T04:21:37.406Z\",\"updated_at\":\"2026-06-23T01:05:53.269Z\"}"
+        },
+        {
+          "name": "_grecaptcha",
+          "value": "09AKhCRwjz6aP-237GIqhIc-S22ScQIIU4qH6kS0IdMceNf__7rViquLHgdLZ4nLXfhPq2GKm61gqJz10PBpMf1OkdA-3l80qGP4YPhhRKL5kHZFVD6xPPtXwScaj_TQRd"
+        },
+        {
+          "name": "bioactiva-auth",
+          "value": "{\"state\":{\"accessToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiY29ycmVvIjoieXVyaS5lc2NvYmFyQHV0ZWMuZWR1LnBlIiwibm9tYnJlcyI6Inl1cmkgYWJlbCIsImFwZWxsaWRvcyI6ImVzY29iYXIgcGVyZXoiLCJyb2xlIjoxLCJlc3RhZG8iOjEsInRva2VuVmVyc2lvbiI6MjYsImlhdCI6MTc4MjE3Njc1MywiZXhwIjoxNzgyMTc3NjUzLCJhdWQiOiJiYWNrLWJpb2FjdGl2YS13ZWIiLCJpc3MiOiJiYWNrLWJpb2FjdGl2YSJ9.iD5HGVGzOcmPc8Ah1cJttDnTOcbbYiewuo_oLBXkRqA\",\"tokenExpiresAt\":1782177653626,\"usuario\":{\"id\":5,\"nombres\":\"yuri abel\",\"apellidos\":\"escobar perez\",\"correo\":\"yuri.escobar@utec.edu.pe\",\"rol\":\"Trabajador\",\"estado\":\"Activo\",\"created_at\":\"2026-06-18T04:21:37.406Z\",\"updated_at\":\"2026-06-23T01:05:53.269Z\"},\"isAuthenticated\":true},\"version\":0}"
+        }
+      ]
+    },
+    {
+      "origin": "https://www.google.com",
+      "localStorage": [
+        {
+          "name": "rc::a",
+          "value": "d2V3ZTZ5ZmRteTNl"
+        },
+        {
+          "name": "rc::f",
+          "value": "0aAD5oO36BiBQ8joqsuJMmbkZykspVpHwIHcn3VY5epGAbefX6ziJm3koPhlT0-R8qymILBPM"
+        }
+      ]
+    }
+  ]
+}
