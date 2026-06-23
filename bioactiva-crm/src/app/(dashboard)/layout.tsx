@@ -13,11 +13,11 @@ import { useProactiveRefresh } from '@/hooks/auth/useProactiveRefresh'
 const MAX_AGE = 8 * 60 * 60
 
 function setCookie(name: string, value: string): void {
-    document.cookie = `${name}=${value}; path=/; max-age=${MAX_AGE}; SameSite=Strict`
+    document.cookie = `${name}=${value}; path=/; max-age=${MAX_AGE}; SameSite=Lax`
 }
 
 function clearCookie(name: string): void {
-    document.cookie = `${name}=; path=/; max-age=0; SameSite=Strict`
+    document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`
 }
 
 export default function DashboardLayout({
