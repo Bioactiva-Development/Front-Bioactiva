@@ -142,6 +142,8 @@ export const toLeadQueryParams = (filtros?: LeadFiltros) => {
   if (filtros?.alerta_actividad) params.alertaActividad = filtros.alerta_actividad
   if (filtros?.fecha_desde) params.fechaDesde = filtros.fecha_desde
   if (filtros?.fecha_hasta) params.fechaHasta = filtros.fecha_hasta
+  if (filtros?.mis_leads) params.misLeads = true
+  if (filtros?.con_actividades_pendientes) params.conActividadesPendientes = true
   if (filtros?.page) params.page = filtros.page
   if (filtros?.limit) params.limit = filtros.limit
 

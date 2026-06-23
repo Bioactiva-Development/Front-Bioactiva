@@ -17,6 +17,7 @@ import {
   useEliminarActividad,
 } from '@/hooks/pipeline/useActividades'
 import { getErrorMessage } from '@/lib/utils/error.utils'
+import { APP_TIME_ZONE } from '@/lib/utils/timezone.utils'
 
 interface ActividadHistorialProps {
   leadId:      number
@@ -96,7 +97,8 @@ function ActividadItem({
                       actividad.estado === EstadoActividad.Cancelada
 
   const formatFecha = (fecha: string) =>
-    new Date(fecha).toLocaleDateString('es-PE', {
+    new Date(fecha).toLocaleString('es-PE', {
+      timeZone: APP_TIME_ZONE,
       day:    '2-digit',
       month:  'short',
       year:   'numeric',
