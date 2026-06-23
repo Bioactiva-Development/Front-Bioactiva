@@ -70,7 +70,7 @@ export const datosService = {
         const disposition = response.headers['content-disposition'] as string | undefined
         let filename = `${filtros.entidad}-${new Date().toISOString().split('T')[0]}.xlsx`
         if (disposition) {
-            const match = disposition.match(/filename="([^"]+)"/)
+            const match = /filename="([^"]+)"/.exec(disposition)
             if (match?.[1]) filename = match[1]
         }
 
@@ -80,7 +80,7 @@ export const datosService = {
         a.download = filename
         document.body.appendChild(a)
         a.click()
-        document.body.removeChild(a)
+        a.remove()
         URL.revokeObjectURL(url)
     },
 
@@ -96,7 +96,7 @@ export const datosService = {
         const disposition = response.headers['content-disposition'] as string | undefined
         let filename = 'plantilla-bioactiva.xlsx'
         if (disposition) {
-            const match = disposition.match(/filename="([^"]+)"/)
+            const match = /filename="([^"]+)"/.exec(disposition)
             if (match?.[1]) filename = match[1]
         }
         const url = URL.createObjectURL(response.data as Blob)
@@ -105,7 +105,7 @@ export const datosService = {
         a.download = filename
         document.body.appendChild(a)
         a.click()
-        document.body.removeChild(a)
+        a.remove()
         URL.revokeObjectURL(url)
     },
 

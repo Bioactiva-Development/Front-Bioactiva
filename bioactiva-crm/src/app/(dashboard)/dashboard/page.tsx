@@ -3,17 +3,12 @@
 import { useState, useMemo } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend
+  ResponsiveContainer, PieChart, Pie, Legend
 } from 'recharts'
-import { Target }        from '@phosphor-icons/react/dist/csr/Target'
-import { Percent }        from '@phosphor-icons/react/dist/csr/Percent'
-import { Clock }          from '@phosphor-icons/react/dist/csr/Clock'
-import { Hourglass }      from '@phosphor-icons/react/dist/csr/Hourglass'
-import { Pulse }          from '@phosphor-icons/react/dist/csr/Pulse'
-import { CurrencyDollar } from '@phosphor-icons/react/dist/csr/CurrencyDollar'
-import { TrendUp }        from '@phosphor-icons/react/dist/csr/TrendUp'
-import { CalendarX }      from '@phosphor-icons/react/dist/csr/CalendarX'
-import { ChartLineUp }    from '@phosphor-icons/react/dist/csr/ChartLineUp'
+import {
+  TargetIcon, PercentIcon, ClockIcon, HourglassIcon, PulseIcon,
+  CurrencyDollarIcon, TrendUpIcon, CalendarXIcon, ChartLineUpIcon,
+} from '@phosphor-icons/react'
 import {
   RefreshCw, ChevronDown, ChevronUp, Filter, Calendar,
 } from 'lucide-react'
@@ -101,7 +96,7 @@ const parseDisplayDate = (date: string) => {
 }
 
 const formatTypedDate = (value: string) => {
-  const digits = value.replace(/\D/g, '').slice(0, 8)
+  const digits = value.replaceAll(/\D/g, '').slice(0, 8)
   return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)]
     .filter(Boolean)
     .join('/')
@@ -354,7 +349,7 @@ export default function DashboardPage() {
     return PIPELINE_ESTADOS.map(({ estado, color }) => ({
       estado,
       cantidad: leadsPeriodo.filter((lead) => lead.estado === estado).length,
-      color,
+      fill: color,
     }))
   }, [leadsResponse?.data, rangoFechas])
 
@@ -366,7 +361,7 @@ export default function DashboardPage() {
       .map(({ name, color }) => ({
         name,
         value: cotizacionesPeriodo.filter((cotizacion) => cotizacion.estado === name).length,
-        color,
+        fill: color,
       }))
       .filter((item) => item.value > 0)
   }, [cotizacionesResponse?.data, rangoFechas])
@@ -550,18 +545,17 @@ export default function DashboardPage() {
       )}
 
       {sinDataPeriodo && (
-        <div
-          role="status"
+        <output
           className="flex min-h-52 flex-col items-center justify-center gap-3 rounded-2xl
             border border-gray-200 bg-white px-6 py-12 text-center shadow-sm"
         >
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50">
-            <CalendarX size={22} weight="duotone" className="text-emerald-600" />
+            <CalendarXIcon size={22} weight="duotone" className="text-emerald-600" />
           </div>
           <p className="text-sm font-semibold text-gray-600">
             No hay data para este periodo seleccionado
           </p>
-        </div>
+        </output>
       )}
 
       {!sinDataPeriodo && (
@@ -588,28 +582,28 @@ export default function DashboardPage() {
             valor={kpiValor(String(metrics?.totalLeads ?? 0))}
             descripcion="Registrados en el periodo"
             iconoBg="bg-emerald-50"
-            icono={<Target size={16} weight="duotone" className="text-emerald-500" />}
+            icono={<TargetIcon size={16} weight="duotone" className="text-emerald-500" />}
           />
           <KpiCard compact accentBorder="border-t-emerald-200"
             label="Ticket promedio"
             valor={kpiMonto(metrics?.averageTicketAmount)}
             descripcion="Promedio de cierres con venta · soles y dólares por separado"
             iconoBg="bg-emerald-50"
-            icono={<CurrencyDollar size={16} weight="duotone" className="text-emerald-500" />}
+            icono={<CurrencyDollarIcon size={16} weight="duotone" className="text-emerald-500" />}
           />
           <KpiCard compact accentBorder="border-t-cyan-200"
             label="Monto en pipeline"
             valor={kpiMonto(metrics?.pipelineTotalAmount)}
             descripcion="Monto de leads abiertos · soles y dólares por separado"
             iconoBg="bg-cyan-50"
-            icono={<ChartLineUp size={16} weight="duotone" className="text-cyan-600" />}
+            icono={<ChartLineUpIcon size={16} weight="duotone" className="text-cyan-600" />}
           />
           <KpiCard compact accentBorder="border-t-blue-200"
             label="Ingresos cerrados"
             valor={kpiMonto(metrics?.closedRevenue)}
             descripcion="Cotizaciones cerradas con venta · soles y dólares por separado"
             iconoBg="bg-blue-50"
-            icono={<CurrencyDollar size={16} weight="duotone" className="text-blue-500" />}
+            icono={<CurrencyDollarIcon size={16} weight="duotone" className="text-blue-500" />}
           />
         </div>
       </div>
@@ -657,11 +651,7 @@ export default function DashboardPage() {
                   />
                   <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '12px' }} />
-                  <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
-                    {pipelineData.map((entry) => (
-                      <Cell key={entry.estado} fill={entry.color} />
-                    ))}
-                  </Bar>
+                  <Bar dataKey="cantidad" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -693,11 +683,7 @@ export default function DashboardPage() {
               <ResponsiveContainer width="100%" height="100%" minHeight={0}>
                 <PieChart>
                   <Pie data={cotizacionesData} cx="50%" cy="50%"
-                    innerRadius="30%" outerRadius="50%" paddingAngle={3} dataKey="value">
-                    {cotizacionesData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
-                    ))}
-                  </Pie>
+                    innerRadius="30%" outerRadius="50%" paddingAngle={3} dataKey="value" />
                   <Tooltip />
                   <Legend iconSize={10} wrapperStyle={{ fontSize: '11px' }} />
                 </PieChart>
@@ -719,28 +705,28 @@ export default function DashboardPage() {
             valor={kpiValor(formatPercent(metrics?.conversionRate))}
             descripcion="Leads convertidos en venta"
             iconoBg="bg-blue-50"
-            icono={<Percent size={16} weight="duotone" className="text-blue-500" />}
+            icono={<PercentIcon size={16} weight="duotone" className="text-blue-500" />}
           />
           <KpiCard compact accentBorder="border-t-cyan-200"
             label="Propuesta → Venta"
             valor={kpiValor(formatPercent(metrics?.proposalToCloseRate))}
             descripcion="Propuestas que cierran con venta"
             iconoBg="bg-cyan-50"
-            icono={<TrendUp size={16} weight="duotone" className="text-cyan-600" />}
+            icono={<TrendUpIcon size={16} weight="duotone" className="text-cyan-600" />}
           />
           <KpiCard compact accentBorder="border-t-violet-200"
             label="Seguimientos / lead"
             valor={kpiValor(formatAverage(metrics?.avgActivitiesPerLead))}
             descripcion="Promedio de actividades registradas"
             iconoBg="bg-violet-50"
-            icono={<Pulse size={16} weight="duotone" className="text-violet-500" />}
+            icono={<PulseIcon size={16} weight="duotone" className="text-violet-500" />}
           />
           <KpiCard compact accentBorder="border-t-red-200"
             label="Leads sin avance"
             valor={kpiValor(formatPercent(metrics?.stalledLeadPercentage))}
             descripcion="Leads estancados más de 30 días"
             iconoBg="bg-red-50"
-            icono={<CalendarX size={16} weight="duotone" className="text-red-500" />}
+            icono={<CalendarXIcon size={16} weight="duotone" className="text-red-500" />}
           />
         </div>
       </div>
@@ -754,14 +740,14 @@ export default function DashboardPage() {
             valor={kpiValor(formatDays(metrics?.avgClosingTimeDays))}
             descripcion="Desde registro hasta cierre con venta"
             iconoBg="bg-orange-50"
-            icono={<Clock size={16} weight="duotone" className="text-orange-500" />}
+            icono={<ClockIcon size={16} weight="duotone" className="text-orange-500" />}
           />
           <KpiCard compact accentBorder="border-t-purple-200"
             label="Tiempo en etapa propuesta"
             valor={kpiValor(formatDays(metrics?.avgProposalStageDays))}
             descripcion="Promedio en etapa ofertado"
             iconoBg="bg-purple-50"
-            icono={<Hourglass size={16} weight="duotone" className="text-purple-500" />}
+            icono={<HourglassIcon size={16} weight="duotone" className="text-purple-500" />}
           />
         </div>
       </div>

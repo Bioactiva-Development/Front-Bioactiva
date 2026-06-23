@@ -154,7 +154,7 @@ export const mockEditarSeguimiento = async (
   const index = MOCK_PROGRAMADAS.findIndex((item) => item.id === id)
   const actual = MOCK_PROGRAMADAS[index]
   const instancia = actual?.instancias?.[0]
-  if (!actual || actual.tipo !== 'SEGUIMIENTO' || !instancia) {
+  if (actual?.tipo !== 'SEGUIMIENTO' || !instancia) {
     throw new Error('Seguimiento no encontrado.')
   }
   if (

@@ -40,7 +40,6 @@ export function mockGetUsuarios(filters?: UsuarioFilters): UsuariosResponse {
     if (filters?.estado) result = result.filter(u => u.estado === filters.estado)
 
     const total = result.length
-    // Paginación: si se pasa `limit`, se segmenta; si no, se devuelve todo.
     const page = filters?.page ?? 1
     const limit = filters?.limit ?? total
     const start = (page - 1) * limit

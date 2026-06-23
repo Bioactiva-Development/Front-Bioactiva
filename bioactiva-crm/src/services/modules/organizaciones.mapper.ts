@@ -97,37 +97,38 @@ export interface SunatRucDto {
  * | INDEPENDIENTE | ONG | ORGANISMO_INTERNACIONAL
  *
  * El frontend solo modela 4 tipos según el Documento de Análisis y Diseño v1.6
- * (Privada/Publica/ONG/Mixta). El mapeo es aproximado mientras se cierra la
- * lista cerrada con el equipo backend.
  */
 const TIPO_DOMAIN_TO_BACKEND: Record<TipoEmpresa, string> = {
-  [TipoEmpresa.Privada]: 'EMPRESA_NACIONAL',
-  [TipoEmpresa.Publica]: 'GOBIERNO_NACIONAL',
+  [TipoEmpresa.Academia]: 'ACADEMIA',
+  [TipoEmpresa.EmpresaInternacional]: 'EMPRESA_INTERNACIONAL',
+  [TipoEmpresa.EmpresaNacional]: 'EMPRESA_NACIONAL',
+  [TipoEmpresa.GobiernoNacional]: 'GOBIERNO_NACIONAL',
+  [TipoEmpresa.Independiente]: 'INDEPENDIENTE',
   [TipoEmpresa.ONG]: 'ONG',
-  [TipoEmpresa.Mixta]: 'ORGANISMO_INTERNACIONAL',
+  [TipoEmpresa.OrganismoInternacional]: 'ORGANISMO_INTERNACIONAL',
 }
 
 const TIPO_BACKEND_TO_DOMAIN: Record<string, TipoEmpresa> = {
-  ACADEMIA: TipoEmpresa.Publica,
-  EMPRESA_INTERNACIONAL: TipoEmpresa.Privada,
-  EMPRESA_NACIONAL: TipoEmpresa.Privada,
-  GOBIERNO_NACIONAL: TipoEmpresa.Publica,
-  INDEPENDIENTE: TipoEmpresa.Privada,
+  ACADEMIA: TipoEmpresa.Academia,
+  EMPRESA_INTERNACIONAL: TipoEmpresa.EmpresaInternacional,
+  EMPRESA_NACIONAL: TipoEmpresa.EmpresaNacional,
+  GOBIERNO_NACIONAL: TipoEmpresa.GobiernoNacional,
+  INDEPENDIENTE: TipoEmpresa.Independiente,
   ONG: TipoEmpresa.ONG,
-  ORGANISMO_INTERNACIONAL: TipoEmpresa.Mixta,
+  ORGANISMO_INTERNACIONAL: TipoEmpresa.OrganismoInternacional,
 }
 
 const TAMANO_DOMAIN_TO_BACKEND: Record<TamanoEmpresa, string> = {
   [TamanoEmpresa.Micro]: 'MICRO',
-  [TamanoEmpresa.Pequena]: 'PEQUENO',
-  [TamanoEmpresa.Mediana]: 'MEDIANO',
+  [TamanoEmpresa.Pequeno]: 'PEQUENO',
+  [TamanoEmpresa.Mediano]: 'MEDIANO',
   [TamanoEmpresa.Grande]: 'GRANDE',
 }
 
 const TAMANO_BACKEND_TO_DOMAIN: Record<string, TamanoEmpresa> = {
   MICRO: TamanoEmpresa.Micro,
-  PEQUENO: TamanoEmpresa.Pequena,
-  MEDIANO: TamanoEmpresa.Mediana,
+  PEQUENO: TamanoEmpresa.Pequeno,
+  MEDIANO: TamanoEmpresa.Mediano,
   GRANDE: TamanoEmpresa.Grande,
 }
 
@@ -179,7 +180,7 @@ export const fromOrganizacionDto = (dto: OrganizacionDtoOut): Organizacion => ({
   nombre_comercial: dto.nombreComercial,
   sub_area: dto.subArea ?? undefined,
   ruc: dto.ruc ?? undefined,
-  tipo: safeMap(TIPO_BACKEND_TO_DOMAIN, dto.tipo, TipoEmpresa.Privada),
+  tipo: safeMap(TIPO_BACKEND_TO_DOMAIN, dto.tipo, TipoEmpresa.EmpresaNacional),
   linkedin: dto.linkedin ?? undefined,
   ubicacion: dto.ubicacion ?? undefined,
   sector: dto.sector

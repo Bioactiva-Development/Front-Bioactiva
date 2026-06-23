@@ -11,8 +11,8 @@ interface OrganizacionCardProps {
 
 const TAMAÑO_COLORS: Record<TamanoEmpresa, string> = {
   [TamanoEmpresa.Micro]:   'bg-gray-100 text-gray-600',
-  [TamanoEmpresa.Pequena]: 'bg-blue-50 text-blue-600',
-  [TamanoEmpresa.Mediana]: 'bg-amber-50 text-amber-600',
+  [TamanoEmpresa.Pequeno]: 'bg-blue-50 text-blue-600',
+  [TamanoEmpresa.Mediano]: 'bg-amber-50 text-amber-600',
   [TamanoEmpresa.Grande]:  'bg-emerald-50 text-emerald-700',
 }
 

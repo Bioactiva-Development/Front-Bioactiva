@@ -86,7 +86,7 @@ describe('organizaciones/organizaciones.service (API mode)', () => {
       expect(getMock).toHaveBeenCalledWith('/organizations', { params: {} })
       expect(result.data).toHaveLength(2)
       expect(result.data[0].codigo_cliente).toBe('ALT-001')
-      expect(result.data[0].tipo).toBe(TipoEmpresa.Privada)
+      expect(result.data[0].tipo).toBe(TipoEmpresa.EmpresaNacional)
       expect(result.data[0].tamano).toBe(TamanoEmpresa.Grande)
     })
 
@@ -192,7 +192,7 @@ describe('organizaciones/organizaciones.service (API mode)', () => {
 
       expect(getMock).toHaveBeenCalledWith('/organizations/org-001')
       expect(result.nombre).toBe('Altomayo')
-      expect(result.tipo).toBe(TipoEmpresa.Privada)
+      expect(result.tipo).toBe(TipoEmpresa.EmpresaNacional)
     })
 
     it('throws when organization not found', async () => {
@@ -232,7 +232,7 @@ describe('organizaciones/organizaciones.service (API mode)', () => {
           nombre: 'Altomayo',
           nombre_comercial: 'Altomayo',
           codigo_cliente: 'ALT-001',
-          tipo: TipoEmpresa.Privada,
+          tipo: TipoEmpresa.EmpresaNacional,
           tamano: TamanoEmpresa.Grande,
           sector: Sector.AGROALIMENTARIA,
         },

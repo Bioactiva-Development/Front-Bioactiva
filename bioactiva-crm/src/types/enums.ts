@@ -42,16 +42,19 @@ export enum TipoMoneda {
 }
 
 export enum TipoEmpresa {
-    Privada = 'Privada',
-    Publica = 'Publica',
+    Academia = 'Academia',
+    EmpresaInternacional = 'Empresa internacional',
+    EmpresaNacional = 'Empresa nacional',
+    GobiernoNacional = 'Gobierno nacional',
+    Independiente = 'Independiente',
     ONG = 'ONG',
-    Mixta = 'Mixta',
+    OrganismoInternacional = 'Organismo internacional',
 }
 
 export enum TamanoEmpresa {
     Micro = 'Micro',
-    Pequena = 'Pequena',
-    Mediana = 'Mediana',
+    Pequeno = 'Pequeno',
+    Mediano = 'Mediano',
     Grande = 'Grande',
 }
 

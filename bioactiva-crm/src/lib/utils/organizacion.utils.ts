@@ -6,8 +6,8 @@ export function formatSector(sector: string): string {
 
 const TAMANO_LABELS: Record<string, string> = {
     Micro:   'Micro',
-    Pequena: 'Pequeña',
-    Mediana: 'Mediana',
+    Pequeno: 'Pequeño',
+    Mediano: 'Mediano',
     Grande:  'Grande',
 }
 

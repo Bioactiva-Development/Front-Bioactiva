@@ -25,18 +25,17 @@ const SECTOR_LABELS = new Map<string, Sector>(
 
 const TAMANO_LABELS = new Map<string, TamanoEmpresa>([
   ['micro',   TamanoEmpresa.Micro],
-  ['pequena', TamanoEmpresa.Pequena],
-  ['pequeno', TamanoEmpresa.Pequena],
-  ['mediana', TamanoEmpresa.Mediana],
-  ['mediano', TamanoEmpresa.Mediana],
+  ['pequeno', TamanoEmpresa.Pequeno],
+  ['mediano', TamanoEmpresa.Mediano],
   ['grande',  TamanoEmpresa.Grande],
 ])
 
 const TIPO_LABELS = new Map<string, TipoEmpresa>([
-  ['privada', TipoEmpresa.Privada],
-  ['publica', TipoEmpresa.Publica],
-  ['ong',     TipoEmpresa.ONG],
-  ['mixta',   TipoEmpresa.Mixta],
+  ['academia',      TipoEmpresa.Academia],
+  ['gobierno',      TipoEmpresa.GobiernoNacional],
+  ['independiente', TipoEmpresa.Independiente],
+  ['ong',           TipoEmpresa.ONG],
+  ['organismo',     TipoEmpresa.OrganismoInternacional],
 ])
 
 /** Retorna el Sector cuyo label normalizado contiene `word` como palabra completa. */
