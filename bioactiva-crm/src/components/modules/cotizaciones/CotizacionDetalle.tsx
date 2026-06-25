@@ -17,7 +17,7 @@ import {
 } from '@/hooks/cotizaciones/useCotizaciones'
 import { useActualizarEstadoLead } from '@/hooks/pipeline/useLeads'
 import { getErrorMessage } from '@/lib/utils/error.utils'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 interface CotizacionDetalleProps {
   cotizacion: Cotizacion
@@ -46,6 +46,7 @@ function InfoItem({ label, valor }: Readonly<{ label: string; valor?: string | n
 export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionDetalleProps>) {
   const router  = useRouter()
   const [accionError, setAccionError] = useState<string | null>(null)
+  const procesando = useRef(false)
 
   const { mutateAsync: enviar,          isPending: enviando }          = useEnviarCotizacion()
   const { mutateAsync: aceptar,         isPending: aceptando }         = useAceptarCotizacion()
@@ -60,11 +61,15 @@ export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionD
   const esEnviada    = cotizacion.estado === EstadoCot.Enviada
 
   const handleAccion = async (fn: () => Promise<unknown>) => {
+    if (procesando.current) return
+    procesando.current = true
     try {
       setAccionError(null)
       await fn()
     } catch (err) {
       setAccionError(getErrorMessage(err))
+    } finally {
+      procesando.current = false
     }
   }
 
