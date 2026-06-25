@@ -3,7 +3,14 @@ import {
   toLeadDateInputValue,
   formatLeadDateOnly,
   getLeadCloseDateStatus,
+  getLocalTodayDateInputValue,
 } from '@/lib/utils/lead-date.utils'
+
+function localDateOffset(days: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() + days)
+  return getLocalTodayDateInputValue(d)
+}
 
 describe('lead-date.utils', () => {
   describe('parseLeadDateOnly', () => {
@@ -92,48 +99,34 @@ describe('lead-date.utils', () => {
     })
 
     it('returns future days label for future date', () => {
-      const future = new Date()
-      future.setDate(future.getDate() + 5)
-      const dateStr = future.toISOString().split('T')[0]
-      const status = getLeadCloseDateStatus(dateStr)
+      const status = getLeadCloseDateStatus(localDateOffset(5))
       expect(status).not.toBeNull()
       expect(status!.label).toContain('Faltan')
       expect(status!.className).toContain('emerald')
     })
 
     it('returns "Falta 1 día" for tomorrow', () => {
-      const tomorrow = new Date()
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      const dateStr = tomorrow.toISOString().split('T')[0]
-      const status = getLeadCloseDateStatus(dateStr)
+      const status = getLeadCloseDateStatus(localDateOffset(1))
       expect(status).not.toBeNull()
       expect(status!.label).toBe('Falta 1 día')
     })
 
     it('returns "Cierra hoy" for today', () => {
-      const today = new Date()
-      const dateStr = today.toISOString().split('T')[0]
-      const status = getLeadCloseDateStatus(dateStr)
+      const status = getLeadCloseDateStatus(localDateOffset(0))
       expect(status).not.toBeNull()
       expect(status!.label).toBe('Cierra hoy')
       expect(status!.className).toContain('amber')
     })
 
     it('returns elapsed days label for past date', () => {
-      const past = new Date()
-      past.setDate(past.getDate() - 5)
-      const dateStr = past.toISOString().split('T')[0]
-      const status = getLeadCloseDateStatus(dateStr)
+      const status = getLeadCloseDateStatus(localDateOffset(-5))
       expect(status).not.toBeNull()
       expect(status!.label).toContain('Pasó hace')
       expect(status!.className).toContain('red')
     })
 
     it('returns "Pasó hace 1 día" for yesterday', () => {
-      const yesterday = new Date()
-      yesterday.setDate(yesterday.getDate() - 1)
-      const dateStr = yesterday.toISOString().split('T')[0]
-      const status = getLeadCloseDateStatus(dateStr)
+      const status = getLeadCloseDateStatus(localDateOffset(-1))
       expect(status).not.toBeNull()
       expect(status!.label).toBe('Pasó hace 1 día')
     })

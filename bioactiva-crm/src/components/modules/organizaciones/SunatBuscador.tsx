@@ -47,15 +47,6 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
     setTab('ruc')
   }
 
-  const handleSeleccionarNombreParaUsar = (item: SunatNombreResult) => {
-    onSeleccionar({
-      ruc:            item.ruc,
-      nombre:         item.nombre,
-      nombreCompleto: item.nombre,
-      ubicacion:      item.ubicacion,
-    })
-  }
-
   const handleCambiarTab = (nuevaTab: TabType) => {
     setTab(nuevaTab)
     limpiar()
@@ -289,9 +280,7 @@ export function SunatBuscador({ onSeleccionar, onCerrar, modoConsulta = false}: 
                     return (
                       <button
                         key={item.ruc}
-                        onClick={() => !cargandoRuc && (modoConsulta
-                          ? handleSeleccionarNombreEnConsulta(item)
-                          : handleSeleccionarNombreParaUsar(item))}
+                        onClick={() => !cargandoRuc && handleSeleccionarNombreEnConsulta(item)}
                         disabled={!!cargandoRuc}
                         className={`w-full flex items-center justify-between px-4 py-3
                           transition-colors text-left
