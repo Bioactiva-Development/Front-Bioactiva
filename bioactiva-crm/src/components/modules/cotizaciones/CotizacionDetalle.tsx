@@ -4,18 +4,20 @@ import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Pencil, ExternalLink,
   Send, CheckCircle2, XCircle, Loader2,
-  DollarSign, Building2,
+  DollarSign, Building2, RotateCcw, AlertTriangle,
 } from 'lucide-react'
+import { ModalShell, ModalHeader } from '@/components/ui'
 import { Cotizacion } from '@/types/cotizacion.types'
-import { EstadoCot, TipoMoneda } from '@/types/enums'
+import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
 import { ROUTES } from '@/lib/constants/routes'
 import {
   useEnviarCotizacion,
   useAceptarCotizacion,
   useRechazarCotizacion,
 } from '@/hooks/cotizaciones/useCotizaciones'
+import { useActualizarEstadoLead } from '@/hooks/pipeline/useLeads'
 import { getErrorMessage } from '@/lib/utils/error.utils'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 interface CotizacionDetalleProps {
   cotizacion: Cotizacion
@@ -44,23 +46,30 @@ function InfoItem({ label, valor }: Readonly<{ label: string; valor?: string | n
 export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionDetalleProps>) {
   const router  = useRouter()
   const [accionError, setAccionError] = useState<string | null>(null)
+  const procesando = useRef(false)
 
-  const { mutateAsync: enviar,   isPending: enviando }   = useEnviarCotizacion()
-  const { mutateAsync: aceptar,  isPending: aceptando }  = useAceptarCotizacion()
-  const { mutateAsync: rechazar, isPending: rechazando } = useRechazarCotizacion()
+  const { mutateAsync: enviar,          isPending: enviando }          = useEnviarCotizacion()
+  const { mutateAsync: aceptar,         isPending: aceptando }         = useAceptarCotizacion()
+  const { mutateAsync: rechazar,        isPending: rechazando }        = useRechazarCotizacion()
+  const { mutateAsync: actualizarEstado, isPending: reaperturando }    = useActualizarEstadoLead()
+  const [confirmarReaperturar, setConfirmarReaperturar] = useState(false)
 
-  const anyPending   = enviando || aceptando || rechazando
+  const anyPending   = enviando || aceptando || rechazando || reaperturando
   const esTerminal   = cotizacion.estado === EstadoCot.Aceptada ||
                        cotizacion.estado === EstadoCot.Rechazada
   const esPendiente  = cotizacion.estado === EstadoCot.Pendiente
   const esEnviada    = cotizacion.estado === EstadoCot.Enviada
 
   const handleAccion = async (fn: () => Promise<unknown>) => {
+    if (procesando.current) return
+    procesando.current = true
     try {
       setAccionError(null)
       await fn()
     } catch (err) {
       setAccionError(getErrorMessage(err))
+    } finally {
+      procesando.current = false
     }
   }
 
@@ -205,21 +214,76 @@ export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionD
               )}
             </div>
 
-            {(cotizacion.estado === EstadoCot.Aceptada ||
-              cotizacion.estado === EstadoCot.Rechazada) && (
-              <p className="text-xs text-gray-400 italic">
-                Esta cotización está en estado terminal y no puede modificarse.
-              </p>
-            )}
           </div>
         )}
 
         {esTerminal && (
-          <div className="mt-4 pt-4 border-t border-gray-50">
-            <p className="text-xs text-gray-400 italic">
-              Esta cotización está en estado terminal y no puede modificarse.
-            </p>
+          <div className="mt-4 pt-4 border-t border-gray-50 space-y-3">
+            {accionError && (
+              <div className="bg-red-50 border border-red-200 text-red-700
+                text-xs rounded-xl px-3 py-2">
+                {accionError}
+              </div>
+            )}
+            <button
+              onClick={() => setConfirmarReaperturar(true)}
+              disabled={anyPending}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm
+                font-semibold text-amber-700 border border-amber-300
+                hover:bg-amber-50 transition-colors
+                disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {reaperturando
+                ? <Loader2 size={14} className="animate-spin" />
+                : <RotateCcw size={14} />
+              }
+              Reaperturar
+            </button>
           </div>
+        )}
+
+        {confirmarReaperturar && (
+          <ModalShell onClose={() => setConfirmarReaperturar(false)} maxWidth="sm">
+            <ModalHeader
+              icon={<AlertTriangle size={18} className="text-amber-500" />}
+              iconBg="bg-amber-50"
+              title="Reaperturar cotización"
+              onClose={() => setConfirmarReaperturar(false)}
+            />
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-sm text-gray-600">
+                Esta acción regresará el lead al estado{' '}
+                <span className="font-semibold text-gray-900">Ofertado</span>{' '}
+                y la cotización volverá a{' '}
+                <span className="font-semibold text-gray-900">Pendiente</span>.
+                Podrás volver a editarla y enviarla.
+              </p>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setConfirmarReaperturar(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setConfirmarReaperturar(false)
+                    await handleAccion(() =>
+                      actualizarEstado({ id: cotizacion.id_lead, estado: LeadState.Ofertado })
+                    )
+                  }}
+                  disabled={reaperturando}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 disabled:bg-amber-200 disabled:cursor-not-allowed rounded-xl transition-colors"
+                >
+                  {reaperturando
+                    ? <><Loader2 size={14} className="animate-spin" />Reaperturando...</>
+                    : 'Sí, reaperturar'}
+                </button>
+              </div>
+            </div>
+          </ModalShell>
         )}
       </div>
 

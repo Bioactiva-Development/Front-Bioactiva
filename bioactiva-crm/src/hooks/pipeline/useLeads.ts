@@ -349,7 +349,7 @@ export function useMoverLeadPipeline() {
         )
       }
 
-      console.error(getErrorMessage(err))
+      console.warn(getErrorMessage(err))
     },
   })
 }
