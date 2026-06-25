@@ -249,10 +249,19 @@ function PipelineContent() {
       />
 
       {dragError && (
-        <div className="flex items-start gap-2 rounded-xl border border-amber-200
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200
           bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <AlertCircle size={16} className="mt-0.5 shrink-0" />
-          <p>{dragError}</p>
+          <div className="flex items-center gap-2">
+            <AlertCircle size={16} className="shrink-0" />
+            <p>{dragError}</p>
+          </div>
+          <button
+            onClick={() => setDragError(null)}
+            className="text-amber-500 hover:text-amber-700 transition-colors shrink-0"
+            aria-label="Cerrar"
+          >
+            <X size={14} />
+          </button>
         </div>
       )}
 
