@@ -113,6 +113,24 @@ describe('security/auth.store', () => {
     expect(useAuthStore.getState().isAuthenticated).toBe(true)
   })
 
+  it('updates usuario with setUsuario', () => {
+    const usuario = {
+      id: 1,
+      nombres: 'Carlos',
+      apellidos: 'Ramírez',
+      correo: 'admin@bioactiva.pe',
+      rol: RolUsuario.Administrador,
+      estado: EstadoUsuario.Activo,
+      created_at: '2025-01-01T08:00:00Z',
+      updated_at: '2025-01-01T08:00:00Z',
+    }
+    useAuthStore.getState().setSession('token-123', usuario)
+    const updated = { ...usuario, nombres: 'Carlos Updated' }
+    useAuthStore.getState().setUsuario(updated)
+    expect(useAuthStore.getState().usuario?.nombres).toBe('Carlos Updated')
+    expect(localStorage.getItem('bioactiva_user')).toBe(JSON.stringify(updated))
+  })
+
   it('sets loading state with setLoading', () => {
     useAuthStore.getState().setLoading(true)
     expect(useAuthStore.getState().isLoading).toBe(true)

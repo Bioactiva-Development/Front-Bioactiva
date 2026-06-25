@@ -17,12 +17,14 @@ jest.mock('@/lib/constants/config', () => ({
 const getMock = jest.fn()
 const postMock = jest.fn()
 const patchMock = jest.fn()
+const deleteMock = jest.fn()
 
 jest.mock('@/services/api/client', () => ({
   apiClient: {
     get: getMock,
     post: postMock,
     patch: patchMock,
+    delete: deleteMock,
   },
 }))
 
@@ -282,6 +284,14 @@ describe('organizaciones/organizaciones.service (API mode)', () => {
         { nombre: 'Altomayo Updated' }
       )
       expect(result.nombre).toBe('Altomayo Updated')
+    })
+  })
+
+  describe('delete', () => {
+    it('deletes organization', async () => {
+      deleteMock.mockResolvedValueOnce({})
+      await organizacionesService.delete('org-001')
+      expect(deleteMock).toHaveBeenCalledWith('/organizations/org-001')
     })
   })
 

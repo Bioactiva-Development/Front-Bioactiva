@@ -166,6 +166,20 @@ describe('leads/leads.service (API mode)', () => {
     })
   })
 
+  describe('getByContacto', () => {
+    it('fetches all leads and filters by contact id', async () => {
+      const leadWithContact = { ...rawLead, idContacto: 4 }
+      getMock.mockResolvedValueOnce({
+        data: { data: [leadWithContact, { ...rawLead, id: 8, idContacto: 5 }], meta: { page: 1, limit: 100, total: 2, totalPages: 1 } },
+      })
+
+      const result = await leadsService.getByContacto(4)
+      expect(getMock).toHaveBeenCalledWith('/leads', { params: { page: 1, limit: 100 } })
+      expect(result).toHaveLength(1)
+      expect(result[0].id).toBe(7)
+    })
+  })
+
   describe('getPipeline', () => {
     it('builds pipeline from all leads', async () => {
       getMock.mockResolvedValueOnce({

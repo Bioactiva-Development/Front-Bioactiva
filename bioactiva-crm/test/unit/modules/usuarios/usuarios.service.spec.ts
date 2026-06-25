@@ -152,6 +152,19 @@ describe('usuarios/usuarios.service (API mode)', () => {
     })
   })
 
+  describe('getAssignables', () => {
+    it('fetches assignable users', async () => {
+      getMock.mockResolvedValueOnce({
+        data: [{ id: 1, nombres: 'Juan', apellidos: 'Pérez', correo: 'juan@bioactiva.pe', rol: 'TRABAJADOR' }],
+      })
+
+      const result = await usuariosService.getAssignables()
+      expect(getMock).toHaveBeenCalledWith('/users/assignable')
+      expect(result).toHaveLength(1)
+      expect(result[0].id).toBe(1)
+    })
+  })
+
   describe('editar', () => {
     it('PUTs to correct endpoint', async () => {
       patchMock.mockResolvedValueOnce({ data: { id: 1 } })
@@ -264,6 +277,25 @@ describe('usuarios/usuarios.service (API mode)', () => {
       expect(getMock).toHaveBeenCalledWith('/invitations', {
         params: { page: 2, limit: 5, term: 'nuevo', estado: 0 },
       })
+    })
+
+    it('maps estado 3→Revocado', async () => {
+      getMock.mockResolvedValueOnce({
+        data: { data: [{ ...rawInvitacion, id: 1, estado: 3 }] },
+      })
+
+      const result = await usuariosService.listInvitaciones()
+      expect(result.data[0].estado).toBe(EstadoToken.Revocado)
+    })
+
+    it('corrects expired invitation when date has passed', async () => {
+      const pastDate = new Date(Date.now() - 86400000).toISOString()
+      getMock.mockResolvedValueOnce({
+        data: { data: [{ ...rawInvitacion, estado: 0, expired_at: pastDate }] },
+      })
+
+      const result = await usuariosService.listInvitaciones()
+      expect(result.data[0].estado).toBe(EstadoToken.Expirado)
     })
 
     it('maps estado 0→Pendiente, 1→Consumido, 2→Expirado', async () => {

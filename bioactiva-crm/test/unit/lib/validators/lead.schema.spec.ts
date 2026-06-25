@@ -1,4 +1,4 @@
-import { leadSchema } from '@/lib/validators/lead.schema'
+import { leadSchema, createLeadSchema } from '@/lib/validators/lead.schema'
 import { LeadState } from '@/types/enums'
 
 describe('validators/lead.schema', () => {
@@ -96,6 +96,17 @@ describe('validators/lead.schema', () => {
     expect(result.comentarios).toBe('')
   })
 
+  it('rejects encargado with value 0', () => {
+    expect(() =>
+      leadSchema.parse({
+        id_org: 'org-001',
+        servicio_interes: 'Test',
+        id_encargado: 0,
+        estado: LeadState.Prospecto,
+      })
+    ).toThrow('El encargado es obligatorio')
+  })
+
   it('rejects comentarios exceeding 500 characters', () => {
     expect(() =>
       leadSchema.parse({
@@ -106,6 +117,91 @@ describe('validators/lead.schema', () => {
         comentarios: 'X'.repeat(501),
       })
     ).toThrow('Máximo 500 caracteres')
+  })
+
+  it('rejects canal_captacion exceeding 60 characters', () => {
+    expect(() =>
+      leadSchema.parse({
+        id_org: 'org-001',
+        servicio_interes: 'Test',
+        id_encargado: 1,
+        estado: LeadState.Prospecto,
+        canal_captacion: 'X'.repeat(61),
+      })
+    ).toThrow('Máximo 60 caracteres')
+  })
+
+  it('rejects desafio_oportunidad exceeding 500 characters', () => {
+    expect(() =>
+      leadSchema.parse({
+        id_org: 'org-001',
+        servicio_interes: 'Test',
+        id_encargado: 1,
+        estado: LeadState.Prospecto,
+        desafio_oportunidad: 'X'.repeat(501),
+      })
+    ).toThrow('Máximo 500 caracteres')
+  })
+
+  describe('createLeadSchema', () => {
+    it('accepts valid future date', () => {
+      const future = new Date()
+      future.setDate(future.getDate() + 30)
+      const y = future.getFullYear()
+      const m = String(future.getMonth() + 1).padStart(2, '0')
+      const d = String(future.getDate()).padStart(2, '0')
+      const result = createLeadSchema.parse({
+        id_org: 'org-001',
+        servicio_interes: 'Test',
+        id_encargado: 1,
+        estado: LeadState.Prospecto,
+        fecha_cierre: `${y}-${m}-${d}`,
+      })
+      expect(result.fecha_cierre).toBe(`${y}-${m}-${d}`)
+    })
+
+    it('accepts empty fecha_cierre', () => {
+      const result = createLeadSchema.parse({
+        id_org: 'org-001',
+        servicio_interes: 'Test',
+        id_encargado: 1,
+        estado: LeadState.Prospecto,
+        fecha_cierre: '',
+      })
+      expect(result.fecha_cierre).toBe('')
+    })
+
+    it('rejects past fecha_cierre', () => {
+      const past = new Date()
+      past.setDate(past.getDate() - 5)
+      const y = past.getFullYear()
+      const m = String(past.getMonth() + 1).padStart(2, '0')
+      const d = String(past.getDate()).padStart(2, '0')
+      expect(() =>
+        createLeadSchema.parse({
+          id_org: 'org-001',
+          servicio_interes: 'Test',
+          id_encargado: 1,
+          estado: LeadState.Prospecto,
+          fecha_cierre: `${y}-${m}-${d}`,
+        })
+      ).toThrow('No se permite establecer fechas pasadas')
+    })
+
+    it('accepts fecha_cierre from today (today is not in the past)', () => {
+      const today = new Date()
+      const y = today.getFullYear()
+      const m = String(today.getMonth() + 1).padStart(2, '0')
+      const d = String(today.getDate()).padStart(2, '0')
+      const result = createLeadSchema.parse({
+        id_org: 'org-001',
+        servicio_interes: 'Test',
+        id_encargado: 1,
+        estado: LeadState.Prospecto,
+        fecha_cierre: `${y}-${m}-${d}`,
+      })
+      expect(result.fecha_cierre).toBe(`${y}-${m}-${d}`)
+    })
   })
 
   it('accepts all LeadState enum values', () => {

@@ -6,9 +6,15 @@ const mockGetAll = jest.fn()
 const mockGetById = jest.fn()
 const mockCreate = jest.fn()
 const mockUpdate = jest.fn()
+const mockDelete = jest.fn()
 const mockSunatPorRuc = jest.fn()
 const mockSunatPorNombre = jest.fn()
 const mockGetByIdConRelaciones = jest.fn()
+
+const mockRouterPush = jest.fn()
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockRouterPush }),
+}))
 
 jest.mock('@/services/modules/organizaciones.service', () => ({
   organizacionesService: {
@@ -16,6 +22,7 @@ jest.mock('@/services/modules/organizaciones.service', () => ({
     getById: mockGetById,
     create: mockCreate,
     update: mockUpdate,
+    delete: mockDelete,
     sunatPorRuc: mockSunatPorRuc,
     sunatPorNombre: mockSunatPorNombre,
     getByIdConRelaciones: mockGetByIdConRelaciones,
@@ -46,6 +53,7 @@ import {
   useOrganizacion,
   useCrearOrganizacion,
   useActualizarOrganizacion,
+  useEliminarOrganizacion,
   useSunat,
   useOrganizacionConRelaciones,
 } from '@/hooks/organizaciones/useOrganizaciones'
@@ -162,6 +170,21 @@ describe('organizaciones/useOrganizaciones', () => {
           sector: Sector.OTROS,
         })
       }).rejects.toThrow('Sesión expirada. Vuelve a iniciar sesión para registrar una organización.')
+    })
+  })
+
+  describe('useEliminarOrganizacion', () => {
+    it('deletes organization and redirects', async () => {
+      mockDelete.mockResolvedValueOnce({ ok: true })
+
+      const { result } = renderHook(() => useEliminarOrganizacion(), { wrapper })
+
+      await act(async () => {
+        await result.current.mutateAsync('org-001')
+      })
+
+      expect(mockDelete).toHaveBeenCalledWith('org-001')
+      expect(mockRouterPush).toHaveBeenCalledWith('/organizaciones')
     })
   })
 
