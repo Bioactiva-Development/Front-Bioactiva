@@ -144,6 +144,56 @@ describe('cotizaciones/cotizaciones.service (API mode)', () => {
     })
   })
 
+  describe('getByLead', () => {
+    it('fetches cotizaciones by lead id with limit 100', async () => {
+      getMock.mockResolvedValueOnce({ data: { data: [rawCotizacion], meta: { total: 1 } } })
+
+      const result = await cotizacionesService.getByLead(2)
+      expect(getMock).toHaveBeenCalledWith('/quotations', {
+        params: { idLead: 2, limit: 100 },
+      })
+      expect(result).toHaveLength(1)
+      expect(result[0].id).toBe(4)
+    })
+
+    it('handles array response', async () => {
+      getMock.mockResolvedValueOnce({ data: [rawCotizacion] })
+
+      const result = await cotizacionesService.getByLead(2)
+      expect(result).toHaveLength(1)
+    })
+  })
+
+  describe('enviar', () => {
+    it('sends quotation via lifecycle endpoint', async () => {
+      patchMock.mockResolvedValueOnce({ data: { ...rawCotizacion, estado: 'ENVIADA' } })
+
+      const result = await cotizacionesService.enviar(4)
+      expect(patchMock).toHaveBeenCalledWith('/quotations/4/send')
+      expect(result.estado).toBe(EstadoCot.Enviada)
+    })
+  })
+
+  describe('aceptar', () => {
+    it('accepts quotation via lifecycle endpoint', async () => {
+      patchMock.mockResolvedValueOnce({ data: { ...rawCotizacion, estado: 'ACEPTADA' } })
+
+      const result = await cotizacionesService.aceptar(4)
+      expect(patchMock).toHaveBeenCalledWith('/quotations/4/accept')
+      expect(result.estado).toBe(EstadoCot.Aceptada)
+    })
+  })
+
+  describe('rechazar', () => {
+    it('rejects quotation via lifecycle endpoint', async () => {
+      patchMock.mockResolvedValueOnce({ data: { ...rawCotizacion, estado: 'RECHAZADA' } })
+
+      const result = await cotizacionesService.rechazar(4)
+      expect(patchMock).toHaveBeenCalledWith('/quotations/4/reject')
+      expect(result.estado).toBe(EstadoCot.Rechazada)
+    })
+  })
+
   describe('update', () => {
     it('patches cotizacion and returns updated data', async () => {
       patchMock.mockResolvedValueOnce({ data: { ...rawCotizacion, monto: '8000.00', updatedAt: '2026-06-03T10:00:00.000Z' } })

@@ -2,7 +2,7 @@ jest.mock('@/lib/constants/config', () => ({
   DOMINIO_INSTITUCIONAL: 'bioactiva.pe',
 }))
 
-import { invitarUsuarioSchema, editarUsuarioSchema, cambiarPasswordSchema } from '@/lib/validators/usuario.schema'
+import { invitarUsuarioSchema, editarUsuarioSchema, cambiarPasswordSchema, cambiarPasswordPerfilSchema } from '@/lib/validators/usuario.schema'
 import { RolUsuario } from '@/types/enums'
 
 describe('usuarios/usuario.schema', () => {
@@ -108,6 +108,82 @@ describe('usuarios/usuario.schema', () => {
           rol: RolUsuario.Trabajador,
         })
       ).toThrow(/correo institucional/)
+    })
+  })
+
+  describe('cambiarPasswordPerfilSchema', () => {
+    it('accepts valid current/new/confirm passwords', () => {
+      expect(
+        cambiarPasswordPerfilSchema.parse({
+          currentPassword: 'OldPass1!',
+          newPassword: 'NewPass1!',
+          confirmPassword: 'NewPass1!',
+        })
+      ).toEqual({
+        currentPassword: 'OldPass1!',
+        newPassword: 'NewPass1!',
+        confirmPassword: 'NewPass1!',
+      })
+    })
+
+    it('rejects empty currentPassword', () => {
+      expect(() =>
+        cambiarPasswordPerfilSchema.parse({
+          currentPassword: '',
+          newPassword: 'NewPass1!',
+          confirmPassword: 'NewPass1!',
+        })
+      ).toThrow('Ingrese su contraseña actual')
+    })
+
+    it('rejects mismatched new and confirm passwords', () => {
+      expect(() =>
+        cambiarPasswordPerfilSchema.parse({
+          currentPassword: 'OldPass1!',
+          newPassword: 'NewPass1!',
+          confirmPassword: 'NewPass2!',
+        })
+      ).toThrow('Las contraseñas no coinciden')
+    })
+
+    it('rejects newPassword same as currentPassword', () => {
+      expect(() =>
+        cambiarPasswordPerfilSchema.parse({
+          currentPassword: 'SamePass1!',
+          newPassword: 'SamePass1!',
+          confirmPassword: 'SamePass1!',
+        })
+      ).toThrow('La nueva contraseña debe ser distinta de la actual')
+    })
+
+    it('rejects newPassword without uppercase', () => {
+      expect(() =>
+        cambiarPasswordPerfilSchema.parse({
+          currentPassword: 'OldPass1!',
+          newPassword: 'newpass1!',
+          confirmPassword: 'newpass1!',
+        })
+      ).toThrow('letra mayúscula')
+    })
+
+    it('rejects newPassword without digit', () => {
+      expect(() =>
+        cambiarPasswordPerfilSchema.parse({
+          currentPassword: 'OldPass1!',
+          newPassword: 'NewPass!',
+          confirmPassword: 'NewPass!',
+        })
+      ).toThrow('número')
+    })
+
+    it('rejects newPassword without special character', () => {
+      expect(() =>
+        cambiarPasswordPerfilSchema.parse({
+          currentPassword: 'OldPass1!',
+          newPassword: 'NewPass1',
+          confirmPassword: 'NewPass1',
+        })
+      ).toThrow('carácter especial')
     })
   })
 

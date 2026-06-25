@@ -5,6 +5,7 @@ import { TipoActividad } from '@/types/enums'
 import type { ActividadFormData } from '@/types/actividad.types'
 
 const mockGetByLead = jest.fn()
+const mockGetAll = jest.fn()
 const mockCreate = jest.fn()
 const mockUpdate = jest.fn()
 const mockComplete = jest.fn()
@@ -18,6 +19,7 @@ const mockUpdateNotas = jest.fn()
 jest.mock('@/services/modules/actividades.service', () => ({
   actividadesService: {
     getByLead: mockGetByLead,
+    getAll: mockGetAll,
     create: mockCreate,
     update: mockUpdate,
     complete: mockComplete,
@@ -34,6 +36,7 @@ jest.mock('@/lib/constants/queryKeys', () => ({
   QUERY_KEYS: {
     actividades: {
       byLead: (leadId: number) => ['actividades', 'lead', leadId],
+      calendar: (filters?: unknown) => ['actividades', 'calendar', filters],
     },
   },
 }))
@@ -59,6 +62,7 @@ jest.mock('@/store', () => ({
 
 import {
   useActividades,
+  useActividadesCalendario,
   useCrearActividad,
   useActualizarActividad,
   useCompletarActividad,
@@ -80,6 +84,28 @@ function wrapper({ children }: { children: React.ReactNode }) {
 describe('pipeline/useActividades', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+  })
+
+  describe('useActividadesCalendario', () => {
+    it('fetches pending reunion activities for calendar', async () => {
+      mockGetAll.mockResolvedValueOnce([{ id: 1, nombreActividad: 'Reunión' }])
+
+      const { result } = renderHook(() => useActividadesCalendario(), { wrapper })
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+      expect(mockGetAll).toHaveBeenCalled()
+    })
+
+    it('passes idResponsable filter when provided', async () => {
+      mockGetAll.mockResolvedValueOnce([])
+
+      const { result } = renderHook(() => useActividadesCalendario(5), { wrapper })
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+      expect(mockGetAll).toHaveBeenCalledWith(
+        expect.objectContaining({ id_responsable: 5 })
+      )
+    })
   })
 
   describe('useActividades', () => {

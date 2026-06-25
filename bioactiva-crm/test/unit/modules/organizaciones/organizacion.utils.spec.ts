@@ -1,4 +1,4 @@
-import { generarCodigoCliente } from '@/lib/utils/organizacion.utils'
+import { generarCodigoCliente, formatTipo, formatSector, formatTamano } from '@/lib/utils/organizacion.utils'
 
 /**
  * OrganizacionUtils
@@ -12,6 +12,39 @@ import { generarCodigoCliente } from '@/lib/utils/organizacion.utils'
 // STATUS: Implementación completa.
 
 describe('organizaciones/organizacion.utils', () => {
+  describe('formatTipo', () => {
+    it('formats EMPRESA_NACIONAL to Empresa nacional', () => {
+      expect(formatTipo('EMPRESA_NACIONAL')).toBe('Empresa nacional')
+    })
+    it('formats EMPRESA_INTERNACIONAL to Empresa internacional', () => {
+      expect(formatTipo('EMPRESA_INTERNACIONAL')).toBe('Empresa internacional')
+    })
+    it('returns unknown tipo as-is', () => {
+      expect(formatTipo('UNKNOWN')).toBe('UNKNOWN')
+    })
+  })
+
+  describe('formatSector', () => {
+    it('formats BANCA_Y_SEGUROS to Banca y seguros', () => {
+      expect(formatSector('BANCA_Y_SEGUROS')).toBe('Banca y seguros')
+    })
+    it('formats AGROALIMENTARIA to Agroalimentaria', () => {
+      expect(formatSector('AGROALIMENTARIA')).toBe('Agroalimentaria')
+    })
+  })
+
+  describe('formatTamano', () => {
+    it('formats Pequeno to Pequeño', () => {
+      expect(formatTamano('Pequeno')).toBe('Pequeño')
+    })
+    it('formats Grande to Grande', () => {
+      expect(formatTamano('Grande')).toBe('Grande')
+    })
+    it('returns unknown tamano as-is', () => {
+      expect(formatTamano('UNKNOWN')).toBe('UNKNOWN')
+    })
+  })
+
   describe('generarCodigoCliente', () => {
     it('generates code from two significant words', () => {
       expect(generarCodigoCliente('Cacao de Aroma', '20123456550')).toBe('CA-550')

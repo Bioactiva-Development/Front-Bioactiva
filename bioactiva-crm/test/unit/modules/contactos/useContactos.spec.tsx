@@ -7,6 +7,7 @@ const mockGetById = jest.fn()
 const mockCreate = jest.fn()
 const mockUpdate = jest.fn()
 const mockGetByOrganizacion = jest.fn()
+const mockCambiarEstado = jest.fn()
 
 jest.mock('@/services/modules/contactos.service', () => ({
   contactosService: {
@@ -15,6 +16,7 @@ jest.mock('@/services/modules/contactos.service', () => ({
     create: mockCreate,
     update: mockUpdate,
     getByOrganizacion: mockGetByOrganizacion,
+    cambiarEstado: mockCambiarEstado,
   },
 }))
 
@@ -29,6 +31,7 @@ import {
   useContactosPorOrganizacion,
   useCrearContacto,
   useActualizarContacto,
+  useCambiarEstadoContacto,
 } from '@/hooks/contactos/useContactos'
 
 function wrapper({ children }: { children: React.ReactNode }) {
@@ -116,6 +119,40 @@ describe('contactos/useContactos', () => {
       })
 
       expect(mockCreate).toHaveBeenCalled()
+    })
+  })
+
+  describe('useCambiarEstadoContacto', () => {
+    it('changes contact email state and invalidates queries', async () => {
+      mockCambiarEstado.mockResolvedValueOnce({ id: 1, estado_correo: 'VIGENTE' })
+
+      const { result } = renderHook(() => useCambiarEstadoContacto(1), { wrapper })
+
+      await act(async () => {
+        await result.current.mutateAsync('VIGENTE')
+      })
+
+      expect(mockCambiarEstado).toHaveBeenCalledWith(1, 'VIGENTE')
+    })
+
+    it('logs error on failure', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+      mockCambiarEstado.mockRejectedValueOnce({ message: 'Error al cambiar estado' })
+
+      const { result } = renderHook(() => useCambiarEstadoContacto(1), { wrapper })
+
+      await act(async () => {
+        try {
+          await result.current.mutateAsync('VENCIDO')
+        } catch {
+          // expected
+        }
+      })
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith('Error al cambiar estado')
+      })
+      consoleSpy.mockRestore()
     })
   })
 
