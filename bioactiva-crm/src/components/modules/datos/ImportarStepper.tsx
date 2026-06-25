@@ -357,7 +357,7 @@ export function ImportarStepper() {
 
                             {/* Detalle insertados */}
                             {jobStatus.result && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-sm">
+                                <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
                                     {(Object.entries(jobStatus.result.summary.inserted) as [string, number][]).filter(([k]) => k !== 'actividades').map(([k, v]) => (
                                         <div key={k} className="rounded-xl bg-[#F1FFEC] border border-[#BCF7B3] p-3 text-center">
                                             <p className="text-xl font-bold text-[#1C7E3C]">{v}</p>
@@ -394,7 +394,7 @@ export function ImportarStepper() {
                             </div>
 
                             {jobStatus.result && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-sm">
+                                <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
                                     {(Object.entries(jobStatus.result.summary.inserted) as [string, number][]).filter(([k]) => k !== 'actividades').map(([k, v]) => (
                                         <div key={k} className="rounded-xl bg-[#F1FFEC] border border-[#BCF7B3] p-3 text-center">
                                             <p className="text-xl font-bold text-[#1C7E3C]">{v}</p>
