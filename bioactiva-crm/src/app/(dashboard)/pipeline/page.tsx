@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { AlertCircle, Calendar, Clock, Loader2, Plus, User } from 'lucide-react'
+import { AlertCircle, Calendar, Clock, FileText, Loader2, Plus, User, X } from 'lucide-react'
 import { SEMAFORO_UI } from '@/lib/utils/semaforo.utils'
 import { formatLeadDateOnly } from '@/lib/utils/lead-date.utils'
 import { useMoverLeadPipeline, usePipelineColumns } from '@/hooks/pipeline/useLeads'
@@ -14,6 +14,7 @@ import { LeadFiltros as FiltrosType, Lead } from '@/types/lead.types'
 import { EstadoCot, LeadState, Sector, TipoEmpresa, TipoMoneda } from '@/types/enums'
 import { ActivityAlert } from '@/types/lead.types'
 import { getErrorMessage } from '@/lib/utils/error.utils'
+import { ROUTES } from '@/lib/constants/routes'
 
 const COLUMNAS_MOVIL = [
   { key: 'prospecto'      as const, label: 'Prospecto', activeClass: 'bg-gray-700 text-white' },
@@ -156,6 +157,7 @@ function PipelineContent() {
 
   const [leadSeleccionado, setLeadSeleccionado] = useState<Lead | null>(null)
   const [dragError, setDragError] = useState<string | null>(null)
+  const [borradorId, setBorradorId] = useState<number | null>(null)
   const [tabMovil, setTabMovil] = useState<'prospecto' | 'ofertado' | 'cierreVenta' | 'cierreSinVenta'>('prospecto')
 
   const columnas = usePipelineColumns(filtros)
@@ -203,7 +205,8 @@ function PipelineContent() {
   const handleMoveLead = async (lead: Lead, estado: LeadState) => {
     try {
       setDragError(null)
-      await moverLead({ lead, estado })
+      const result = await moverLead({ lead, estado })
+      if (result.borrador) setBorradorId(result.borrador.id)
     } catch (err: unknown) {
       // 409: el lead tiene una actividad pendiente y debe resolverse antes.
       const status = (err as { status?: number })?.status
@@ -250,6 +253,36 @@ function PipelineContent() {
           bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <p>{dragError}</p>
+        </div>
+      )}
+
+      {borradorId && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border
+          border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <div className="flex items-center gap-2">
+            <FileText size={16} className="shrink-0" />
+            <p>
+              Se creó una cotización en estado{' '}
+              <span className="font-semibold">Pendiente</span> para este lead.
+              Revísala y complétala con los valores reales antes de enviarla.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => router.push(ROUTES.cotizacion(borradorId))}
+              className="text-xs font-semibold text-blue-700 underline underline-offset-2
+                hover:text-blue-900 transition-colors"
+            >
+              Ver cotización
+            </button>
+            <button
+              onClick={() => setBorradorId(null)}
+              className="text-blue-500 hover:text-blue-700 transition-colors"
+              aria-label="Cerrar"
+            >
+              <X size={14} />
+            </button>
+          </div>
         </div>
       )}
 
