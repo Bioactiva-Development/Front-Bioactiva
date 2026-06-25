@@ -305,12 +305,12 @@ export function OrganizacionForm({
           <label htmlFor="of-ubicacion" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Ubicación
           </label>
-          <input
+          <textarea
             id="of-ubicacion"
-            type="text"
+            rows={2}
             placeholder="Ciudad, Región..."
             {...register('ubicacion')}
-            className={inputClass(!!errors.ubicacion)}
+            className={`${inputClass(!!errors.ubicacion)} resize-none`}
           />
         </div>
 
@@ -321,12 +321,12 @@ export function OrganizacionForm({
               Opcional — SUNAT lo completa
             </span>
           </label>
-          <input
+          <textarea
             id="of-actividad"
-            type="text"
+            rows={3}
             placeholder="Ej: Fabricación de productos orgánicos..."
             {...register('actividad_economica')}
-            className={inputClass(!!errors.actividad_economica)}
+            className={`${inputClass(!!errors.actividad_economica)} resize-none`}
           />
         </div>
 
