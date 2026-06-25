@@ -425,7 +425,7 @@ export function CotizacionForm({
               <input
                 id="cot-link"
                 type="url"
-                placeholder="https://drive.google.com/..."
+                placeholder="Ingresa aquí el enlace de la propuesta comercial"
                 {...register('link_propuesta')}
                 className={inputClass(!!errors.link_propuesta)}
               />

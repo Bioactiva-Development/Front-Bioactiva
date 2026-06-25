@@ -15,7 +15,7 @@ import { TrendUpIcon }        from '@phosphor-icons/react/dist/csr/TrendUp'
 import { CalendarXIcon }      from '@phosphor-icons/react/dist/csr/CalendarX'
 import { ChartLineUpIcon }    from '@phosphor-icons/react/dist/csr/ChartLineUp'
 import {
-  RefreshCw, ChevronDown, ChevronUp, Filter, Calendar,
+  RefreshCw, ChevronDown, ChevronUp, Filter, Calendar, Loader2,
 } from 'lucide-react'
 
 import { useLeads }              from '@/hooks/pipeline/useLeads'
@@ -295,6 +295,8 @@ export default function DashboardPage() {
   const { data: metrics, isLoading: cargandoMetricas, isError: errorMetricas } =
     useDashboardMetrics(dashboardParams)
 
+  const cargando = cargandoLeads || cargandoCotizaciones || cargandoMetricas
+
   const kpiValor = (value: string) => cargandoMetricas ? '...' : value
   const kpiMonto = (value?: MoneyByCurrency) =>
     cargandoMetricas ? '...' : <MoneyDual value={value} />
@@ -549,7 +551,14 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {sinDataPeriodo && (
+      {cargando && (
+        <div className="flex min-h-52 items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white px-6 py-12 shadow-sm">
+          <Loader2 size={20} className="animate-spin text-emerald-500" />
+          <span className="text-sm text-gray-400">Cargando datos del periodo...</span>
+        </div>
+      )}
+
+      {!cargando && sinDataPeriodo && (
         <output
           className="flex min-h-52 flex-col items-center justify-center gap-3 rounded-2xl
             border border-gray-200 bg-white px-6 py-12 text-center shadow-sm"
@@ -563,7 +572,7 @@ export default function DashboardPage() {
         </output>
       )}
 
-      {!sinDataPeriodo && (
+      {!cargando && !sinDataPeriodo && (
         <>
 
       {/* ─── PRIMERA PANTALLA ─── */}

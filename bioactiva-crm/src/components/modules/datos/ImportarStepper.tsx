@@ -98,7 +98,9 @@ export function ImportarStepper() {
             : 'border-gray-200 bg-gray-50 hover:border-[#1C7E3C]/50 hover:bg-[#F1FFEC]/30'
 
     const totalInsertados = jobStatus?.result
-        ? Object.values(jobStatus.result.summary.inserted).reduce((a, b) => a + b, 0)
+        ? Object.entries(jobStatus.result.summary.inserted)
+            .filter(([k]) => k !== 'actividades')
+            .reduce((a, [, b]) => a + b, 0)
         : 0
 
     return (
@@ -221,7 +223,9 @@ export function ImportarStepper() {
                     <div>
                         <h3 className="text-sm font-bold text-gray-800 mb-3">Filas detectadas por hoja</h3>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            {(Object.entries(validacion.parsedCounts) as [string, number][]).map(([k, v]) => (
+                            {(Object.entries(validacion.parsedCounts) as [string, number][])
+                                .filter(([k]) => k !== 'actividades')
+                                .map(([k, v]) => (
                                 <div key={k} className="rounded-xl bg-gray-50 border border-gray-100 p-3 text-center">
                                     <p className="text-2xl font-bold text-gray-800">{v}</p>
                                     <p className="text-xs text-gray-500 mt-0.5 capitalize">{k}</p>
@@ -353,8 +357,8 @@ export function ImportarStepper() {
 
                             {/* Detalle insertados */}
                             {jobStatus.result && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-sm">
-                                    {(Object.entries(jobStatus.result.summary.inserted) as [string, number][]).map(([k, v]) => (
+                                <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+                                    {(Object.entries(jobStatus.result.summary.inserted) as [string, number][]).filter(([k]) => k !== 'actividades').map(([k, v]) => (
                                         <div key={k} className="rounded-xl bg-[#F1FFEC] border border-[#BCF7B3] p-3 text-center">
                                             <p className="text-xl font-bold text-[#1C7E3C]">{v}</p>
                                             <p className="text-xs text-gray-500 mt-0.5 capitalize">{k}</p>
@@ -390,8 +394,8 @@ export function ImportarStepper() {
                             </div>
 
                             {jobStatus.result && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-sm">
-                                    {(Object.entries(jobStatus.result.summary.inserted) as [string, number][]).map(([k, v]) => (
+                                <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+                                    {(Object.entries(jobStatus.result.summary.inserted) as [string, number][]).filter(([k]) => k !== 'actividades').map(([k, v]) => (
                                         <div key={k} className="rounded-xl bg-[#F1FFEC] border border-[#BCF7B3] p-3 text-center">
                                             <p className="text-xl font-bold text-[#1C7E3C]">{v}</p>
                                             <p className="text-xs text-gray-500 mt-0.5 capitalize">{k}</p>
