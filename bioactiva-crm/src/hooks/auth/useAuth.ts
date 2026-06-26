@@ -23,13 +23,14 @@ function extractMessage(err: unknown, fallback: string): string {
 }
 
 const MAX_AGE = 8 * 60 * 60
+const SECURE = process.env.NODE_ENV === 'production' ? '; Secure' : ''
 
 function setCookie(name: string, value: string): void {
-    document.cookie = `${name}=${value}; path=/; max-age=${MAX_AGE}; SameSite=Lax`
+    document.cookie = `${name}=${value}; path=/; max-age=${MAX_AGE}; SameSite=Lax${SECURE}`
 }
 
 function clearCookie(name: string): void {
-    document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`
+    document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax${SECURE}`
 }
 
 export function useAuth() {

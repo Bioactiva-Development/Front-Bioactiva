@@ -6,6 +6,7 @@ const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password', '/activat
 const ADMIN_PATHS = ['/control-acceso']
 
 const IS_PROD = process.env.NODE_ENV === 'production'
+const API_ORIGIN = process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
 
 // CSP estricta basada en nonce (produccion). Cada request genera un nonce y
 // Next.js lo aplica automaticamente a sus <script>/<style>. Con 'strict-dynamic',
@@ -15,14 +16,15 @@ const IS_PROD = process.env.NODE_ENV === 'production'
 //  - style-src: sin 'unsafe-inline' para <style>; los atributos style inline en
 //    runtime (React style={{}}, drag&drop, charts) se permiten via style-src-attr.
 function buildStrictCsp(nonce: string): string {
+    const apiSrc = API_ORIGIN ? ` ${API_ORIGIN}` : ''
     return [
         "default-src 'self'",
         `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/`,
         `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com`,
         "style-src-attr 'unsafe-inline'",
         "font-src 'self' data: https://fonts.gstatic.com",
-        "img-src 'self' data: blob: https:",
-        "connect-src 'self' https: http://localhost:* ws://localhost:*",
+        `img-src 'self' data: blob:${apiSrc}`,
+        `connect-src 'self'${apiSrc} https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/`,
         "frame-src 'self' https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/",
         "object-src 'none'",
         "base-uri 'self'",
@@ -67,6 +69,7 @@ export function proxy(request: NextRequest) {
     const redirectTo = (url: string) => {
         const redirect = NextResponse.redirect(new URL(url, request.url))
         redirect.headers.set('Content-Security-Policy', csp)
+        redirect.headers.set('X-Content-Type-Options', 'nosniff')
         return redirect
     }
 
@@ -85,11 +88,13 @@ export function proxy(request: NextRequest) {
 
         const response = NextResponse.next({ request: { headers: requestHeaders } })
         response.headers.set('Content-Security-Policy', csp)
+        response.headers.set('X-Content-Type-Options', 'nosniff')
         return response
     }
 
     const response = NextResponse.next()
     response.headers.set('Content-Security-Policy', csp)
+    response.headers.set('X-Content-Type-Options', 'nosniff')
     return response
 }
 

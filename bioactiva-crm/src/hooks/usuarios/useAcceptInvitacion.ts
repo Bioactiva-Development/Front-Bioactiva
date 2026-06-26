@@ -12,9 +12,10 @@ import { useAuthStore } from '@/store/auth.store'
 import { usuarioFromAccessToken } from '@/lib/utils/auth.mappers'
 
 const MAX_AGE = 8 * 60 * 60
+const SECURE = process.env.NODE_ENV === 'production' ? '; Secure' : ''
 
 function setCookie(name: string, value: string): void {
-    document.cookie = `${name}=${value}; path=/; max-age=${MAX_AGE}; SameSite=Lax`
+    document.cookie = `${name}=${value}; path=/; max-age=${MAX_AGE}; SameSite=Lax${SECURE}`
 }
 
 export function useAcceptInvitacion() {
