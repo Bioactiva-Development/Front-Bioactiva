@@ -236,6 +236,7 @@ export default function NotificacionesPage() {
             />
             <HistoryColumn
               title="Vencidas"
+              count={vencidasResponse?.meta.total ?? 0}
               tone="expired"
               notifications={vencidas}
               loading={loadingVencidas}
@@ -286,6 +287,9 @@ function HistoryColumn({
   leadsPorId,
 }: Readonly<HistoryColumnProps>) {
   const scheduled = tone === 'scheduled'
+  const countLabel = scheduled
+    ? count === 1 ? 'programada' : 'programadas'
+    : count === 1 ? 'vencida' : 'vencidas'
 
   return (
     <section className="min-h-80 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -295,8 +299,12 @@ function HistoryColumn({
           <h2 className="text-lg font-bold text-gray-950">{title}</h2>
         </div>
         {typeof count === 'number' && (
-          <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-600">
-            {count} {count === 1 ? 'activa' : 'activas'}
+          <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${
+            scheduled
+              ? 'border-blue-200 bg-blue-50 text-blue-600'
+              : 'border-red-200 bg-red-50 text-red-600'
+          }`}>
+            {count} {countLabel}
           </span>
         )}
       </div>

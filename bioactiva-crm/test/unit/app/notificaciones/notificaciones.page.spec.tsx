@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import NotificacionesPage from '@/app/(dashboard)/notificaciones/page'
 
 const useNotificacionesProgramadas = jest.fn()
@@ -81,5 +81,28 @@ describe('NotificacionesPage', () => {
       page: 1,
       limit: 6,
     })
+  })
+
+  it('shows total counters for scheduled and expired notification history', () => {
+    useNotificacionesProgramadas
+      .mockReturnValueOnce({
+        data: {
+          data: [],
+          meta: { page: 1, limit: 6, total: 0, totalPages: 1 },
+        },
+        isLoading: false,
+      })
+      .mockReturnValueOnce({
+        data: {
+          data: [],
+          meta: { page: 1, limit: 6, total: 7, totalPages: 2 },
+        },
+        isLoading: false,
+      })
+
+    render(<NotificacionesPage />)
+
+    expect(screen.getByText('0 programadas')).toBeInTheDocument()
+    expect(screen.getByText('7 vencidas')).toBeInTheDocument()
   })
 })
