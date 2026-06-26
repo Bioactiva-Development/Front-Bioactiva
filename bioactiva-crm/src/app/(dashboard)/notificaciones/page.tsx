@@ -94,7 +94,6 @@ export default function NotificacionesPage() {
     integraciones,
     integracionInfo,
     isLoadingIntegracion,
-    conectarMicrosoft,
     desconectarMicrosoft,
   } = usePerfil()
 
@@ -255,7 +254,6 @@ export default function NotificacionesPage() {
           integraciones={integraciones}
           integracionInfo={integracionInfo}
           isLoadingIntegracion={isLoadingIntegracion}
-          onConnect={() => conectarMicrosoft('/notificaciones')}
           onDisconnect={desconectarMicrosoft}
         />
       )}
