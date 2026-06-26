@@ -43,7 +43,7 @@ const TITULOS: Record<Seccion, string> = {
   calendario: 'Calendario',
 }
 
-const NOTIFICATIONS_PAGE_SIZE = 10
+const NOTIFICATIONS_PAGE_SIZE = 6
 
 export default function NotificacionesPage() {
   const [seccion, setSeccion] = useState<Seccion>('historial')
