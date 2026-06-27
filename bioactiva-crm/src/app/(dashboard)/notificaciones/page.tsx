@@ -234,8 +234,7 @@ export default function NotificacionesPage() {
               onEdit={iniciarEdicion}
             />
             <HistoryColumn
-              title="Vencidas"
-              count={vencidasResponse?.meta.total ?? 0}
+              title="Enviadas"
               tone="expired"
               notifications={vencidas}
               loading={loadingVencidas}
@@ -310,7 +309,7 @@ function HistoryColumn({
         {loading && <LoadingMessage />}
         {!loading && notifications.length === 0 && (
           <EmptyMessage>
-            No hay notificaciones {scheduled ? 'programadas' : 'vencidas'}.
+            No hay notificaciones {scheduled ? 'programadas' : 'enviadas'}.
           </EmptyMessage>
         )}
         {notifications.map((notificacion) => {
