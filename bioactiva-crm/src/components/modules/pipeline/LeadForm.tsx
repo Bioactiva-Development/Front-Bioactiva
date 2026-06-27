@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Save, ArrowLeft, Target, Building2, User, MessageSquare, Radio } from 'lucide-react'
+import { Loader2, Save, ArrowLeft, Target, Building2, User, MessageSquare, Radio, Search, X } from 'lucide-react'
 import { formatVocativo } from '@/lib/utils/contacto.utils'
 import { useRouter } from 'next/navigation'
 import {
@@ -14,6 +14,7 @@ import {
 import { Lead } from '@/types/lead.types'
 import { ROUTES } from '@/lib/constants/routes'
 import { useOrganizaciones } from '@/hooks/organizaciones/useOrganizaciones'
+import { useDebounce } from '@/hooks/shared/useDebounce'
 import { useContactosPorOrganizacion } from '@/hooks/contactos/useContactos'
 import { usuariosService } from '@/services/modules/usuarios.service'
 import { LeadState } from '@/types/enums'
@@ -126,6 +127,10 @@ export function LeadForm({
   const [responsablesLoading, setResponsablesLoading] = useState(false)
   const [responsablesError, setResponsablesError] = useState<string | null>(null)
   const [canalOtroActivo, setCanalOtroActivo] = useState(false)
+  const [orgQuery, setOrgQuery] = useState('')
+  const [orgDisplayName, setOrgDisplayName] = useState('')
+  const [orgDropdownOpen, setOrgDropdownOpen] = useState(false)
+  const orgComboRef = useRef<HTMLDivElement>(null)
 
   const {
     register,
@@ -158,6 +163,15 @@ export function LeadForm({
     () => orgsData?.data ?? [],
     [orgsData?.data]
   )
+  const debouncedOrgQuery = useDebounce(orgQuery, 300)
+  const { data: orgSearchData, isLoading: orgSearchLoading } = useOrganizaciones(
+    !esEdicion && debouncedOrgQuery.length >= 1
+      ? { search: debouncedOrgQuery, limit: 20 }
+      : { limit: 0 }
+  )
+  const orgResults = !esEdicion && debouncedOrgQuery.length >= 1
+    ? (orgSearchData?.data ?? [])
+    : organizaciones.slice(0, 5)
   const { data: contactosOrg }  = useContactosPorOrganizacion(orgSeleccionada)
   const contactos               = contactosOrg ?? []
   const includeCurrentOrgOption = Boolean(
@@ -285,6 +299,18 @@ export function LeadForm({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgSeleccionada])
 
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (orgComboRef.current && !orgComboRef.current.contains(e.target as Node)) {
+        setOrgDropdownOpen(false)
+        if (!orgSeleccionada) setOrgQuery('')
+        else setOrgQuery(orgDisplayName)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [orgDisplayName, orgSeleccionada])
+
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
     transition-colors placeholder:text-gray-400
@@ -370,19 +396,94 @@ export function LeadForm({
                   <label htmlFor="ldf-org" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     Organización <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    id="ldf-org"
-                    {...register('id_org')}
-                    className={`${inputClass(!!errors.id_org)} cursor-pointer`}
-                  >
-                    <option value="">Seleccionar organización...</option>
-                    {includeCurrentOrgOption && (
-                      <option value={lead!.id_org}>{lead!.organizacion_nombre}</option>
+                  <div ref={orgComboRef} className="relative">
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                      <input
+                        id="ldf-org"
+                        type="text"
+                        autoComplete="off"
+                        value={orgQuery}
+                        onFocus={() => setOrgDropdownOpen(true)}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          setOrgQuery(val)
+                          setOrgDropdownOpen(true)
+                          if (!val || val !== orgDisplayName) {
+                            setValue('id_org', '', { shouldValidate: true })
+                            setOrgDisplayName('')
+                            setValue('id_contacto', undefined)
+                          }
+                        }}
+                        placeholder="Buscar organización..."
+                        className={`${inputClass(!!errors.id_org)} pl-9 ${orgQuery ? 'pr-8' : ''}`}
+                      />
+                      {orgQuery && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOrgQuery('')
+                            setOrgDisplayName('')
+                            setValue('id_org', '', { shouldValidate: true })
+                            setValue('id_contacto', undefined)
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                    <input type="hidden" {...register('id_org')} />
+
+                    {orgDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200
+                        rounded-xl shadow-lg max-h-56 overflow-y-auto">
+                        {debouncedOrgQuery.length >= 1 && orgSearchLoading ? (
+                          <div className="flex items-center gap-2 px-4 py-3">
+                            <Loader2 size={14} className="animate-spin text-gray-400" />
+                            <span className="text-sm text-gray-400">Buscando...</span>
+                          </div>
+                        ) : debouncedOrgQuery.length >= 1 && orgResults.length === 0 ? (
+                          <p className="px-4 py-3 text-sm text-gray-400">
+                            Sin resultados para &ldquo;{debouncedOrgQuery}&rdquo;
+                          </p>
+                        ) : (
+                          <>
+                          {debouncedOrgQuery.length < 1 && (
+                            <p className="px-4 pt-2 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                              Recientes
+                            </p>
+                          )}
+                          {orgResults.map((org) => (
+                            <button
+                              key={org.id}
+                              type="button"
+                              onClick={() => {
+                                setValue('id_org', org.id, { shouldValidate: true })
+                                setOrgQuery(org.nombre)
+                                setOrgDisplayName(org.nombre)
+                                setOrgDropdownOpen(false)
+                              }}
+                              className={`w-full text-left px-4 py-2.5 text-sm transition-colors
+                                hover:bg-emerald-50 hover:text-emerald-700
+                                ${orgSeleccionada === org.id
+                                  ? 'bg-emerald-50 text-emerald-700 font-medium'
+                                  : 'text-gray-700'
+                                }`}
+                            >
+                              {org.nombre}
+                              {org.nombre_comercial && org.nombre_comercial !== org.nombre && (
+                                <span className="text-xs text-gray-400 ml-1.5">
+                                  · {org.nombre_comercial}
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                          </>
+                        )}
+                      </div>
                     )}
-                    {organizaciones.map((org) => (
-                      <option key={org.id} value={org.id}>{org.nombre}</option>
-                    ))}
-                  </select>
+                  </div>
                   {errors.id_org && (
                     <p className="text-red-500 text-xs">{errors.id_org.message}</p>
                   )}
