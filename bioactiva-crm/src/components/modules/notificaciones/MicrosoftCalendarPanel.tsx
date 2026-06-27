@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   ExternalLink,
   Loader2,
-  Plug,
 } from 'lucide-react'
 import {
   useActividadesCalendario,
@@ -25,7 +24,6 @@ interface MicrosoftCalendarPanelProps {
   integraciones: IntegracionesResponse | null
   integracionInfo: string | null
   isLoadingIntegracion: boolean
-  onConnect: () => void
   onDisconnect: () => void
 }
 
@@ -45,7 +43,6 @@ export function MicrosoftCalendarPanel({
   integraciones,
   integracionInfo,
   isLoadingIntegracion,
-  onConnect,
   onDisconnect,
 }: Readonly<MicrosoftCalendarPanelProps>) {
   const { data: actividades = [], isLoading, isError } =
@@ -57,6 +54,7 @@ export function MicrosoftCalendarPanel({
   const conectado = Boolean(
     integraciones?.outlook.conectado || integraciones?.teams.conectado
   )
+  const integrationStatusLoaded = integraciones !== null
 
   return (
     <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -67,10 +65,12 @@ export function MicrosoftCalendarPanel({
             Crea eventos Outlook y reuniones Teams desde actividades tipo reunión.
           </p>
         </div>
-        <MicrosoftStatus
-          conectado={conectado}
-          cuenta={integraciones?.outlook.cuenta}
-        />
+        {integrationStatusLoaded && (
+          <MicrosoftStatus
+            conectado={conectado}
+            cuenta={integraciones?.outlook.cuenta}
+          />
+        )}
       </div>
 
       <div className="space-y-5 p-6">
@@ -78,33 +78,6 @@ export function MicrosoftCalendarPanel({
           <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             <AlertCircle size={16} className="mt-0.5 shrink-0" />
             {integracionInfo}
-          </div>
-        )}
-
-        {!conectado && (
-          <div className="flex flex-col gap-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm">
-                <Plug size={17} />
-              </span>
-              <div>
-                <p className="font-semibold text-gray-900">Conecta tu cuenta Microsoft</p>
-                <p className="mt-1 text-xs text-gray-600">
-                  La creación de eventos requiere una integración activa en tu perfil.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={onConnect}
-              disabled={isLoadingIntegracion}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0078D4] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-            >
-              {isLoadingIntegracion
-                ? <Loader2 size={16} className="animate-spin" />
-                : <ExternalLink size={15} />}
-              Conectar con Microsoft
-            </button>
           </div>
         )}
 
@@ -250,13 +223,15 @@ function MicrosoftStatus({
   cuenta,
 }: Readonly<{ conectado: boolean; cuenta?: string }>) {
   return (
-    <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${
+    <div className={`inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold leading-snug ${
       conectado
         ? 'bg-emerald-50 text-emerald-700'
         : 'bg-gray-100 text-gray-500'
     }`}>
       <span className={`h-2 w-2 rounded-full ${conectado ? 'bg-emerald-500' : 'bg-gray-400'}`} />
-      {conectado ? cuenta ?? 'Microsoft conectado' : 'Sin conexión'}
+      {conectado
+        ? cuenta ?? 'Microsoft conectado'
+        : 'Conexión con Microsoft no activa, inicie sesión desde su perfil'}
     </div>
   )
 }
