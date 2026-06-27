@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -99,9 +99,9 @@ export function InvitarUsuarioForm({ onSubmit, isLoading, error, onClose }: Read
                                 disabled:bg-emerald-200 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
                         >
                             {isLoading ? (
-                                <><Loader2 size={15} className="animate-spin" />Enviando...</>
+                                <><Loader2 size={16} className="animate-spin" />Enviando...</>
                             ) : (
-                                <><Send size={15} />Enviar invitación</>
+                                <><Send size={16} />Enviar invitación</>
                             )}
                         </button>
                     </div>

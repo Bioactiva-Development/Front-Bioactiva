@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
@@ -366,7 +366,7 @@ export function LeadForm({
           {/* Sección: Organización y contacto */}
           <div className="space-y-4">
             <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
-              <Building2 size={11} className="text-gray-400" />
+              <Building2 size={12} className="text-gray-400" />
               Organización y contacto
             </p>
 
@@ -530,7 +530,7 @@ export function LeadForm({
           {/* Sección: Información del lead */}
           <div className="space-y-4">
             <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
-              <Target size={11} className="text-gray-400" />
+              <Target size={12} className="text-gray-400" />
               Información del lead
             </p>
 
@@ -649,7 +649,7 @@ export function LeadForm({
           {!esEdicion && (
             <div className="space-y-4">
               <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
-                <MessageSquare size={11} className="text-gray-400" />
+                <MessageSquare size={12} className="text-gray-400" />
                 Notas y contexto
               </p>
 
@@ -684,7 +684,7 @@ export function LeadForm({
           {/* Sección: Responsable */}
           <div className="space-y-4">
             <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
-              <User size={11} className="text-gray-400" />
+              <User size={12} className="text-gray-400" />
               Responsable
             </p>
 

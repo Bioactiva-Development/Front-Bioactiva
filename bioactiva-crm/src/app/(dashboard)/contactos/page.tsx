@@ -1,7 +1,8 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { Plus, Users, X } from 'lucide-react'
+import { PaginacionSlidingWindow } from '@/components/ui/PaginacionSlidingWindow'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useContactos } from '@/hooks/contactos/useContactos'
 import { ContactoFiltros } from '@/components/modules/contactos/ContactoFiltros'
@@ -84,7 +85,7 @@ export default function ContactosPage() {
             className="ml-auto flex items-center gap-1 text-xs text-red-500
               hover:text-red-700 transition-colors"
           >
-            <X size={13} />
+            <X size={14} />
             Quitar filtro
           </button>
         </div>
@@ -125,20 +126,20 @@ export default function ContactosPage() {
           <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-emerald-700 text-white">
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+              <tr className="border-b border-gray-100">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Contacto
                 </th>
-                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Organización
                 </th>
-                <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Comunicación
                 </th>
-                <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Estado
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Acciones
                 </th>
               </tr>
@@ -157,39 +158,11 @@ export default function ContactosPage() {
             <p className="text-sm text-gray-500">
               Mostrando {((pagina - 1) * ITEMS_POR_PAGINA) + 1}–{Math.min(pagina * ITEMS_POR_PAGINA, total)} de {total}
             </p>
-            {totalPaginas > 1 && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPagina((p) => p - 1)}
-                  disabled={pagina === 1}
-                  className="p-2 rounded-lg text-gray-400 hover:text-gray-600
-                    hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  ‹
-                </button>
-                {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPagina(p)}
-                    className={`w-8 h-8 rounded-lg text-sm font-semibold transition-colors
-                      ${p === pagina
-                        ? 'bg-emerald-600 text-white'
-                        : 'text-gray-500 hover:bg-gray-50'
-                      }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setPagina((p) => p + 1)}
-                  disabled={pagina === totalPaginas}
-                  className="p-2 rounded-lg text-gray-400 hover:text-gray-600
-                    hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  ›
-                </button>
-              </div>
-            )}
+            <PaginacionSlidingWindow
+              paginaActual={pagina}
+              totalPaginas={totalPaginas}
+              onChange={setPagina}
+            />
           </div>
         )}
       </div>

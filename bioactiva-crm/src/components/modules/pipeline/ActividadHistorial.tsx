@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import {
@@ -166,7 +166,7 @@ function ActividadItem({
                     border border-emerald-200 transition-colors
                     disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <CheckCircle2 size={13} />
+                  <CheckCircle2 size={14} />
                   Completar
                 </button>
                 <button
@@ -214,7 +214,7 @@ function ActividadItem({
         {actividad.outlook_event_id && (
           <div className="flex flex-wrap items-center gap-2 rounded-lg border
             border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-            <CalendarPlus size={13} />
+            <CalendarPlus size={14} />
             <span className="font-semibold">Evento Outlook creado</span>
             {actividad.teamsMeetingUrl && (
               <a
@@ -270,8 +270,8 @@ function ActividadItem({
                 transition-colors"
             >
               {guardandoNotas
-                ? <Loader2 size={13} className="animate-spin" />
-                : <Save size={13} />}
+                ? <Loader2 size={14} className="animate-spin" />
+                : <Save size={14} />}
               Guardar comentario
             </button>
           </div>

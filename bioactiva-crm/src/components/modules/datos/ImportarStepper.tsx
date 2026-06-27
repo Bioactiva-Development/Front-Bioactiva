@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useRef, useCallback, DragEvent, ChangeEvent } from 'react'
 import {
@@ -141,7 +141,7 @@ export function ImportarStepper() {
                             disabled={isLoading}
                             className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-[#1C7E3C] text-[#1C7E3C] text-sm font-semibold hover:bg-white transition-colors whitespace-nowrap disabled:opacity-50"
                         >
-                            <FileDown size={15} />
+                            <FileDown size={16} />
                             Plantilla .xlsx
                         </button>
                     </div>
@@ -238,7 +238,7 @@ export function ImportarStepper() {
                     {validacion.errors.length > 0 && (
                         <div className="space-y-2">
                             <div className="flex items-center gap-2 text-sm font-semibold text-red-600">
-                                <AlertCircle size={15} />
+                                <AlertCircle size={16} />
                                 {validacion.errors.length} error{validacion.errors.length > 1 ? 'es' : ''} bloqueante{validacion.errors.length > 1 ? 's' : ''}
                             </div>
                             <ul className="space-y-1.5 max-h-40 overflow-y-auto">
@@ -256,7 +256,7 @@ export function ImportarStepper() {
                     {validacion.warnings.length > 0 && (
                         <div className="space-y-2">
                             <div className="flex items-center gap-2 text-sm font-semibold text-amber-600">
-                                <TriangleAlert size={15} />
+                                <TriangleAlert size={16} />
                                 {validacion.warnings.length} advertencia{validacion.warnings.length > 1 ? 's' : ''} (no bloquea)
                             </div>
                             <ul className="space-y-1.5 max-h-32 overflow-y-auto">
@@ -283,7 +283,7 @@ export function ImportarStepper() {
                             disabled={!validacion.valid || isLoading}
                             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#1C7E3C] hover:bg-[#16642f] text-white text-sm font-semibold transition-colors disabled:bg-[#BCF7B3] disabled:cursor-not-allowed"
                         >
-                            <Download size={15} />
+                            <Download size={16} />
                             Importar ahora
                         </button>
                     </div>

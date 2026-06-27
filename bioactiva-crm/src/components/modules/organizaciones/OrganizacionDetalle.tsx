@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -136,7 +136,7 @@ export function OrganizacionDetalle({
                 </span>
                 {organizacion.ubicacion && (
                   <span className="text-xs text-gray-400 flex items-center gap-1">
-                    <MapPin size={11} />
+                    <MapPin size={12} />
                     {organizacion.ubicacion}
                   </span>
                 )}
@@ -299,12 +299,12 @@ export function OrganizacionDetalle({
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-gray-500 flex items-center gap-1.5">
-                        <Mail size={11} className="text-gray-400" />
+                        <Mail size={12} className="text-gray-400" />
                         {contacto.correo}
                       </p>
                       {contacto.telefono && (
                         <p className="text-xs text-gray-500 flex items-center gap-1.5">
-                          <Phone size={11} className="text-gray-400" />
+                          <Phone size={12} className="text-gray-400" />
                           {contacto.telefono}
                         </p>
                       )}

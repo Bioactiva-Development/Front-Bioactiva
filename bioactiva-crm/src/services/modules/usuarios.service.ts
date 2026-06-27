@@ -126,7 +126,7 @@ export const usuariosService = {
         // Se toleran respuestas planas (array) o { usuarios: [...] } por robustez.
         const { data } = await apiClient.get(ENDPOINTS.usuarios.list, { params: buildUsersQuery(filters) })
         const rows = Array.isArray(data) ? data : (data.data ?? data.usuarios ?? [])
-        const usuarios: UsuarioListItem[] = rows.map((u: Record<string, unknown>) => ({
+        const todos: UsuarioListItem[] = rows.map((u: Record<string, unknown>) => ({
             id: Number(u.id),
             nombres: strOf(u.nombres),
             apellidos: strOf(u.apellidos),
@@ -136,8 +136,11 @@ export const usuariosService = {
             created_at: strOf(u.fechaRegistro ?? u.created_at ?? u.createdAt),
             updated_at: strOf(u.updated_at ?? u.updatedAt ?? u.fechaRegistro),
         }))
+        // Excluye invitaciones pendientes: solo se muestran usuarios que completaron el registro.
+        const usuarios = todos.filter((u) => u.estado !== EstadoUsuario.Pendiente)
         const meta = (data?.meta ?? {}) as Record<string, unknown>
-        const total = Number(meta.total ?? usuarios.length)
+        const pendienteEnPagina = todos.length - usuarios.length
+        const total = Math.max(0, Number(meta.total ?? todos.length) - pendienteEnPagina)
         const activos = usuarios.filter((u) => u.estado === EstadoUsuario.Activo).length
         return { usuarios, total, activos }
     },

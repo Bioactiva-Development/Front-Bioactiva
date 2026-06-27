@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import {
@@ -96,8 +96,8 @@ export function NotificacionAlerta({
     >
       <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBgClass}`}>
         {esImportError
-          ? <FileX size={15} className={esNoLeida ? 'text-orange-500' : 'text-gray-400'} />
-          : <AlertTriangle size={15} className={esNoLeida ? 'text-red-500' : 'text-gray-400'} />
+          ? <FileX size={16} className={esNoLeida ? 'text-orange-500' : 'text-gray-400'} />
+          : <AlertTriangle size={16} className={esNoLeida ? 'text-red-500' : 'text-gray-400'} />
         }
       </span>
       <span className="min-w-0 flex-1">
@@ -209,7 +209,7 @@ export function NotificacionProgramadaItem({
             onClick={() => onEdit(notificacion)}
             className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100"
           >
-            <Pencil size={13} /> Editar
+            <Pencil size={14} /> Editar
           </button>
         )}
         <button
@@ -218,7 +218,7 @@ export function NotificacionProgramadaItem({
           className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 shadow-sm hover:border-gray-300"
         >
           {esSeguimiento ? 'Ver correos' : 'Ver detalle'}
-          {mostrandoDetalle ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          {mostrandoDetalle ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
         {esProgramada && (
           <button
@@ -230,7 +230,7 @@ export function NotificacionProgramadaItem({
             disabled={isPending}
             className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 disabled:opacity-40"
           >
-            <Trash2 size={13} /> Eliminar
+            <Trash2 size={14} /> Eliminar
           </button>
         )}
       </div>

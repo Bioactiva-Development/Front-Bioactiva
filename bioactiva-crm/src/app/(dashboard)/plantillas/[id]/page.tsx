@@ -36,7 +36,7 @@ export default function PlantillaDetallePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        titulo={plantilla?.nombre ?? 'Detalle de plantilla'}
+        titulo={plantilla?.nombre ?? 'Detalle de Plantilla'}
         descripcion="Revisa la plantilla y edita si es necesario"
         acciones={
           <button
