@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 const mockGetUsuarios = jest.fn()
 const mockEditar = jest.fn()
 const mockCambiarPassword = jest.fn()
+const mockCambiarRol = jest.fn()
 const mockDeshabilitar = jest.fn()
 const mockHabilitar = jest.fn()
 
@@ -11,6 +12,7 @@ jest.mock('@/services/modules/usuarios.service', () => ({
     getUsuarios: mockGetUsuarios,
     editar: mockEditar,
     cambiarPassword: mockCambiarPassword,
+    cambiarRol: mockCambiarRol,
     deshabilitar: mockDeshabilitar,
     habilitar: mockHabilitar,
   },
@@ -69,6 +71,38 @@ describe('usuarios/useUsuarios', () => {
       })
 
       expect(result.current.error).toBe('Error al cargar usuarios.')
+    })
+  })
+
+  describe('cambiarRol', () => {
+    it('changes role and reloads list', async () => {
+      mockCambiarRol.mockResolvedValueOnce(undefined)
+      mockGetUsuarios.mockResolvedValueOnce({ usuarios: [{ id: 1, rol: 'TRABAJADOR' }], total: 1, activos: 1 })
+
+      const { result } = renderHook(() => useUsuarios())
+
+      let success: boolean
+      await act(async () => {
+        success = await result.current.cambiarRol(1, 'TRABAJADOR' as any)
+      })
+
+      expect(success!).toBe(true)
+      expect(mockCambiarRol).toHaveBeenCalledWith(1, 'TRABAJADOR')
+      expect(result.current.successMessage).toBe('Rol actualizado correctamente.')
+    })
+
+    it('handles cambiarRol error', async () => {
+      mockCambiarRol.mockRejectedValueOnce({ message: 'Error al cambiar rol' })
+
+      const { result } = renderHook(() => useUsuarios())
+
+      let success: boolean
+      await act(async () => {
+        success = await result.current.cambiarRol(1, 'TRABAJADOR' as any)
+      })
+
+      expect(success!).toBe(false)
+      expect(result.current.error).toBe('Error al cambiar rol')
     })
   })
 

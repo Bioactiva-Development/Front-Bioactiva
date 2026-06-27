@@ -107,4 +107,54 @@ describe('auth/useProactiveRefresh', () => {
     act(() => { jest.advanceTimersByTime(60000) })
     expect(refreshMock).not.toHaveBeenCalled()
   })
+
+  it('triggers refresh when tab becomes visible and token is near expiry', async () => {
+    mockTokenExpiresAt = Date.now() + 30000
+    refreshMock.mockResolvedValueOnce({ accessToken: 'refresh-on-visible', accessTokenExpiresIn: 3600 })
+
+    renderHook(() => useProactiveRefresh())
+
+    act(() => {
+      Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+    await act(async () => { await Promise.resolve() })
+
+    expect(refreshMock).toHaveBeenCalled()
+  })
+
+  it('does not refresh when tab is not visible', () => {
+    renderHook(() => useProactiveRefresh())
+
+    act(() => {
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+
+    expect(refreshMock).not.toHaveBeenCalled()
+  })
+
+  it('does not refresh on visibility change when token is not near expiry', () => {
+    mockTokenExpiresAt = Date.now() + 300000
+    renderHook(() => useProactiveRefresh())
+
+    act(() => {
+      Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+
+    expect(refreshMock).not.toHaveBeenCalled()
+  })
+
+  it('handles visibility change when accessToken is null', () => {
+    mockAccessToken = null
+    renderHook(() => useProactiveRefresh())
+
+    act(() => {
+      Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+
+    expect(refreshMock).not.toHaveBeenCalled()
+  })
 })

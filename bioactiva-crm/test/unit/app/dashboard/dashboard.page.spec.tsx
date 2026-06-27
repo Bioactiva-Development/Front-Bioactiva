@@ -36,6 +36,7 @@ jest.mock('lucide-react', () => {
     ChevronUp: 'chevron-up',
     Filter: 'filter',
     Calendar: 'calendar',
+    Loader2: 'loader-2',
   }
   const result: Record<string, React.FC> = {}
   for (const [name] of Object.entries(icons)) {
@@ -242,8 +243,7 @@ describe('dashboard/page', () => {
   it('shows "..." for KPI values when metrics are loading', () => {
     mockUseDashboardMetrics.mockReturnValue({ data: null, isLoading: true, isError: false })
     renderPage()
-    const kpiValues = screen.getAllByText('...')
-    expect(kpiValues.length).toBeGreaterThanOrEqual(10)
+    expect(screen.getByText('Cargando datos del periodo...')).toBeInTheDocument()
   })
 
   it('shows metrics loaded values through KPI cards', () => {
@@ -280,13 +280,13 @@ describe('dashboard/page', () => {
   it('shows loading message "Cargando..." when leads loading', () => {
     mockUseLeads.mockReturnValue({ data: { data: [] }, isLoading: true, isError: false })
     renderPage()
-    expect(screen.getByText('Cargando...')).toBeInTheDocument()
+    expect(screen.getByText('Cargando datos del periodo...')).toBeInTheDocument()
   })
 
   it('shows loading message "Cargando..." when cotizaciones loading', () => {
     mockUseCotizaciones.mockReturnValue({ data: { data: [] }, isLoading: true, isError: false })
     renderPage()
-    expect(screen.getByText('Cargando...')).toBeInTheDocument()
+    expect(screen.getByText('Cargando datos del periodo...')).toBeInTheDocument()
   })
 
   it('shows error message when metrics error', () => {

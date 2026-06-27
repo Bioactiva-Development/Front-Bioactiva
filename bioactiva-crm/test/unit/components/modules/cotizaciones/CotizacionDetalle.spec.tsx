@@ -20,6 +20,10 @@ jest.mock('@/hooks/cotizaciones/useCotizaciones', () => ({
   useRechazarCotizacion: () => ({ mutateAsync: mockRechazar, isPending: false }),
 }))
 
+jest.mock('@/hooks/pipeline/useLeads', () => ({
+  useActualizarEstadoLead: () => ({ mutateAsync: jest.fn(), isPending: false }),
+}))
+
 jest.mock('@/lib/utils/error.utils', () => ({
   getErrorMessage: (...args: unknown[]) => mockGetErrorMessage(...args),
 }))
@@ -38,6 +42,8 @@ jest.mock('lucide-react', () => ({
   Loader2: () => <div data-testid="icon-loader" />,
   DollarSign: () => <div data-testid="icon-dollar" />,
   Building2: () => <div data-testid="icon-building" />,
+  RotateCcw: () => <div data-testid="icon-rotate-ccw" />,
+  AlertTriangle: () => <div data-testid="icon-alert-triangle" />,
 }))
 
 const baseCotizacion: Cotizacion = {
@@ -139,11 +145,7 @@ describe('modules/cotizaciones/CotizacionDetalle', () => {
     expect(screen.queryByText('Marcar como enviada')).not.toBeInTheDocument()
     expect(screen.queryByText('Aceptar')).not.toBeInTheDocument()
     expect(screen.queryByText('Rechazar')).not.toBeInTheDocument()
-    expect(
-      screen.getByText(
-        'Esta cotización está en estado terminal y no puede modificarse.'
-      )
-    ).toBeInTheDocument()
+    expect(screen.getByText('Reaperturar')).toBeInTheDocument()
   })
 
   it('clicking Enviar calls enviar mutateAsync', async () => {

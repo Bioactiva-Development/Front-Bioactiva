@@ -29,6 +29,28 @@ const scheduled = {
 describe('notificaciones/notificaciones.service', () => {
   beforeEach(() => jest.clearAllMocks())
 
+  it('lists scheduled notifications with idLead filter', async () => {
+    const page = { data: [scheduled], meta: { page: 1, limit: 10, total: 1, totalPages: 1 } }
+    getMock.mockResolvedValueOnce({ data: page })
+
+    const result = await notificacionesService.getProgramadas({ idLead: 10 })
+    expect(getMock).toHaveBeenCalledWith('/notifications', {
+      params: { idLead: 10 },
+    })
+    expect(result.data).toHaveLength(1)
+  })
+
+  it('lists scheduled notifications with no filters', async () => {
+    const page = { data: [scheduled], meta: { page: 1, limit: 10, total: 1, totalPages: 1 } }
+    getMock.mockResolvedValueOnce({ data: page })
+
+    const result = await notificacionesService.getProgramadas()
+    expect(getMock).toHaveBeenCalledWith('/notifications', {
+      params: {},
+    })
+    expect(result.data).toHaveLength(1)
+  })
+
   it('lists scheduled notifications with backend filters', async () => {
     const page = {
       data: [scheduled],

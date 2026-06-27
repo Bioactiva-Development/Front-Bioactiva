@@ -232,6 +232,17 @@ describe('contactos/contactos.service (API mode)', () => {
     })
   })
 
+  describe('cambiarEstado', () => {
+    it('patches contact email state via /status endpoint', async () => {
+      const mockNormalized = { id: 1, nombres: 'Test', correo: 'test@test.com', estado_correo: 'VENCIDO' }
+      patchMock.mockResolvedValueOnce({ data: { id: 1, nombres: 'Test', correo: 'test@test.com', estado_correo: 'VENCIDO' } })
+
+      const result = await contactosService.cambiarEstado(1, 'VENCIDO')
+      expect(patchMock).toHaveBeenCalledWith('/contacts/1/status', { estado_correo: 'VENCIDO' })
+      expect(result.estado_correo).toBe('VENCIDO')
+    })
+  })
+
   describe('normalizeContacto (via service methods)', () => {
     it('handles null optional fields', async () => {
       const raw = {

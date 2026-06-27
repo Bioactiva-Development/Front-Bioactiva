@@ -172,6 +172,29 @@ describe('actividades/actividades.service (API mode)', () => {
     })
   })
 
+  describe('getComentarios', () => {
+    it('fetches comments by activity id', async () => {
+      getMock.mockResolvedValueOnce({
+        data: [{ id: 1, texto: 'Comentario', autor: 'Admin', createdAt: '2026-06-10T14:00:00Z' }],
+      })
+
+      const result = await actividadesService.getComentarios(12)
+      expect(getMock).toHaveBeenCalledWith('/activities/12/comentarios')
+      expect(result).toHaveLength(1)
+      expect(result[0].texto).toBe('Comentario')
+    })
+  })
+
+  describe('createComentario', () => {
+    it('creates a comment for the activity', async () => {
+      postMock.mockResolvedValueOnce({ data: { id: 1, texto: 'Nuevo comentario' } })
+
+      const result = await actividadesService.createComentario(12, 'Nuevo comentario', 'Admin')
+      expect(postMock).toHaveBeenCalledWith('/activities/12/comentarios', { texto: 'Nuevo comentario' })
+      expect(result.id).toBe(1)
+    })
+  })
+
   describe('delete', () => {
     it('deletes activity', async () => {
       deleteMock.mockResolvedValueOnce({})

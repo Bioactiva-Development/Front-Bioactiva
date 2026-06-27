@@ -290,7 +290,7 @@ describe('pipeline/useLeads', () => {
 
     it('rolls back optimistic update on error', async () => {
       mockGetByLead.mockRejectedValueOnce(new Error('Error al mover'))
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
 
       const lead = makeLead({ id: 1, estado: LeadState.Prospecto })
       const { result } = renderHook(() => useMoverLeadPipeline(), { wrapper })
