@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
@@ -157,7 +157,7 @@ export default function NotificacionesPage() {
         <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-600">
           Centro de notificaciones
         </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-950">
+        <h1 className="mt-1 text-xl font-bold text-gray-900">
           {TITULOS[seccion]}
         </h1>
         {idResponsable && seccion === 'historial' && (
@@ -356,7 +356,7 @@ function Pagination({
           disabled={meta.page <= 1}
           className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 disabled:opacity-40"
         >
-          <ChevronLeft size={15} />
+          <ChevronLeft size={16} />
         </button>
         <button
           type="button"
@@ -365,7 +365,7 @@ function Pagination({
           disabled={meta.page >= totalPages}
           className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 disabled:opacity-40"
         >
-          <ChevronRight size={15} />
+          <ChevronRight size={16} />
         </button>
       </div>
     </div>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -128,7 +128,7 @@ export function PlantillaForm({
           {/* Sección: Contenido */}
           <div className="space-y-4">
             <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
-              <Code2 size={11} className="text-gray-400" />
+              <Code2 size={12} className="text-gray-400" />
               Contenido del mensaje
             </p>
 
@@ -153,7 +153,7 @@ export function PlantillaForm({
           {esEdicion && (
             <div className="space-y-4">
               <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
-                <Settings size={11} className="text-gray-400" />
+                <Settings size={12} className="text-gray-400" />
                 Configuración
               </p>
 

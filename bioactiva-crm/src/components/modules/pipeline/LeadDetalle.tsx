@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -167,7 +167,7 @@ function CampoContextoEditable({
                 text-xs font-semibold text-gray-500 hover:text-gray-700
                 hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
-              <X size={13} />
+              <X size={14} />
               Cancelar
             </button>
             <button
@@ -178,9 +178,9 @@ function CampoContextoEditable({
                 disabled:bg-emerald-400 text-white transition-colors"
             >
               {guardando ? (
-                <Loader2 size={13} className="animate-spin" />
+                <Loader2 size={14} className="animate-spin" />
               ) : (
-                <Save size={13} />
+                <Save size={14} />
               )}
               Guardar
             </button>
@@ -667,7 +667,7 @@ export function LeadDetalle({
                         px-2.5 py-1.5 text-xs font-semibold text-emerald-600
                         hover:bg-emerald-50 transition-colors"
                     >
-                      <ExternalLink size={13} />
+                      <ExternalLink size={14} />
                       Ver detalle
                     </button>
                   </div>

@@ -39,11 +39,9 @@ export const contactoSchema = z.object({
         .optional()
         .or(z.literal('')),
 
-    // El formulario acepta solo los 9 dígitos locales; el form antepone +51 antes
-    // de enviar al backend (que sigue exigiendo ^\+\d[\d\s]*$).
     telefono: z
         .string()
-        .regex(/^\d{9}$/, 'Ingresa los 9 dígitos del número (sin +51)')
+        .regex(/^\d{4,15}$/, 'Ingresa solo los dígitos del número (sin código de país)')
         .optional()
         .or(z.literal('')),
 

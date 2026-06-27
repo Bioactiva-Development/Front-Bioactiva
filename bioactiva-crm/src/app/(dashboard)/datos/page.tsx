@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ImportarStepper } from '@/components/modules/datos/ImportarStepper'
 import { ExportarForm } from '@/components/modules/datos/ExportarForm'
+import { PageHeader } from '@/components/layout/PageHeader'
 
 type Tab = 'importar' | 'exportar'
 
@@ -11,13 +12,10 @@ export default function DatosPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Importar / Exportar</h1>
-                <p className="text-sm text-gray-500 mt-1">
-                    Gestiona cargas desde Excel y exportaciones filtradas desde una sola vista.
-                </p>
-            </div>
+            <PageHeader
+                titulo="Importar / Exportar"
+                descripcion="Gestiona cargas desde Excel y exportaciones filtradas desde una sola vista."
+            />
 
             {/* Tabs */}
             <div className="inline-flex items-center bg-gray-100 rounded-xl p-1 gap-1">

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo } from 'react'
 import { useForm, useWatch, type UseFormRegister } from 'react-hook-form'
@@ -765,7 +765,7 @@ function TemplateOptions({
 function Warning({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-      <AlertCircle size={17} className="mt-0.5 shrink-0" />
+      <AlertCircle size={16} className="mt-0.5 shrink-0" />
       <p>{children}</p>
     </div>
   )

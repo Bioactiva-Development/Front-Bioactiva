@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useRef, useState } from 'react'
 import { Building2, X } from 'lucide-react'
@@ -80,7 +80,7 @@ export function OrgBuscador({
             focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-emerald-500
             transition-colors cursor-pointer"
         >
-          <X size={15} strokeWidth={2.5} />
+          <X size={16} strokeWidth={2.5} />
         </button>
       )}
 

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useMemo, useState } from 'react'
 import {
@@ -96,7 +96,7 @@ export function MicrosoftCalendarPanel({
 
         {isLoading && (
           <div className="flex items-center gap-2 rounded-xl bg-gray-50 px-4 py-8 text-sm text-gray-500">
-            <Loader2 size={17} className="animate-spin" /> Cargando reuniones...
+            <Loader2 size={16} className="animate-spin" /> Cargando reuniones...
           </div>
         )}
         {isError && (
@@ -195,7 +195,7 @@ function CalendarActivityCard({
           rel="noreferrer"
           className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
         >
-          Abrir reunión de Teams <ExternalLink size={13} />
+          Abrir reunión de Teams <ExternalLink size={14} />
         </a>
       )}
 
