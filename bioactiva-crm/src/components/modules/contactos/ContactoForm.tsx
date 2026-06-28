@@ -16,6 +16,56 @@ import { useOrganizaciones, useOrganizacion } from '@/hooks/organizaciones/useOr
 import { useDebounce } from '@/hooks/shared/useDebounce'
 import { formatVocativo } from '@/lib/utils/contacto.utils'
 
+interface OrgDropdownContentProps {
+  query:       string
+  isSearching: boolean
+  results:     { id: string; nombre: string }[]
+  selected:    string | undefined
+  onSelect:    (id: string, nombre: string) => void
+}
+
+function OrgDropdownContent({ query, isSearching, results, selected, onSelect }: Readonly<OrgDropdownContentProps>) {
+  if (query.length >= 1 && isSearching) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-3">
+        <Loader2 size={14} className="animate-spin text-gray-400" />
+        <span className="text-sm text-gray-400">Buscando...</span>
+      </div>
+    )
+  }
+  if (query.length >= 1 && results.length === 0) {
+    return (
+      <p className="px-4 py-3 text-sm text-gray-400">
+        Sin resultados para &ldquo;{query}&rdquo;
+      </p>
+    )
+  }
+  return (
+    <>
+      {query.length < 1 && (
+        <p className="px-4 pt-2 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+          Recientes
+        </p>
+      )}
+      {results.map((org) => (
+        <button
+          key={org.id}
+          type="button"
+          onClick={() => onSelect(org.id, org.nombre)}
+          className={`w-full text-left px-4 py-2.5 text-sm transition-colors
+            hover:bg-emerald-50 hover:text-emerald-700
+            ${selected === org.id
+              ? 'bg-emerald-50 text-emerald-700 font-medium'
+              : 'text-gray-700'
+            }`}
+        >
+          {org.nombre}
+        </button>
+      ))}
+    </>
+  )
+}
+
 interface ContactoFormProps {
   contacto?:     Contacto
   onSubmit:      (data: ContactoFormValues) => Promise<void>
@@ -27,7 +77,7 @@ interface ContactoFormProps {
 function splitPhone(full: string | null | undefined): { codigo: string; numero: string } {
   if (!full) return { codigo: '+51', numero: '' }
   if (full.startsWith('+51')) return { codigo: '+51', numero: full.slice(3) }
-  const m = full.match(/^(\+\d{1,4}?)(\d{6,})$/)
+  const m = /^(\+\d{1,4}?)(\d{6,})$/.exec(full)
   return m ? { codigo: m[1], numero: m[2] } : { codigo: '+51', numero: '' }
 }
 
@@ -186,44 +236,18 @@ export function ContactoForm({
 
               {orgDropdownOpen && (
                 <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-56 overflow-y-auto">
-                  {debouncedOrgQuery.length >= 1 && orgSearchLoading ? (
-                    <div className="flex items-center gap-2 px-4 py-3">
-                      <Loader2 size={14} className="animate-spin text-gray-400" />
-                      <span className="text-sm text-gray-400">Buscando...</span>
-                    </div>
-                  ) : debouncedOrgQuery.length >= 1 && orgResults.length === 0 ? (
-                    <p className="px-4 py-3 text-sm text-gray-400">
-                      Sin resultados para &ldquo;{debouncedOrgQuery}&rdquo;
-                    </p>
-                  ) : (
-                    <>
-                      {debouncedOrgQuery.length < 1 && (
-                        <p className="px-4 pt-2 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
-                          Recientes
-                        </p>
-                      )}
-                      {orgResults.map((org) => (
-                        <button
-                          key={org.id}
-                          type="button"
-                          onClick={() => {
-                            setValue('idOrganizacion', org.id, { shouldValidate: true })
-                            setOrgNombreSeleccionado(org.nombre)
-                            setOrgQuery('')
-                            setOrgDropdownOpen(false)
-                          }}
-                          className={`w-full text-left px-4 py-2.5 text-sm transition-colors
-                            hover:bg-emerald-50 hover:text-emerald-700
-                            ${orgSeleccionada === org.id
-                              ? 'bg-emerald-50 text-emerald-700 font-medium'
-                              : 'text-gray-700'
-                            }`}
-                        >
-                          {org.nombre}
-                        </button>
-                      ))}
-                    </>
-                  )}
+                  <OrgDropdownContent
+                    query={debouncedOrgQuery}
+                    isSearching={orgSearchLoading}
+                    results={orgResults}
+                    selected={orgSeleccionada}
+                    onSelect={(id, nombre) => {
+                      setValue('idOrganizacion', id, { shouldValidate: true })
+                      setOrgNombreSeleccionado(nombre)
+                      setOrgQuery('')
+                      setOrgDropdownOpen(false)
+                    }}
+                  />
                 </div>
               )}
             </div>
