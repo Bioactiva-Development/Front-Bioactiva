@@ -220,6 +220,7 @@ function PipelineContent() {
 
   return (
     <div className="space-y-4">
+      <h1 className="sr-only">Pipeline comercial</h1>
 
       {/* Header */}
       <div className="flex items-center gap-3">

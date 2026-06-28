@@ -77,7 +77,7 @@ export function PlantillaCard({
         <div className="flex items-center gap-1">
           <button
             onClick={() => onVer(plantilla)}
-            title="Ver detalle"
+            aria-label={`Ver detalle de ${plantilla.nombre}`}
             className="p-2 rounded-lg text-gray-400 hover:text-emerald-600
               hover:bg-emerald-50 transition-colors"
           >
@@ -85,7 +85,7 @@ export function PlantillaCard({
           </button>
           <button
             onClick={() => onEditar(plantilla)}
-            title="Editar"
+            aria-label={`Editar ${plantilla.nombre}`}
             className="p-2 rounded-lg text-gray-400 hover:text-emerald-600
               hover:bg-emerald-50 transition-colors"
           >
@@ -93,7 +93,7 @@ export function PlantillaCard({
           </button>
           <button
             onClick={() => onEliminar(plantilla)}
-            title={plantilla.activo ? 'Eliminar o desactivar' : 'Eliminar'}
+            aria-label={plantilla.activo ? `Eliminar o desactivar ${plantilla.nombre}` : `Eliminar ${plantilla.nombre}`}
             className="p-2 rounded-lg text-gray-400 hover:text-red-500
               hover:bg-red-50 transition-colors"
           >

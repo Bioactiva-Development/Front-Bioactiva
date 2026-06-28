@@ -82,6 +82,7 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={handleVerDetalle}
+          aria-label={`Ver detalle de ${organizacion.nombre}`}
           className="p-2 rounded-lg text-gray-400 hover:text-emerald-600
             hover:bg-emerald-50 transition-colors"
         >
