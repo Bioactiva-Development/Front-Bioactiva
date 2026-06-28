@@ -59,7 +59,7 @@ describe('modules/plantillas/PlantillaCard', () => {
   it('calls onVer when eye button is clicked', async () => {
     const onVer = jest.fn()
     render(<PlantillaCard plantilla={basePlantilla} onVer={onVer} onEditar={jest.fn()} onEliminar={jest.fn()} />)
-    const verBtns = screen.getAllByTitle('Ver detalle')
+    const verBtns = screen.getAllByRole('button', { name: /ver detalle de/i })
     await userEvent.click(verBtns[0])
     expect(onVer).toHaveBeenCalledWith(basePlantilla)
   })
@@ -67,14 +67,14 @@ describe('modules/plantillas/PlantillaCard', () => {
   it('calls onEditar when edit button is clicked', async () => {
     const onEditar = jest.fn()
     render(<PlantillaCard plantilla={basePlantilla} onVer={jest.fn()} onEditar={onEditar} onEliminar={jest.fn()} />)
-    await userEvent.click(screen.getAllByTitle('Editar')[0])
+    await userEvent.click(screen.getAllByRole('button', { name: /editar/i })[0])
     expect(onEditar).toHaveBeenCalledWith(basePlantilla)
   })
 
   it('calls onEliminar when delete button is clicked', async () => {
     const onEliminar = jest.fn()
     render(<PlantillaCard plantilla={basePlantilla} onVer={jest.fn()} onEditar={jest.fn()} onEliminar={onEliminar} />)
-    await userEvent.click(screen.getAllByTitle('Eliminar o desactivar')[0])
+    await userEvent.click(screen.getAllByRole('button', { name: /eliminar/i })[0])
     expect(onEliminar).toHaveBeenCalledWith(basePlantilla)
   })
 })

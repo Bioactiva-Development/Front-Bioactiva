@@ -119,7 +119,7 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-1">
           <button
-            title="Ver detalle"
+            aria-label={`Ver detalle de cotización ${cotizacion.codigo}`}
             onClick={handleVerDetalle}
             className="p-2 rounded-lg text-gray-400 hover:text-emerald-600
               hover:bg-emerald-50 transition-colors"

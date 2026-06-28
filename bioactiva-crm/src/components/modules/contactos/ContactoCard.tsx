@@ -97,6 +97,7 @@ export function ContactoCard({ contacto }: Readonly<ContactoCardProps>) {
       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={handleVerDetalle}
+          aria-label={`Ver detalle de ${contacto.nombres} ${contacto.apellidos}`}
           className="p-2 rounded-lg text-gray-400 hover:text-emerald-600
             hover:bg-emerald-50 transition-colors"
         >
