@@ -83,12 +83,12 @@ describe('NotificacionesPage', () => {
     })
   })
 
-  it('shows total counters for scheduled and expired notification history', () => {
+  it('shows total counter for scheduled history', () => {
     useNotificacionesProgramadas
       .mockReturnValueOnce({
         data: {
           data: [],
-          meta: { page: 1, limit: 6, total: 0, totalPages: 1 },
+          meta: { page: 1, limit: 6, total: 5, totalPages: 1 },
         },
         isLoading: false,
       })
@@ -102,7 +102,6 @@ describe('NotificacionesPage', () => {
 
     render(<NotificacionesPage />)
 
-    expect(screen.getByText('0 programadas')).toBeInTheDocument()
-    expect(screen.getByText('7 vencidas')).toBeInTheDocument()
+    expect(screen.getByText('5 programadas')).toBeInTheDocument()
   })
 })

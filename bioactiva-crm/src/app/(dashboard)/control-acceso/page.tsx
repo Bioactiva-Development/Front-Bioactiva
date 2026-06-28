@@ -364,7 +364,7 @@ export default function ControlAccesoPage() {
                                                 {u.estado !== EstadoUsuario.Pendiente && u.id !== currentUser?.id && (
                                                     <button
                                                         onClick={() => abrirModal('estado', u)}
-                                                        title={u.estado === EstadoUsuario.Activo ? 'Deshabilitar' : 'Habilitar'}
+                                                        aria-label={u.estado === EstadoUsuario.Activo ? `Deshabilitar a ${u.nombres} ${u.apellidos}` : `Habilitar a ${u.nombres} ${u.apellidos}`}
                                                         className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors
                                                             ${u.estado === EstadoUsuario.Activo
                                                                 ? 'text-gray-400 hover:bg-red-50 hover:text-red-500'
