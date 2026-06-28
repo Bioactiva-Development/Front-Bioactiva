@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
@@ -245,7 +245,7 @@ export function CotizacionForm({
           {/* Sección: Destinatario */}
           <div className="space-y-4">
             <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
-              <User size={11} className="text-gray-400" />
+              <User size={12} className="text-gray-400" />
               Destinatario
             </p>
 
@@ -283,7 +283,7 @@ export function CotizacionForm({
           {/* Sección: Propuesta comercial */}
           <div className="space-y-4">
             <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
-              <FileText size={11} className="text-gray-400" />
+              <FileText size={12} className="text-gray-400" />
               Propuesta comercial
             </p>
 
@@ -359,7 +359,7 @@ export function CotizacionForm({
           {/* Sección: Valor económico */}
           <div className="space-y-4">
             <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
-              <DollarSign size={11} className="text-gray-400" />
+              <DollarSign size={12} className="text-gray-400" />
               Valor económico
             </p>
 
@@ -401,7 +401,7 @@ export function CotizacionForm({
           {/* Sección: Detalles adicionales */}
           <div className="space-y-4">
             <p className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
-              <StickyNote size={11} className="text-gray-400" />
+              <StickyNote size={12} className="text-gray-400" />
               Detalles adicionales
             </p>
 

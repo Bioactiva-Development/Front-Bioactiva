@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
@@ -259,7 +259,7 @@ export function RecordatorioForm({
 
         {notificacionProgramadaExistente && (
           <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            <AlertCircle size={17} className="mt-0.5 shrink-0" />
+            <AlertCircle size={16} className="mt-0.5 shrink-0" />
             <p>
               Ya existe un {tipoNotificacionExistente} programado para la
               actividad activa de este lead. Cancélalo antes de crear una nueva

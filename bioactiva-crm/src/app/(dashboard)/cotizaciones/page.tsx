@@ -68,26 +68,26 @@ export default function CotizacionesPage() {
           <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-emerald-700 text-white">
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+              <tr className="border-b border-gray-100">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   # Cotización
                 </th>
-                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Período
                 </th>
-                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Contacto
                 </th>
-                <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Nombre del servicio
                 </th>
-                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Monto
                 </th>
-                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Estado
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Acciones
                 </th>
               </tr>

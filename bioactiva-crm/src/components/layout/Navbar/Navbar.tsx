@@ -40,6 +40,7 @@ export function Navbar() {
 
             <button
                 onClick={toggleSidebar}
+                aria-label="Abrir menú"
                 className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors lg:hidden"
             >
                 <Menu size={20} />

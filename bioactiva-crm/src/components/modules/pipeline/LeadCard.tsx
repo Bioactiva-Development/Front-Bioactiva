@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
@@ -110,7 +110,7 @@ export function LeadCard({
       className="text-gray-300 hover:text-emerald-600 transition-colors
         p-0.5 rounded cursor-pointer shrink-0"
     >
-      <ExternalLink size={13} />
+      <ExternalLink size={14} />
     </button>
   )
 
@@ -193,7 +193,7 @@ export function LeadCard({
 
       {/* Fecha de creación del lead */}
       <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-        <Calendar size={11} className="shrink-0" />
+        <Calendar size={12} className="shrink-0" />
         Creado el {formatLeadDateOnly(lead.created_at)}
       </div>
     </div>

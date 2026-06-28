@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Suspense, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -54,7 +54,7 @@ function LeadListItem({ lead, onClick }: { lead: Lead; onClick: (lead: Lead) => 
           {lead.tiene_alerta && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase
               px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-              <Clock size={9} /> {lead.alerta_motivo ?? '+30 días sin avance'}
+              <Clock size={12} /> {lead.alerta_motivo ?? '+30 días sin avance'}
             </span>
           )}
         </div>
@@ -77,13 +77,13 @@ function LeadListItem({ lead, onClick }: { lead: Lead; onClick: (lead: Lead) => 
 
       {lead.encargado_nombre && (
         <div className="mt-2 flex items-center gap-1.5">
-          <User size={11} className="text-gray-300 shrink-0" />
+          <User size={12} className="text-gray-300 shrink-0" />
           <p className="text-xs text-gray-500 truncate">{lead.encargado_nombre}</p>
         </div>
       )}
 
       <div className="mt-2 flex items-center gap-1.5 text-[10px] text-gray-400">
-        <Calendar size={11} className="shrink-0" />
+        <Calendar size={12} className="shrink-0" />
         Creado el {formatLeadDateOnly(lead.created_at)}
       </div>
     </button>
@@ -220,6 +220,7 @@ function PipelineContent() {
 
   return (
     <div className="space-y-4">
+      <h1 className="sr-only">Pipeline comercial</h1>
 
       {/* Header */}
       <div className="flex items-center gap-3">

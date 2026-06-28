@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -73,7 +73,7 @@ function NuevaCotizacionContent() {
 
       {cargandoCotizaciones ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 size={22} className="animate-spin text-gray-300" />
+          <Loader2 size={24} className="animate-spin text-gray-300" />
         </div>
       ) : cotizacionExistente ? (
         <div className="max-w-2xl mx-auto">

@@ -50,7 +50,7 @@ export default function EditarPlantillaPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        titulo="Editar plantilla"
+        titulo="Editar Plantilla"
         descripcion="Modifica los datos de la plantilla de correo"
         acciones={
           <button

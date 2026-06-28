@@ -1,11 +1,12 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
     UserX, UserCheck, UserPlus,
-    Search, ChevronLeft, ChevronRight, ShieldAlert, X,
+    Search, ShieldAlert, X,
 } from 'lucide-react'
+import { PaginacionSlidingWindow } from '@/components/ui/PaginacionSlidingWindow'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { InvitarUsuarioModal } from '@/components/modules/control-acceso/InvitarUsuarioModal'
 import { CambiarPasswordModal } from '@/components/modules/control-acceso/CambiarPasswordModal'
@@ -228,7 +229,7 @@ export default function ControlAccesoPage() {
     return (
         <div>
             <PageHeader
-                titulo="Control de acceso"
+                titulo="Control de Acceso"
                 descripcion="Gestión de usuarios y permisos del sistema"
                 acciones={
                     <button
@@ -363,14 +364,14 @@ export default function ControlAccesoPage() {
                                                 {u.estado !== EstadoUsuario.Pendiente && u.id !== currentUser?.id && (
                                                     <button
                                                         onClick={() => abrirModal('estado', u)}
-                                                        title={u.estado === EstadoUsuario.Activo ? 'Deshabilitar' : 'Habilitar'}
+                                                        aria-label={u.estado === EstadoUsuario.Activo ? `Deshabilitar a ${u.nombres} ${u.apellidos}` : `Habilitar a ${u.nombres} ${u.apellidos}`}
                                                         className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors
                                                             ${u.estado === EstadoUsuario.Activo
                                                                 ? 'text-gray-400 hover:bg-red-50 hover:text-red-500'
                                                                 : 'text-gray-400 hover:bg-green-50 hover:text-green-600'
                                                             }`}
                                                     >
-                                                        {u.estado === EstadoUsuario.Activo ? <UserX size={15} /> : <UserCheck size={15} />}
+                                                        {u.estado === EstadoUsuario.Activo ? <UserX size={16} /> : <UserCheck size={16} />}
                                                     </button>
                                                 )}
                                             </div>
@@ -387,24 +388,11 @@ export default function ControlAccesoPage() {
                         <p className="text-sm text-gray-400">
                             Mostrando {((usuariosPage - 1) * LIMIT) + 1}–{Math.min(usuariosPage * LIMIT, totalUsuarios)} de {totalUsuarios} usuario{totalUsuarios === 1 ? '' : 's'}
                         </p>
-                        {totalPagesUsuarios > 1 && (
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setUsuariosPage((p) => Math.max(1, p - 1))}
-                                    disabled={usuariosPage === 1}
-                                    className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronLeft size={16} />
-                                </button>
-                                <button
-                                    onClick={() => setUsuariosPage((p) => Math.min(totalPagesUsuarios, p + 1))}
-                                    disabled={usuariosPage === totalPagesUsuarios}
-                                    className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronRight size={16} />
-                                </button>
-                            </div>
-                        )}
+                        <PaginacionSlidingWindow
+                            paginaActual={usuariosPage}
+                            totalPaginas={totalPagesUsuarios}
+                            onChange={setUsuariosPage}
+                        />
                     </div>
                 )}
             </div>
@@ -417,7 +405,7 @@ export default function ControlAccesoPage() {
                 <div className="px-6 py-4">
                     <div className="flex flex-col sm:flex-row gap-3 mb-4">
                         <div className="relative flex-1">
-                            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="Buscar por correo..."
@@ -503,24 +491,11 @@ export default function ControlAccesoPage() {
                             <p className="text-sm text-gray-400">
                                 Mostrando {((page - 1) * LIMIT) + 1}–{Math.min(page * LIMIT, totalInvitaciones)} de {totalInvitaciones} invitación{totalInvitaciones === 1 ? '' : 'es'}
                             </p>
-                            {totalPages > 1 && (
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                        disabled={page === 1}
-                                        className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        <ChevronLeft size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                                        disabled={page === totalPages}
-                                        className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        <ChevronRight size={16} />
-                                    </button>
-                                </div>
-                            )}
+                            <PaginacionSlidingWindow
+                                paginaActual={page}
+                                totalPaginas={totalPages}
+                                onChange={setPage}
+                            />
                         </div>
                     )}
                 </div>

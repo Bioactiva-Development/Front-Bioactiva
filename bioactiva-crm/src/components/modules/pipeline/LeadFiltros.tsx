@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, Filter, X } from 'lucide-react'
 import { LeadFiltros as FiltrosType, ActivityAlert } from '@/types/lead.types'
-import { EstadoUsuario, LeadState, Sector, TipoEmpresa } from '@/types/enums'
+import { LeadState, Sector, TipoEmpresa } from '@/types/enums'
 import { usuariosService } from '@/services/modules/usuarios.service'
-import { UsuarioListItem } from '@/types/usuario.types'
+import { AssignableUsuario } from '@/types/usuario.types'
 import { OrgBuscador } from '@/components/ui/OrgBuscador/OrgBuscador'
 import { formatSector, formatTipo } from '@/lib/utils/organizacion.utils'
 
@@ -25,7 +25,7 @@ interface ResponsableOption {
   nombre: string
 }
 
-const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
+const toResponsableOption = (usuario: AssignableUsuario): ResponsableOption => ({
   id: usuario.id,
   nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
 })
@@ -108,13 +108,9 @@ export function LeadFiltros({
 
     async function cargarResponsables() {
       try {
-        const response = await usuariosService.getUsuarios({
-          estado: EstadoUsuario.Activo,
-          limit: 100,
-        })
-
+        const assignables = await usuariosService.getAssignables()
         if (!isMounted) return
-        setResponsables(response.usuarios.map(toResponsableOption))
+        setResponsables(assignables.map(toResponsableOption))
       } catch {
         if (!isMounted) return
         setResponsables([])

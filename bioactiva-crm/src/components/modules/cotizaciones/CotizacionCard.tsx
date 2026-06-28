@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -12,9 +12,9 @@ interface CotizacionCardProps {
 
 const ESTADO_COLORS: Record<EstadoCot, string> = {
   [EstadoCot.Pendiente]:  'bg-gray-100 text-gray-600',
-  [EstadoCot.Enviada]:    'bg-blue-50 text-blue-700',
-  [EstadoCot.Aceptada]:   'bg-emerald-50 text-emerald-700',
-  [EstadoCot.Rechazada]:  'bg-red-50 text-red-600',
+  [EstadoCot.Enviada]:    'bg-blue-100 text-blue-700',
+  [EstadoCot.Aceptada]:   'bg-emerald-100 text-emerald-700',
+  [EstadoCot.Rechazada]:  'bg-red-100 text-red-700',
 }
 
 const ESTADO_HOVER_COLORS: Record<EstadoCot, string> = {
@@ -53,7 +53,7 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
     >
       {/* Código — siempre visible; muestra datos clave debajo en móvil */}
       <td className="px-4 py-3">
-        <p className={`text-sm font-bold ${ESTADO_CODE_COLORS[cotizacion.estado]}`}>
+        <p className={`text-sm font-semibold ${ESTADO_CODE_COLORS[cotizacion.estado]}`}>
           {cotizacion.codigo}
         </p>
         <div className="sm:hidden mt-1 space-y-0.5">
@@ -66,8 +66,9 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
           {cotizacion.contacto_nombre && (
             <p className="text-xs text-gray-400 truncate">{cotizacion.contacto_nombre}</p>
           )}
-          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide
+          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium
             ${ESTADO_COLORS[cotizacion.estado]}`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
             {cotizacion.estado}
           </span>
         </div>
@@ -108,9 +109,9 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
 
       {/* Estado — oculto en móvil, visible en sm+ */}
       <td className="hidden sm:table-cell px-4 py-3">
-        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg
-          text-xs font-bold uppercase tracking-wide
+        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium
           ${ESTADO_COLORS[cotizacion.estado]}`}>
+          <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
           {cotizacion.estado}
         </span>
       </td>
@@ -118,12 +119,12 @@ export function CotizacionCard({ cotizacion }: Readonly<CotizacionCardProps>) {
       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-1">
           <button
-            title="Ver detalle"
+            aria-label={`Ver detalle de cotización ${cotizacion.codigo}`}
             onClick={handleVerDetalle}
             className="p-2 rounded-lg text-gray-400 hover:text-emerald-600
               hover:bg-emerald-50 transition-colors"
           >
-            <ExternalLink size={15} />
+            <ExternalLink size={16} />
           </button>
         </div>
       </td>

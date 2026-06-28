@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useMemo } from 'react'
 import {
@@ -564,7 +564,7 @@ export default function DashboardPage() {
             border border-gray-200 bg-white px-6 py-12 text-center shadow-sm"
         >
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50">
-            <CalendarXIcon size={22} weight="duotone" className="text-emerald-600" />
+            <CalendarXIcon size={24} weight="duotone" className="text-emerald-600" />
           </div>
           <p className="text-sm font-semibold text-gray-600">
             No hay data para este periodo seleccionado

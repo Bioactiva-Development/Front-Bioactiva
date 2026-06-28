@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useRouter } from 'next/navigation'
 import {
@@ -141,13 +141,13 @@ export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
                 {lead.contacto_nombre ? (
                   <p className="flex items-center gap-1.5 text-sm text-emerald-600
                     font-medium mt-0.5">
-                    <User size={13} className="shrink-0" />
+                    <User size={14} className="shrink-0" />
                     <span className="truncate">{lead.contacto_nombre}</span>
                   </p>
                 ) : (
                   <p className="flex items-center gap-1.5 text-sm text-gray-400
                     italic mt-0.5">
-                    <User size={13} className="shrink-0" />
+                    <User size={14} className="shrink-0" />
                     Sin contacto asociado
                   </p>
                 )}
@@ -211,7 +211,7 @@ export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
               px-6 py-10 text-center">
               <div className="flex h-12 w-12 items-center justify-center
                 rounded-full bg-white text-gray-300 shadow-sm">
-                <FileText size={22} />
+                <FileText size={24} />
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-semibold text-gray-600">
@@ -331,7 +331,7 @@ export function LeadDrawer({ lead, onCerrar, onMoverLead }: LeadDrawerProps) {
                       </p>
                       <p className="text-xs font-bold text-gray-900 mt-1
                         flex items-center gap-1">
-                        <DollarSign size={11} className="text-gray-400" />
+                        <DollarSign size={12} className="text-gray-400" />
                         {formatMonto(cot.monto, cot.tipo)}
                       </p>
                     </div>

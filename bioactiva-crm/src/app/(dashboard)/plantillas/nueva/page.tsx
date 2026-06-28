@@ -29,7 +29,7 @@ export default function NuevaPlantillaPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        titulo="Nueva plantilla"
+        titulo="Nueva Plantilla"
         descripcion="Crea una plantilla de correo para recordatorios y seguimientos"
         acciones={
           <button
