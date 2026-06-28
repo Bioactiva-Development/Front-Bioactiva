@@ -101,10 +101,10 @@ describe('contactos/contacto.schema', () => {
     ).toMatchObject({ telefono: '' })
   })
 
-  it('rejects telefono exceeding 9 characters', () => {
+  it('rejects telefono exceeding 15 digits', () => {
     expect(() =>
-      contactoSchema.parse({ ...VALID_DATA, telefono: '1234567890' })
-    ).toThrow('Ingresa los 9 dígitos')
+      contactoSchema.parse({ ...VALID_DATA, telefono: '1234567890123456' })
+    ).toThrow('Ingresa solo los dígitos del número (sin código de país)')
   })
 
   it('accepts telefono with 9 digits (no prefix)', () => {
@@ -116,7 +116,7 @@ describe('contactos/contacto.schema', () => {
   it('rejects telefono with parentheses', () => {
     expect(() =>
       contactoSchema.parse({ ...VALID_DATA, telefono: '+(51)987654321' })
-    ).toThrow('Ingresa los 9 dígitos')
+    ).toThrow('Ingresa solo los dígitos del número (sin código de país)')
   })
 
   it('accepts optional comentarios as empty string', () => {
