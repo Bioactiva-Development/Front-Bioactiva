@@ -43,9 +43,10 @@ export function useCrearCotizacion() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: CotizacionFormData) => cotizacionesService.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
-      queryClient.invalidateQueries({ queryKey: ['leads'] })
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones', 'list'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.byLead(variables.id_lead) })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.leads.detail(variables.id_lead) })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
@@ -59,11 +60,8 @@ export function useActualizarCotizacion(id: number) {
     mutationFn: (data: Partial<CotizacionFormData>) =>
       cotizacionesService.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
-      queryClient.invalidateQueries({ queryKey: ['leads'] })
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.cotizaciones.detail(id),
-      })
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones', 'list'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.detail(id) })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
@@ -78,10 +76,13 @@ function useCotizacionEstadoMutation(
 
   return useMutation({
     mutationFn,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
-      queryClient.invalidateQueries({ queryKey: ['leads'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    onSuccess: (_data, cotizacionId) => {
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones', 'lead'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.detail(cotizacionId) })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'pipeline'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'column'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'metrics'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
