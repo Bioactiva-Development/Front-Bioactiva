@@ -27,4 +27,7 @@ export interface DashboardMetrics {
   stalledLeadPercentage: number
   periodStart: string
   periodEnd: string
+  // Distribuciones para gráficos (estado backend + cantidad).
+  distribucionPipeline?: Array<{ estado: string; cantidad: number }>
+  distribucionCotizaciones?: Array<{ estado: string; cantidad: number }>
 }
