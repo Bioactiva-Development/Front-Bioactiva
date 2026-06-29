@@ -138,6 +138,7 @@ export const toLeadQueryParams = (filtros?: LeadFiltros) => {
   if (filtros?.tipo_org) params.tipo = filtros.tipo_org
   if (filtros?.search) params.search = filtros.search
   // Enum TODAS | POR_VENCER | VENCIDAS. Se omite para traer todos los leads.
+  if (filtros?.id_contacto) params.idContacto = filtros.id_contacto
   if (filtros?.alerta_actividad) params.alertaActividad = filtros.alerta_actividad
   if (filtros?.fecha_desde) params.fechaDesde = filtros.fecha_desde
   if (filtros?.fecha_hasta) params.fechaHasta = filtros.fecha_hasta

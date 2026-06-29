@@ -54,6 +54,8 @@ export interface LeadFiltros {
   // Filtran por fecha de creación del lead (createdAt). ISO 8601.
   fecha_desde?: string
   fecha_hasta?: string
+  // Filtra por el contacto vinculado al lead (GET /leads?idContacto=).
+  id_contacto?: number
   // Si true, devuelve solo los leads asignados al usuario autenticado.
   mis_leads?: boolean
   // Si true, devuelve solo los leads con al menos una actividad pendiente.
