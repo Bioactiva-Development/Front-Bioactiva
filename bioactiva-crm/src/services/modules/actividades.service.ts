@@ -51,13 +51,7 @@ export const actividadesService = {
 
     const response = await apiClient.get<RawActividadesResponse>(
       ENDPOINTS.actividades.list,
-      {
-        params: {
-          ...toActividadQueryParams(filtros),
-          page: 1,
-          limit: 100,
-        },
-      }
+      { params: toActividadQueryParams(filtros) }
     )
     return normalizeActividadesResponse(response.data)
   },
@@ -66,13 +60,7 @@ export const actividadesService = {
     if (USE_MOCK) return mockGetActividades(leadId)
     const response = await apiClient.get<RawActividadesResponse>(
       ENDPOINTS.actividades.list,
-      {
-        params: {
-          ...toActividadQueryParams({ id_lead: leadId }),
-          page: 1,
-          limit: 100,
-        },
-      }
+      { params: toActividadQueryParams({ id_lead: leadId }) }
     )
     return normalizeActividadesResponse(response.data)
   },

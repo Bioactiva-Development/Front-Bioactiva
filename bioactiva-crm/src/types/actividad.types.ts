@@ -41,8 +41,10 @@ export interface ActividadFormData {
 }
 
 export interface ActividadFiltros {
-  id_lead?:       number
-  estado?:        EstadoActividad
-  tipo?:          TipoActividad
+  id_lead?:        number
+  estado?:         EstadoActividad
+  tipo?:           TipoActividad
   id_responsable?: number
+  page?:           number
+  limit?:          number
 }
