@@ -1,4 +1,4 @@
-import { LeadState, Sector, TipoEmpresa } from './enums'
+import { EstadoCot, LeadState, Sector, TipoEmpresa, TipoMoneda } from './enums'
 
 // Semáforo de actividades del lead (backend: activityAlert).
 // Severidad de menor a mayor: SIN_ACTIVIDADES < PENDIENTE < POR_VENCER.
@@ -36,6 +36,7 @@ export interface Lead {
   tiene_alerta?:boolean
   alerta_motivo?: string
   activity_alert?: ActivityAlert
+  cotizacion_activa?: { id: number; monto: number; tipo: TipoMoneda; estado: EstadoCot } | null
 }
 
 export interface LeadFiltros {

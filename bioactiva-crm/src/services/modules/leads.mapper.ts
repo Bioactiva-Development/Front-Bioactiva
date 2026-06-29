@@ -1,5 +1,5 @@
 import { ActivityAlert, Lead, LeadFiltros, LeadFormData } from '@/types/lead.types'
-import { LeadState } from '@/types/enums'
+import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
 
 export interface LeadDtoOut {
   id: number
@@ -22,6 +22,12 @@ export interface LeadDtoOut {
   fechaCierreEstimada?: string | null
   fecha_cierre?: string | null
   activityAlert?: string | null
+  cotizacionActiva?: {
+    id: number
+    monto: string | number
+    tipo: string
+    estado: string
+  } | null
 }
 
 const ACTIVITY_ALERTS = new Set<ActivityAlert>([
@@ -121,6 +127,14 @@ export const fromLeadDto = (dto: LeadDtoOut): Lead => ({
   contacto_nombre: dto.contactName ?? undefined,
   encargado_nombre: dto.encargadoName,
   activity_alert: toActivityAlert(dto.activityAlert),
+  cotizacion_activa: dto.cotizacionActiva
+    ? {
+        id:     dto.cotizacionActiva.id,
+        monto:  parseFloat(String(dto.cotizacionActiva.monto)),
+        tipo:   dto.cotizacionActiva.tipo as TipoMoneda,
+        estado: dto.cotizacionActiva.estado as EstadoCot,
+      }
+    : null,
 })
 
 export const toBackendLeadState = (estado: LeadState) =>
