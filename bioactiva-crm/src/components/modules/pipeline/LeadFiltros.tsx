@@ -39,7 +39,7 @@ const SEMAFORO_OPCIONES: {
   dots: string[]
 }[] = [
   { value: undefined,         label: 'Todas',           dots: [] },
-  { value: 'SIN_ACTIVIDADES', label: 'Sin actividades', dots: ['bg-gray-800'] },
+  { value: 'SIN_ACTIVIDADES', label: 'Sin actividades', dots: ['bg-emerald-500'] },
   { value: 'PENDIENTE',       label: 'Pendiente',       dots: ['bg-yellow-400'] },
   { value: 'POR_VENCER',      label: 'Por vencer',      dots: ['bg-red-500'] },
 ]
