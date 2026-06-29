@@ -1,15 +1,13 @@
 import { LeadState, Sector, TipoEmpresa } from './enums'
 
 // Semáforo de actividades del lead (backend: activityAlert).
-// Severidad de menor a mayor: SIN_ACTIVIDADES < PENDIENTE < EN_RIESGO < POR_VENCER.
+// Severidad de menor a mayor: SIN_ACTIVIDADES < PENDIENTE < POR_VENCER.
 //  · SIN_ACTIVIDADES = el lead no tiene actividades pendientes.
-//  · PENDIENTE       = tiene pendientes, pero ninguna en riesgo ni próxima a vencer.
-//  · EN_RIESGO       = al menos una pendiente pasó la mitad de su ventana de tiempo.
-//  · POR_VENCER      = al menos una pendiente vence en ≤4 días o ya está vencida.
+//  · PENDIENTE       = tiene pendientes, pero ninguna próxima a vencer.
+//  · POR_VENCER      = al menos una pendiente vence en ≤2 días o ya está vencida.
 export type ActivityAlert =
   | 'SIN_ACTIVIDADES'
   | 'PENDIENTE'
-  | 'EN_RIESGO'
   | 'POR_VENCER'
 
 

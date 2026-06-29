@@ -27,7 +27,6 @@ export interface LeadDtoOut {
 const ACTIVITY_ALERTS = new Set<ActivityAlert>([
   'SIN_ACTIVIDADES',
   'PENDIENTE',
-  'EN_RIESGO',
   'POR_VENCER',
 ])
 
