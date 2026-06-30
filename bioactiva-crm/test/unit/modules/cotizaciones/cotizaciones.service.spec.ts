@@ -9,19 +9,7 @@ jest.mock('@/services/api/client', () => ({
   apiClient: { get: getMock, post: postMock, patch: patchMock, delete: deleteMock },
 }))
 
-jest.mock('@/services/modules/leads.service', () => ({
-  leadsService: {
-    getPipeline: jest.fn(),
-    updateEstado: jest.fn(),
-  },
-}))
-
-jest.mock('@/lib/utils/lead-flow.utils', () => ({
-  getLeadStateFromCotizacion: jest.fn(() => null),
-}))
-
 import { cotizacionesService } from '@/services/modules/cotizaciones.service'
-import { leadsService } from '@/services/modules/leads.service'
 import { EstadoCot } from '@/types/enums'
 
 const rawCotizacion = {
@@ -51,9 +39,6 @@ const rawCotizacion = {
 describe('cotizaciones/cotizaciones.service (API mode)', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    ;(leadsService.getPipeline as jest.Mock).mockResolvedValue({
-      prospecto: [], ofertado: [], cierreVenta: [], cierreSinVenta: [], total: 0,
-    })
   })
 
   describe('getById', () => {
@@ -73,51 +58,39 @@ describe('cotizaciones/cotizaciones.service (API mode)', () => {
   })
 
   describe('getAll', () => {
-    it('fetches and filters cotizaciones synced with pipeline', async () => {
-      ;(leadsService.getPipeline as jest.Mock).mockResolvedValue({
-        prospecto: [{ id: 2 }],
-        ofertado: [],
-        cierreVenta: [],
-        cierreSinVenta: [],
-        total: 1,
-      })
+    it('fetches cotizaciones directly from the API', async () => {
       getMock.mockResolvedValueOnce({ data: { data: [rawCotizacion], meta: { total: 1 } } })
 
       const result = await cotizacionesService.getAll()
+      expect(getMock).toHaveBeenCalledWith('/quotations', { params: {} })
       expect(result.data).toHaveLength(1)
       expect(result.data[0].id).toBe(4)
     })
 
-    it('returns empty array when no active leads match', async () => {
-      ;(leadsService.getPipeline as jest.Mock).mockResolvedValue({
-        prospecto: [], ofertado: [], cierreVenta: [], cierreSinVenta: [], total: 0,
-      })
-      getMock.mockResolvedValueOnce({ data: { data: [rawCotizacion], meta: { total: 1 } } })
+    it('returns empty array when the API returns no results', async () => {
+      getMock.mockResolvedValueOnce({ data: { data: [], meta: { total: 0 } } })
 
       const result = await cotizacionesService.getAll()
       expect(result.data).toHaveLength(0)
     })
 
-    it('filters by estado', async () => {
-      ;(leadsService.getPipeline as jest.Mock).mockResolvedValue({
-        prospecto: [{ id: 2 }], ofertado: [], cierreVenta: [], cierreSinVenta: [], total: 1,
-      })
-      getMock.mockResolvedValueOnce({ data: { data: [rawCotizacion], meta: { total: 1 } } })
+    it('forwards estado as a query param', async () => {
+      getMock.mockResolvedValueOnce({ data: { data: [], meta: { total: 0 } } })
 
-      const result = await cotizacionesService.getAll({ estado: EstadoCot.Enviada })
-      expect(result.data).toHaveLength(0)
+      await cotizacionesService.getAll({ estado: EstadoCot.Enviada })
+
+      expect(getMock).toHaveBeenCalledWith('/quotations', {
+        params: { estado: 'ENVIADA' },
+      })
     })
 
-    it('forwards idOrg server-side (sin paginar, con límite alto)', async () => {
-      ;(leadsService.getPipeline as jest.Mock).mockResolvedValue({
-        prospecto: [{ id: 2 }], ofertado: [], cierreVenta: [], cierreSinVenta: [], total: 1,
-      })
+    it('forwards idOrg and page as query params', async () => {
       getMock.mockResolvedValueOnce({ data: { data: [rawCotizacion], meta: { total: 1 } } })
 
       await cotizacionesService.getAll({ id_org: 'org-uuid-1', page: 2 })
 
       expect(getMock).toHaveBeenCalledWith('/quotations', {
-        params: { idOrg: 'org-uuid-1', limit: 500 },
+        params: { idOrg: 'org-uuid-1', page: 2 },
       })
     })
   })
@@ -213,26 +186,16 @@ describe('cotizaciones/cotizaciones.service (API mode)', () => {
   })
 
   describe('getKpis', () => {
-    it('computes KPIs from synced cotizaciones', async () => {
-      ;(leadsService.getPipeline as jest.Mock).mockResolvedValue({
-        prospecto: [{ id: 1 }, { id: 2 }],
-        ofertado: [], cierreVenta: [], cierreSinVenta: [], total: 2,
-      })
+    it('fetches KPIs from the dedicated endpoint', async () => {
       getMock.mockResolvedValueOnce({
-        data: {
-          data: [
-            { ...rawCotizacion, id: 1, idLead: 1, monto: '5000', estado: 'ACEPTADA' },
-            { ...rawCotizacion, id: 2, idLead: 2, monto: '3000', estado: 'ENVIADA' },
-            { ...rawCotizacion, id: 3, idLead: 2, monto: '2000', estado: 'RECHAZADA' },
-          ],
-          meta: { total: 3 },
-        },
+        data: { pendientes: 3, enviadas: 2, aceptadas: 1, rechazadas: 4 },
       })
 
       const kpis = await cotizacionesService.getKpis()
+      expect(getMock).toHaveBeenCalledWith('/quotations/kpis')
       expect(kpis.aceptadas).toBe(1)
-      expect(kpis.enviadas).toBe(1)
-      expect(kpis.rechazadas).toBe(1)
+      expect(kpis.enviadas).toBe(2)
+      expect(kpis.rechazadas).toBe(4)
     })
   })
 })

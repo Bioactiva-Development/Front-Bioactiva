@@ -258,8 +258,11 @@ describe('dashboard/page', () => {
   })
 
   it('renders pipeline section', () => {
-    mockUseLeads.mockReturnValue({
-      data: { data: [defaultLead] },
+    mockUseDashboardMetrics.mockReturnValue({
+      data: {
+        ...mockMetrics,
+        distribucionPipeline: [{ estado: 'EN_PROSPECTO', cantidad: 1 }],
+      },
       isLoading: false,
       isError: false,
     })
@@ -268,8 +271,11 @@ describe('dashboard/page', () => {
   })
 
   it('renders cotizaciones section', () => {
-    mockUseCotizaciones.mockReturnValue({
-      data: { data: [defaultCotizacion] },
+    mockUseDashboardMetrics.mockReturnValue({
+      data: {
+        ...mockMetrics,
+        distribucionCotizaciones: [{ estado: 'PENDIENTE', cantidad: 1 }],
+      },
       isLoading: false,
       isError: false,
     })
@@ -277,14 +283,8 @@ describe('dashboard/page', () => {
     expect(screen.getByText('Estado de cotizaciones')).toBeInTheDocument()
   })
 
-  it('shows loading message "Cargando..." when leads loading', () => {
-    mockUseLeads.mockReturnValue({ data: { data: [] }, isLoading: true, isError: false })
-    renderPage()
-    expect(screen.getByText('Cargando datos del periodo...')).toBeInTheDocument()
-  })
-
-  it('shows loading message "Cargando..." when cotizaciones loading', () => {
-    mockUseCotizaciones.mockReturnValue({ data: { data: [] }, isLoading: true, isError: false })
+  it('shows loading message "Cargando..." when metrics are loading', () => {
+    mockUseDashboardMetrics.mockReturnValue({ data: null, isLoading: true, isError: false })
     renderPage()
     expect(screen.getByText('Cargando datos del periodo...')).toBeInTheDocument()
   })

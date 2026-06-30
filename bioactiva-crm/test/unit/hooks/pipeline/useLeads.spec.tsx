@@ -43,11 +43,18 @@ jest.mock('@/services/modules/cotizaciones.service', () => ({
 jest.mock('@/lib/constants/queryKeys', () => ({
   QUERY_KEYS: {
     leads: {
-      pipeline: (filters?: unknown) => ['leads', 'pipeline', filters],
-      list: (filters?: unknown) => ['leads', 'list', filters],
-      column: (estado: string, filters?: unknown) => ['leads', 'column', estado, filters],
+      pipeline:   (filters?: unknown) => ['leads', 'pipeline', filters],
+      list:       (filters?: unknown) => ['leads', 'list', filters],
+      column:     (estado: string, filters?: unknown) => ['leads', 'column', estado, filters],
       byContacto: (id: number) => ['leads', 'contacto', id],
-      detail: (id: number) => ['leads', id],
+      detail:     (id: number) => ['leads', id],
+    },
+    cotizaciones: {
+      list:   (filters?: unknown) => ['cotizaciones', 'list', filters],
+      byLead: (leadId: number) => ['cotizaciones', 'lead', leadId],
+    },
+    dashboard: {
+      metrics: (filters?: unknown) => ['dashboard', 'metrics', filters],
     },
   },
 }))
