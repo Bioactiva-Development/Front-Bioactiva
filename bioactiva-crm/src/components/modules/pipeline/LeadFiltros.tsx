@@ -32,7 +32,7 @@ const toResponsableOption = (usuario: AssignableUsuario): ResponsableOption => (
 
 // Semáforo de actividades (backend: alertaActividad). Mismos valores que el
 // campo activityAlert del lead. "Todas" = sin filtro. Severidad de menor a mayor:
-// SIN_ACTIVIDADES < PENDIENTE < EN_RIESGO < POR_VENCER.
+// SIN_ACTIVIDADES < PENDIENTE < POR_VENCER.
 const SEMAFORO_OPCIONES: {
   value: ActivityAlert | undefined
   label: string
@@ -41,7 +41,6 @@ const SEMAFORO_OPCIONES: {
   { value: undefined,         label: 'Todas',           dots: [] },
   { value: 'SIN_ACTIVIDADES', label: 'Sin actividades', dots: ['bg-emerald-500'] },
   { value: 'PENDIENTE',       label: 'Pendiente',       dots: ['bg-yellow-400'] },
-  { value: 'EN_RIESGO',       label: 'En riesgo',       dots: ['bg-orange-500'] },
   { value: 'POR_VENCER',      label: 'Por vencer',      dots: ['bg-red-500'] },
 ]
 

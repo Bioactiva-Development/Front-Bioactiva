@@ -1,5 +1,5 @@
 import { ActivityAlert, Lead, LeadFiltros, LeadFormData } from '@/types/lead.types'
-import { LeadState } from '@/types/enums'
+import { EstadoCot, LeadState, TipoMoneda } from '@/types/enums'
 
 export interface LeadDtoOut {
   id: number
@@ -22,12 +22,17 @@ export interface LeadDtoOut {
   fechaCierreEstimada?: string | null
   fecha_cierre?: string | null
   activityAlert?: string | null
+  cotizacionActiva?: {
+    id: number
+    monto: string | number
+    tipo: string
+    estado: string
+  } | null
 }
 
 const ACTIVITY_ALERTS = new Set<ActivityAlert>([
   'SIN_ACTIVIDADES',
   'PENDIENTE',
-  'EN_RIESGO',
   'POR_VENCER',
 ])
 
@@ -122,6 +127,14 @@ export const fromLeadDto = (dto: LeadDtoOut): Lead => ({
   contacto_nombre: dto.contactName ?? undefined,
   encargado_nombre: dto.encargadoName,
   activity_alert: toActivityAlert(dto.activityAlert),
+  cotizacion_activa: dto.cotizacionActiva
+    ? {
+        id:     dto.cotizacionActiva.id,
+        monto:  parseFloat(String(dto.cotizacionActiva.monto)),
+        tipo:   dto.cotizacionActiva.tipo as TipoMoneda,
+        estado: dto.cotizacionActiva.estado as EstadoCot,
+      }
+    : null,
 })
 
 export const toBackendLeadState = (estado: LeadState) =>
@@ -139,6 +152,7 @@ export const toLeadQueryParams = (filtros?: LeadFiltros) => {
   if (filtros?.tipo_org) params.tipo = filtros.tipo_org
   if (filtros?.search) params.search = filtros.search
   // Enum TODAS | POR_VENCER | VENCIDAS. Se omite para traer todos los leads.
+  if (filtros?.id_contacto) params.idContacto = filtros.id_contacto
   if (filtros?.alerta_actividad) params.alertaActividad = filtros.alerta_actividad
   if (filtros?.fecha_desde) params.fechaDesde = filtros.fecha_desde
   if (filtros?.fecha_hasta) params.fechaHasta = filtros.fecha_hasta

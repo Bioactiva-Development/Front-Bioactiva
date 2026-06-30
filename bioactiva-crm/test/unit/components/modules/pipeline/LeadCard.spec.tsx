@@ -59,7 +59,6 @@ describe('modules/pipeline/LeadCard', () => {
   it.each([
     ['SIN_ACTIVIDADES', 'Sin actividades'],
     ['PENDIENTE',       'Pendiente'],
-    ['EN_RIESGO',       'En riesgo'],
     ['POR_VENCER',      'Por vencer'],
   ] as const)('renders the %s semáforo badge', (alert, label) => {
     render(<LeadCard lead={{ ...baseLead, activity_alert: alert }} onClick={jest.fn()} />)
@@ -70,7 +69,6 @@ describe('modules/pipeline/LeadCard', () => {
     render(<LeadCard lead={baseLead} onClick={jest.fn()} />)
     expect(screen.queryByText('Sin actividades')).not.toBeInTheDocument()
     expect(screen.queryByText('Pendiente')).not.toBeInTheDocument()
-    expect(screen.queryByText('En riesgo')).not.toBeInTheDocument()
     expect(screen.queryByText('Por vencer')).not.toBeInTheDocument()
   })
 

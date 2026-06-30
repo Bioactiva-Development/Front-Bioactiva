@@ -33,6 +33,15 @@ jest.mock('@/lib/constants/queryKeys', () => ({
       detail: (id: number) => ['cotizaciones', id],
       byLead: (leadId: number) => ['cotizaciones', 'lead', leadId],
     },
+    leads: {
+      list:     (filters?: unknown) => ['leads', 'list', filters],
+      pipeline: (filters?: unknown) => ['leads', 'pipeline', filters],
+      column:   (estado: string, filters?: unknown) => ['leads', 'column', estado, filters],
+      detail:   (id: number) => ['leads', id],
+    },
+    dashboard: {
+      metrics: (filters?: unknown) => ['dashboard', 'metrics', filters],
+    },
   },
 }))
 
