@@ -162,6 +162,28 @@ describe('dashboard/page', () => {
     expect(fin).toHaveValue(`31/12/${currentYear}`)
   })
 
+  it('shows the date format next to each date label', async () => {
+    renderPage()
+    await abrirFiltros()
+
+    expect(screen.getAllByText('DD/MM/YYYY')).toHaveLength(2)
+  })
+
+  it('opens the native date picker from the full calendar icon area', async () => {
+    const user = userEvent.setup()
+    const showPicker = jest.fn()
+    Object.defineProperty(HTMLInputElement.prototype, 'showPicker', {
+      configurable: true,
+      value: showPicker,
+    })
+
+    renderPage()
+    await abrirFiltros()
+    await user.click(screen.getByRole('button', { name: /abrir calendario inicial/i }))
+
+    expect(showPicker).toHaveBeenCalled()
+  })
+
   it('fills both dates when a predefined quarter is selected', async () => {
     const user = userEvent.setup()
     renderPage()
