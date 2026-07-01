@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { actividadesService } from '@/services/modules/actividades.service'
 import { QUERY_KEYS } from '@/lib/constants/queryKeys'
-import { ActividadFormData } from '@/types/actividad.types'
+import type { Actividad, ActividadFormData } from '@/types/actividad.types'
 import { EstadoActividad, TipoActividad } from '@/types/enums'
 import { getErrorMessage } from '@/lib/utils/error.utils'
 import { useAuthStore } from '@/store'
@@ -14,6 +14,11 @@ export function useActividades(leadId: number) {
   })
 }
 
+export const isActividadCalendarioVigente = (
+  actividad: Actividad,
+  now = new Date()
+) => new Date(actividad.fecha_fin).getTime() >= now.getTime()
+
 export function useActividadesCalendario(idResponsable?: number) {
   const filtros = {
     estado: EstadoActividad.Pendiente,
@@ -24,6 +29,9 @@ export function useActividadesCalendario(idResponsable?: number) {
   return useQuery({
     queryKey: QUERY_KEYS.actividades.calendar(filtros),
     queryFn: () => actividadesService.getAll(filtros),
+    select: (actividades) =>
+      actividades.filter((actividad) => isActividadCalendarioVigente(actividad)),
+    refetchInterval: 1000 * 60,
     staleTime: 1000 * 60,
   })
 }

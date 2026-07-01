@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, PieChart, Pie, Legend
@@ -116,6 +116,7 @@ function DateField({
   onChange,
 }: Readonly<DateFieldProps>) {
   const [displayValue, setDisplayValue] = useState(formatDateForDisplay(value))
+  const dateInputRef = useRef<HTMLInputElement>(null)
 
   const commitDisplayValue = (nextDisplayValue: string) => {
     const parsed = parseDisplayDate(nextDisplayValue)
@@ -136,6 +137,22 @@ function DateField({
   }
 
   const invalidDisplay = displayValue.length === 10 && !parseDisplayDate(displayValue)
+  const openDatePicker = () => {
+    onFocus()
+    const dateInput = dateInputRef.current
+    if (!dateInput) return
+
+    dateInput.focus()
+    try {
+      if (dateInput.showPicker) {
+        dateInput.showPicker()
+      } else {
+        dateInput.click()
+      }
+    } catch {
+      dateInput.click()
+    }
+  }
 
   return (
     <div className="relative">
@@ -158,20 +175,27 @@ function DateField({
         className={`${className} pr-11`}
       />
       <input
+        ref={dateInputRef}
         type="date"
         value={value}
         min={min}
         max={max}
-        aria-label={calendarLabel}
+        aria-hidden="true"
+        tabIndex={-1}
         onFocus={onFocus}
         onChange={(event) => onChange(event.target.value)}
-        className="absolute right-0 top-0 h-full w-11 cursor-pointer opacity-0"
+        className="pointer-events-none absolute right-0 top-0 h-full w-11 opacity-0"
       />
-      <Calendar
-        size={16}
-        aria-hidden="true"
-        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-      />
+      <button
+        type="button"
+        aria-label={calendarLabel}
+        onClick={openDatePicker}
+        className="absolute right-0 top-0 flex h-full w-11 cursor-pointer items-center justify-center
+          rounded-r-lg text-gray-500 transition-colors hover:text-emerald-600
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
+      >
+        <Calendar size={16} aria-hidden="true" />
+      </button>
     </div>
   )
 }
@@ -456,14 +480,19 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-3 items-end">
               <div className="space-y-1">
-                <label
-                  htmlFor="dash-fecha-inicio"
-                  className={`text-[11px] font-medium uppercase tracking-wide transition-colors ${
-                    periodoActivo === 'custom' ? 'text-emerald-600' : 'text-gray-400'
-                  }`}
-                >
-                  Fecha inicio
-                </label>
+                <div className="flex items-baseline gap-2">
+                  <label
+                    htmlFor="dash-fecha-inicio"
+                    className={`text-[11px] font-medium uppercase tracking-wide transition-colors ${
+                      periodoActivo === 'custom' ? 'text-emerald-600' : 'text-gray-400'
+                    }`}
+                  >
+                    Fecha inicio
+                  </label>
+                  <span className="text-[10px] font-medium text-gray-400">
+                    DD/MM/YYYY
+                  </span>
+                </div>
                 <DateField
                   key={fechaInicio}
                   id="dash-fecha-inicio"
@@ -482,14 +511,19 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-end gap-3">
                 <div className="flex-1 space-y-1">
-                  <label
-                    htmlFor="dash-fecha-fin"
-                    className={`text-[11px] font-medium uppercase tracking-wide transition-colors ${
-                      periodoActivo === 'custom' ? 'text-emerald-600' : 'text-gray-400'
-                    }`}
-                  >
-                    Fecha fin
-                  </label>
+                  <div className="flex items-baseline gap-2">
+                    <label
+                      htmlFor="dash-fecha-fin"
+                      className={`text-[11px] font-medium uppercase tracking-wide transition-colors ${
+                        periodoActivo === 'custom' ? 'text-emerald-600' : 'text-gray-400'
+                      }`}
+                    >
+                      Fecha fin
+                    </label>
+                    <span className="text-[10px] font-medium text-gray-400">
+                      DD/MM/YYYY
+                    </span>
+                  </div>
                   <DateField
                     key={fechaFin}
                     id="dash-fecha-fin"

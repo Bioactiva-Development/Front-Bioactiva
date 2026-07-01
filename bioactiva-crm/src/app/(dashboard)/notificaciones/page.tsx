@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/store'
-import { RolUsuario } from '@/types/enums'
 import { usePerfil } from '@/hooks/perfil/usePerfil'
 import { useLeads } from '@/hooks/pipeline/useLeads'
 import {
@@ -54,8 +53,7 @@ export default function NotificacionesPage() {
   const [seguimientoEditar, setSeguimientoEditar] =
     useState<NotificacionProgramada | null>(null)
   const usuario = useAuthStore((state) => state.usuario)
-  const idResponsable =
-    usuario?.rol === RolUsuario.Trabajador ? usuario.id : undefined
+  const idResponsable = usuario?.id
 
   const { data: programadasResponse, isLoading: loadingProgramadas } =
     useNotificacionesProgramadas({
