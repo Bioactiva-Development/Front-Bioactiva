@@ -125,7 +125,7 @@ function filtrosFromParams(sp: URLSearchParams): FiltrosType {
   if (fechaHasta) filtros.fecha_hasta = fechaHasta
 
   const ALERTAS: ActivityAlert[] = [
-    'SIN_ACTIVIDADES', 'PENDIENTE', 'EN_RIESGO', 'POR_VENCER',
+    'SIN_ACTIVIDADES', 'PENDIENTE', 'POR_VENCER',
   ]
   const alerta = sp.get('alertaActividad')
   if (alerta && (ALERTAS as string[]).includes(alerta)) {

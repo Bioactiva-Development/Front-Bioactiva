@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, PieChart, Pie, Legend
@@ -18,8 +18,6 @@ import {
   RefreshCw, ChevronDown, ChevronUp, Filter, Calendar, Loader2,
 } from 'lucide-react'
 
-import { useLeads }              from '@/hooks/pipeline/useLeads'
-import { useCotizaciones }       from '@/hooks/cotizaciones/useCotizaciones'
 import { useDashboardMetrics }   from '@/hooks/dashboard/useDashboardMetrics'
 import { EstadoCot, LeadState }  from '@/types/enums'
 import type { MoneyByCurrency }   from '@/types/dashboard.types'
@@ -53,27 +51,26 @@ interface DateFieldProps {
   onChange: (value: string) => string
 }
 
-const ANIO_INICIAL          = 2020
-const ANIO_ACTUAL           = new Date().getFullYear()
-const ANIO_ACTUAL_TEXTO     = String(ANIO_ACTUAL)
-const ANIOS                 = Array.from(
+const ANIO_INICIAL      = 2020
+const ANIO_ACTUAL       = new Date().getFullYear()
+const ANIO_ACTUAL_TEXTO = String(ANIO_ACTUAL)
+const ANIOS             = Array.from(
   { length: ANIO_ACTUAL - ANIO_INICIAL + 1 },
   (_, index) => String(ANIO_ACTUAL - index)
 )
-const DASHBOARD_FETCH_LIMIT = 500
 
 const PIPELINE_ESTADOS = [
-  { estado: LeadState.Prospecto,      color: '#6b7280' },
-  { estado: LeadState.Ofertado,       color: '#f59e0b' },
-  { estado: LeadState.CierreVenta,    color: '#10b981' },
-  { estado: LeadState.CierreSinVenta, color: '#ef4444' },
+  { estado: LeadState.Prospecto,      backendEstado: 'EN_PROSPECTO',      color: '#6b7280' },
+  { estado: LeadState.Ofertado,       backendEstado: 'OFERTADO',          color: '#f59e0b' },
+  { estado: LeadState.CierreVenta,    backendEstado: 'CIERRE_CON_VENTA',  color: '#10b981' },
+  { estado: LeadState.CierreSinVenta, backendEstado: 'CIERRE_SIN_VENTA', color: '#ef4444' },
 ]
 
 const COTIZACION_ESTADOS = [
-  { name: EstadoCot.Pendiente,  color: '#9ca3af' },
-  { name: EstadoCot.Enviada,    color: '#3b82f6' },
-  { name: EstadoCot.Aceptada,   color: '#10b981' },
-  { name: EstadoCot.Rechazada,  color: '#ef4444' },
+  { name: EstadoCot.Pendiente,  backendEstado: 'PENDIENTE',  color: '#9ca3af' },
+  { name: EstadoCot.Enviada,    backendEstado: 'ENVIADA',    color: '#3b82f6' },
+  { name: EstadoCot.Aceptada,   backendEstado: 'ACEPTADA',   color: '#10b981' },
+  { name: EstadoCot.Rechazada,  backendEstado: 'RECHAZADA',  color: '#ef4444' },
 ]
 
 const parseDateBoundary = (date: string, endOfDay = false) =>
@@ -107,11 +104,6 @@ const formatTypedDate = (value: string) => {
     .join('/')
 }
 
-const isWithinPeriod = (isoDate: string | undefined, start: Date, end: Date) => {
-  if (!isoDate) return false
-  const time = new Date(isoDate).getTime()
-  return time >= start.getTime() && time <= end.getTime()
-}
 
 function DateField({
   id,
@@ -124,6 +116,7 @@ function DateField({
   onChange,
 }: Readonly<DateFieldProps>) {
   const [displayValue, setDisplayValue] = useState(formatDateForDisplay(value))
+  const dateInputRef = useRef<HTMLInputElement>(null)
 
   const commitDisplayValue = (nextDisplayValue: string) => {
     const parsed = parseDisplayDate(nextDisplayValue)
@@ -144,6 +137,22 @@ function DateField({
   }
 
   const invalidDisplay = displayValue.length === 10 && !parseDisplayDate(displayValue)
+  const openDatePicker = () => {
+    onFocus()
+    const dateInput = dateInputRef.current
+    if (!dateInput) return
+
+    dateInput.focus()
+    try {
+      if (dateInput.showPicker) {
+        dateInput.showPicker()
+      } else {
+        dateInput.click()
+      }
+    } catch {
+      dateInput.click()
+    }
+  }
 
   return (
     <div className="relative">
@@ -166,20 +175,27 @@ function DateField({
         className={`${className} pr-11`}
       />
       <input
+        ref={dateInputRef}
         type="date"
         value={value}
         min={min}
         max={max}
-        aria-label={calendarLabel}
+        aria-hidden="true"
+        tabIndex={-1}
         onFocus={onFocus}
         onChange={(event) => onChange(event.target.value)}
-        className="absolute right-0 top-0 h-full w-11 cursor-pointer opacity-0"
+        className="pointer-events-none absolute right-0 top-0 h-full w-11 opacity-0"
       />
-      <Calendar
-        size={16}
-        aria-hidden="true"
-        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-      />
+      <button
+        type="button"
+        aria-label={calendarLabel}
+        onClick={openDatePicker}
+        className="absolute right-0 top-0 flex h-full w-11 cursor-pointer items-center justify-center
+          rounded-r-lg text-gray-500 transition-colors hover:text-emerald-600
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
+      >
+        <Calendar size={16} aria-hidden="true" />
+      </button>
     </div>
   )
 }
@@ -284,10 +300,6 @@ export default function DashboardPage() {
   const [fechaFin, setFechaFin]           = useState(`${ANIO_ACTUAL}-12-31`)
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
 
-  const { data: leadsResponse, isLoading: cargandoLeads, isError: errorLeads } =
-    useLeads({ page: 1, limit: DASHBOARD_FETCH_LIMIT })
-  const { data: cotizacionesResponse, isLoading: cargandoCotizaciones, isError: errorCotizaciones } =
-    useCotizaciones({ page: 1, limit: DASHBOARD_FETCH_LIMIT })
   const dashboardParams = useMemo(() => ({
     startDate: toIsoDateBoundary(fechaInicio),
     endDate:   toIsoDateBoundary(fechaFin, true),
@@ -295,7 +307,7 @@ export default function DashboardPage() {
   const { data: metrics, isLoading: cargandoMetricas, isError: errorMetricas } =
     useDashboardMetrics(dashboardParams)
 
-  const cargando = cargandoLeads || cargandoCotizaciones || cargandoMetricas
+  const cargando = cargandoMetricas
 
   const kpiValor = (value: string) => cargandoMetricas ? '...' : value
   const kpiMonto = (value?: MoneyByCurrency) =>
@@ -340,38 +352,30 @@ export default function DashboardPage() {
 
   const handleFechaFocus = () => setPeriodoActivo('custom')
 
-  const rangoFechas = useMemo(() => ({
-    inicio: parseDateBoundary(fechaInicio),
-    fin:    parseDateBoundary(fechaFin, true),
-  }), [fechaFin, fechaInicio])
   const periodos = useMemo(() => getPeriodos(anioActivo), [anioActivo])
   const periodoSeleccionado = periodoActivo === 'custom'
     ? 'RANGO PERSONALIZADO'
     : `${periodos.find((periodo) => periodo.key === periodoActivo)?.label ?? 'AÑO COMPLETO'} ${anioActivo}`
 
   const pipelineData = useMemo(() => {
-    const leadsPeriodo = (leadsResponse?.data ?? []).filter((lead) =>
-      isWithinPeriod(lead.created_at, rangoFechas.inicio, rangoFechas.fin)
-    )
-    return PIPELINE_ESTADOS.map(({ estado, color }) => ({
+    const dist = metrics?.distribucionPipeline ?? []
+    return PIPELINE_ESTADOS.map(({ estado, backendEstado, color }) => ({
       estado,
-      cantidad: leadsPeriodo.filter((lead) => lead.estado === estado).length,
+      cantidad: dist.find((d) => d.estado === backendEstado)?.cantidad ?? 0,
       fill: color,
     }))
-  }, [leadsResponse?.data, rangoFechas])
+  }, [metrics?.distribucionPipeline])
 
   const cotizacionesData = useMemo(() => {
-    const cotizacionesPeriodo = (cotizacionesResponse?.data ?? []).filter((cotizacion) =>
-      isWithinPeriod(cotizacion.fecha_cot, rangoFechas.inicio, rangoFechas.fin)
-    )
+    const dist = metrics?.distribucionCotizaciones ?? []
     return COTIZACION_ESTADOS
-      .map(({ name, color }) => ({
+      .map(({ name, backendEstado, color }) => ({
         name,
-        value: cotizacionesPeriodo.filter((cotizacion) => cotizacion.estado === name).length,
+        value: dist.find((d) => d.estado === backendEstado)?.cantidad ?? 0,
         fill: color,
       }))
       .filter((item) => item.value > 0)
-  }, [cotizacionesResponse?.data, rangoFechas])
+  }, [metrics?.distribucionCotizaciones])
 
   const metricasConValor = metrics
     ? [
@@ -391,11 +395,7 @@ export default function DashboardPage() {
       ].some((value) => value !== 0)
     : false
   const sinDataPeriodo =
-    !cargandoLeads &&
-    !cargandoCotizaciones &&
     !cargandoMetricas &&
-    !errorLeads &&
-    !errorCotizaciones &&
     !errorMetricas &&
     !metricasConValor &&
     !pipelineData.some((item) => item.cantidad > 0) &&
@@ -480,14 +480,19 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-3 items-end">
               <div className="space-y-1">
-                <label
-                  htmlFor="dash-fecha-inicio"
-                  className={`text-[11px] font-medium uppercase tracking-wide transition-colors ${
-                    periodoActivo === 'custom' ? 'text-emerald-600' : 'text-gray-400'
-                  }`}
-                >
-                  Fecha inicio
-                </label>
+                <div className="flex items-baseline gap-2">
+                  <label
+                    htmlFor="dash-fecha-inicio"
+                    className={`text-[11px] font-medium uppercase tracking-wide transition-colors ${
+                      periodoActivo === 'custom' ? 'text-emerald-600' : 'text-gray-400'
+                    }`}
+                  >
+                    Fecha inicio
+                  </label>
+                  <span className="text-[10px] font-medium text-gray-400">
+                    DD/MM/YYYY
+                  </span>
+                </div>
                 <DateField
                   key={fechaInicio}
                   id="dash-fecha-inicio"
@@ -506,14 +511,19 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-end gap-3">
                 <div className="flex-1 space-y-1">
-                  <label
-                    htmlFor="dash-fecha-fin"
-                    className={`text-[11px] font-medium uppercase tracking-wide transition-colors ${
-                      periodoActivo === 'custom' ? 'text-emerald-600' : 'text-gray-400'
-                    }`}
-                  >
-                    Fecha fin
-                  </label>
+                  <div className="flex items-baseline gap-2">
+                    <label
+                      htmlFor="dash-fecha-fin"
+                      className={`text-[11px] font-medium uppercase tracking-wide transition-colors ${
+                        periodoActivo === 'custom' ? 'text-emerald-600' : 'text-gray-400'
+                      }`}
+                    >
+                      Fecha fin
+                    </label>
+                    <span className="text-[10px] font-medium text-gray-400">
+                      DD/MM/YYYY
+                    </span>
+                  </div>
                   <DateField
                     key={fechaFin}
                     id="dash-fecha-fin"
@@ -632,17 +642,17 @@ export default function DashboardPage() {
             Cantidad de leads por estado comercial.
           </p>
           <div className="flex-1 min-h-0">
-            {cargandoLeads && (
+            {cargandoMetricas && (
               <div className="h-full flex items-center justify-center">
                 <p className="text-sm text-gray-400">Cargando...</p>
               </div>
             )}
-            {!cargandoLeads && errorLeads && (
+            {!cargandoMetricas && errorMetricas && (
               <div className="h-full flex items-center justify-center">
                 <p className="text-sm text-red-500">No se pudo cargar el pipeline.</p>
               </div>
             )}
-            {!cargandoLeads && !errorLeads && (
+            {!cargandoMetricas && !errorMetricas && (
               <ResponsiveContainer width="100%" height="100%" minHeight={0}>
                 <BarChart data={pipelineData} margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
                   <XAxis
@@ -678,22 +688,22 @@ export default function DashboardPage() {
             Distribución de propuestas del periodo.
           </p>
           <div className="flex-1 min-h-0">
-            {cargandoCotizaciones && (
+            {cargandoMetricas && (
               <div className="h-full flex items-center justify-center">
                 <p className="text-sm text-gray-400">Cargando...</p>
               </div>
             )}
-            {!cargandoCotizaciones && errorCotizaciones && (
+            {!cargandoMetricas && errorMetricas && (
               <div className="h-full flex items-center justify-center">
                 <p className="text-sm text-red-500">No se pudieron cargar las cotizaciones.</p>
               </div>
             )}
-            {!cargandoCotizaciones && !errorCotizaciones && cotizacionesData.length === 0 && (
+            {!cargandoMetricas && !errorMetricas && cotizacionesData.length === 0 && (
               <div className="h-full flex items-center justify-center">
                 <p className="text-sm text-emerald-600 font-medium">Sin cotizaciones en el periodo.</p>
               </div>
             )}
-            {!cargandoCotizaciones && !errorCotizaciones && cotizacionesData.length !== 0 && (
+            {!cargandoMetricas && !errorMetricas && cotizacionesData.length !== 0 && (
               <ResponsiveContainer width="100%" height="100%" minHeight={0}>
                 <PieChart>
                   <Pie data={cotizacionesData} cx="50%" cy="50%"

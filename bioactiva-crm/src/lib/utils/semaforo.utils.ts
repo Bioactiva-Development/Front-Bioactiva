@@ -1,8 +1,8 @@
 import { ActivityAlert } from '@/types/lead.types'
 
 // Mapeo visual del semáforo de actividades del lead (backend: activityAlert).
-// Escala de color pedida por negocio (de tranquilo a urgente):
-//   SIN_ACTIVIDADES → verde · PENDIENTE → amarillo · EN_RIESGO → naranja · POR_VENCER → rojo.
+// Escala de color (de tranquilo a urgente):
+//   SIN_ACTIVIDADES → verde · PENDIENTE → amarillo · POR_VENCER → rojo.
 // Las clases se escriben literales para que Tailwind las detecte (no construir dinámicamente).
 export interface SemaforoUI {
   label: string
@@ -25,13 +25,6 @@ export const SEMAFORO_UI: Record<ActivityAlert, SemaforoUI> = {
     pill: 'bg-yellow-100 text-yellow-700',
     dot: 'bg-yellow-400',
     accent: 'border-l-yellow-400',
-    pulse: false,
-  },
-  EN_RIESGO: {
-    label: 'En riesgo',
-    pill: 'bg-orange-100 text-orange-700',
-    dot: 'bg-orange-500',
-    accent: 'border-l-orange-500',
     pulse: false,
   },
   POR_VENCER: {

@@ -11,7 +11,7 @@ import { ValidateImportResult, ImportJobStatus } from '@/types/datos.types'
 
 type Step = 1 | 2 | 3
 
-const STEP_LABELS = ['Subir archivo', 'Validación', 'Importando']
+const STEP_LABELS = ['Importar', 'Verificación', 'Importación y validación']
 
 function isValidXlsx(file: File): boolean {
     return file.name.toLowerCase().endsWith('.xlsx')
@@ -127,9 +127,15 @@ export function ImportarStepper() {
                 })}
             </div>
 
-            {/* Step 1: Subir archivo */}
+            {/* Step 1: Importar */}
             {step === 1 && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5 shadow-sm">
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-800">Carga tu archivo</h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Sube el archivo Excel con tus datos. Solo se aceptan archivos <span className="font-semibold">.xlsx</span> basados en la plantilla oficial. El sistema verificará que el archivo tenga el formato correcto antes de continuar.
+                        </p>
+                    </div>
                     {/* Descarga plantilla */}
                     <div className="flex items-center justify-between p-4 rounded-xl bg-[#F1FFEC] border border-[#BCF7B3]">
                         <div>
@@ -216,9 +222,21 @@ export function ImportarStepper() {
                 </div>
             )}
 
-            {/* Step 2: Resultados de validación */}
+            {/* Step 2: Verificación */}
             {step === 2 && validacion && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5 shadow-sm">
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-800">Resultados de verificación</h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Se revisaron los registros del archivo en busca de campos obligatorios faltantes y formatos inválidos. Los errores bloqueantes impiden continuar.
+                        </p>
+                        <div className="mt-2 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+                            <TriangleAlert size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                            <p className="text-xs text-amber-700">
+                                <span className="font-semibold">Esta verificación no es definitiva.</span> La validación final se realiza en la siguiente etapa, cruzando los datos del archivo con la información existente en el sistema.
+                            </p>
+                        </div>
+                    </div>
                     {/* Filas detectadas */}
                     <div>
                         <h3 className="text-sm font-bold text-gray-800 mb-3">Filas detectadas por hoja</h3>
@@ -297,8 +315,9 @@ export function ImportarStepper() {
                         <>
                             <Loader2 size={40} className="text-[#1C7E3C] animate-spin" />
                             <div>
-                                <h3 className="text-base font-bold text-gray-800">Importando datos...</h3>
-                                <p className="text-sm text-gray-500 mt-1">El servidor está procesando el archivo.</p>
+                                <h3 className="text-base font-bold text-gray-800">Importación en proceso...</h3>
+                                <p className="text-sm text-gray-500 mt-1">El sistema está validando los datos contra la información existente y registrando los nuevos registros.</p>
+                                <p className="text-xs text-gray-400 mt-1">Te notificaremos aquí cuando el proceso concluya.</p>
                             </div>
                             <div className="w-full max-w-xs bg-gray-100 rounded-full h-2">
                                 <div

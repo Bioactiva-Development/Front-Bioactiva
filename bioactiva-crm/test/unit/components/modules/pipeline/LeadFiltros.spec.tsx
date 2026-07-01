@@ -36,8 +36,8 @@ describe('modules/pipeline/LeadFiltros', () => {
     expect(screen.getByText('Todas')).toBeInTheDocument()
     expect(screen.getByText('Sin actividades')).toBeInTheDocument()
     expect(screen.getByText('Pendiente')).toBeInTheDocument()
-    expect(screen.getByText('En riesgo')).toBeInTheDocument()
     expect(screen.getByText('Por vencer')).toBeInTheDocument()
+    expect(screen.queryByText('En riesgo')).not.toBeInTheDocument()
   })
 
   it('emits alerta_actividad when a semáforo option is clicked', async () => {

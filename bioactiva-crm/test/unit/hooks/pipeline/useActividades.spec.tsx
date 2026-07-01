@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React from 'react'
-import { TipoActividad } from '@/types/enums'
+import { EstadoActividad, TipoActividad } from '@/types/enums'
 import type { ActividadFormData } from '@/types/actividad.types'
 
 const mockGetByLead = jest.fn()
@@ -61,6 +61,7 @@ jest.mock('@/store', () => ({
 }))
 
 import {
+  isActividadCalendarioVigente,
   useActividades,
   useActividadesCalendario,
   useCrearActividad,
@@ -74,6 +75,22 @@ import {
   useCrearEventoCalendario,
 } from '@/hooks/pipeline/useActividades'
 
+const actividadCalendario = (fecha_fin: string, id = 1) => ({
+  id,
+  id_lead: 42,
+  id_responsable: 7,
+  nombre_actividad: `Reunion ${id}`,
+  fecha_inicio: '2026-06-29T09:00:00.000-05:00',
+  fecha_fin,
+  tipo: TipoActividad.Reunion,
+  estado: EstadoActividad.Pendiente,
+  outlook_imported: false,
+  seguimiento_automatico: false,
+  id_author: 1,
+  created_at: '2026-06-01T00:00:00.000Z',
+  updated_at: '2026-06-01T00:00:00.000Z',
+})
+
 function wrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -84,11 +101,14 @@ function wrapper({ children }: { children: React.ReactNode }) {
 describe('pipeline/useActividades', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    jest.useRealTimers()
   })
 
   describe('useActividadesCalendario', () => {
     it('fetches pending reunion activities for calendar', async () => {
-      mockGetAll.mockResolvedValueOnce([{ id: 1, nombreActividad: 'Reunión' }])
+      mockGetAll.mockResolvedValueOnce([
+        actividadCalendario(new Date(Date.now() + 60_000).toISOString()),
+      ])
 
       const { result } = renderHook(() => useActividadesCalendario(), { wrapper })
 
@@ -105,6 +125,53 @@ describe('pipeline/useActividades', () => {
       expect(mockGetAll).toHaveBeenCalledWith(
         expect.objectContaining({ id_responsable: 5 })
       )
+    })
+
+    it('filters out meetings whose end date and time already passed', async () => {
+      mockGetAll.mockResolvedValueOnce([
+        actividadCalendario(new Date(Date.now() - 60_000).toISOString(), 1),
+        actividadCalendario(new Date(Date.now() + 60_000).toISOString(), 2),
+      ])
+
+      const { result } = renderHook(() => useActividadesCalendario(), { wrapper })
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+      expect(result.current.data?.map((actividad) => actividad.id)).toEqual([2])
+    })
+  })
+
+  describe('isActividadCalendarioVigente', () => {
+    it('returns false once the meeting end time has passed', () => {
+      const actividad = actividadCalendario('2026-06-29T12:00:00.000-05:00')
+
+      expect(
+        isActividadCalendarioVigente(
+          actividad,
+          new Date('2026-06-29T12:01:00.000-05:00')
+        )
+      ).toBe(false)
+    })
+
+    it('returns true while the meeting end time is still in the future', () => {
+      const actividad = actividadCalendario('2026-06-29T12:00:00.000-05:00')
+
+      expect(
+        isActividadCalendarioVigente(
+          actividad,
+          new Date('2026-06-29T11:59:00.000-05:00')
+        )
+      ).toBe(true)
+    })
+
+    it('returns true when the meeting end time is exactly now', () => {
+      const actividad = actividadCalendario('2026-06-29T12:00:00.000-05:00')
+
+      expect(
+        isActividadCalendarioVigente(
+          actividad,
+          new Date('2026-06-29T12:00:00.000-05:00')
+        )
+      ).toBe(true)
     })
   })
 

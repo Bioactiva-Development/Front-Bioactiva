@@ -110,6 +110,8 @@ export const toActividadQueryParams = (filtros?: ActividadFiltros) => {
     params.estado =
       filtros.estado === EstadoActividad.Completada ? 'REALIZADA' : 'PENDIENTE'
   }
+  params.page  = filtros?.page  ?? 1
+  params.limit = filtros?.limit ?? 100
 
   return params
 }

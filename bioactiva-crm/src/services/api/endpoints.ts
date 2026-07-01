@@ -91,6 +91,7 @@ export const ENDPOINTS = {
 
     cotizaciones: {
         list: '/quotations',
+        kpis: '/quotations/kpis',
         detail: (id: number) => `/quotations/${id}`,
         create: '/quotations',
         update: (id: number) => `/quotations/${id}`,

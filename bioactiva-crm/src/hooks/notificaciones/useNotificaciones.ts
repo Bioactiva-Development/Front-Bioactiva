@@ -26,9 +26,9 @@ export function useNotificacionesInApp() {
   return useQuery({
     queryKey: QUERY_KEYS.notificaciones.inApp(),
     queryFn: () => notificacionesService.getInApp(),
-    staleTime: 1000 * 60,
-    refetchInterval: 1000 * 60 * 2,
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60 * 3,
+    refetchInterval: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   })
 }
 

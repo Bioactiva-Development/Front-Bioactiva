@@ -67,9 +67,10 @@ describe('leads.mapper', () => {
     }
 
     expect(fromLeadDto({ ...base, activityAlert: 'POR_VENCER' }).activity_alert).toBe('POR_VENCER')
-    expect(fromLeadDto({ ...base, activityAlert: 'EN_RIESGO' }).activity_alert).toBe('EN_RIESGO')
     expect(fromLeadDto({ ...base, activityAlert: 'PENDIENTE' }).activity_alert).toBe('PENDIENTE')
     expect(fromLeadDto({ ...base, activityAlert: 'SIN_ACTIVIDADES' }).activity_alert).toBe('SIN_ACTIVIDADES')
+    // EN_RIESGO ya no es un valor válido del enum; el mapper lo descarta.
+    expect(fromLeadDto({ ...base, activityAlert: 'EN_RIESGO' }).activity_alert).toBeUndefined()
     expect(fromLeadDto({ ...base, activityAlert: 'desconocido' }).activity_alert).toBeUndefined()
     expect(fromLeadDto(base).activity_alert).toBeUndefined()
   })

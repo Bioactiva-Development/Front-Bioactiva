@@ -162,6 +162,28 @@ describe('dashboard/page', () => {
     expect(fin).toHaveValue(`31/12/${currentYear}`)
   })
 
+  it('shows the date format next to each date label', async () => {
+    renderPage()
+    await abrirFiltros()
+
+    expect(screen.getAllByText('DD/MM/YYYY')).toHaveLength(2)
+  })
+
+  it('opens the native date picker from the full calendar icon area', async () => {
+    const user = userEvent.setup()
+    const showPicker = jest.fn()
+    Object.defineProperty(HTMLInputElement.prototype, 'showPicker', {
+      configurable: true,
+      value: showPicker,
+    })
+
+    renderPage()
+    await abrirFiltros()
+    await user.click(screen.getByRole('button', { name: /abrir calendario inicial/i }))
+
+    expect(showPicker).toHaveBeenCalled()
+  })
+
   it('fills both dates when a predefined quarter is selected', async () => {
     const user = userEvent.setup()
     renderPage()
@@ -258,8 +280,11 @@ describe('dashboard/page', () => {
   })
 
   it('renders pipeline section', () => {
-    mockUseLeads.mockReturnValue({
-      data: { data: [defaultLead] },
+    mockUseDashboardMetrics.mockReturnValue({
+      data: {
+        ...mockMetrics,
+        distribucionPipeline: [{ estado: 'EN_PROSPECTO', cantidad: 1 }],
+      },
       isLoading: false,
       isError: false,
     })
@@ -268,8 +293,11 @@ describe('dashboard/page', () => {
   })
 
   it('renders cotizaciones section', () => {
-    mockUseCotizaciones.mockReturnValue({
-      data: { data: [defaultCotizacion] },
+    mockUseDashboardMetrics.mockReturnValue({
+      data: {
+        ...mockMetrics,
+        distribucionCotizaciones: [{ estado: 'PENDIENTE', cantidad: 1 }],
+      },
       isLoading: false,
       isError: false,
     })
@@ -277,14 +305,8 @@ describe('dashboard/page', () => {
     expect(screen.getByText('Estado de cotizaciones')).toBeInTheDocument()
   })
 
-  it('shows loading message "Cargando..." when leads loading', () => {
-    mockUseLeads.mockReturnValue({ data: { data: [] }, isLoading: true, isError: false })
-    renderPage()
-    expect(screen.getByText('Cargando datos del periodo...')).toBeInTheDocument()
-  })
-
-  it('shows loading message "Cargando..." when cotizaciones loading', () => {
-    mockUseCotizaciones.mockReturnValue({ data: { data: [] }, isLoading: true, isError: false })
+  it('shows loading message "Cargando..." when metrics are loading', () => {
+    mockUseDashboardMetrics.mockReturnValue({ data: null, isLoading: true, isError: false })
     renderPage()
     expect(screen.getByText('Cargando datos del periodo...')).toBeInTheDocument()
   })

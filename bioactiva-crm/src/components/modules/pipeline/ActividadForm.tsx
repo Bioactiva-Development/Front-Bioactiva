@@ -25,7 +25,12 @@ export function ActividadForm({
   isLoading,
   error,
 }: ActividadFormProps) {
-  const nowStr = new Date().toISOString().slice(0, 16)
+  const nowStr = (() => {
+    const now = new Date()
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
+      .toISOString()
+      .slice(0, 16)
+  })()
 
   const {
     register,
