@@ -151,7 +151,7 @@ export default function NotificacionesPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1500px] space-y-5">
+    <div className="space-y-5">
       <PageHeader
         titulo={TITULOS[seccion]}
         descripcion="Programación y gestión de recordatorios, seguimientos y eventos de calendario"
