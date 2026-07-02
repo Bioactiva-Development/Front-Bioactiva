@@ -1,6 +1,6 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Save, X } from 'lucide-react'
 import {
@@ -25,9 +25,19 @@ export function ActividadForm({
   isLoading,
   error,
 }: ActividadFormProps) {
+  const nowStr = (() => {
+    const now = new Date()
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
+      .toISOString()
+      .slice(0, 16)
+  })()
+
   const {
     register,
     handleSubmit,
+    control,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm<ActividadFormValues>({
     resolver: zodResolver(actividadSchema),
@@ -37,6 +47,9 @@ export function ActividadForm({
       tipo: TipoActividad.Llamada,
     },
   })
+
+  const fechaInicioWatch = useWatch({ control, name: 'fecha_inicio' })
+  const minFechaFin = fechaInicioWatch || nowStr
 
   const inputClass = (hasError: boolean) =>
     `w-full px-4 py-2.5 rounded-xl border text-sm text-gray-900 outline-none
@@ -104,7 +117,16 @@ export function ActividadForm({
             </label>
             <input
               type="datetime-local"
-              {...register('fecha_inicio')}
+              min={nowStr}
+              {...register('fecha_inicio', {
+                onChange: (e) => {
+                  const inicio = e.target.value
+                  const fin = getValues('fecha_fin')
+                  if (fin && inicio && fin < inicio) {
+                    setValue('fecha_fin', inicio, { shouldValidate: true })
+                  }
+                },
+              })}
               className={inputClass(!!errors.fecha_inicio)}
             />
             {errors.fecha_inicio && (
@@ -117,7 +139,16 @@ export function ActividadForm({
             </label>
             <input
               type="datetime-local"
-              {...register('fecha_fin')}
+              min={minFechaFin}
+              {...register('fecha_fin', {
+                onChange: (e) => {
+                  const fin = e.target.value
+                  const inicio = getValues('fecha_inicio')
+                  if (fin && inicio && fin < inicio) {
+                    setValue('fecha_fin', inicio, { shouldValidate: true })
+                  }
+                },
+              })}
               className={inputClass(!!errors.fecha_fin)}
             />
             {errors.fecha_fin && (

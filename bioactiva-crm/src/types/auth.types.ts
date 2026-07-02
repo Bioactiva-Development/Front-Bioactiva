@@ -106,6 +106,14 @@ export interface ValidateTokenResult {
     message?: string
 }
 
+// Respuesta de GET /reset-password/info/:token. No lanza error: los estados
+// del token llegan como booleanos para decidir qué pantalla mostrar.
+export interface ResetPasswordInfoResponse {
+    correo: string
+    expired: boolean
+    used: boolean
+}
+
 
 export interface UserToken {
     id: number

@@ -17,7 +17,9 @@ jest.mock('react-hook-form', () => ({
     register: mockRegister,
     handleSubmit: mockHandleSubmit,
     formState: { errors: {} },
+    control: {},
   }),
+  useWatch: jest.fn(() => undefined),
 }))
 
 jest.mock('@hookform/resolvers/zod', () => ({
@@ -28,6 +30,7 @@ jest.mock('@/hooks/organizaciones/useOrganizaciones', () => ({
   useOrganizaciones: jest.fn(() => ({
     data: { data: [{ id: '1', nombre: 'Org A' }, { id: '2', nombre: 'Org B' }] },
   })),
+  useOrganizacion: jest.fn(() => ({ data: null })),
 }))
 
 jest.mock('@/lib/constants/routes', () => ({
@@ -42,6 +45,8 @@ jest.mock('lucide-react', () => ({
   Mail: () => <span data-testid="icon-mail" />,
   Phone: () => <span data-testid="icon-phone" />,
   Building2: () => <span data-testid="icon-building" />,
+  Search: () => <span data-testid="icon-search" />,
+  X: () => <span data-testid="icon-x" />,
 }))
 
 const baseContacto: Contacto = {
@@ -75,14 +80,12 @@ describe('modules/contactos/ContactoForm', () => {
       render(<ContactoForm {...defaultProps} />)
     })
 
-    it('renders organization select with default option', () => {
-      expect(screen.getByLabelText('Organización *')).toBeInTheDocument()
-      expect(screen.getByText('Seleccionar organización...')).toBeInTheDocument()
+    it('renders organization search input', () => {
+      expect(screen.getByPlaceholderText('Buscar organización...')).toBeInTheDocument()
     })
 
-    it('renders organization options from useOrganizaciones data', () => {
-      expect(screen.getByText('Org A')).toBeInTheDocument()
-      expect(screen.getByText('Org B')).toBeInTheDocument()
+    it('renders organization section label', () => {
+      expect(screen.getByText(/organización/i)).toBeInTheDocument()
     })
 
     it('renders vocativo select with enum options', () => {

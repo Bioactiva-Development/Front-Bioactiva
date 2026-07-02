@@ -72,8 +72,7 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
 
       {/* Tamaño — oculto en móvil y tablet, visible en md+ */}
       <td className="hidden md:table-cell px-4 py-3">
-        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs
-          font-bold uppercase tracking-wide
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
           ${TAMAÑO_COLORS[organizacion.tamano]}`}>
           {formatTamano(organizacion.tamano)}
         </span>
@@ -83,6 +82,7 @@ export function OrganizacionCard({ organizacion }: Readonly<OrganizacionCardProp
       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={handleVerDetalle}
+          aria-label={`Ver detalle de ${organizacion.nombre}`}
           className="p-2 rounded-lg text-gray-400 hover:text-emerald-600
             hover:bg-emerald-50 transition-colors"
         >

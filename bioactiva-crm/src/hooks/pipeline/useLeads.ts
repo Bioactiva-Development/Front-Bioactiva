@@ -232,11 +232,10 @@ export function useCrearLead() {
       return leadsService.create(data)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] })
-      queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
-      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.invalidateQueries({ queryKey: ['organizaciones'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'pipeline'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'column'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'metrics'] })
     },
   })
 }
@@ -249,11 +248,11 @@ export function useActualizarLead(id: number) {
       return leadsService.update(id, data)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] })
-      queryClient.invalidateQueries({ queryKey: ['notificaciones'] })
-      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.invalidateQueries({ queryKey: ['organizaciones'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'pipeline'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'column'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.leads.detail(id) })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'metrics'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
@@ -269,11 +268,14 @@ export function useActualizarEstadoLead() {
       const lead = await leadsService.getById(id)
       return syncLeadAndCotizacionState(lead, estado)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] })
-      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.invalidateQueries({ queryKey: ['organizaciones'] })
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['leads', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'pipeline'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'column'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.leads.detail(variables.id) })
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones', 'list'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.byLead(variables.id) })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'metrics'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
@@ -286,11 +288,13 @@ export function useEliminarLead() {
 
   return useMutation({
     mutationFn: (id: number) => leadsService.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] })
-      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.invalidateQueries({ queryKey: ['organizaciones'] })
+    onSuccess: (_data, leadId) => {
+      queryClient.invalidateQueries({ queryKey: ['leads', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'pipeline'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'column'] })
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones', 'list'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.byLead(leadId) })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'metrics'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
@@ -306,7 +310,7 @@ export function useMoverLeadPipeline() {
       return syncLeadAndCotizacionState(lead, estado)
     },
     onMutate: async ({ lead, estado }) => {
-      await queryClient.cancelQueries({ queryKey: ['leads'] })
+      await queryClient.cancelQueries({ queryKey: ['leads', 'pipeline'] })
 
       const previousPipelineQueries =
         queryClient.getQueriesData<PipelineData>({
@@ -332,10 +336,14 @@ export function useMoverLeadPipeline() {
 
       return { previousPipelineQueries, previousLead, leadId: lead.id }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] })
-      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['leads', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'pipeline'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'column'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.leads.detail(variables.lead.id) })
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones', 'list'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.byLead(variables.lead.id) })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'metrics'] })
     },
     onError: (err: unknown, _variables, context) => {
       context?.previousPipelineQueries.forEach(([queryKey, pipeline]) => {

@@ -67,17 +67,18 @@ describe('security/auth.mock (implementation)', () => {
       expect(result.correo).toContain('@bioactiva.pe')
     })
 
-    it('throws for consumed token', async () => {
-      // Consumed token is not in the list, will be treated as unknown
-      await expect(
-        mockValidateToken('token-inexistente'),
-      ).rejects.toMatchObject({ status: 400 })
+    // Emula GET /reset-password/info/:token: no lanza error, devuelve
+    // { valid: false, message } para que la UI decida qué pantalla mostrar.
+    it('returns invalid result for unknown/consumed token', async () => {
+      const result = await mockValidateToken('token-inexistente')
+      expect(result.valid).toBe(false)
+      expect(result.message).toContain('utilizado')
     })
 
-    it('throws for expired token', async () => {
-      await expect(
-        mockValidateToken('token-expirado-789'),
-      ).rejects.toMatchObject({ status: 400, message: expect.stringContaining('expirado') })
+    it('returns invalid result for expired token', async () => {
+      const result = await mockValidateToken('token-expirado-789')
+      expect(result.valid).toBe(false)
+      expect(result.message).toContain('expirado')
     })
   })
 

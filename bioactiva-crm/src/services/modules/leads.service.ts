@@ -221,20 +221,22 @@ export const leadsService = {
   },
 
   getByContacto: async (idContacto: number): Promise<Lead[]> => {
-    const firstPage = await fetchLeadsPage({ page: 1, limit: PAGE_SIZE_PIPELINE })
-    const totalPages = firstPage.limit > 0
-      ? Math.ceil(firstPage.total / firstPage.limit)
-      : 1
-
-    const remaining = await Promise.all(
-      Array.from({ length: Math.max(totalPages - 1, 0) }, (_, i) =>
-        fetchLeadsPage({ page: i + 2, limit: PAGE_SIZE_PIPELINE })
+    if (USE_MOCK) {
+      const firstPage = await fetchLeadsPage({ page: 1, limit: PAGE_SIZE_PIPELINE })
+      const totalPages = firstPage.limit > 0
+        ? Math.ceil(firstPage.total / firstPage.limit)
+        : 1
+      const remaining = await Promise.all(
+        Array.from({ length: Math.max(totalPages - 1, 0) }, (_, i) =>
+          fetchLeadsPage({ page: i + 2, limit: PAGE_SIZE_PIPELINE })
+        )
       )
-    )
-
-    return [firstPage, ...remaining]
-      .flatMap((page) => page.data)
-      .filter((lead) => lead.id_contacto === idContacto)
+      return [firstPage, ...remaining]
+        .flatMap((page) => page.data)
+        .filter((lead) => lead.id_contacto === idContacto)
+    }
+    const response = await fetchLeadsPage({ id_contacto: idContacto })
+    return response.data
   },
 
   getAll: async (filtros?: LeadFiltros): Promise<LeadsResponse> => {

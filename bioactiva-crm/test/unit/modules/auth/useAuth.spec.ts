@@ -98,7 +98,7 @@ describe('security/useAuth', () => {
 
     expect(authServiceMock.forgotPassword).toHaveBeenCalledWith('admin@bioactiva.pe', undefined)
     expect(result.current.success).toBe(
-      'Si el correo está registrado en el sistema, recibirás un enlace de recuperación en los próximos minutos.'
+      'Si el correo está registrado, te enviamos un enlace de recuperación. Revisa tu bandeja y spam.'
     )
   })
 
@@ -223,6 +223,19 @@ describe('security/useAuth', () => {
     })
 
     expect(result.current.error).toBe('Error de red')
+  })
+
+  it('maps a 401 on forgot password to a captcha verification message', async () => {
+    authServiceMock.forgotPassword.mockRejectedValueOnce({ status: 401, message: 'Unauthorized' })
+
+    const { result } = renderHook(() => useAuth())
+
+    const enviado = await act(async () =>
+      result.current.forgotPassword({ correo: 'admin@bioactiva.pe' })
+    )
+
+    expect(enviado).toBe(false)
+    expect(result.current.error).toBe('Verificación fallida, reintenta el captcha.')
   })
 
   it('handles login error that is an Error instance', async () => {

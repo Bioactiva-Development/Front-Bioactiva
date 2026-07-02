@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Suspense, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -7,6 +7,7 @@ import { SEMAFORO_UI } from '@/lib/utils/semaforo.utils'
 import { formatLeadDateOnly } from '@/lib/utils/lead-date.utils'
 import { useMoverLeadPipeline, usePipelineColumns } from '@/hooks/pipeline/useLeads'
 import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { KanbanBoard } from '@/components/modules/pipeline/KanbanBoard'
 import { LeadFiltros } from '@/components/modules/pipeline/LeadFiltros'
 import { LeadDrawer } from '@/components/modules/pipeline/LeadDrawer'
@@ -54,7 +55,7 @@ function LeadListItem({ lead, onClick }: { lead: Lead; onClick: (lead: Lead) => 
           {lead.tiene_alerta && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase
               px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-              <Clock size={9} /> {lead.alerta_motivo ?? '+30 días sin avance'}
+              <Clock size={12} /> {lead.alerta_motivo ?? '+30 días sin avance'}
             </span>
           )}
         </div>
@@ -77,13 +78,13 @@ function LeadListItem({ lead, onClick }: { lead: Lead; onClick: (lead: Lead) => 
 
       {lead.encargado_nombre && (
         <div className="mt-2 flex items-center gap-1.5">
-          <User size={11} className="text-gray-300 shrink-0" />
+          <User size={12} className="text-gray-300 shrink-0" />
           <p className="text-xs text-gray-500 truncate">{lead.encargado_nombre}</p>
         </div>
       )}
 
       <div className="mt-2 flex items-center gap-1.5 text-[10px] text-gray-400">
-        <Calendar size={11} className="shrink-0" />
+        <Calendar size={12} className="shrink-0" />
         Creado el {formatLeadDateOnly(lead.created_at)}
       </div>
     </button>
@@ -125,7 +126,7 @@ function filtrosFromParams(sp: URLSearchParams): FiltrosType {
   if (fechaHasta) filtros.fecha_hasta = fechaHasta
 
   const ALERTAS: ActivityAlert[] = [
-    'SIN_ACTIVIDADES', 'PENDIENTE', 'EN_RIESGO', 'POR_VENCER',
+    'SIN_ACTIVIDADES', 'PENDIENTE', 'POR_VENCER',
   ]
   const alerta = sp.get('alertaActividad')
   if (alerta && (ALERTAS as string[]).includes(alerta)) {
@@ -220,26 +221,21 @@ function PipelineContent() {
 
   return (
     <div className="space-y-4">
-
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 bg-white border border-gray-100
-          rounded-xl px-1 py-1 shadow-sm">
-          <button className="px-4 py-2 rounded-lg text-sm font-semibold
-            bg-emerald-50 text-emerald-700">
-            Pipeline
+      <PageHeader
+        titulo="Pipeline comercial"
+        descripcion="Seguimiento de leads por etapa comercial"
+        acciones={
+          <button
+            onClick={() => router.push('/pipeline/nuevo')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl
+              bg-emerald-600 hover:bg-emerald-700 text-white
+              text-sm font-semibold transition-colors"
+          >
+            <Plus size={16} />
+            Nuevo Lead
           </button>
-        </div>
-        <button
-          onClick={() => router.push('/pipeline/nuevo')}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl
-            bg-emerald-600 hover:bg-emerald-700 text-white
-            text-sm font-semibold transition-colors"
-        >
-          <Plus size={16} />
-          Nuevo Lead
-        </button>
-      </div>
+        }
+      />
 
       {/* Filtros */}
       <LeadFiltros

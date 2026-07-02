@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useRouter } from 'next/navigation'
 import {
@@ -113,7 +113,7 @@ export function CotizacionDetalle({ cotizacion, onEditar }: Readonly<CotizacionD
 
             <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center
               justify-center shrink-0">
-              <DollarSign size={22} className="text-emerald-600" />
+              <DollarSign size={24} className="text-emerald-600" />
             </div>
 
             <div>

@@ -1,8 +1,9 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Search, X, Eye, EyeOff } from 'lucide-react'
+import { PageHeader } from '@/components/layout/PageHeader'
 import {
   usePlantillas,
   useEliminarPlantilla,
@@ -85,34 +86,35 @@ export default function PlantillasPage() {
   return (
     <div className="space-y-3">
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Plantillas de correo</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
-            <span className="text-emerald-600 font-semibold">{activas}</span> activas
-            {todasPlantillas.length - activas > 0 && (
-              <> · <span className="text-gray-400">{todasPlantillas.length - activas} inactivas</span></>
-            )}
-            {' · '}{todasPlantillas.length} total
-          </p>
-        </div>
-        <button
-          onClick={() => router.push('/plantillas/nueva')}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
-            bg-emerald-600 hover:bg-emerald-700 text-white
-            text-sm font-semibold transition-colors w-full sm:w-auto"
-        >
-          <Plus size={16} />
-          Nueva Plantilla
-        </button>
-      </div>
+      <PageHeader
+        titulo="Plantillas de correo"
+        descripcion="Gestión de plantillas para notificaciones y seguimientos comerciales"
+        acciones={
+          <button
+            onClick={() => router.push('/plantillas/nueva')}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+              bg-emerald-600 hover:bg-emerald-700 text-white
+              text-sm font-semibold transition-colors w-full sm:w-auto"
+          >
+            <Plus size={16} />
+            Nueva Plantilla
+          </button>
+        }
+      />
+
+      <p className="text-sm text-gray-400">
+        <span className="text-emerald-600 font-semibold">{activas}</span> activas
+        {todasPlantillas.length - activas > 0 && (
+          <> · <span className="text-gray-400">{todasPlantillas.length - activas} inactivas</span></>
+        )}
+        {' · '}{todasPlantillas.length} total
+      </p>
 
       {/* Filtros inline */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <Search
-            size={15}
+            size={16}
             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
           />
           <input
@@ -145,7 +147,7 @@ export default function PlantillasPage() {
               : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
             }`}
         >
-          {includeInactive ? <Eye size={15} /> : <EyeOff size={15} />}
+          {includeInactive ? <Eye size={16} /> : <EyeOff size={16} />}
           {includeInactive ? 'Con inactivas' : 'Solo activas'}
         </button>
       </div>
@@ -172,17 +174,17 @@ export default function PlantillasPage() {
           <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-emerald-700 text-white">
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+              <tr className="border-b border-gray-100">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Plantilla
                 </th>
-                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Estado
                 </th>
-                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Creada
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Acciones
                 </th>
               </tr>

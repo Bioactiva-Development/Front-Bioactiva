@@ -11,13 +11,14 @@ import { ROUTES } from '@/lib/constants/routes'
 import { useProactiveRefresh } from '@/hooks/auth/useProactiveRefresh'
 
 const MAX_AGE = 8 * 60 * 60
+const SECURE = process.env.NODE_ENV === 'production' ? '; Secure' : ''
 
 function setCookie(name: string, value: string): void {
-    document.cookie = `${name}=${value}; path=/; max-age=${MAX_AGE}; SameSite=Lax`
+    document.cookie = `${name}=${value}; path=/; max-age=${MAX_AGE}; SameSite=Lax${SECURE}`
 }
 
 function clearCookie(name: string): void {
-    document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`
+    document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax${SECURE}`
 }
 
 export default function DashboardLayout({
@@ -80,7 +81,7 @@ export default function DashboardLayout({
                     <Navbar />
                 </div>
 
-                <main className="flex-1 p-4 sm:p-6 print:p-6">
+                <main id="main-content" className="flex-1 p-4 sm:p-6 print:p-6">
                     {children}
                 </main>
             </div>

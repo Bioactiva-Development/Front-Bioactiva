@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Loader2, Trash2 } from 'lucide-react'
 import { Invitacion } from '@/types/usuario.types'
@@ -90,9 +90,9 @@ export function UsuarioItem({ invitacion, onRevoke, isRevoking }: Readonly<Usuar
                         className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         {isRevoking ? (
-                            <Loader2 size={15} className="animate-spin" />
+                            <Loader2 size={16} className="animate-spin" />
                         ) : (
-                            <Trash2 size={15} />
+                            <Trash2 size={16} />
                         )}
                     </button>
                 )}

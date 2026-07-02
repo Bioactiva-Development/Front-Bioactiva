@@ -1,12 +1,10 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import { Calendar, Clock, ExternalLink, User } from 'lucide-react'
 import { Lead } from '@/types/lead.types'
-import { EstadoCot, TipoMoneda } from '@/types/enums'
-import { Cotizacion } from '@/types/cotizacion.types'
-import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
+import { TipoMoneda } from '@/types/enums'
 import { SEMAFORO_UI } from '@/lib/utils/semaforo.utils'
 import { formatLeadDateOnly } from '@/lib/utils/lead-date.utils'
 
@@ -24,10 +22,6 @@ function avatarColor(name: string): string {
 
 function initials(name: string): string {
   return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
-}
-
-function cotizacionActiva(cots: Cotizacion[]): Cotizacion | null {
-  return cots.find((c) => c.estado !== EstadoCot.Rechazada) ?? null
 }
 
 function formatMonto(monto: number, tipo: TipoMoneda): string {
@@ -54,8 +48,7 @@ export function LeadCard({
   const cardRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
 
-  const { data: cotizaciones = [] } = useCotizacionesPorLead(lead.id)
-  const cot = cotizacionActiva(cotizaciones)
+  const cot = lead.cotizacion_activa ?? null
 
   useEffect(() => {
     const el = cardRef.current
@@ -110,7 +103,7 @@ export function LeadCard({
       className="text-gray-300 hover:text-emerald-600 transition-colors
         p-0.5 rounded cursor-pointer shrink-0"
     >
-      <ExternalLink size={13} />
+      <ExternalLink size={14} />
     </button>
   )
 
@@ -193,7 +186,7 @@ export function LeadCard({
 
       {/* Fecha de creación del lead */}
       <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-        <Calendar size={11} className="shrink-0" />
+        <Calendar size={12} className="shrink-0" />
         Creado el {formatLeadDateOnly(lead.created_at)}
       </div>
     </div>

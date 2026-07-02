@@ -49,6 +49,8 @@ describe('actividades.mapper', () => {
       idResponsable: 3,
       tipo: 'LLAMADA',
       estado: 'PENDIENTE',
+      page: 1,
+      limit: 100,
     })
 
     expect(toCreateActividadDto({

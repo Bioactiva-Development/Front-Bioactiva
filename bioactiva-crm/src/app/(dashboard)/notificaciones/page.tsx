@@ -1,9 +1,9 @@
-'use client'
+﻿'use client'
 
 import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { useAuthStore } from '@/store'
-import { RolUsuario } from '@/types/enums'
 import { usePerfil } from '@/hooks/perfil/usePerfil'
 import { useLeads } from '@/hooks/pipeline/useLeads'
 import {
@@ -43,7 +43,7 @@ const TITULOS: Record<Seccion, string> = {
   calendario: 'Calendario',
 }
 
-const NOTIFICATIONS_PAGE_SIZE = 10
+const NOTIFICATIONS_PAGE_SIZE = 6
 
 export default function NotificacionesPage() {
   const [seccion, setSeccion] = useState<Seccion>('historial')
@@ -54,8 +54,7 @@ export default function NotificacionesPage() {
   const [seguimientoEditar, setSeguimientoEditar] =
     useState<NotificacionProgramada | null>(null)
   const usuario = useAuthStore((state) => state.usuario)
-  const idResponsable =
-    usuario?.rol === RolUsuario.Trabajador ? usuario.id : undefined
+  const idResponsable = usuario?.id
 
   const { data: programadasResponse, isLoading: loadingProgramadas } =
     useNotificacionesProgramadas({
@@ -94,7 +93,6 @@ export default function NotificacionesPage() {
     integraciones,
     integracionInfo,
     isLoadingIntegracion,
-    conectarMicrosoft,
     desconectarMicrosoft,
   } = usePerfil()
 
@@ -154,37 +152,28 @@ export default function NotificacionesPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1500px] space-y-5">
-      <header>
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-600">
-          Centro de notificaciones
-        </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-950">
-          {TITULOS[seccion]}
-        </h1>
-        {idResponsable && seccion === 'historial' && (
-          <p className="mt-1 text-xs text-gray-500">
-            Mostrando programaciones asociadas a tu usuario.
-          </p>
-        )}
-      </header>
+      <PageHeader
+        titulo={TITULOS[seccion]}
+        descripcion="Programación y gestión de recordatorios, seguimientos y eventos de calendario"
+      />
 
-      <nav className="flex flex-wrap gap-2" aria-label="Vistas de notificaciones">
+      <div className="flex items-center gap-0.5 sm:gap-1 bg-white border border-gray-100
+        rounded-xl px-1 sm:px-1.5 py-1 sm:py-1.5 shadow-sm w-full">
         {SECCIONES.map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => navigate(item.id)}
-            aria-current={seccion === item.id ? 'page' : undefined}
-            className={`rounded-full border px-4 py-2 text-sm font-semibold shadow-sm transition-colors ${
+            className={`flex-1 text-center py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
               seccion === item.id
-                ? 'border-emerald-600 bg-emerald-600 text-white'
-                : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-200 hover:text-emerald-700'
+                ? 'bg-emerald-50 text-emerald-700'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
           >
             {item.label}
           </button>
         ))}
-      </nav>
+      </div>
 
       {formError && seccion === 'historial' && (
         <Feedback tone="error">{formError}</Feedback>
@@ -235,7 +224,7 @@ export default function NotificacionesPage() {
               onEdit={iniciarEdicion}
             />
             <HistoryColumn
-              title="Vencidas"
+              title="Enviadas"
               tone="expired"
               notifications={vencidas}
               loading={loadingVencidas}
@@ -254,7 +243,6 @@ export default function NotificacionesPage() {
           integraciones={integraciones}
           integracionInfo={integracionInfo}
           isLoadingIntegracion={isLoadingIntegracion}
-          onConnect={() => conectarMicrosoft('/notificaciones')}
           onDisconnect={desconectarMicrosoft}
         />
       )}
@@ -286,6 +274,9 @@ function HistoryColumn({
   leadsPorId,
 }: Readonly<HistoryColumnProps>) {
   const scheduled = tone === 'scheduled'
+  const countLabel = scheduled
+    ? count === 1 ? 'programada' : 'programadas'
+    : count === 1 ? 'vencida' : 'vencidas'
 
   return (
     <section className="min-h-80 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -295,8 +286,12 @@ function HistoryColumn({
           <h2 className="text-lg font-bold text-gray-950">{title}</h2>
         </div>
         {typeof count === 'number' && (
-          <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-600">
-            {count} {count === 1 ? 'activa' : 'activas'}
+          <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${
+            scheduled
+              ? 'border-blue-200 bg-blue-50 text-blue-600'
+              : 'border-red-200 bg-red-50 text-red-600'
+          }`}>
+            {count} {countLabel}
           </span>
         )}
       </div>
@@ -304,7 +299,7 @@ function HistoryColumn({
         {loading && <LoadingMessage />}
         {!loading && notifications.length === 0 && (
           <EmptyMessage>
-            No hay notificaciones {scheduled ? 'programadas' : 'vencidas'}.
+            No hay notificaciones {scheduled ? 'programadas' : 'enviadas'}.
           </EmptyMessage>
         )}
         {notifications.map((notificacion) => {
@@ -351,7 +346,7 @@ function Pagination({
           disabled={meta.page <= 1}
           className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 disabled:opacity-40"
         >
-          <ChevronLeft size={15} />
+          <ChevronLeft size={16} />
         </button>
         <button
           type="button"
@@ -360,7 +355,7 @@ function Pagination({
           disabled={meta.page >= totalPages}
           className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 disabled:opacity-40"
         >
-          <ChevronRight size={15} />
+          <ChevronRight size={16} />
         </button>
       </div>
     </div>

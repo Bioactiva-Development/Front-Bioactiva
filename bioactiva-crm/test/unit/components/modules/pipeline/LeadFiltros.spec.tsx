@@ -10,11 +10,11 @@ jest.mock('@/hooks/organizaciones/useOrganizaciones', () => ({
   useOrganizacion: () => ({ data: undefined }),
 }))
 
-const getUsuarios = jest.fn().mockResolvedValue({
-  usuarios: [{ id: 3, nombres: 'Carlos', apellidos: 'López', correo: 'c@x.com' }],
-})
+const getAssignables = jest.fn().mockResolvedValue([
+  { id: 3, nombres: 'Carlos', apellidos: 'López', correo: 'c@x.com' },
+])
 jest.mock('@/services/modules/usuarios.service', () => ({
-  usuariosService: { getUsuarios: (...args: unknown[]) => getUsuarios(...args) },
+  usuariosService: { getAssignables: (...args: unknown[]) => getAssignables(...args) },
 }))
 
 // El panel de filtros está colapsado por defecto; lo abrimos antes de aseverar.
@@ -36,8 +36,8 @@ describe('modules/pipeline/LeadFiltros', () => {
     expect(screen.getByText('Todas')).toBeInTheDocument()
     expect(screen.getByText('Sin actividades')).toBeInTheDocument()
     expect(screen.getByText('Pendiente')).toBeInTheDocument()
-    expect(screen.getByText('En riesgo')).toBeInTheDocument()
     expect(screen.getByText('Por vencer')).toBeInTheDocument()
+    expect(screen.queryByText('En riesgo')).not.toBeInTheDocument()
   })
 
   it('emits alerta_actividad when a semáforo option is clicked', async () => {
@@ -62,7 +62,7 @@ describe('modules/pipeline/LeadFiltros', () => {
     const onChange = jest.fn()
     render(<LeadFiltros filtros={{}} onChange={onChange} onLimpiar={jest.fn()} />)
     await abrirFiltros()
-    await waitFor(() => expect(getUsuarios).toHaveBeenCalled())
+    await waitFor(() => expect(getAssignables).toHaveBeenCalled())
 
     const estadoSelect = screen.getByLabelText('Estado')
     await userEvent.selectOptions(estadoSelect, LeadState.Ofertado)

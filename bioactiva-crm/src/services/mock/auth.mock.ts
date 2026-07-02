@@ -114,19 +114,21 @@ export const mockForgotPassword = async (_correo: string): Promise<ForgotPasswor
     return { ok: true }
 }
 
+// Emula GET /reset-password/info/:token: no lanza error, devuelve el estado
+// del token para que el formulario decida qué pantalla mostrar.
 export const mockValidateToken = async (token: string): Promise<ValidateTokenResponse> => {
     await delay(400)
 
     const mockToken = MOCK_TOKENS.find((t) => t.token === token)
 
     if (!mockToken || mockToken.estado === EstadoToken.Consumido) {
-        throw Object.assign(new Error('Token de restablecimiento de contraseña inválido o ya utilizado.'), { status: 400 })
+        return { valid: false, message: 'El enlace de recuperación ya fue utilizado. Solicita uno nuevo.' }
     }
 
     const ahora = new Date()
     const expiracion = new Date(mockToken.expires_at)
     if (ahora > expiracion || mockToken.estado === EstadoToken.Expirado) {
-        throw Object.assign(new Error('El token de restablecimiento de contraseña ha expirado.'), { status: 400 })
+        return { valid: false, message: 'El enlace de recuperación ha expirado. Solicita uno nuevo.' }
     }
 
     return { valid: true, correo: ofuscarCorreo(mockToken.correo) }

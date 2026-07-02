@@ -23,7 +23,11 @@ export function ModalShell({ onClose, maxWidth = 'md', children }: Readonly<Moda
                 aria-label="Cerrar modal"
                 tabIndex={-1}
             />
-            <div className={`relative z-10 w-full ${maxWidthClass[maxWidth]} bg-white rounded-2xl shadow-2xl`}>
+            <div
+                role="dialog"
+                aria-modal="true"
+                className={`relative z-10 w-full ${maxWidthClass[maxWidth]} bg-white rounded-2xl shadow-2xl`}
+            >
                 {children}
             </div>
         </div>

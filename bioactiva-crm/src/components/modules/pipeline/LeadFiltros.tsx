@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, Filter, X } from 'lucide-react'
 import { LeadFiltros as FiltrosType, ActivityAlert } from '@/types/lead.types'
-import { EstadoUsuario, LeadState, Sector, TipoEmpresa } from '@/types/enums'
+import { LeadState, Sector, TipoEmpresa } from '@/types/enums'
 import { usuariosService } from '@/services/modules/usuarios.service'
-import { UsuarioListItem } from '@/types/usuario.types'
+import { AssignableUsuario } from '@/types/usuario.types'
 import { OrgBuscador } from '@/components/ui/OrgBuscador/OrgBuscador'
 import { formatSector, formatTipo } from '@/lib/utils/organizacion.utils'
 
@@ -25,14 +25,14 @@ interface ResponsableOption {
   nombre: string
 }
 
-const toResponsableOption = (usuario: UsuarioListItem): ResponsableOption => ({
+const toResponsableOption = (usuario: AssignableUsuario): ResponsableOption => ({
   id: usuario.id,
   nombre: `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.correo,
 })
 
 // Semáforo de actividades (backend: alertaActividad). Mismos valores que el
 // campo activityAlert del lead. "Todas" = sin filtro. Severidad de menor a mayor:
-// SIN_ACTIVIDADES < PENDIENTE < EN_RIESGO < POR_VENCER.
+// SIN_ACTIVIDADES < PENDIENTE < POR_VENCER.
 const SEMAFORO_OPCIONES: {
   value: ActivityAlert | undefined
   label: string
@@ -41,7 +41,6 @@ const SEMAFORO_OPCIONES: {
   { value: undefined,         label: 'Todas',           dots: [] },
   { value: 'SIN_ACTIVIDADES', label: 'Sin actividades', dots: ['bg-emerald-500'] },
   { value: 'PENDIENTE',       label: 'Pendiente',       dots: ['bg-yellow-400'] },
-  { value: 'EN_RIESGO',       label: 'En riesgo',       dots: ['bg-orange-500'] },
   { value: 'POR_VENCER',      label: 'Por vencer',      dots: ['bg-red-500'] },
 ]
 
@@ -108,13 +107,9 @@ export function LeadFiltros({
 
     async function cargarResponsables() {
       try {
-        const response = await usuariosService.getUsuarios({
-          estado: EstadoUsuario.Activo,
-          limit: 100,
-        })
-
+        const assignables = await usuariosService.getAssignables()
         if (!isMounted) return
-        setResponsables(response.usuarios.map(toResponsableOption))
+        setResponsables(assignables.map(toResponsableOption))
       } catch {
         if (!isMounted) return
         setResponsables([])

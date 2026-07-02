@@ -1,15 +1,13 @@
-import { LeadState, Sector, TipoEmpresa } from './enums'
+import { EstadoCot, LeadState, Sector, TipoEmpresa, TipoMoneda } from './enums'
 
 // Semáforo de actividades del lead (backend: activityAlert).
-// Severidad de menor a mayor: SIN_ACTIVIDADES < PENDIENTE < EN_RIESGO < POR_VENCER.
+// Severidad de menor a mayor: SIN_ACTIVIDADES < PENDIENTE < POR_VENCER.
 //  · SIN_ACTIVIDADES = el lead no tiene actividades pendientes.
-//  · PENDIENTE       = tiene pendientes, pero ninguna en riesgo ni próxima a vencer.
-//  · EN_RIESGO       = al menos una pendiente pasó la mitad de su ventana de tiempo.
-//  · POR_VENCER      = al menos una pendiente vence en ≤4 días o ya está vencida.
+//  · PENDIENTE       = tiene pendientes, pero ninguna próxima a vencer.
+//  · POR_VENCER      = al menos una pendiente vence en ≤2 días o ya está vencida.
 export type ActivityAlert =
   | 'SIN_ACTIVIDADES'
   | 'PENDIENTE'
-  | 'EN_RIESGO'
   | 'POR_VENCER'
 
 
@@ -38,6 +36,7 @@ export interface Lead {
   tiene_alerta?:boolean
   alerta_motivo?: string
   activity_alert?: ActivityAlert
+  cotizacion_activa?: { id: number; monto: number; tipo: TipoMoneda; estado: EstadoCot } | null
 }
 
 export interface LeadFiltros {
@@ -56,6 +55,8 @@ export interface LeadFiltros {
   // Filtran por fecha de creación del lead (createdAt). ISO 8601.
   fecha_desde?: string
   fecha_hasta?: string
+  // Filtra por el contacto vinculado al lead (GET /leads?idContacto=).
+  id_contacto?: number
   // Si true, devuelve solo los leads asignados al usuario autenticado.
   mis_leads?: boolean
   // Si true, devuelve solo los leads con al menos una actividad pendiente.

@@ -1,6 +1,12 @@
 import { actividadSchema } from '@/lib/validators/actividad.schema'
 import { EstadoActividad, TipoActividad } from '@/types/enums'
 
+const d = (offsetDays: number, hour = 14) => {
+  const dt = new Date(Date.now() + offsetDays * 86_400_000)
+  dt.setHours(hour, 0, 0, 0)
+  return dt.toISOString().slice(0, 16)
+}
+
 describe('validators/actividad.schema', () => {
   it('accepts valid actividad data', () => {
     const result = actividadSchema.parse({
@@ -8,8 +14,8 @@ describe('validators/actividad.schema', () => {
       nombre_actividad: 'Discovery call',
       tipo: TipoActividad.Llamada,
       estado: EstadoActividad.Pendiente,
-      fecha_inicio: '2026-06-10T14:00',
-      fecha_fin: '2026-06-10T15:00',
+      fecha_inicio: d(1, 14),
+      fecha_fin: d(1, 15),
     })
     expect(result.nombre_actividad).toBe('Discovery call')
     expect(result.tipo).toBe(TipoActividad.Llamada)
@@ -21,8 +27,8 @@ describe('validators/actividad.schema', () => {
       nombre_actividad: 'Follow-up',
       tipo: TipoActividad.Email,
       estado: EstadoActividad.Completada,
-      fecha_inicio: '2026-06-11T10:00',
-      fecha_fin: '2026-06-11T11:00',
+      fecha_inicio: d(2, 10),
+      fecha_fin: d(2, 11),
       notas: 'Cliente confirmó interés',
     })
     expect(result.notas).toBe('Cliente confirmó interés')
@@ -34,8 +40,8 @@ describe('validators/actividad.schema', () => {
       nombre_actividad: 'Call',
       tipo: TipoActividad.Llamada,
       estado: EstadoActividad.Pendiente,
-      fecha_inicio: '2026-06-10T14:00',
-      fecha_fin: '2026-06-10T15:00',
+      fecha_inicio: d(1, 14),
+      fecha_fin: d(1, 15),
       notas: '',
     })
     expect(result.notas).toBe('')
@@ -47,8 +53,8 @@ describe('validators/actividad.schema', () => {
         nombre_actividad: 'Test',
         tipo: TipoActividad.Llamada,
         estado: EstadoActividad.Pendiente,
-        fecha_inicio: '2026-06-10T14:00',
-        fecha_fin: '2026-06-10T15:00',
+        fecha_inicio: d(1, 14),
+        fecha_fin: d(1, 15),
       })
     ).toThrow()
   })
@@ -60,8 +66,8 @@ describe('validators/actividad.schema', () => {
         nombre_actividad: '',
         tipo: TipoActividad.Llamada,
         estado: EstadoActividad.Pendiente,
-        fecha_inicio: '2026-06-10T14:00',
-        fecha_fin: '2026-06-10T15:00',
+        fecha_inicio: d(1, 14),
+        fecha_fin: d(1, 15),
       })
     ).toThrow('El nombre de la actividad es obligatorio')
   })
@@ -73,8 +79,8 @@ describe('validators/actividad.schema', () => {
         nombre_actividad: 'X'.repeat(91),
         tipo: TipoActividad.Llamada,
         estado: EstadoActividad.Pendiente,
-        fecha_inicio: '2026-06-10T14:00',
-        fecha_fin: '2026-06-10T15:00',
+        fecha_inicio: d(1, 14),
+        fecha_fin: d(1, 15),
       })
     ).toThrow('Máximo 90 caracteres')
   })
@@ -86,8 +92,8 @@ describe('validators/actividad.schema', () => {
         nombre_actividad: 'Call',
         tipo: TipoActividad.Llamada,
         estado: EstadoActividad.Pendiente,
-        fecha_inicio: '2026-06-10T14:00',
-        fecha_fin: '2026-06-10T15:00',
+        fecha_inicio: d(1, 14),
+        fecha_fin: d(1, 15),
         notas: 'X'.repeat(1001),
       })
     ).toThrow('Máximo 1000 caracteres')
@@ -99,8 +105,8 @@ describe('validators/actividad.schema', () => {
       nombre_actividad: 'Call',
       tipo: TipoActividad.Llamada,
       estado: EstadoActividad.Pendiente,
-      fecha_inicio: '2026-06-10T14:00',
-      fecha_fin: '2026-06-10T15:00',
+      fecha_inicio: d(1, 14),
+      fecha_fin: d(1, 15),
       id_responsable: 0,
     })
     expect(result).not.toHaveProperty('id_responsable')
@@ -113,10 +119,23 @@ describe('validators/actividad.schema', () => {
         nombre_actividad: 'Call',
         tipo: TipoActividad.Llamada,
         estado: EstadoActividad.Pendiente,
-        fecha_inicio: '2026-06-10T15:00',
-        fecha_fin: '2026-06-10T14:00',
+        fecha_inicio: d(1, 15),
+        fecha_fin: d(1, 14),
       })
-    ).toThrow('La fecha es obligatoria')
+    ).toThrow('La fecha de fin debe ser igual o posterior a la fecha de inicio')
+  })
+
+  it('rejects fecha_inicio in the past', () => {
+    expect(() =>
+      actividadSchema.parse({
+        id_lead: 10,
+        nombre_actividad: 'Call',
+        tipo: TipoActividad.Llamada,
+        estado: EstadoActividad.Pendiente,
+        fecha_inicio: '2020-01-01T10:00',
+        fecha_fin: '2020-01-01T11:00',
+      })
+    ).toThrow('La fecha de inicio no puede ser en el pasado')
   })
 
   it('accepts all TipoActividad enum values', () => {
@@ -126,8 +145,8 @@ describe('validators/actividad.schema', () => {
         nombre_actividad: 'Test',
         tipo,
         estado: EstadoActividad.Pendiente,
-        fecha_inicio: '2026-06-10T14:00',
-        fecha_fin: '2026-06-10T15:00',
+        fecha_inicio: d(1, 14),
+        fecha_fin: d(1, 15),
       })
       expect(result.tipo).toBe(tipo)
     }
@@ -140,8 +159,8 @@ describe('validators/actividad.schema', () => {
         nombre_actividad: 'Test',
         tipo: TipoActividad.Llamada,
         estado,
-        fecha_inicio: '2026-06-10T14:00',
-        fecha_fin: '2026-06-10T15:00',
+        fecha_inicio: d(1, 14),
+        fecha_fin: d(1, 15),
       })
       expect(result.estado).toBe(estado)
     }
