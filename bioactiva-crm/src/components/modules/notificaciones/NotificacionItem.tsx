@@ -203,15 +203,6 @@ export function NotificacionProgramadaItem({
       </p>
 
       <div className="mt-4 flex flex-wrap justify-end gap-2">
-        {puedeEditar && onEdit && (
-          <button
-            type="button"
-            onClick={() => onEdit(notificacion)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100"
-          >
-            <Pencil size={14} /> Editar
-          </button>
-        )}
         <button
           type="button"
           onClick={() => setMostrandoDetalle((visible) => !visible)}
