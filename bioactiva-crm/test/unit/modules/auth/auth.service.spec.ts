@@ -103,13 +103,29 @@ describe('security/auth.service (API mode)', () => {
     })
   })
 
-  it('sends forgot password request', async () => {
+  it('sends forgot password request without captcha header when no token is given', async () => {
     postMock.mockResolvedValueOnce({ data: { ok: true } })
 
     const response = await authService.forgotPassword('admin@bioactiva.pe')
 
-    expect(postMock).toHaveBeenCalledWith('/reset-password/request', { correo: 'admin@bioactiva.pe' })
+    expect(postMock).toHaveBeenCalledWith(
+      '/reset-password/request',
+      { correo: 'admin@bioactiva.pe' },
+      undefined,
+    )
     expect(response).toEqual({ ok: true })
+  })
+
+  it('sends forgot password request with x-recaptcha-token header, same as login', async () => {
+    postMock.mockResolvedValueOnce({ data: { ok: true } })
+
+    await authService.forgotPassword('admin@bioactiva.pe', 'captcha-token-123')
+
+    expect(postMock).toHaveBeenCalledWith(
+      '/reset-password/request',
+      { correo: 'admin@bioactiva.pe' },
+      { headers: { 'x-recaptcha-token': 'captcha-token-123' } },
+    )
   })
 
   it('sends reset password request', async () => {
@@ -125,13 +141,15 @@ describe('security/auth.service (API mode)', () => {
     expect(response).toEqual({ ok: true })
   })
 
-  it('gets token validation from the dynamic endpoint', async () => {
-    postMock.mockResolvedValueOnce({ data: { valid: true, correo: 'admin@bioactiva.pe' } })
+  it('gets token validation from the info endpoint', async () => {
+    getMock.mockResolvedValueOnce({
+      data: { correo: 'a***n@bioactiva.pe', expired: false, used: false },
+    })
 
     const response = await authService.validateToken('token-abc')
 
-    expect(postMock).toHaveBeenCalledWith('/reset-password/validate', { token: 'token-abc' })
-    expect(response).toEqual({ valid: true, correo: 'admin@bioactiva.pe' })
+    expect(getMock).toHaveBeenCalledWith('/reset-password/info/token-abc')
+    expect(response).toEqual({ valid: true, correo: 'a***n@bioactiva.pe' })
   })
 
   it('does not call API on logout (no-op)', async () => {
@@ -142,25 +160,40 @@ describe('security/auth.service (API mode)', () => {
     expect(postMock).not.toHaveBeenCalled()
   })
 
-  it('handles 400 error from validateToken gracefully', async () => {
-    postMock.mockRejectedValueOnce({ status: 400, message: 'El enlace de recuperación ha expirado.' })
+  it('maps expired tokens to an invalid result with a specific message', async () => {
+    getMock.mockResolvedValueOnce({
+      data: { correo: 'a***n@bioactiva.pe', expired: true, used: false },
+    })
 
     const response = await authService.validateToken('expired-token')
 
     expect(response).toEqual({
       valid: false,
-      message: 'El enlace de recuperación ha expirado.',
+      message: 'El enlace de recuperación ha expirado. Solicita uno nuevo.',
     })
   })
 
-  it('handles non-400 error from validateToken gracefully', async () => {
-    postMock.mockRejectedValueOnce({ status: 500, message: 'Server error' })
+  it('maps used tokens to an invalid result with a specific message', async () => {
+    getMock.mockResolvedValueOnce({
+      data: { correo: 'a***n@bioactiva.pe', expired: false, used: true },
+    })
+
+    const response = await authService.validateToken('used-token')
+
+    expect(response).toEqual({
+      valid: false,
+      message: 'El enlace de recuperación ya fue utilizado. Solicita uno nuevo.',
+    })
+  })
+
+  it('handles unexpected errors from validateToken gracefully', async () => {
+    getMock.mockRejectedValueOnce({ status: 500, message: 'Server error' })
 
     const response = await authService.validateToken('bad-token')
 
     expect(response).toEqual({
       valid: false,
-      message: 'Server error',
+      message: 'El enlace de recuperación no es válido o ha expirado.',
     })
   })
 })

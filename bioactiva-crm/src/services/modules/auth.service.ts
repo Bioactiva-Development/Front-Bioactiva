@@ -13,6 +13,7 @@ import {
     RefreshResponse,
     ForgotPasswordResponse,
     ResetPasswordResponse,
+    ResetPasswordInfoResponse,
     ValidateTokenResponse,
     UsuarioRaw,
 } from '@/types/auth.types'
@@ -22,22 +23,14 @@ import { mapUsuarioRaw } from '@/lib/utils/auth.mappers'
 /**
  * Cliente del módulo de autenticación + restablecimiento de contraseña.
  *
- * Rutas del backend NestJS (doc HackMD):
+ * Rutas del backend NestJS:
  *  - POST /auth/login
  *  - POST /auth/refresh                     (cookie)
  *  - GET  /auth/me                          (Bearer)
- *  - POST /reset-password/request           ← antes mal mapeado a /auth/forgot-password
- *  - POST /reset-password/validate          ← antes era GET /auth/validate-token/:t
- *  - POST /reset-password/reset             ← antes mal mapeado a /auth/reset-password
+ *  - POST /reset-password/request
+ *  - GET  /reset-password/info/:token       ← reemplaza a POST /reset-password/validate
+ *  - POST /reset-password/reset
  */
-
-interface AppError {
-    status?: number
-    message?: string
-}
-
-const isAppError = (e: unknown): e is AppError =>
-    typeof e === 'object' && e !== null
 
 export const authService = {
     login: async (data: LoginRequest, captchaToken?: string | null): Promise<LoginResponse> => {
@@ -67,15 +60,20 @@ export const authService = {
     /**
      * Solicita el envío de un correo de recuperación.
      *
-     * El backend siempre responde `{ ok: true }` aunque el correo no exista
-     * (anti-enumeración de usuarios). El frontend debe mostrar siempre un
-     * mensaje neutral del tipo "Si el correo está registrado, recibirás...".
+     * El backend responde siempre `200 { ok: true }`, exista o no la cuenta y
+     * haya o no rate limit (anti-enumeración de usuarios). Dentro de los 5
+     * minutos posteriores a una solicitud no envía otro correo, pero tampoco
+     * lo señala: el cooldown se maneja localmente en el cliente.
+     *
+     * El captcha viaja igual que en login: header `x-recaptcha-token`. Si la
+     * verificación falla, el backend responde `401`.
      */
-    forgotPassword: async (correo: string, _captchaToken?: string | null): Promise<ForgotPasswordResponse> => {
+    forgotPassword: async (correo: string, captchaToken?: string | null): Promise<ForgotPasswordResponse> => {
         if (USE_MOCK) return mockForgotPassword(correo)
         const response = await apiClient.post<{ ok: boolean }>(
             ENDPOINTS.resetPassword.request,
             { correo },
+            captchaToken ? { headers: { 'x-recaptcha-token': captchaToken } } : undefined,
         )
         return { ok: response.data?.ok ?? true }
     },
@@ -83,9 +81,9 @@ export const authService = {
     /**
      * Valida un token de recuperación.
      *
-     * Backend: `POST /reset-password/validate` con `{ token }`.
-     *   - 200 → `{ correo: "u***o@dominio.com" }` (correo ofuscado)
-     *   - 400 → `{ message: "Token inválido o ya utilizado" | "...ha expirado" }`
+     * Backend: `GET /reset-password/info/:token`.
+     *   - 200 → `{ correo: "u***o@dominio.com", expired: boolean, used: boolean }`
+     *     (correo ofuscado; no lanza error para tokens expirados/consumidos).
      *
      * Adaptamos al contrato que espera el formulario:
      *   `{ valid, correo?, message? }`.
@@ -93,20 +91,20 @@ export const authService = {
     validateToken: async (token: string): Promise<ValidateTokenResponse> => {
         if (USE_MOCK) return mockValidateToken(token)
         try {
-            const response = await apiClient.post<{ correo: string }>(
-                ENDPOINTS.resetPassword.validate,
-                { token },
+            const response = await apiClient.get<ResetPasswordInfoResponse>(
+                ENDPOINTS.resetPassword.info(token),
             )
-            return { valid: true, correo: response.data.correo }
-        } catch (err) {
-            const raw = isAppError(err) ? (err.message ?? '') : ''
-            const isTechnical = !raw || /cannot read|undefined|null|prisma|invocation|property of/i.test(raw)
-            return {
-                valid: false,
-                message: isTechnical
-                    ? 'El enlace de recuperación no es válido o ha expirado.'
-                    : raw,
+            const { correo, expired, used } = response.data
+            if (expired) {
+                return { valid: false, message: 'El enlace de recuperación ha expirado. Solicita uno nuevo.' }
             }
+            if (used) {
+                return { valid: false, message: 'El enlace de recuperación ya fue utilizado. Solicita uno nuevo.' }
+            }
+            return { valid: true, correo }
+        } catch {
+            // Token desconocido o error inesperado: misma pantalla de enlace inválido.
+            return { valid: false, message: 'El enlace de recuperación no es válido o ha expirado.' }
         }
     },
 

@@ -14,6 +14,7 @@ import { CurrencyDollarIcon } from '@phosphor-icons/react/dist/csr/CurrencyDolla
 import { TrendUpIcon }        from '@phosphor-icons/react/dist/csr/TrendUp'
 import { CalendarXIcon }      from '@phosphor-icons/react/dist/csr/CalendarX'
 import { ChartLineUpIcon }    from '@phosphor-icons/react/dist/csr/ChartLineUp'
+import { PageHeader } from '@/components/layout/PageHeader'
 import {
   RefreshCw, ChevronDown, ChevronUp, Filter, Calendar, Loader2,
 } from 'lucide-react'
@@ -404,13 +405,10 @@ export default function DashboardPage() {
   return (
     <div className="space-y-3">
 
-      {/* Header */}
-      <div>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Dashboard comercial</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Métricas del periodo seleccionado</p>
-        </div>
-      </div>
+      <PageHeader
+        titulo="Dashboard comercial"
+        descripcion="Visión general del rendimiento comercial y seguimiento de KPIs"
+      />
 
       {/* Filtros colapsables */}
       <div className={`rounded-xl border transition-colors ${filtrosAbiertos ? 'bg-white border-gray-200' : 'bg-white border-gray-200 hover:border-gray-300'}`}>

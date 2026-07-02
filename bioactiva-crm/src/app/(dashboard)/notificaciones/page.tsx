@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { useAuthStore } from '@/store'
 import { usePerfil } from '@/hooks/perfil/usePerfil'
 import { useLeads } from '@/hooks/pipeline/useLeads'
@@ -151,37 +152,28 @@ export default function NotificacionesPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1500px] space-y-5">
-      <header>
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-600">
-          Centro de notificaciones
-        </p>
-        <h1 className="mt-1 text-xl font-bold text-gray-900">
-          {TITULOS[seccion]}
-        </h1>
-        {idResponsable && seccion === 'historial' && (
-          <p className="mt-1 text-xs text-gray-500">
-            Mostrando programaciones asociadas a tu usuario.
-          </p>
-        )}
-      </header>
+      <PageHeader
+        titulo={TITULOS[seccion]}
+        descripcion="Programación y gestión de recordatorios, seguimientos y eventos de calendario"
+      />
 
-      <nav className="flex flex-wrap gap-2" aria-label="Vistas de notificaciones">
+      <div className="flex items-center gap-0.5 sm:gap-1 bg-white border border-gray-100
+        rounded-xl px-1 sm:px-1.5 py-1 sm:py-1.5 shadow-sm w-full">
         {SECCIONES.map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => navigate(item.id)}
-            aria-current={seccion === item.id ? 'page' : undefined}
-            className={`rounded-full border px-4 py-2 text-sm font-semibold shadow-sm transition-colors ${
+            className={`flex-1 text-center py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
               seccion === item.id
-                ? 'border-emerald-600 bg-emerald-600 text-white'
-                : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-200 hover:text-emerald-700'
+                ? 'bg-emerald-50 text-emerald-700'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
           >
             {item.label}
           </button>
         ))}
-      </nav>
+      </div>
 
       {formError && seccion === 'historial' && (
         <Feedback tone="error">{formError}</Feedback>
