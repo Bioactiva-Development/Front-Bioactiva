@@ -62,6 +62,12 @@ export function useActualizarCotizacion(id: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cotizaciones', 'list'] })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.detail(id) })
+      // El Kanban embebe un snapshot de la cotización activa en cada lead
+      // (LeadCard usa lead.cotizacion_activa.monto), que viene de la query de
+      // pipeline/columnas, no de esta. Sin esto, un monto editado queda
+      // desactualizado en el Pipeline hasta el próximo refetch por staleTime.
+      queryClient.invalidateQueries({ queryKey: ['leads', 'pipeline'] })
+      queryClient.invalidateQueries({ queryKey: ['leads', 'column'] })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
