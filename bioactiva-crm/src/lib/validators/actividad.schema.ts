@@ -26,7 +26,16 @@ export const actividadSchema = z
       .string()
       .min(1, 'La fecha de inicio es obligatoria')
       .refine(
-        (val) => !val || new Date(val) >= new Date(),
+        (val) => {
+          if (!val) return true
+          // El input datetime-local solo captura hasta el minuto; comparar
+          // contra un `new Date()` con segundos hace fallar la selección del
+          // minuto actual apenas transcurre un instante. Se redondea "ahora"
+          // al minuto para que coincida con la precisión del valor elegido.
+          const ahora = new Date()
+          ahora.setSeconds(0, 0)
+          return new Date(val) >= ahora
+        },
         'La fecha de inicio no puede ser en el pasado'
       ),
 
