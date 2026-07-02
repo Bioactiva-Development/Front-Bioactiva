@@ -22,6 +22,7 @@ import {
 export interface CambioEstadoResult {
   lead: Lead
   borrador?: Cotizacion
+  cotizacionesIds?: number[]
 }
 
 // El backend crea un borrador PENDIENTE al pasar a OFERTADO y no duplica si el
@@ -152,6 +153,7 @@ async function syncLeadAndCotizacionState(
     return {
       lead: actualizado,
       borrador: detectarBorrador(cotizaciones, cotizacionesActualizadas),
+      cotizacionesIds: cotizacionesActualizadas.map((c) => c.id),
     }
   }
 
@@ -181,10 +183,19 @@ async function syncLeadAndCotizacionState(
       await cotizacionesService.rechazar(cotizacion.id)
     }
 
-    return { lead: await leadsService.getById(lead.id) }
+    const leadActualizado = await leadsService.getById(lead.id)
+    return {
+      lead: leadActualizado,
+      cotizacionesIds: [cotizacion.id],
+    }
   }
 
-  return { lead: await leadsService.updateEstado(lead.id, estado) }
+  const leadActualizado = await leadsService.updateEstado(lead.id, estado)
+  const cotizacionesActualizadas = await cotizacionesService.getByLead(lead.id)
+  return {
+    lead: leadActualizado,
+    cotizacionesIds: cotizacionesActualizadas.map((c) => c.id),
+  }
 }
 
 const PIPELINE_KEY_BY_STATE: Record<
@@ -268,7 +279,7 @@ export function useActualizarEstadoLead() {
       const lead = await leadsService.getById(id)
       return syncLeadAndCotizacionState(lead, estado)
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['leads', 'list'] })
       queryClient.invalidateQueries({ queryKey: ['leads', 'pipeline'] })
       queryClient.invalidateQueries({ queryKey: ['leads', 'column'] })
@@ -276,6 +287,9 @@ export function useActualizarEstadoLead() {
       queryClient.invalidateQueries({ queryKey: ['cotizaciones', 'list'] })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.byLead(variables.id) })
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'metrics'] })
+      data?.cotizacionesIds?.forEach((cotId) => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.detail(cotId) })
+      })
     },
     onError: (err: unknown) => {
       console.error(getErrorMessage(err))
@@ -336,7 +350,7 @@ export function useMoverLeadPipeline() {
 
       return { previousPipelineQueries, previousLead, leadId: lead.id }
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['leads', 'list'] })
       queryClient.invalidateQueries({ queryKey: ['leads', 'pipeline'] })
       queryClient.invalidateQueries({ queryKey: ['leads', 'column'] })
@@ -344,6 +358,9 @@ export function useMoverLeadPipeline() {
       queryClient.invalidateQueries({ queryKey: ['cotizaciones', 'list'] })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.byLead(variables.lead.id) })
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'metrics'] })
+      data?.cotizacionesIds?.forEach((cotId) => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.detail(cotId) })
+      })
     },
     onError: (err: unknown, _variables, context) => {
       context?.previousPipelineQueries.forEach(([queryKey, pipeline]) => {

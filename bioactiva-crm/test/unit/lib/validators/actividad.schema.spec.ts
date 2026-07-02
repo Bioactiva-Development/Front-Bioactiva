@@ -138,6 +138,27 @@ describe('validators/actividad.schema', () => {
     ).toThrow('La fecha de inicio no puede ser en el pasado')
   })
 
+  it('accepts fecha_inicio set to the current minute even if seconds have elapsed', () => {
+    // datetime-local solo captura hasta el minuto (segundos truncados a :00).
+    // Simula el caso real: el usuario elige "ahora" y el parseo/submit ocurre
+    // unos segundos después, dentro del mismo minuto.
+    jest.useFakeTimers().setSystemTime(new Date('2026-07-02T14:35:45.000'))
+    try {
+      const fechaInicio = '2026-07-02T14:35'
+      const result = actividadSchema.parse({
+        id_lead: 10,
+        nombre_actividad: 'Call',
+        tipo: TipoActividad.Llamada,
+        estado: EstadoActividad.Pendiente,
+        fecha_inicio: fechaInicio,
+        fecha_fin: '2026-07-02T15:00',
+      })
+      expect(result.fecha_inicio).toBe(fechaInicio)
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
   it('accepts all TipoActividad enum values', () => {
     for (const tipo of Object.values(TipoActividad)) {
       const result = actividadSchema.parse({

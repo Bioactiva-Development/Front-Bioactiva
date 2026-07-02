@@ -154,6 +154,7 @@ describe('cotizaciones/useCotizaciones', () => {
   describe('useActualizarCotizacion', () => {
     it('updates quotation and invalidates queries', async () => {
       mockUpdate.mockResolvedValueOnce({ id: 5 })
+      const invalidateSpy = jest.spyOn(QueryClient.prototype, 'invalidateQueries')
 
       const { result } = renderHook(() => useActualizarCotizacion(5), { wrapper })
 
@@ -162,6 +163,14 @@ describe('cotizaciones/useCotizaciones', () => {
       })
 
       expect(mockUpdate).toHaveBeenCalledWith(5, { monto: '1000' })
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['cotizaciones', 'list'] })
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['cotizaciones', 5] })
+      // El monto embebido en lead.cotizacion_activa (LeadCard) viene de la
+      // query de pipeline/columnas, no de cotizaciones: sin esto quedaría
+      // desactualizado en el Kanban tras editar la cotización.
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['leads', 'pipeline'] })
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['leads', 'column'] })
+      invalidateSpy.mockRestore()
     })
 
     it('logs error on failure', async () => {

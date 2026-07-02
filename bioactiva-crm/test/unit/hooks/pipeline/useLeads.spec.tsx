@@ -51,6 +51,7 @@ jest.mock('@/lib/constants/queryKeys', () => ({
     },
     cotizaciones: {
       list:   (filters?: unknown) => ['cotizaciones', 'list', filters],
+      detail: (id: number) => ['cotizaciones', id],
       byLead: (leadId: number) => ['cotizaciones', 'lead', leadId],
     },
     dashboard: {
