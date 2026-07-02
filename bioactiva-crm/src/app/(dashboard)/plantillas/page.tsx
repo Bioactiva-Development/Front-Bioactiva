@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Search, X, Eye, EyeOff } from 'lucide-react'
+import { PageHeader } from '@/components/layout/PageHeader'
 import {
   usePlantillas,
   useEliminarPlantilla,
@@ -85,28 +86,29 @@ export default function PlantillasPage() {
   return (
     <div className="space-y-3">
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Plantillas de correo</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
-            <span className="text-emerald-600 font-semibold">{activas}</span> activas
-            {todasPlantillas.length - activas > 0 && (
-              <> · <span className="text-gray-400">{todasPlantillas.length - activas} inactivas</span></>
-            )}
-            {' · '}{todasPlantillas.length} total
-          </p>
-        </div>
-        <button
-          onClick={() => router.push('/plantillas/nueva')}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
-            bg-emerald-600 hover:bg-emerald-700 text-white
-            text-sm font-semibold transition-colors w-full sm:w-auto"
-        >
-          <Plus size={16} />
-          Nueva Plantilla
-        </button>
-      </div>
+      <PageHeader
+        titulo="Plantillas de correo"
+        descripcion="Gestión de plantillas para notificaciones y seguimientos comerciales"
+        acciones={
+          <button
+            onClick={() => router.push('/plantillas/nueva')}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+              bg-emerald-600 hover:bg-emerald-700 text-white
+              text-sm font-semibold transition-colors w-full sm:w-auto"
+          >
+            <Plus size={16} />
+            Nueva Plantilla
+          </button>
+        }
+      />
+
+      <p className="text-sm text-gray-400">
+        <span className="text-emerald-600 font-semibold">{activas}</span> activas
+        {todasPlantillas.length - activas > 0 && (
+          <> · <span className="text-gray-400">{todasPlantillas.length - activas} inactivas</span></>
+        )}
+        {' · '}{todasPlantillas.length} total
+      </p>
 
       {/* Filtros inline */}
       <div className="flex items-center gap-3">

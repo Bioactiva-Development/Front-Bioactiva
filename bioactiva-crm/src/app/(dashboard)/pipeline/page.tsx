@@ -7,6 +7,7 @@ import { SEMAFORO_UI } from '@/lib/utils/semaforo.utils'
 import { formatLeadDateOnly } from '@/lib/utils/lead-date.utils'
 import { useMoverLeadPipeline, usePipelineColumns } from '@/hooks/pipeline/useLeads'
 import { useCotizacionesPorLead } from '@/hooks/cotizaciones/useCotizaciones'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { KanbanBoard } from '@/components/modules/pipeline/KanbanBoard'
 import { LeadFiltros } from '@/components/modules/pipeline/LeadFiltros'
 import { LeadDrawer } from '@/components/modules/pipeline/LeadDrawer'
@@ -220,27 +221,21 @@ function PipelineContent() {
 
   return (
     <div className="space-y-4">
-      <h1 className="sr-only">Pipeline comercial</h1>
-
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 bg-white border border-gray-100
-          rounded-xl px-1 py-1 shadow-sm">
-          <button className="px-4 py-2 rounded-lg text-sm font-semibold
-            bg-emerald-50 text-emerald-700">
-            Pipeline
+      <PageHeader
+        titulo="Pipeline comercial"
+        descripcion="Seguimiento de leads por etapa comercial"
+        acciones={
+          <button
+            onClick={() => router.push('/pipeline/nuevo')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl
+              bg-emerald-600 hover:bg-emerald-700 text-white
+              text-sm font-semibold transition-colors"
+          >
+            <Plus size={16} />
+            Nuevo Lead
           </button>
-        </div>
-        <button
-          onClick={() => router.push('/pipeline/nuevo')}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl
-            bg-emerald-600 hover:bg-emerald-700 text-white
-            text-sm font-semibold transition-colors"
-        >
-          <Plus size={16} />
-          Nuevo Lead
-        </button>
-      </div>
+        }
+      />
 
       {/* Filtros */}
       <LeadFiltros

@@ -234,7 +234,7 @@ export default function ControlAccesoPage() {
                 acciones={
                     <button
                         onClick={() => abrirModal('invitar')}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#1C7E3C] hover:bg-[#16642f] rounded-xl transition-colors shadow-sm"
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors shadow-sm"
                     >
                         <UserPlus size={16} />
                         Invitar usuario
