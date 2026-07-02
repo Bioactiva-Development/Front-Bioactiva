@@ -46,6 +46,7 @@ export default function OrganizacionesPage() {
     <div className="space-y-3">
       <PageHeader
         titulo="Gestión de Organizaciones"
+        descripcion="Registro y administración de empresas clientes"
         acciones={
           <div className="flex items-center gap-3">
             <button

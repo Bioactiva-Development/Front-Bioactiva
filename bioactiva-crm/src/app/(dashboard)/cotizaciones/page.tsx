@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { useCotizaciones } from '@/hooks/cotizaciones/useCotizaciones'
 import { CotizacionFiltros } from '@/components/modules/cotizaciones/CotizacionFiltros'
 import { CotizacionCard } from '@/components/modules/cotizaciones/CotizacionCard'
@@ -29,10 +30,10 @@ export default function CotizacionesPage() {
   return (
     <div className="space-y-3">
 
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">Cotizaciones</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Gestión de propuestas comerciales</p>
-      </div>
+      <PageHeader
+        titulo="Cotizaciones"
+        descripcion="Gestión de propuestas comerciales y seguimiento de cotizaciones"
+      />
 
       <CotizacionFiltros
         filtros={filtros}

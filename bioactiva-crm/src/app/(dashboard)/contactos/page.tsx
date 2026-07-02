@@ -53,6 +53,7 @@ export default function ContactosPage() {
     <div className="space-y-3">
       <PageHeader
         titulo="Directorio de Contactos"
+        descripcion="Gestión de contactos asociados a organizaciones"
         acciones={
           <button
             onClick={() => router.push('/contactos/nueva')}
