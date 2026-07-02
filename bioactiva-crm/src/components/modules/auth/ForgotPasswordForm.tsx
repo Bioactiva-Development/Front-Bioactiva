@@ -1,34 +1,88 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, ArrowLeft, CheckCircle } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import ReCAPTCHA from 'react-google-recaptcha'
 import { forgotPasswordSchema, ForgotPasswordFormValues } from '@/lib/validators/auth.schema'
 import { useAuth } from '@/hooks/auth/useAuth'
 import { ROUTES } from '@/lib/constants/routes'
 
+// El backend responde 200 { ok: true } siempre (anti-enumeración) y dentro de
+// los 5 minutos posteriores a una solicitud no envía otro correo, sin señalarlo.
+// Este cooldown local evita reintentos en vano durante esa ventana.
+const COOLDOWN_MS = 5 * 60 * 1000
+
+interface Cooldown {
+    correo: string
+    until: number
+}
+
+function crearCooldown(correo: string): Cooldown {
+    return {
+        correo: correo.trim().toLowerCase(),
+        until: Date.now() + COOLDOWN_MS,
+    }
+}
+
+function ahoraMs(): number {
+    return Date.now()
+}
+
+function formatearRestante(ms: number): string {
+    const total = Math.max(0, Math.ceil(ms / 1000))
+    const min = Math.floor(total / 60)
+    const seg = total % 60
+    return `${min}:${String(seg).padStart(2, '0')}`
+}
+
 export function ForgotPasswordForm() {
-    const { forgotPassword, isLoading, error, success } = useAuth()
+    const { forgotPassword, isLoading, error, success, resetMessages } = useAuth()
     const [captchaToken, setCaptchaToken] = useState<string | null>(null)
     const recaptchaRef                    = useRef<ReCAPTCHA>(null)
+
+    const [cooldown, setCooldown] = useState<Cooldown | null>(null)
+    const [ahora, setAhora]       = useState(() => Date.now())
+
+    const cooldownRestante = cooldown ? cooldown.until - ahora : 0
+    const cooldownActivo   = cooldownRestante > 0
+
+    useEffect(() => {
+        if (!cooldownActivo) return
+        const id = setInterval(() => setAhora(Date.now()), 1000)
+        return () => clearInterval(id)
+    }, [cooldownActivo])
 
     const {
         register,
         handleSubmit,
+        control,
         formState: { errors },
     } = useForm<ForgotPasswordFormValues>({
         resolver: zodResolver(forgotPasswordSchema),
     })
 
+    // El cooldown es por correo: escribir otro correo permite enviar de inmediato.
+    const correoActual    = (useWatch({ control, name: 'correo' }) ?? '').trim().toLowerCase()
+    const correoBloqueado = cooldownActivo && cooldown?.correo === correoActual
+
     const onSubmit = async (data: ForgotPasswordFormValues) => {
-        await forgotPassword(data, captchaToken)
-        if (error) {
+        const enviado = await forgotPassword(data, captchaToken)
+        if (enviado) {
+            setCooldown(crearCooldown(data.correo))
+            setAhora(ahoraMs())
+        } else {
             recaptchaRef.current?.reset()
             setCaptchaToken(null)
         }
+    }
+
+    const reintentar = () => {
+        recaptchaRef.current?.reset()
+        setCaptchaToken(null)
+        resetMessages()
     }
 
     return (
@@ -69,12 +123,25 @@ export function ForgotPasswordForm() {
                                 <CheckCircle size={18} className="mt-0.5 shrink-0" />
                                 <p>{success}</p>
                             </div>
-                            <p className="text-sm text-gray-500 text-center">
-                                Revisa tu bandeja de entrada y sigue las instrucciones.
-                            </p>
+                            {cooldownActivo ? (
+                                <p className="text-sm text-gray-500 text-center">
+                                    ¿No recibiste el correo? Podrás solicitar otro enlace en{' '}
+                                    <span className="font-semibold text-gray-700 tabular-nums">
+                                        {formatearRestante(cooldownRestante)}
+                                    </span>
+                                </p>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={reintentar}
+                                    className="w-full text-sm text-[#1C7E3C] font-semibold hover:underline"
+                                >
+                                    Volver a enviar el enlace
+                                </button>
+                            )}
                         </div>
                     ) : (
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                        <form onSubmit={(e) => void handleSubmit(onSubmit)(e)} className="space-y-5">
                             <div className="space-y-1.5">
                                 <label htmlFor="fp-correo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                     Correo electrónico
@@ -97,6 +164,10 @@ export function ForgotPasswordForm() {
                             </div>
 
                             <div className="flex justify-center">
+                                {/* v2 checkbox, mismo widget que login. Si más adelante se activa
+                                    modo score/Enterprise, el token debe generarse con
+                                    grecaptcha.enterprise.execute(siteKey, { action: 'password_reset' })
+                                    — la action debe coincidir exactamente con la que valide el backend. */}
                                 <ReCAPTCHA
                                     ref={recaptchaRef}
                                     sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
@@ -105,9 +176,18 @@ export function ForgotPasswordForm() {
                                 />
                             </div>
 
+                            {correoBloqueado && (
+                                <p className="text-xs text-gray-500 text-center">
+                                    Ya se envió un enlace a este correo. Podrás solicitar otro en{' '}
+                                    <span className="font-semibold text-gray-700 tabular-nums">
+                                        {formatearRestante(cooldownRestante)}
+                                    </span>
+                                </p>
+                            )}
+
                             <button
                                 type="submit"
-                                disabled={isLoading || !captchaToken}
+                                disabled={isLoading || !captchaToken || correoBloqueado}
                                 className="w-full flex items-center justify-center gap-2 bg-[#1C7E3C] hover:bg-[#16642f]
                   disabled:bg-[#BCF7B3] disabled:cursor-not-allowed text-white font-semibold
                   py-3 px-4 rounded-xl text-sm transition-colors shadow-md shadow-[#BCF7B3]"

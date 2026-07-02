@@ -6,9 +6,11 @@ export const ENDPOINTS = {
         logout:  '/auth/logout',
     },
     resetPassword: {
-        request:  '/reset-password/request',
-        validate: '/reset-password/validate',
-        reset:    '/reset-password/reset',
+        request: '/reset-password/request',
+        // GET /reset-password/info/:token — devuelve { correo, expired, used }
+        // sin lanzar error; pensado para decidir qué pantalla mostrar.
+        info:    (token: string) => `/reset-password/info/${encodeURIComponent(token)}`,
+        reset:   '/reset-password/reset',
     },
     usuarios: {
         // GET /users — implementado en backend (doc-endpoint.md, módulo `users`).
