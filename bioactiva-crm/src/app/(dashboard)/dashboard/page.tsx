@@ -270,16 +270,33 @@ const formatUsd = (value?: number) =>
 
 /**
  * Muestra un monto en ambas divisas por separado (S/ y US$). El backend reporta
- * cada divisa de forma independiente y nunca las combina, por eso se apilan en
- * dos lineas en lugar de sumarse. Se renderiza con <span> para ser HTML valido
- * dentro del <p> de la KpiCard.
+ * cada divisa de forma independiente y nunca las combina: NO son un monto
+ * principal y su equivalencia, son dos totales distintos. Por eso se muestran
+ * con el mismo peso tipográfico, cada uno con su propia etiqueta de moneda y
+ * separados por una línea divisoria, en vez de uno grande y otro chico en gris
+ * (que se leía como una conversión). Se renderiza con <span> para ser HTML
+ * valido dentro del <p> de la KpiCard.
  */
 function MoneyDual({ value }: Readonly<{ value?: MoneyByCurrency }>) {
   return (
-    <span className="flex flex-col gap-0.5 leading-none">
-      <span>{formatPen(value?.pen)}</span>
-      <span className="text-sm font-bold text-gray-400 tabular-nums tracking-tight">
-        {formatUsd(value?.usd)}
+    <span className="flex flex-col divide-y divide-gray-100 leading-none">
+      <span className="flex items-baseline justify-between gap-2 pb-1.5">
+        <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-emerald-600">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          Soles
+        </span>
+        <span className="text-lg font-extrabold text-gray-900 tabular-nums tracking-tight">
+          {formatPen(value?.pen)}
+        </span>
+      </span>
+      <span className="flex items-baseline justify-between gap-2 pt-1.5">
+        <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-blue-600">
+          <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+          Dólares
+        </span>
+        <span className="text-lg font-extrabold text-gray-900 tabular-nums tracking-tight">
+          {formatUsd(value?.usd)}
+        </span>
       </span>
     </span>
   )

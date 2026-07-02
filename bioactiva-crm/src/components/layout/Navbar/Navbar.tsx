@@ -59,11 +59,11 @@ export function Navbar() {
                         <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center">
                             <span className="text-white text-xs font-bold">{iniciales}</span>
                         </div>
-                        <div className="hidden sm:block text-left">
-                            <p className="text-sm font-semibold text-gray-900 leading-tight">
+                        <div className="hidden sm:block text-left max-w-40">
+                            <p className="text-sm font-semibold text-gray-900 leading-tight truncate">
                                 {usuario?.nombres} {usuario?.apellidos}
                             </p>
-                            <p className="text-xs text-gray-400 leading-tight">{rolLabel}</p>
+                            <p className="text-xs text-gray-400 leading-tight mt-0.5">{rolLabel}</p>
                         </div>
 
                         <ChevronDown
