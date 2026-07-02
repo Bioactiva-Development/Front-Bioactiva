@@ -123,9 +123,11 @@ describe('dashboard/page', () => {
     expect(screen.getByText('Dashboard comercial')).toBeInTheDocument()
   })
 
-  it('renders subtitle "Métricas del periodo seleccionado"', () => {
+  it('renders subtitle "Visión general del rendimiento comercial y seguimiento de KPIs"', () => {
     renderPage()
-    expect(screen.getByText('Métricas del periodo seleccionado')).toBeInTheDocument()
+    expect(
+      screen.getByText('Visión general del rendimiento comercial y seguimiento de KPIs')
+    ).toBeInTheDocument()
   })
 
   it('does not render the active status and current date', () => {
